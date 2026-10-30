@@ -7444,7 +7444,7 @@ function mvSalidaHTML(v,hoy){
   const now=new Date(),m=mins(s.hora),falta=m==null?null:m-(now.getHours()*60+now.getMinutes());
   const lista=v.lista||[],vc=mvVueloCalc(v.vuelo),conVuelo=vc&&vc.fecha===s.fecha&&vc.hora===s.hora&&falta!=null&&falta<180;
   return '<div class="card mv"><h2>🚪 Sal de casa a las '+esc(hCortaHM(s.hora))+'</h2>'+
-    (conVuelo?'<p>Vuelo '+esc(v.vuelo.hora)+' · aeropuerto '+esc(vc.aero)+' · trayecto '+vc.tray+' min</p>'+mvEnlacesHTML(v.vuelo.aero):'')+
+    (conVuelo?'<p>Vuelo '+esc(v.vuelo.hora)+' · en el aeropuerto a las '+esc(vc.aero)+' · trayecto '+vc.tray+' min</p>'+mvEnlacesHTML(v.vuelo.aero):'')+
     (falta!=null&&falta>0?'<p><b>Faltan '+(falta>=60?Math.floor(falta/60)+' h ':'')+(falta%60)+' min</b></p>':'')+
     (lista.length?lista.map(function(x){
       return '<label class="mvc"><input type="checkbox" data-a="mv-lista-ok" data-id="'+esc(x.id)+'"'+(x.ok?' checked':'')+'><span>'+esc(x.t)+'</span></label>';}).join(''):'')+

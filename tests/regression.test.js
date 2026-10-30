@@ -15451,16 +15451,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.hoyMini = await page.evaluate(() => { const e = document.querySelector('#main .mini'); return e ? parseFloat(getComputedStyle(e).fontSize) : -1; });
     await gotoTab('consumo'); await page.waitForTimeout(200);
     r.vis = await page.evaluate(() => [...document.querySelectorAll('#main .cnvis button')].map((b) => Math.round(b.getBoundingClientRect().height)));
+    // y ninguna letra de la portada del 4:20 por debajo de 11 px (el verificador vio 9,5-10,5 en sus cifras y días)
+    r.minPortada = await page.evaluate(() => Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))));
     await page.click('#main [data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(200);
     r.plan = await page.evaluate(() => {
       const seg = [...document.querySelectorAll('#main .cnseg button')].map((b) => Math.round(b.getBoundingClientRect().height));
       const chk = [...document.querySelectorAll('#main .cn label.mini input[type=checkbox]')].map((i) => ({ w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), fila: Math.round(i.closest('label').getBoundingClientRect().height) }));
-      return { seg: seg, chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), ancho: document.documentElement.scrollWidth };
+      return { seg: seg, chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), minLetra: Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))), ancho: document.documentElement.scrollWidth };
     });
     await gotoTab('hoy');
-    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 12 px, pestañas y botones de potencia de 44 px y casillas de 16 px en filas de 44 px, sin desbordar a 412',
+    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 12 px, pestañas y botones de potencia de 44 px y casillas de 16 px en filas de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
       r.hoyMini === 12 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.seg.length > 0 && r.plan.seg.every((h) => h >= 44) && r.plan.chk.length >= 3 &&
-      r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 12 && r.plan.ancho <= 412, JSON.stringify(r));
+      r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 12 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
     await page.setViewportSize(vp);
   }
   // (b) sueño en Hoy: la fila de «te faltan N noches» sale en los 4 modos solo el día de hoy y abre la hoja de la noche más reciente sin anotar

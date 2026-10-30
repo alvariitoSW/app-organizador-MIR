@@ -2045,7 +2045,7 @@ body[data-tab="gym"] #main .gtb input{font-size:16px}
 .hnum small{display:block;font-size:9px;font-weight:800;color:var(--ink2);letter-spacing:.08em;margin-top:2px}
 .htit{flex:1;min-width:0}.htit h3{margin:2px 0 1px;font-size:17px}.hsub{font-size:12px;color:var(--ink2)}
 .hver{flex:none;border:0;background:none;color:var(--brand);font:inherit;font-size:12.5px;font-weight:800;min-height:44px;padding:0 2px;cursor:pointer}
-.hcap{font-size:10.5px;font-weight:900;letter-spacing:.14em;color:var(--ink2);margin:14px 0 7px}
+.hcap{font-size:11px;font-weight:900;letter-spacing:.14em;color:var(--ink2);margin:14px 0 7px}
 .hchips{display:flex;flex-wrap:wrap;gap:6px}
 .hchip{min-height:44px;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);
   color:var(--ink);font:inherit;font-weight:800;font-size:13px;cursor:pointer}
@@ -2348,8 +2348,8 @@ html:not(.dark) .h2,html:not(.dark) .mt,html:not(.dark) .sano,html:not(.dark) .f
 .h2wk>button{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;gap:2px;padding:0;border:0;background:none;font:inherit;cursor:pointer;min-width:0}
 .h2wk i{display:block;border-radius:4px 4px 0 0;background:var(--bp)}.h2wk .x i{background:var(--bx)}.h2wk .v i{background:var(--line)}
 .h2wk .ver i{outline:1.5px solid var(--ink);outline-offset:-1.5px}
-.h2wk em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800;color:var(--ink)}
-.h2wk span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.h2wk span.hoy{color:var(--brand)}
+.h2wk em{font-style:normal;font-size:11px;text-align:center;font-weight:800;color:var(--ink)}
+.h2wk span{font-size:11px;text-align:center;color:var(--ink2);font-weight:800}.h2wk span.hoy{color:var(--brand)}
 .h2wk small{font-size:10px;text-align:center;color:var(--ok);font-weight:900;min-height:12px}
 .h2wk .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7;pointer-events:none}
 .h2leg{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--bp);margin:0 3px 0 0}.h2leg.x{background:var(--bx);margin-left:8px}
@@ -2464,7 +2464,7 @@ html,body{overscroll-behavior-y:none}
 .d6m{display:flex;gap:6px;align-items:flex-end;height:100px;position:relative;margin-top:10px}
 .d6m>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:3px}
 .d6m i{display:block;border-radius:4px 4px 0 0;background:var(--bp)}.d6m .x i{background:var(--bx)}.d6m .v i{background:var(--line)}
-.d6m em{font-style:normal;font-size:9.5px;text-align:center;font-weight:800}.d6m span{font-size:9.5px;text-align:center;color:var(--ink2);font-weight:800}.d6m span.hoy{color:var(--brand)}
+.d6m em{font-style:normal;font-size:11px;text-align:center;font-weight:800}.d6m span{font-size:11px;text-align:center;color:var(--ink2);font-weight:800}.d6m span.hoy{color:var(--brand)}
 .d6m .obj{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink2);opacity:.7}
 .d6chk{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:12.5px}
 .d6chk:first-of-type{border-top:0}.din6 .ok{color:var(--ok)}.din6 .warn{color:var(--warn)}
@@ -2516,7 +2516,7 @@ html,body{overscroll-behavior-y:none}
 /* ---- Mi semana · Mis platos ---- */
 .mskpi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .mskpi>div{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 10px}
-.mskpi b{display:block;font-size:20px;font-weight:900;line-height:1.1}.mskpi b.ok{color:var(--ok)}.mskpi span{font-size:10.5px;color:var(--ink2);font-weight:700}
+.mskpi b{display:block;font-size:20px;font-weight:900;line-height:1.1}.mskpi b.ok{color:var(--ok)}.mskpi span{font-size:11px;color:var(--ink2);font-weight:700}
 .msb{height:118px}.msb .pd{display:block;width:8px;height:8px;border-radius:50%;margin:1px auto 0;background:var(--line)}.msb .pd.ok{background:var(--bg3)}
 .msb2{display:grid;grid-template-columns:20px 1fr 78px;gap:6px;align-items:center;font-size:12px;margin-top:6px}
 .msb2 .t{height:8px;border-radius:5px;background:var(--line);overflow:hidden}.msb2 .t i{display:block;height:100%;border-radius:5px}.msb2 b{text-align:right;white-space:nowrap}
@@ -2658,7 +2658,7 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 .cnaf{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
 .cnaf .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.cnaf .t b{font-size:13px}.cnaf .t span{font-size:11.5px;color:var(--ink2)}
 .cnaf em{font-style:normal;font-weight:900}.cnaf em.ok{color:var(--ok)}.cnaf em.lo{color:var(--warn)}
-.cnaf.nc .t b{color:var(--ink2)}.cnaf small{font-size:10.5px}
+.cnaf.nc .t b{color:var(--ink2)}.cnaf small{font-size:11px}
 .cnpa{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
 .cnpa span{color:var(--ink2);text-align:right}.cnpa.w span{color:var(--warn);font-weight:700}
 details.cnci{padding:0}details.cnci summary{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;cursor:pointer;list-style:none}
@@ -2670,7 +2670,7 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cncuo{display:flex;flex-direction:column;gap:6px}
 .cncuo button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font:inherit;font-size:13px;cursor:pointer;min-height:44px}
 .cncuh{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.cncuh div{border:1px solid var(--line);border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;align-items:center}
-.cncuh b{font-size:17px}.cncuh span{font-size:10.5px;color:var(--ink2)}
+.cncuh b{font-size:17px}.cncuh span{font-size:11px;color:var(--ink2)}
 .cnrow .x{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--ink2);cursor:pointer}
 .cnwk i{background:var(--bg3)}.cnwk .x i{background:var(--bx)}
 .mskpi b.ex{color:var(--bx)}
@@ -4163,3 +4163,6 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 .mvcalc{background:color-mix(in srgb,var(--brand) 14%,var(--card));border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));border-radius:14px;padding:12px;margin:10px 0}.mvcalc b{display:block;font-size:20px}.mvcalc span{font-size:12px;color:var(--ink2)}
 .mv .btn{width:100%}.mv .row .btn,.mv .mvx{width:auto}.mv .mvx{min-width:44px}
 .mv input[type=text]{min-height:44px;font-size:16px;flex:1;min-width:0}
+
+/* Remates: ninguna letra del 4:20 por debajo de 11 px */
+.cn small{font-size:11px}
