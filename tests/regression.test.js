@@ -15228,6 +15228,56 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.cBtn === 1 && r.cConf === 1 && r.cEstado.pin === false && r.cEstado.ses === 1 && r.cEstado.desc === true && r.cAbre === 1, JSON.stringify(r));
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia393')); localStorage.removeItem('__copia393'); P.ui.cnVista = ''; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
   }
+  // 394) G11 · coach, energía del día y «sin pantallas», encadenados por la interfaz. Fija: (a) el coach del saliente y su coherencia con Entreno; (b) la franja sin pantallas, sin botón para quitarla y sin guardia; (c) el ✓ de la mañana.
+  {
+    // «ahora» congelado a una hora de hoy (patrón de la 75); el calendario se guarda y se restaura entero
+    const congela = (h, m) => page.evaluate(([h, m]) => { if (!window.__origDate394) window.__origDate394 = Date; const O = window.__origDate394, n = new O();
+      const f = new O(n.getFullYear(), n.getMonth(), n.getDate(), 0, h * 60 + m, 0).getTime();
+      window.Date = class extends O { constructor(...a) { if (!a.length) super(f); else super(...a); } static now() { return f; } }; }, [h, m]);
+    const descongela = () => page.evaluate(() => { if (window.__origDate394) { window.Date = window.__origDate394; delete window.__origDate394; } });
+    const dias = (def) => page.evaluate((def) => { const P = window.PG; window.__daySet394 = window.__daySet394 || JSON.stringify(P.store.rotation.daySet || {});
+      const hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1)), ma = P.iso(P.addDays(new Date(), 1));
+      [ay, hoy, ma].forEach((k, i) => { if (def[i] === 'sh-g') P.setDayOverride(k, 'sh-g', 'urg'); else P.setDayOverride(k, def[i], ''); }); P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.save(); P.render(); }, def);
+    const r = {};
+    await congela(12, 0);
+    // (a) día saliente: el coach habla del saliente y lo de entrenar es lo mismo que dice Entreno
+    await dias(['sh-g', 'sh-s', 'sh-l']); await page.waitForTimeout(250);
+    r.aN = await page.$$eval('#main .coach', (b) => b.length);
+    r.aTxt = r.aN ? await page.$eval('#main .coach .coacht', (e) => e.innerText) : '';
+    r.aEnt = await page.evaluate(() => window.PG.laminaDatos(window.PG.iso(new Date())).dia.corto);
+    r.aBat = await page.$$eval('#main .coach .bat i', (b) => b.length);
+    await dias(['sh-l', 'sh-t', 'sh-t']); await page.waitForTimeout(250);
+    r.aTxt2 = await page.$eval('#main .coach .coacht', (e) => e.innerText).catch(() => '');
+    r.aN2 = await page.$$eval('#main .coach', (b) => b.length);
+    check('394a Coach · el día saliente dice siesta de 20 min antes de las 15:00 y «paseo o nada» (lo mismo que Entreno); un día de trabajo ya no, y siempre UNA tarjeta, sin puntuar ni culpa',
+      r.aN === 1 && r.aN2 === 1 && r.aBat === 4 && /siesta de 20 min antes de las 15:00/i.test(r.aTxt) && /paseo o nada/.test(r.aTxt) && /paseo o nada/.test(r.aEnt) &&
+      !/paseo o nada/.test(r.aTxt2) && !/siesta de 20 min/i.test(r.aTxt2) && !/burnout|culpa|fallo|\d+\s*\/\s*100/i.test(r.aTxt + r.aTxt2), JSON.stringify(r));
+    // (b) a 30 min de la cama sale «Sin pantallas»; no hay con qué quitarlo; en guardia no sale
+    await dias(['sh-t', 'sh-t', 'sh-t']);
+    const cama = await page.evaluate(() => { const P = window.PG, n = new Date(); return P.snPantallas(new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0)); });
+    r.bCama = cama && cama.cama;
+    if (cama) { const cm = cama.ini + 45; await descongela(); await congela(Math.floor((cm - 30) / 60), (cm - 30) % 60); }
+    await dias(['sh-t', 'sh-t', 'sh-t']); await page.waitForTimeout(250);
+    r.bN = await page.$$eval('#main .pant', (b) => b.length);
+    r.bTxt = r.bN ? await page.$eval('#main .pant', (e) => e.innerText) : '';
+    r.bQuita = await page.$$eval('#main .pant select, #main .pant input, #main .pant [data-a*="quita"], #main .pant [data-a*="paus"], #main .pant [data-a*="pant-off"], #main .pant [role="switch"]', (b) => b.length);
+    await dias(['sh-t', 'sh-g', 'sh-s']); await page.waitForTimeout(250);
+    r.bG = await page.$$eval('#main .pant', (b) => b.length);
+    check('394b Sin pantallas · a 30 min de la cama sale «Sin pantallas desde…» con el texto honrado y sin botón, ajuste ni pausa; en guardia no sale',
+      r.bN === 1 && /Sin pantallas desde las \d{1,2}:\d{2}/.test(r.bTxt) && /solo pidiéndoselo a Claude/.test(r.bTxt) && r.bQuita === 0 && r.bG === 0, JSON.stringify(r));
+    // (c) por la mañana: «¿Anoche lo cumpliste?» guarda la respuesta por fecha y desaparece
+    await descongela(); await congela(7, 30);
+    await dias(['sh-t', 'sh-t', 'sh-t']); await page.waitForTimeout(250);
+    r.cN = await page.$$eval('#main .pant [data-a="pant-resp"]', (b) => b.length);
+    if (r.cN === 2) await page.click('#main .pant [data-a="pant-resp"][data-v="no"]');
+    await page.waitForTimeout(200);
+    r.cGuardado = await page.evaluate(() => { const P = window.PG, ay = P.iso(P.addDays(new Date(), -1)); return (P.store.sueno.pant || {resp: {}}).resp[ay]; });
+    r.cDespues = await page.$$eval('#main .pant', (b) => b.length);
+    check('394c Sin pantallas · por la mañana «¿Anoche lo cumpliste?» guarda «no, y no pasa nada» con la fecha de anoche y la tarjeta desaparece (sin racha)',
+      r.cN === 2 && r.cGuardado === 'no' && r.cDespues === 0, JSON.stringify(r));
+    await descongela();
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.daySet = JSON.parse(window.__daySet394); delete window.__daySet394; if (P.store.sueno.pant) delete P.store.sueno.pant; P.save(); P.render(); });
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
