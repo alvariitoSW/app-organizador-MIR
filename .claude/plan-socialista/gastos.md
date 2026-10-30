@@ -64,6 +64,8 @@ traspaso explica por qué.
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
+| 2026-10-30 | G5 · receta, cola de TikTok, antojo de microondas | construir | sonnet | 1 | 48 | 1,0 M | 4,7 M de caché leída | todas las condiciones en el primer encargo y una sola suite completa: −33 % sobre presupuesto |
+| 2026-10-30 | G6 · maqueta de Entreno | maqueta | sonnet + verificador sonnet | 2 | 16 | ~0,3 M (sin la presidencia) | verificador rehízo los dibujos | maqueta sin concurso con lenguaje ya elegido y acuerdos escritos: ~0,3 M |
 
 ## Ahorros que funcionan
 
@@ -89,5 +91,6 @@ Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las sigu
   constructor recibe la ficha, no la conversación.
 - Una ronda de maquetas para una sección entera antes que una por cada función (plan de Comer, 2026-10-27).
 - Un concurso de diseñadores sonnet con escuelas opuestas y críticas cruzadas da ideas que una sola mano no saca (los tres robaron «Ahora toca»); los diseñadores se continúan con SendMessage, no se relanzan (v3-comer-mapa).
+- Un encargo con todas las condiciones (una sola caja, un solo número, pruebas que caen limpias, una suite completa) evita la ronda de retoques: G5 1,0 M frente a G4 2,1 M (2026-10-30).
 - Abrir en sonnet las sesiones mecánicas (arreglos localizados, construir con ficha y maqueta aprobada).
 - Concursos de diseño libre: sonnet, no haiku (haiku sacó 1, 1 y 3 de 5 en La Rara; sonnet ganó con 5/5). (la-rara, 2026-10-28)

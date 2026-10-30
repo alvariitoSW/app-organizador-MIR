@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G5 · Construir R8 + S7: cola de TikTok, página de receta con Compartir, antojo de microondas** (maquetas R5 `comer-reforma.html` y G2 `comer-g2.html`, pantallas 3 y 4)
+**Gran Ley · G7 · Construir R10: 12 dibujos, un toque por serie, progresión doble, récord** (maqueta `maquetas/entreno-g6.html`)
 
 ## Por hacer
 
@@ -32,8 +32,8 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 | ~~G2~~ | ✅ 30/10 · `maquetas/comer-g2.html` · **completa la R5** (`comer-reforma.html`, que manda en proteína, receta, compra y nevera): «Escribir lo comido» arriba en Hoy y el antojo de microondas S7 (≤5 min · ≥20 g, dos alternativas, «Apuntar que me lo he comido») · sin concurso (Consejo por delegación, acta `consejo/2026-10-30-g2.md`) · ~0,6 M | maqueta | sonnet monta, haiku textos | ~1,5 M |
 | ~~G3~~ | ✅ main 56f30af · 30/10 · adelantada (sesión R6, con la maqueta R5) · compra base con un toque restando la casa, semana por caducidad, hoja del reparto según tu semana, zona ❄ Congelador, pescado 4 × 250 g, 8 platos que congelan bien (lista), `dishes[].congela` · pruebas 376-379 · ficha `fichas/reforma-r6-compra-congelador.md` | construir | sonnet con ficha | ~2,0 M |
 | ~~G4~~ | ✅ 30/10 · proteína en Hoy a 1,6 g/kg (solo si faltan >30 g, una sugerencia de la nevera; guardia «lo que se pueda»), aviso tras entreno (2 h), la frase arriba en Comer → Hoy con lupa (una sola caja), barra de Comer con el mismo número · S6 ya cubierta (no se construye) · pruebas 380-383 · ~2,1 M (se pasó: dos suites completas y retoques) | construir | sonnet | ~1,2 M |
-| G5 | Construir R8 + S7: cola TikTok, página de receta con Compartir, microondas | construir | sonnet | ~1,5 M |
-| G6 | MAQUETA Entreno: R9 + entrenador que respeta la guardia | maqueta | opus + sonnet | ~1,0 M |
+| ~~G5~~ | ✅ 30/10 · página de receta (hoja de Comer: tachar ingredientes, Añadir a la compra, Ver en TikTok fuera, Compartir sin datos), cola de TikTok en Importar, antojo de microondas (7 recetas ≤5 min · 23-31 g) en Hoy y Comer · pruebas 384-386 · 1,0 M | construir | sonnet | ~1,5 M |
+| ~~G6~~ | ✅ 30/10 · `maquetas/entreno-g6.html` · Lo que toca hoy, 3 dibujos de dos posturas, una serie por toque, +2,5 kg, récord discreto, día saliente · sin concurso (Consejo por delegación) · ~0,3 M | maqueta | sonnet | ~1,0 M |
 | G7 | Construir R10: 12 dibujos, un toque por serie, progresión doble, récord | construir | haiku dibujos, sonnet | ~2,0 M |
 | G8 | Lector de comida rápida | construir | haiku datos, sonnet | ~0,8 M |
 | G9 | MAQUETA La Noche 2: coach + energía + 4:20 y descanso + sin pantallas | maqueta | opus + sonnet | ~1,5 M |

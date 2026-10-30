@@ -1983,3 +1983,23 @@ aparte de recetas de microondas. Un segundo número de proteína en Hoy.
 - Un plato hecho de alimentos (sin líneas escritas) enseña como ingredientes «N g de alimento».
 - El icono grande es el emoji del plato (sin imágenes externas).
 - «Apuntar» lo mete como comida «por macros» en el momento de ahora (`momentoAhora`).
+
+## Gran Ley · G6 · Maqueta de Entreno (2026-10-30)
+
+*Por el Consejo por delegación (acuerdos 2026-10-29-2 «9 · Entreno» y 2026-10-30 «A · R9-R10»). Maqueta: `maquetas/entreno-g6.html`. Sin concurso.*
+
+**Elegido.** Lenguaje de Entreno ya construido (Teide y Bancales), 4 pantallas a 412×915 en claro y oscuro:
+- **Hoy en Entreno:** «Lo que toca hoy» con 4 ejercicios, «Prueba +2,5 kg» en uno con su porqué, la semana con la guardia
+  marcada y un récord discreto.
+- **Ejercicio abierto** (sentadilla goblet): dibujo SVG propio de dos posturas que se alternan (quietas lado a lado con
+  movimiento reducido), músculo resaltado, 3 claves de ≤6 palabras, error típico, pauta y una serie por toque con el peso
+  anterior puesto.
+- **Los otros dibujos:** press con mancuernas y remo con mancuerna (apoyo de mano en el banco).
+- **Día saliente:** frase del entrenador, 25 min al 65 % o 10 min de movilidad, y descansar sin culpa. Nada de rojo.
+Progresión doble: tope de repeticiones con 1-2 en recámara en todas las series → +2,5 kg. Verificador: contraste AA
+(verde claro oscurecido a `#126a32`), táctiles ≥44 px, dibujos rehechos con volumen (no palitos).
+
+**Descartado.** Imágenes externas (openGym): SVG propios en `fig/`. Concurso. Confeti o rojo en récords y días flojos.
+
+**Supuestos.** Pesos de ejemplo; los 12 ejercicios de G7 siguen el estilo de estos 3 dibujos; el remo se dibuja con apoyo
+de mano y no de rodilla.
