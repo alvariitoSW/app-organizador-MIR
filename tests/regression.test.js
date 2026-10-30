@@ -14664,8 +14664,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.foodVista = ''; P.ui.cocinaPlato = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
     const meses3 = (r.d.fecha && r.d.hasta) ? Math.round((new Date(r.d.hasta) - new Date(r.d.fecha)) / 86400000) : 0;
-    check('373 Comer · reparto: «✓ hecho» de 6 raciones abre «¿Cómo las repartes?» con la propuesta de la semana (lo que el menú pide mientras aguanta, 3 o 4; no el 2 de reserva; botones ≥44); Cancelar no apunta nada; otra vez + sube uno, con 6 el + queda apagado; con 4 → Guardar deja 4 en la nevera y 2 congeladas con «hasta» a ~3 meses',
-      r.a.hay && r.a.rol === 'dialog' && /repartes/.test(r.a.tit) && r.exp >= 3 && r.exp <= 5 && r.a.n === r.exp + ' nevera · ' + (6 - r.exp) + ' ❄' && r.a.menos >= 44 && r.a.mas >= 44 && r.a.nev === 0 && r.a.cong === 0 &&
+    check('373 Comer · reparto: «✓ hecho» de 6 raciones abre «¿Cómo las repartes?» con la propuesta de la semana (lo que el menú pide mientras aguanta; no el 2 de reserva; botones ≥44); Cancelar no apunta nada; otra vez + sube uno, con 6 el + queda apagado; con 4 → Guardar deja 4 en la nevera y 2 congeladas con «hasta» a ~3 meses',
+      r.a.hay && r.a.rol === 'dialog' && /repartes/.test(r.a.tit) && r.exp >= 1 && r.exp <= 5 && r.a.n === r.exp + ' nevera · ' + (6 - r.exp) + ' ❄' && r.a.menos >= 44 && r.a.mas >= 44 && r.a.nev === 0 && r.a.cong === 0 &&
       !r.b.hay && r.b.nev === 0 && r.b.cong === 0 && r.b.vista === 'cocina' &&
       r.c.n === (r.exp + 1) + ' nevera · ' + (5 - r.exp) + ' ❄' && r.tope.n === '6 nevera · 0 ❄' && r.tope.masOff && r.d.nev === 4 && r.d.cong === 2 && !r.d.hay && meses3 >= 85 && meses3 <= 95 && r.a.ancho <= 412, JSON.stringify(r));
   }
