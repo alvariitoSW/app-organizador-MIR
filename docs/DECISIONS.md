@@ -1765,3 +1765,22 @@ protagonista: el objetivo de 6 meses queda como dato pequeño. Bento como base (
 **Supuestos.** El mes va de nómina a nómina; «puedes ahorrar» deja ~200 € de margen; con el portátil «apartando», «para gastar»
 (812 € · 30 €/día) no cambia; el botón «🌳 Ahorro y Bosque» en Tu mes repite la pestaña y se puede quitar. Las cifras son
 inventadas.
+
+## La Reforma · R2 · Construir «Tu mes» (2026-10-30)
+
+**Elegido (Consejo por delegación).** La portada de Dinero es **Tu mes** (maqueta `maquetas/dinero-tu-mes.html`, El Vaso):
+arriba «Acabarás con ~X € · ahorras Y», el vaso por capas (fijos abajo, gastos, margen, ahorro arriba; etiquetas fuera de las
+capas, a 14 px) y la cadena «empiezas − fijos − gastos = acabas». Tocar el vaso o «Fijos» separa los fijos y dice «Te quedan N €»
+con la lista ✓ pagado / ○ por pagar. Cifras de `d6Mes` y `mesTipo` (`tuMesDatos()`, sin cálculos nuevos salvo «acabarás» y
+«ahorras»). Sin captura de Fintonic del mes no se dice «acabarás» ni «ahorras»: pide la captura. En Hoy, debajo del cartel de la
+noche, «💶 Te quedan N € · M €/día hasta fin de mes · mañana pagas X» solo si hay un fijo sin pagar mañana o el ritmo va en
+«ojo»/«pasa»; tocarla abre Tu mes. Pestañas: Tu mes · Bosque · Gastos · Ahorro · Compras (el Bosque se junta con Ahorro en R3).
+Pruebas 365-368 (caen al revertir cada parte y ninguna otra). De paso, tres pruebas que dependían del día (226, 268, 285) ya no:
+la 226 destapó «la desayuno» en la sugerencia de vitaminas (ahora «el desayuno»). Suite 817/817.
+
+**Descartado.** El mes de nómina a nómina de la maqueta (se queda el del calendario, como el resto de Dinero). Repetir «Hoy toca
+pagar» en la línea de Hoy (ya está en Para hoy). Animar el vaso al plegar (la app repinta la pantalla entera).
+
+**Supuestos.** «Puedes ahorrar» = acabarás − un margen del 10 % de lo que queda tras los fijos (redondeado a 10 €); gastos
+previstos = lo gastado o el mes típico, lo que sea mayor. La línea de Hoy no se puede ocultar todavía. La franja de casillas que
+asomó bajo Tu mes en una captura es un resto de pintado del navegador de pruebas (no hay elemento ahí): mirarlo en el móvil.
