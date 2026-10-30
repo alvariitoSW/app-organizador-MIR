@@ -196,3 +196,6 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, lector de frases S2b) · success; sellado (version.json 2e30a00 posterior al código f7dc69b); rama 1 por delante (solo plan); 0 issues/PR · ok
 - [parte-s3-2026-10-28] 2026-10-28 · parte con la S3 (Comer del reloj) elegida; presupuesto ~2,1 M medido (plan 1,8 M ×2); propuesto decidir antes qué entra en la sesión 1 · propuesto
 - [parte-s3b-2026-10-28] 2026-10-28 · parte: rama con la S3 sesión 1 (12 commits, app.js/styles.css sin sellar, suite 754/754) sin pasar a main; main 2e30a00 success; siguiente S3b (~2,8 M); el usuario pide S3b y luego pasar todo a main · propuesto
+- [run-41069781673] 2026-10-30 · despliegue de main (5bff20a, Gran Ley cerrada) · success; sellado (version.json 27af4cf = último código); 0 issues/PR · ok
+- [rama-706d99d] 2026-10-30 · rama finanzas-nutricion-reforma-upgqhz: 61 commits por detrás de main (Gran Ley G1-G13 tocó app.js), 0 por delante; traer main antes de construir R1 · abierto
+- [parte-r1-2026-10-30] 2026-10-30 · parte con La Reforma R1 · Concurso de Dinero elegida (~2,5 M); propuesto traer main primero · propuesto
