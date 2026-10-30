@@ -4090,3 +4090,25 @@ html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
 .antr{margin:10px 0;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2)}
 .ant1{display:flex;align-items:center;gap:8px;font-size:17px}
 .antl{margin:6px 0 0;padding-left:22px;font-size:15px;line-height:1.45}
+
+/* G7 · Entreno: ficha, lo que toca hoy y el día saliente (letra ≥14 px, táctiles ≥44 px) */
+.gficha{border:1px solid var(--line);border-radius:14px;padding:0 12px;margin:8px 0}
+.gficha summary{min-height:44px;display:flex;align-items:center;font-size:15px;font-weight:700;cursor:pointer}
+.gfdib{background:var(--card2,var(--line));border-radius:12px;padding:6px;margin-bottom:8px}
+.gfmus,.gfcl,.gferr{font-size:14px;margin:6px 0}
+.gfcl{padding-left:22px}.gfcl li{padding:2px 0;font-weight:600}
+.gferr{border-left:4px solid var(--warn);padding:6px 10px;background:color-mix(in srgb,var(--warn) 14%,var(--card));border-radius:0 10px 10px 0}
+.gficha[open]{padding-bottom:10px}
+.grec{display:block;font-size:14px;font-weight:700;color:var(--ink)}
+.gtoca{margin-top:10px}.gtoca h3{font-size:16px;margin:0 0 4px}
+.gtf{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 0;border-top:1px solid var(--line)}
+.gtf .n{flex:1;min-width:0}.gtf .n b{display:block;font-size:15px}.gtf .n small{font-size:14px;color:var(--ink2)}
+.gtf .sug{flex:none;font-size:14px;font-weight:700;text-align:center;color:var(--ink);padding:4px 8px;border-radius:10px;background:color-mix(in srgb,var(--ok) 22%,var(--card))}
+.gtnota{font-size:14px;margin:8px 0 0;padding:10px 12px;border-radius:12px;color:var(--ink);background:color-mix(in srgb,var(--ok) 14%,var(--card))}
+.gtnota.flat{background:none;padding:6px 0;color:var(--ink2)}
+.gsal .gfrase{font-size:16px;font-weight:600;line-height:1.4;margin:8px 0;color:var(--ink)}
+.gmov{border:1px solid var(--line);border-radius:14px;padding:0 12px;margin-top:10px}
+.gmov summary{min-height:48px;display:flex;align-items:center;font-size:15px;font-weight:700;cursor:pointer}
+.gmov ul{margin:0 0 8px;padding-left:20px;font-size:14px}
+.gsalb{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:10px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.gfdib{--acc:var(--ok)}

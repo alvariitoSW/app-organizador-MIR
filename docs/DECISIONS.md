@@ -2003,3 +2003,26 @@ Progresión doble: tope de repeticiones con 1-2 en recámara en todas las series
 
 **Supuestos.** Pesos de ejemplo; los 12 ejercicios de G7 siguen el estilo de estos 3 dibujos; el remo se dibuja con apoyo
 de mano y no de rodilla.
+
+## Gran Ley · G7 · Entreno: fichas dibujadas, un toque por serie, progresión doble y el entrenador de la guardia (2026-10-30)
+
+*Por el Consejo por delegación. Maqueta aprobada: `maquetas/entreno-g6.html`. Pruebas 387-391.*
+
+**Elegido.**
+- **Ficha** (`fichaHTML`, app.js): «Cómo se hace» plegable sobre las series de la sesión en curso, con el dibujo de dos posturas de `fig/ejercicios.js`
+  (12 ejercicios; el CSS de los dibujos se inyecta una vez), músculo, 3 claves, error típico y pauta. Sin ficha, todo igual que antes.
+- **Un toque por serie:** ya existía el ✓ por fila con el peso de hoy; ahora las repeticiones también salen con las de la vez anterior
+  (salvo cuando hoy sube el peso, que salen las del plan).
+- **Progresión doble:** se reutiliza `progresionDe` (todas las series al tope y sin pasar de «justo») y su salto por ejercicio (`pasoEj`):
+  «Prueba +X kg» con una línea de porqué en «Lo que toca hoy»; la serie ya sale con ese peso; nunca obligatorio.
+- **Récord discreto:** la serie que supera el mejor 1RM estimado guarda `rec` y la fila enseña «récord» en texto normal, sin confeti ni rojo.
+- **«Lo que toca hoy»** (`tocaHoyHTML`) sustituye a la línea «primer ejercicio · peso ▲» de la tarjeta grande: todos los ejercicios con series × reps y peso.
+- **Entrenador de la guardia** (`salienteHTML`, `movilidadHTML`): hoy saliente (shift «saliente» o día tras guardia) → 25 min al 65 % (3 ejercicios × 2 series,
+  sin récords), movilidad de 10 min que se apunta como cardio, o «hoy descanso» reversible. Guardia sin rutina → «Hoy no toca» + movilidad.
+
+**Descartado.** Segundo dibujo de ejercicio en la lista de hoy (empujaba las series); una tira Ayer/Hoy/Mañana; confeti o rojo; un botón de serie nuevo
+(el ✓ de la fila ya es un toque).
+
+**Supuestos.** «1-2 en recámara» = la regla que ya tenía la app (RPE < 9 y RIR ≠ 0; sin dato cuenta como bien). El entrenador solo actúa sobre HOY; en otros
+días se ve la tarjeta de siempre (y la rutina pegada a guardia sigue con «pero estás de guardia»). La movilidad son 4 gestos fijos. Saliente al 65 % del peso
+de hoy, redondeado al salto del ejercicio. Light theme comprobado solo por tokens (la captura en claro no cambió de tema en el driver).

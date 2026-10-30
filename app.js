@@ -8900,7 +8900,7 @@ function fechaCortaTxt(key){
   const d=parseDate(key);
   return d?(DAYN[(d.getDay()+6)%7].toLowerCase()+' '+d.getDate()):key;}
 /* ===================== empezar/terminar una rutina = una sesión ===================== */
-function empezarRutina(rid,fecha,corta,minima){
+function empezarRutina(rid,fecha,corta,minima,sal){
   /* monta las series de esa rutina con el último peso que usaste en cada ejercicio (misma idea que
      antes pasarRutina(), pero ahora sabiendo de qué rutina se trata) y abre una "sesión en curso":
      hasta que no le des a «he terminado» (o «descartar»), no hay una sola sesión más que empezar. */
@@ -8914,7 +8914,7 @@ function empezarRutina(rid,fecha,corta,minima){
      peso de la última vez; como ui.gymSesionActiva no se guarda, cerrar la app a mitad dejaba en tu
      historial 17 series que no habías hecho. Ahora cada serie entra cuando la apuntas. */
   const n=rt.ejercicios.reduce(function(a,ej){return a+ejSets(ej).length;},0);
-  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now(),ult:Date.now(),corta:!!corta,min:!!minima};ui.gymFila={};ui.gymRir=null;ui.gymCerrada=null;
+  ui.gymSesionActiva={id:sid,rutinaId:rid,fecha:k,plan:n,ix:0,ts:Date.now(),ult:Date.now(),corta:!!corta,min:!!minima,sal:!!sal};ui.gymFila={};ui.gymRir=null;ui.gymCerrada=null;
   ui.gymDesc=null;ui.gymInforme='';
   /* empezar una rutina te deja DENTRO del entreno, no en un formulario — y también cuando le das
      desde «Hoy», que es donde sale el aviso de que hoy toca: sin cambiar de pestaña, pulsabas
@@ -16348,7 +16348,8 @@ function sesionFilas(sa){
     for(let k=0;k<(+extra[x]||0);k++)plan.push(Object.assign({},ultima));
     const nw=plan.filter(function(s){return s.t!=='c';}).length;
     const pr0=(med==='kg'||med==='lastre')?progresionDe(ej.ex,nw,ejRango(ej)[1],sa.fecha):null;
-    const pr=pr0&&suave&&pr0.kg>0?{kg:redondeaEj(ej.ex,pr0.kg*0.9),cl:'baja',txt:(sa.min?'Sesión mínima':sa.corta?'Versión corta':'Semana de descarga')+': '+fmtKg(redondeaEj(ej.ex,pr0.kg*0.9))+' kg y '+(sa.min?'2 series':'la mitad de series')+'. Sin fatiga extra, lo entrenado se asienta.'}:pr0;
+    const fac=sa.sal?0.65:0.9;   /* G7: saliente de guardia = 65 % del peso */
+    const pr=pr0&&suave&&pr0.kg>0?{kg:redondeaEj(ej.ex,pr0.kg*fac),cl:'baja',txt:(sa.sal?'Saliente de guardia':sa.min?'Sesión mínima':sa.corta?'Versión corta':'Semana de descarga')+': '+fmtKg(redondeaEj(ej.ex,pr0.kg*fac))+' kg y '+(sa.min?'2 series':'la mitad de series')+'. Sin fatiga extra, lo entrenado se asienta.'}:pr0;
     const kgHoy=(pr&&pr.kg>0)?pr.kg:null;
     let wi=0;
     const filas=plan.map(function(s,si){
@@ -16360,7 +16361,7 @@ function sesionFilas(sa){
       const kgBase=esC?(kgHoy?redondeaEj(ej.ex,kgHoy*0.5):(+s.kg||0)):(kgHoy!=null?kgHoy:(+s.kg||(ant?+ant.kg:0)||0));
       return {si:si,t:s.t||'n',hecha:hecha,
         kg:hecha?+hecha.kg:(e.kg!=null?e.kg:kgBase),
-        reps:hecha?+hecha.reps:(e.reps!=null?e.reps:(+s.reps||(ant?+ant.reps:0)||+ej.reps||8)),
+        reps:hecha?+hecha.reps:(e.reps!=null?e.reps:((ant&&!(pr&&pr.cl==='sube')&&!esC?+ant.reps:0)||+s.reps||(ant?+ant.reps:0)||+ej.reps||8)),   /* G7: las reps de la vez anterior ya puestas (salvo si hoy sube el peso) */
         seg:hecha?+(hecha.seg||0):(e.seg!=null?e.seg:(+s.seg||(ant?+(ant.seg||0):0)||(med==='dist'?0:30))),
         m:hecha?+(hecha.m||0):(e.m!=null?e.m:(+s.m||100)),
         antes:ant?(med==='tiempo'?(ant.seg+'″'):(med==='dist'?(ant.m+' m'+(ant.seg?(' · '+ritmo100(ant.m,ant.seg)):'')):(med==='reps'?('× '+ant.reps):((med==='lastre'?'+':'')+fmtKg(ant.kg)+'×'+ant.reps)))):'—'};});
@@ -16387,10 +16388,11 @@ function marcarSerie(x,si,soloApuntar){
   const id=uid('gs'),med=p.med;
   const kg=(med==='kg'||med==='lastre')?Math.max(0,Math.round((+f.kg||0)*100)/100):0;
   const reps=(med==='tiempo'||med==='dist')?1:Math.max(0,Math.min(200,Math.round(+f.reps||0)));
-  const rec=(med==='kg'&&f.t!=='c')?esRecord(p.ex,kg,reps):false;
+  const rec=(med==='kg'&&f.t!=='c'&&!sa.sal)?esRecord(p.ex,kg,reps):false;
   const reg={id:id,fecha:sa.fecha,ex:p.ex,kg:kg,reps:reps,si:si,ts:Date.now(),sesionId:sa.id,nota:'',
     rpe:null,rir:(ui.gymRir==null?null:+ui.gymRir)};
   if(f.t==='c')reg.t='c';
+  if(rec)reg.rec=1;   /* G7: la marca discreta «récord» de la fila */
   if(med==='tiempo')reg.seg=Math.max(1,Math.round(+f.seg||0));
   if(med==='dist')reg.m=Math.max(1,Math.round(+f.m||0));
   if(med==='dist'&&+f.seg>0)reg.seg=Math.round(+f.seg);
@@ -16527,24 +16529,21 @@ function gymHeroHTML(sel){
      dicho (el aviso de arriba ofrece moverla), no se esconde */
   const rt=(e&&e.tipo==='pisc')?(g.rutinas.filter(function(r){return rutTipo(r)==='agua';})[0]||null):((e&&e.rutina)||rutinaDeFecha(sel));
   const choqueRt=!e&&!!rt;
+  if(sel===hoy&&!malo&&(salidaDeGuardia(sel)||esSaliente(shiftById(inf.shiftId))))return salienteHTML(sel,rt);
   if(rt){
     const m=rutinaMeta(rt),hi=e&&e.hora?e.hora:'',tw=hi&&e.dur?trasEntreno(sel,inf,mins(hi)+e.dur):null,
       casa=tw?'':((hi&&e.dur)?hm(mins(hi)+e.dur+entrenoCfg().vuelta):'');
-    /* el peso que toca en el primer ejercicio con barra o mancuerna: lo que miras antes de salir */
-    const pk=rt.ejercicios.filter(function(x){return ejMedida(x)==='kg';}).map(function(x){
-      const pr=progresionDe(x.ex,ejSets(x).filter(function(z){return z.t!=='c';}).length,ejRango(x)[1],sel);
-      return pr.kg>0?(x.ex+' '+fmtKg(pr.kg)+' kg'+(pr.cl==='sube'?' ▲':(pr.cl==='baja'?' ▼':''))):'';}).filter(Boolean)[0]||'';
     const lst=sel===hoy?listoDe(sel):{rec:'normal'},corta=lst.rec==='corta',bq=bloqueDe(sel);
     return '<div class="ghero2'+(choqueRt?' choque':'')+'"><div class="k">'+dtxt+' TOCA'+(hi?(' · '+esc(hi)+(tw?(' → TRABAJO '+esc(tw.trabajo)):(casa?(' → EN CASA '+casa):''))):'')+(bq.descarga?' · DESCARGA':'')+
         (choqueRt&&malo?(' · PERO ESTÁS DE '+malo.toUpperCase()):'')+'</div>'+
-      '<h2>'+esc(rt.nombre)+(corta?' <small class="mini">· versión corta</small>':'')+'</h2><div class="m">'+m.ej+' ejercicios · '+m.series+' series · ~'+m.min+' min · '+esc(hechoHaceTxt(rt.id))+(pk?(' · <b style="color:var(--ink)">'+esc(pk)+'</b>'):'')+'</div>'+
+      '<h2>'+esc(rt.nombre)+(corta?' <small class="mini">· versión corta</small>':'')+'</h2><div class="m">'+m.ej+' ejercicios · '+m.series+' series · ~'+m.min+' min · '+esc(hechoHaceTxt(rt.id))+'</div>'+tocaHoyHTML(rt,sel)+
       '<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?' data-corta="1"':'')+'>▶ Empezar '+esc(rt.nombre)+'</button>'+
       '<div class="glnk"><button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'"'+(corta?'':' data-corta="1"')+'>'+(corta?'versión completa':'versión corta')+'</button><span>·</span>'+
         '<button data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'" data-min="1">mínima · 25 min</button><span>·</span>'+
         '<button data-a="gym-panel" data-p="rutinas">otra rutina</button><span>·</span>'+
         '<button data-a="gym-panel" data-p="sesion">apuntar a mano</button></div></div>';}
   const txt=e&&e.tipo==='pisc'?('Toca piscina'+(e.hora?(' a las '+e.hora):'')+'.'):
-    malo==='guardia'?'Estás de guardia: hoy toca descansar.':
+    malo==='guardia'?'Hoy no toca: estás de guardia. Descansa; si te apetece, solo movilidad.':
     malo==='saliente'?'Saliente: descansa, o piscina suave si te apetece.':
     (g.rutinas.length?'Hoy no toca nada.':'Crea tu primera rutina y la app te la pone en tus días.');
   /* sin plan ese día, la que sigue en tu orden a la última que hiciste: entrenar sigue a un toque */
@@ -16553,10 +16552,60 @@ function gymHeroHTML(sel){
   const iu=ultS?fuerza.findIndex(function(r){return r.id===ultS.rutinaId;}):-1;
   const sigR=fuerza.length?fuerza[(iu+1)%fuerza.length]:null;
   return '<div class="ghero2 calma"><div class="k">'+dtxt+'</div><div class="m" style="font-size:14px;color:var(--ink)">'+esc(txt)+'</div>'+
+    (malo==='guardia'?movilidadHTML():'')+
     (e&&e.tipo==='pisc'?'<button class="gbig2" data-a="gym-agua-nueva">＋ Sesión de piscina por series</button>':'')+
     (g.rutinas.length?(sigR&&!malo&&!(e&&e.tipo==='pisc')?'<button class="gbig2 sec" data-a="ses-empezar" data-id="'+esc(sigR.id)+'" data-key="'+esc(sel)+'">▶ Empezar '+esc(sigR.nombre)+' igualmente</button>':''):'<button class="gbig2" data-a="rt-nueva-rapida">＋ Crear rutina</button>')+
     '<div class="glnk">'+(e&&e.tipo==='pisc'?'<button data-a="gym-panel" data-p="cardio">apuntar piscina</button><span>·</span>':'')+
       '<button data-a="gym-panel" data-p="sesion">apuntar a mano</button></div></div>';}
+/* ===== G7 · Entreno: ficha del ejercicio, «lo que toca hoy» y el entrenador de la guardia ===== */
+function fichaHTML(nombre){
+  /* el dibujo de dos posturas, el músculo, 3 claves y el error típico (fig/ejercicios.js). Sin ficha, nada */
+  const f=window.EJ_FICHAS&&window.EJ_FICHAS[nombre];if(!f)return '';
+  if(window.EJ_FICHAS_CSS&&!document.getElementById('ejfCss')){const st=document.createElement('style');st.id='ejfCss';st.textContent=window.EJ_FICHAS_CSS;document.head.appendChild(st);}
+  return '<details class="gficha" data-tg="gymFicha"'+(ui.gymFicha?' open':'')+'><summary>Cómo se hace</summary>'+
+    '<div class="gfdib" role="img" aria-label="Dos posturas de '+esc(nombre)+'">'+f.svg+'</div>'+
+    '<p class="gfmus">Trabaja: '+esc(f.musculo)+'</p>'+
+    '<ol class="gfcl">'+(f.claves||[]).map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+'</ol>'+
+    '<div class="gferr"><b>Error típico:</b> '+esc(f.error)+'</div>'+
+    (f.pauta?'<p class="gfmus">'+esc(f.pauta)+'</p>':'')+'</details>';}
+function tocaHoyHTML(rt,sel,sal){
+  /* «Lo que toca hoy»: cada ejercicio con series × reps y el peso de hoy (el que ya calcula progresionDe);
+     si en la última sesión sacaste todas al tope con margen, «Prueba +X kg» y su porqué. En la versión
+     saliente: 3 ejercicios, 2 series y el 65 % del peso */
+  const nota=[];
+  const filas=(sal?rt.ejercicios.slice(0,3):rt.ejercicios).map(function(ej){
+    const med=ejMedida(ej),sets=ejSets(ej).filter(function(z){return z.t!=='c';}),rg=ejRango(ej),
+      n=sal?Math.min(2,sets.length):sets.length,kgM=(med==='kg'||med==='lastre');
+    const pr=kgM?progresionDe(ej.ex,sets.length,rg[1],sel):null;
+    let kg=pr&&pr.kg>0?pr.kg:0,ant='';
+    if(sal&&kg){ant=' (antes '+fmtKg(kg)+')';kg=redondeaEj(ej.ex,kg*0.65);}
+    const rep=sal?rg[0]:(rg[0]===rg[1]?rg[0]:rg[0]+'-'+rg[1]);
+    const det=med==='tiempo'?(n+' × '+((sets[0]&&+sets[0].seg)||30)+' s'):(med==='dist'?(n+' × '+((sets[0]&&+sets[0].m)||100)+' m'):
+      (n+' × '+rep+(kg?(' · '+(med==='lastre'?'+':'')+fmtKg(kg)+' kg'+ant):'')));
+    const sube=!sal&&pr&&pr.cl==='sube';
+    if(sube)nota.push('<b>'+esc(ej.ex)+':</b> en la última sesión llegaste a '+rg[1]+' repeticiones en todas las series sin pasar de «justo». Prueba '+fmtKg(pr.kg)+
+      ' kg; si cuesta, vuelves a '+fmtKg(pr.kg-pasoEj(ej.ex))+' sin pasar nada.');
+    return '<div class="gtf"><span class="n"><b>'+esc(ej.ex)+'</b><small>'+esc(det)+'</small></span>'+
+      (sube?'<span class="sug">Prueba +'+fmtKg(pasoEj(ej.ex))+' kg</span>':'')+'</div>';}).join('');
+  return '<div class="gtoca"><h3>'+(sal?'Tu versión de 25 min':'Lo que toca hoy')+'</h3>'+filas+
+    nota.map(function(t){return '<p class="gtnota">'+t+'</p>';}).join('')+
+    (sal?'<p class="gtnota flat">Sin récords ni subidas de peso hoy.</p>':'')+'</div>';}
+function movilidadHTML(){
+  return '<details class="gmov" data-tg="gymMovAb"'+(ui.gymMovAb?' open':'')+'><summary>Solo movilidad · 10 min</summary>'+
+    '<ul><li>Cadera: postura 90/90, 1 min por lado</li><li>Espalda: gato y camello, 1 min</li><li>Hombros: círculos con la pared, 2 min</li><li>Respiración lenta tumbado, 3 min</li></ul>'+
+    '<button class="gsalb" data-a="gym-mov">Apuntar 10 min de movilidad</button></details>';}
+function salienteHTML(sel,rt){
+  /* el día de salir de guardia: poco, sin culpa. Versión de 25 min al 65 %, movilidad o descansar */
+  if(ui.gymDescansa===sel)
+    return '<div class="ghero2 calma gsal"><div class="k">SALIENTE DE GUARDIA</div><p class="gfrase">Hoy descansas, y está bien: tu semana no se resiente. Mañana seguimos.</p>'+
+      '<button class="gsalb" data-a="gym-descansa" data-v="">He cambiado de idea</button></div>';
+  const g=gymS();
+  if(!rt){const f=g.rutinas.filter(function(r){return rutTipo(r)!=='agua'&&r.ejercicios.length;});rt=f[0]||null;}
+  return '<div class="ghero2 calma gsal"><div class="k">HOY · SALIENTE DE GUARDIA</div>'+
+    '<p class="gfrase">Vienes de guardia. Hoy basta con poco: elige la versión corta o solo movilidad. Tu semana no se resiente.</p>'+
+    (rt?tocaHoyHTML(rt,sel,true)+'<button class="gbig2" data-a="ses-empezar" data-id="'+esc(rt.id)+'" data-key="'+esc(sel)+'" data-min="1" data-sal="1">▶ Empezar 25 min · al 65 %</button>':'')+
+    movilidadHTML()+
+    '<button class="gsalb" data-a="gym-descansa" data-v="1">Hoy descanso, nos vemos mañana</button></div>';}
 function rutinaTarjetaHTML(rt){
   const t=rutTipo(rt),ejs=rt.ejercicios;
   const lista=ejs.slice(0,6).map(function(e){return '<li><span>'+esc(e.ex)+'</span><b>×'+ejSets(e).length+'</b></li>';}).join('')+
@@ -17036,7 +17085,7 @@ function renderGymVivo(){
     p.filas.map(function(f,i){let n=0;for(let j=0;j<=i;j++)if(p.filas[j].t!=='c')n++;
       const esAct=i===act,cl=f.hecha?'hecha':(esAct?'act':'');
       const cel=function(k,v,mode){return esAct||f.hecha?('<input inputmode="'+(mode||'numeric')+'" value="'+esc(v)+'" data-a="gv-fila" data-x="'+x+'" data-i="'+i+'" data-k="'+k+'" aria-label="'+k+' serie '+(i+1)+'">'):esc(v);};
-      return '<tr class="'+cl+'"><td><span class="gsn'+(f.t==='c'?' c':'')+'">'+(f.t==='c'?'C':n)+'</span></td><td class="an">'+esc(f.antes)+'</td>'+
+      return '<tr class="'+cl+'"><td><span class="gsn'+(f.t==='c'?' c':'')+'">'+(f.t==='c'?'C':n)+'</span></td><td class="an">'+esc(f.antes)+(f.hecha&&f.hecha.rec?'<small class="grec">récord</small>':'')+'</td>'+
         (colKg?'<td>'+cel('kg',fmtKg(f.kg),'decimal')+'</td>':'')+
         '<td>'+(med==='tiempo'?cel('seg',f.seg):(med==='dist'?cel('m',f.m):cel('reps',f.reps)))+'</td>'+
         (med==='dist'?'<td>'+cel('seg',f.seg||'')+(f.seg&&f.m?'<small class="gr100">'+ritmo100(f.m,f.seg)+'/100</small>':'')+'</td>':'')+
@@ -17056,7 +17105,7 @@ function renderGymVivo(){
   $('#main').innerHTML='<div class="grid">'+cab+desc+
     '<div class="gex gvact"><div class="h"><span class="ic">'+ejIcono(p.ej)+'</span><div><b>'+esc(p.ex)+'</b><small>'+
       (p.ej.objetivo?('🎯 '+esc(p.ej.objetivo)+' · '):'')+esc(EJ_MEDIDAS[med])+(p.ss?' · superserie':'')+'</small></div></div>'+
-      tabla+
+      fichaHTML(p.ex)+tabla+
       (fa&&colKg&&med==='kg'&&ejInfo(p.ex).barra?discosHTML(fa.kg):'')+
       pasos+rir+sug+
       '<div class="gedpie">'+(act>=0?'<button class="ok" data-a="gv-todas" data-x="'+x+'">✓ todas como están</button>':'')+'<button data-a="gv-serie-mas" data-x="'+x+'">＋ serie</button><button data-a="gv-cambiar">cambiar ejercicio</button></div></div>'+
@@ -25468,7 +25517,9 @@ function act(a,el){
     case 'rt-borrar':{const nm=((rutinaPorId(el.dataset.id))||{}).nombre||'';
       confirmar('¿Eliminar la rutina «'+nm+'» entera? Las sesiones ya guardadas con ella se quedan en el historial.').then(function(ok){
         if(!ok)return;flash(delRutinaCard(el.dataset.id));});break;}
-    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key,el.dataset.corta==='1',el.dataset.min==='1'));break;
+    case 'ses-empezar':flash(empezarRutina(el.dataset.id,el.dataset.key,el.dataset.corta==='1',el.dataset.min==='1',el.dataset.sal==='1'));break;
+    case 'gym-descansa':ui.gymDescansa=el.dataset.v==='1'?iso(new Date()):'';render();break;
+    case 'gym-mov':flash(addCardio({tipo:'movilidad',duracionMin:10,fecha:iso(new Date()),nota:'movilidad'}));break;
     case 'gv-ir':{const sa=ui.gymSesionActiva;if(!sa)break;
       sa.ix=+el.dataset.ix||0;ui.gymPanel='vivo';render();window.scrollTo(0,0);break;}
     case 'gv-cambiar':ui.gymPanel='cambiar';render();window.scrollTo(0,0);break;
