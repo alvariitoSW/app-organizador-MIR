@@ -2160,3 +2160,23 @@ aquí la pausa solo existe durante un viaje que el usuario activa y marca.
 **Descartado (medido, cada tramo corrido suelto con node).** (1) Más cortes de la 270 al final (282, 292 … 392): pasan solos, pero 6-12 trozos a la vez en 4 núcleos tardaron MÁS (272-394 s) y tumban a `actualiza`: la suite no es solo espera, cada navegador gasta CPU. (2) Cortes en 1-201 (40, 47, 53b, 45#2, 69): arrancando de cero fallan las pruebas «Hoy junta las cinco patas», «la guardia entra y sale a su hora», «el carril», «la despensa» y «Entreno: la biblioteca se filtra»; necesitan la jornada 8-15, los tipos de guardia con relevo a las 08:00 y las rutinas con sesiones. (3) Repartir por tiempo y por núcleos se escribió y probó, pero sin cortes nuevos válidos en 1-201 no baja de ~5-6 min.
 
 **Supuestos.** Para llegar a ~2 min falta una siembra por `window.PG` (jornada, `guardiaTipos`, rutina y sesiones, platos y menú) al arrancar un trozo que parta la cadena 1-201; es la tarea siguiente. Nada se saltó ni se aflojó.
+
+## Remates · L1 · Arreglos (2026-10-30)
+
+Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/2026-10-30-3.md`). Pruebas 396a–396f.
+
+- **Elegido**
+  - **Vitaminas** (`vitSugerencia`): la sugerencia es «una ración de X (N g)». Ración = la del alimento (`1 ración…` o su primera medida: 1 diente de ajo = 5 g); si no la tiene, la de su grupo (fruta/verdura 150 g, legumbre 200, carne/pescado 125, lácteo 200, cereal 60, grasas 30). El % se recalcula con esos gramos y se salta lo que aporta menos del 10 % (ajo, especias).
+  - **Fintonic** (`finParse`): una línea que empieza por «Presupuesto» no es categoría, y el filtro «de N €» admite espacios, puntos y comas («de 300 288,00 €»).
+  - **`eur()`** agrupa miles con punto reutilizando `fmtMil` («1.000 €», «12.345,50 €»). Toca todo Dinero.
+  - **Quitar una fila en la revisión de Fintonic** (`fin-quitar`) resta su importe del total de gastos que se guardará: baja el total del mes (cambia el supuesto sup-2026-10-30-r4-fintonic).
+  - **Nutricionista** (`nutTecho`): el día de guardia y el de salida de guardia/saliente no restan comida por un pico anterior (supuesto sup-2026-10-17-nutri).
+  - **Sueño** (`suenoEstadoHTML`): la barrita pasa de 3 a 7 noches, a todo el ancho de la tarjeta (bajo la cabecera) y cada noche, con dato o sin él, es un botón que abre la hoja de esa fecha (`sn-hoja` ya aceptaba fecha). El cálculo del nivel sigue con las 3 últimas.
+- **Descartado**
+  - Ración fija de 100 g con filtro solo por %: seguía sugiriendo cosas absurdas.
+  - Escribir otro agrupador para `eur()`: `fmtMil` ya lo hace.
+  - Tocar Hoy (la barrita de 3 noches de Hoy no cambia).
+- **Supuestos**
+  - Quitar una fila resta del total solo si la captura traía «Gastos»; si no, el total no existe y no hay nada que bajar.
+  - «Saliente» = el día marcado como saliente o el siguiente a una guardia (`salidaDeGuardia`).
+  - Pruebas ajustadas por el cambio: 371 (la fila quitada pasa a ser «Ocio 288», porque «Presupuesto…» ya no es categoría, y el total baja a 712) y la de Sueño de 3 barras (ahora 7).

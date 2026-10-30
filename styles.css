@@ -3146,7 +3146,8 @@ details[data-tg] .card{border:0;box-shadow:none;background:transparent;padding:1
 :root{--snlib:#a78bfa}
 html:not(.dark){--snlib:#6d28d9}
 .snluna{width:44px;height:44px;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--ink2);display:grid;place-items:center;cursor:pointer;flex:none}
-.snest .sn3s{height:52px}
+.snest .sn3s{height:52px;margin-top:10px;gap:4px}
+.snest .sn3{flex:1;min-width:0;width:auto}
 .snest .snkssc{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
 .snajc{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
 .snajt{margin:4px 0 8px;font-size:18px}

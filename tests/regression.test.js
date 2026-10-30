@@ -8642,7 +8642,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); });
     check('sueño: ya no hay deuda; «cómo llegas» mira las 3 últimas noches (lo de la guardia cuenta entero) y lo dicen Hoy, Sueño y el «listo»',
       sn.nivel === 3 && sn.suma === 16 && /Agotado/.test(sn.card) && /3 noches con 16 h/.test(sn.listo) && sn.deuda === 'undefined' &&
-      vista.est && vista.barras === 3 && !vista.deuda, JSON.stringify({ sn, vista }));
+      vista.est && vista.barras === 7 && !vista.deuda, JSON.stringify({ sn, vista }));
     check('anotar la noche dibujándola: arrastrar de 23:00 a 7:00 la apunta, con lo despejado que estás, y la hoja se cierra',
       !trasHoja.hoja && trasHoja.r && trasHoja.r.h === 8 && trasHoja.r.kss === 3 && trasHoja.r.acostar === '23:00' && trasHoja.r.desp === '07:00' &&
       trasHoja.r.tr.some((x) => x[0] === 23 && x[1] === 31 && !x[2]), JSON.stringify(trasHoja));
@@ -8959,7 +8959,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const p = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date()))[0].p);
     await page.evaluate(() => { const P = window.PG; P.ui.feVer = ''; P.ui.foodVista = 'vitaminas'; P.render(); });
     /* la vista vieja de micros («LO QUE MÁS TE FALTA») la sustituye la hoja «% diario» con su sugerencia */
-    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /100 g de |de tu nevera|(la|el) (cena|comida|desayuno)/i.test(s) }; });
+    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /una ración de |de tu nevera|(la|el) (cena|comida|desayuno)/i.test(s) }; });
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); P.ui.feVer = P.foodLog(P.iso(new Date()))[0].id; P.render(); });
     await page.click('.fehoja [data-a="fe-borrar"]'); await page.waitForTimeout(120);
     const borrado = await page.evaluate(() => ({ n: window.PG.foodLog(window.PG.iso(new Date())).length, hoja: !!document.querySelector('.fehoja') }));
@@ -14561,7 +14561,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.a.tabs === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && r.b.on === 'Ahorro y Bosque' && r.b.arboles === 6 && r.b.llenos >= 1 && r.b.llenos < 6 && r.b.frutos === 0 && r.b.barras === 5 && /4\.200/.test(r.b.colchon) && r.b.btn && r.b.nomina && r.b.guardar &&
       r.c.on === 'Ahorro y Bosque' && r.c.frutos === 1 && r.c.arboles === 6 && r.d.hoja && r.b.ancho <= 412 && r.c.ancho <= 412, JSON.stringify(r));
   }
-  // 371) DINERO · R4 · Fintonic en pequeño, EN CADENA (412×915, hoy = 29/10/2026): subir una captura (OCR simulado) → renombrar «Belleza» a «Alquiler» (input de la fila + change) → quitar la fila del
+  // 371) [2026-10-30: la fila quitada es «Ocio 288»; quitarla baja el total a 712, ver 396d] DINERO · R4 · Fintonic en pequeño, EN CADENA (412×915, hoy = 29/10/2026): subir una captura (OCR simulado) → renombrar «Belleza» a «Alquiler» (input de la fila + change) → quitar la fila del
   //      «de 300» con ✕ → «suman 712 de 1.000» y «faltan 288» → guardar → gastoMes = {Supermercado 400, Alquiler 312} y Tu mes cuenta 312 como fijo (el total no cambia). H4: renombrar «Bares» a «Supermercado»
   //      (ya existía) y guardar SUMA las dos filas. Restaura window.ocrTextos y el store.
   {
@@ -14584,7 +14584,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         txt: m.innerText.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth, lista: !!document.querySelector("#finCats") }; });
     const r = {};
     await siembra(); await page.waitForTimeout(250);
-    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nBelleza 312,00 €\nPresupuesto mensual 288,00 €');
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nBelleza 312,00 €\nOcio 288,00 €');
     r.a = await lee();
     await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Alquiler'); r.b = await lee();
     await page.click('#main .fin-x[data-k="2"]'); await page.waitForTimeout(150); r.c = await lee();
@@ -14600,9 +14600,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; window.ocrTextos = window.__ocr371; P.store = window.__copia371; P.ui.fin = null; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); window.Date = window.__origDate371; });
     await page.setViewportSize(vp);
     check('371 Dinero · Fintonic en pequeño: subir → renombrar Belleza a «Alquiler» → quitar la fila del presupuesto con ✕ (44×44) → «suman 712 de 1.000» y «faltan 288» → guardar → {Supermercado 400, Alquiler 312}, Alquiler cuenta como fijo; dos filas con el mismo nombre se suman',
-      r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Presupuesto/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
-      /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
-      r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
+      r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Ocio/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
+      /suman 712 € de 712 €/.test(r.c.txt) && !/faltan/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
+      r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 712 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
   }
   // 372) DINERO · G1 [aparc-tu-mes-r2], EN CADENA (412×915): Tu mes → «Apuntar gasto grande» → Portátil «Lo voy apartando» → Listo → la leyenda del vaso nombra «Apartado (rayas)»
   //      fuera del vaso, a ≥14 px y con su muestra A RAYAS (como la capa, no un cuadro liso) → abrir su fila → Quitar → la fila de la leyenda desaparece
@@ -14672,8 +14672,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.dudas = await page.evaluate(() => !!(window.PG.ui.frase && (window.PG.ui.frase.dudas || []).length));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
     await page.setViewportSize(vp);
-    check('374 Comer · nevera sin nada útil (solo chocolate): tras «un vaso de leche» la sugerencia de vitaminas es comida de verdad («100 g de …»), sin chocolate, cacao ni dulces; «pizza barbacoa 3 porciones» sin coma se apunta como Pizza barbacoa',
-      r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*100 g de /.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
+    check('374 Comer · nevera sin nada útil (solo chocolate): tras «un vaso de leche» la sugerencia de vitaminas es comida de verdad («una ración de … (N g)»), sin chocolate, cacao ni dulces; «pizza barbacoa 3 porciones» sin coma se apunta como Pizza barbacoa',
+      r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*Una ración de .+\(\d+ g\)/.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
       r.pizza === '780' && !r.dudas, JSON.stringify(r));
   }
   // 375) HOY · G1 [aparc-sueno-vistas], EN CADENA (412×915): en la vista Reloj, sin la noche apuntada, sale «Anotar anoche» a la vista (antes solo dentro del cartel
@@ -15336,6 +15336,111 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.cFin === 1 && r.cDespues === 0 && !/De viaje · día/.test(r.cMain2), JSON.stringify(r));
     await page.evaluate(() => { const P = window.PG; P.store.modoViaje = null; P.dineroS().pagos = P.dineroS().pagos.filter((p) => p.cat !== 'viajes');
       P.habitosS().items = P.habitosS().items.filter((h) => h.id !== 'hab-vj'); P.save(); P.render(); });
+  }
+  // 396) REMATES · L1 · ARREGLOS (acta consejo/2026-10-30-3.md)
+  // (a) vitaminas: la sugerencia es una ración real, no «100 g de ajo»; el ajo (5 g = 2 % de la vitamina C) se salta
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia396a', JSON.stringify(P.store));
+      const T = P.store.shifts.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0];
+      for (let i = 0; i < 9; i++) P.setDayOverride(P.iso(P.addDays(new Date(), i)), T.id, '');
+      P.store.semBase = { on: true, d: {} }; P.store.gComida = {}; P.store.food.despensa = []; P.store.food.cocinado = [];
+      P.despensaAdd('ajo');
+      P.store.food.log[P.iso(P.addDays(new Date(), -1))] = [{ id: 'x396a', nombre: 'zumo', kcal: 100, prot: 1, carb: 20, gresa: 0, mi: { vc: 5 } }];
+      P.ui.cjeHoja = null; P.ui.plM = null; P.ui.tpVista = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.foodDate = P.iso(P.addDays(new Date(), -1)); P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    const lee = () => page.evaluate(() => (document.querySelector('#main .vitsug') || {}).textContent || '');
+    await page.click('#main .cjvit'); await page.waitForTimeout(250); r.a = await lee();
+    await page.click('#main .subcab [data-a="food-vista"]'); await page.waitForTimeout(250);
+    await page.click('#main .cjvit'); await page.waitForTimeout(250); r.b = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia396a')); localStorage.removeItem('__copia396a'); P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    const ok = (t) => /Una ración de [^()]+ \(\d+ g\)/.test(t) && !/100 g de/.test(t) && !/\bajo\b/i.test(t) && (+((/te sube un (\d+) %/.exec(t) || [])[1]) >= 10);
+    check('396a Vitaminas · la sugerencia es «una ración de X (N g)» que sube ≥10 %, no «100 g de ajo» (el ajo, con 5 g, se salta aunque esté en la nevera); igual al volver a abrirla',
+      ok(r.a) && ok(r.b), JSON.stringify(r));
+  }
+  // (b)(c)(d) Fintonic: la línea «Presupuesto de 300 288,00 €» no es categoría; el dinero sale con punto de miles; quitar una fila baja el total del mes
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { window.__copia396 = JSON.parse(JSON.stringify(window.PG.store)); window.__ocr396 = window.ocrTextos; });
+    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 20; c.height = 20; return c.toDataURL('image/png').split(',')[1]; });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia396)); const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = []; a.gastado = {}; a.cobrado = {}; d.gastos = []; d.pagos = []; P.ui.fin = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const subir = async (texto) => {
+      await page.evaluate((t) => { window.ocrTextos = () => Promise.resolve([t]); }, texto);
+      await page.setInputFiles('#main input[data-a="fin-fotos"]', { name: 'c.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      await page.waitForFunction(() => window.PG.ui.fin && window.PG.ui.fin.estado === 'listo', null, { timeout: 10000 }); await page.waitForTimeout(150); };
+    const lee = () => page.evaluate(() => ({ cats: window.PG.ui.fin.res.cats.map((c) => c.nombre + ':' + c.v).join('|'), txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ') }));
+    const r = {};
+    // (b) subir → guardar: «Presupuesto de 300 288,00 €» no entra como categoría de 300.288
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nPresupuesto de 300 288,00 €'); r.b = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.b.g = await page.evaluate(() => JSON.stringify(window.gastoMes('2026-10').cats));
+    check('396b Fintonic · «Presupuesto de 300 288,00 €» (espacios y coma) no es categoría: solo queda Supermercado, también tras guardar',
+      r.b.cats === 'Supermercado:400' && r.b.g === '{"Supermercado":400}', JSON.stringify(r.b));
+    // (c) subir → editar el importe: 1234 y 12.345,50 salen con punto de miles en la revisión
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 12.345,50 €\nSupermercado 400,00 €'); r.c1 = await lee();
+    await page.fill('#main input[data-a="fin-v"][data-k="cat:0"]', '1234'); await page.dispatchEvent('#main input[data-a="fin-v"][data-k="cat:0"]', 'change'); await page.waitForTimeout(150); r.c2 = await lee();
+    check('396c eur() · agrupa miles con punto: «de 12.345,50 €» y, al escribir 1234, «suman 1.234 €» (no «1234 €»)',
+      /suman 400 € de 12\.345,50 €/.test(r.c1.txt) && /suman 1\.234 € de 12\.345,50 €/.test(r.c2.txt), JSON.stringify({ c1: r.c1.txt.slice(0, 400), c2: r.c2.txt.slice(0, 400) }));
+    // (d) subir → quitar una fila con ✕ → guardar: el total del mes baja lo quitado (antes seguía en 1.000)
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nBelleza 312,00 €\nOcio 288,00 €');
+    await page.click('#main .fin-x[data-k="2"]'); await page.waitForTimeout(150); r.d1 = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.d2 = await page.evaluate(() => { const g = window.gastoMes('2026-10'); return { total: g.total, cats: JSON.stringify(g.cats) }; });
+    await page.evaluate(() => { const P = window.PG; window.ocrTextos = window.__ocr396; P.store = window.__copia396; P.ui.fin = null; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('396d Fintonic · quitar una fila en la revisión SÍ baja el total del mes: 1.000 − 288 = 712 al guardar',
+      r.d1.cats === 'Supermercado:400|Belleza:312' && r.d2.total === 712 && r.d2.cats === '{"Supermercado":400,"Belleza":312}', JSON.stringify(r));
+  }
+  // (e) nutricionista: el día de guardia y el saliente no se compensan (el pico de ayer solo se resta en un día normal)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, f = P.store.food; localStorage.setItem('__copia396e', JSON.stringify(P.store));
+      f.objetivo = Object.assign({}, f.objetivo || {}, { kcal: 2200 });
+      const hoy = new Date(), lun = P.mondayOf(hoy);
+      for (let d = lun < P.addDays(hoy, -3) ? lun : P.addDays(hoy, -3); P.iso(d) <= P.iso(hoy); d = P.addDays(d, 1)) f.log[P.iso(d)] = [];
+      const m = (k, nom, kcal, pos) => P.addFoodEntry(k, { macro: { nombre: nom, kcal: kcal, prot: 10, carb: 30, gresa: 10, emoji: '🍽' }, pos: pos });
+      const ay = P.iso(P.addDays(hoy, -1)); m(ay, 'Pasta', 1400, 'comida'); m(ay, 'Pizza', 1800, 'cena'); P.save(); });
+    const pon = (ayer, hoyT) => page.evaluate((a) => { const P = window.PG, hoy = new Date(), S = P.store.shifts;
+      const N = S.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0], G = S.filter((x) => P.isGuardia(x))[0];
+      const Sal = S.filter((x) => /saliente|post ?-?guardia/i.test(x.name))[0];
+      const id = { n: N.id, g: G.id, s: (Sal || N).id };
+      P.setDayOverride(P.iso(P.addDays(hoy, -1)), id[a[0]], ''); P.setDayOverride(P.iso(hoy), id[a[1]], ''); P.ui.tab = 'hoy'; P.save(); P.render(); }, [ayer, hoyT]);
+    const techo = async () => { await page.click('#tabs [data-a="nav-comer"]'); await page.waitForTimeout(250);
+      if (await page.$('#main [data-a="cje-tab"][data-v="hoy"]')) { await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(200); }
+      return page.evaluate(() => { const c = document.querySelector('#main .nsem'); return c ? (c.querySelector('.nstc') || {}).textContent || '' : 'sin tarjeta'; }); };
+    const r = {};
+    await pon('n', 'n'); r.normal = await techo();
+    await pon('n', 'g'); r.guardia = await techo();
+    await pon('g', 'n'); r.saliente = await techo();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia396e')); localStorage.removeItem('__copia396e'); P.save(); P.ui.tab = 'hoy'; P.render(); });
+    await page.setViewportSize(vp);
+    check('396e Nutricionista · el pico de ayer se compensa un día normal («no pases de 1.900») pero NO el día de guardia ni el de después (salida de guardia): ahí «Hoy: 2.200 kcal»',
+      /no pases de 1\.900/.test(r.normal) && /Hoy: 2\.200/.test(r.guardia) && !/no pases/.test(r.guardia) && /Hoy: 2\.200/.test(r.saliente) && !/no pases/.test(r.saliente), JSON.stringify(r));
+  }
+  // (f) sueño: la barrita son 7 noches y una olvidada (sin dato) es un botón que abre la hoja DE ESA FECHA
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia396f', JSON.stringify(P.store));
+      const sr = P.store.suenoReal = {}, hoy = new Date();
+      for (let i = 0; i < 7; i++) if (i !== 4) sr[P.iso(P.addDays(hoy, -i))] = { h: 7.5, guardia: false };
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.dineroVista = ''; P.save(); P.render(); window.__snMonta && window.__snMonta(); });
+    await page.waitForTimeout(150);
+    await page.click('.snhoy .snhoyc'); await page.waitForTimeout(250);
+    const r = { k: await page.evaluate(() => window.PG.iso(window.PG.addDays(new Date(), -4))) };
+    r.a = await page.evaluate(() => { const b = [...document.querySelectorAll('.snest .sn3')], s = document.querySelector('.snest .sn3s').getBoundingClientRect();
+      return { n: b.length, vacias: b.filter((x) => x.querySelector('i.vacio')).map((x) => x.dataset.k), minW: Math.min(...b.map((x) => x.getBoundingClientRect().width)), dentro: s.right <= 412 && s.left >= 0, ancho: document.documentElement.scrollWidth }; });
+    await page.click('.snest .sn3[data-k="' + r.k + '"]'); await page.waitForTimeout(250);
+    r.b = await page.evaluate(() => ({ hoja: !!document.querySelector('.hoja'), k: window.PG.ui.snHoja, tit: (document.querySelector('.hoja .sh') || {}).textContent || '' }));
+    await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(250);
+    r.c = await page.evaluate((k) => ({ hoja: !!document.querySelector('.hoja'), esa: !!window.PG.suenoReal(k), hoyTocada: window.PG.suenoReal(window.PG.iso(new Date())).h }), r.k);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia396f')); localStorage.removeItem('__copia396f'); P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('396f Sueño · 7 noches en la barrita (a 412 px caben, botones ≥40 px) y la noche olvidada (hace 4 días) abre la hoja de ESA fecha y se guarda en ella, sin tocar la de hoy',
+      r.a.n === 7 && r.a.vacias.join() === r.k && r.a.minW >= 40 && r.a.dentro && r.a.ancho <= 412 && r.b.hoja && r.b.k === r.k && /Noche del/.test(r.b.tit) && !r.c.hoja && r.c.esa && r.c.hoyTocada === 7.5, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

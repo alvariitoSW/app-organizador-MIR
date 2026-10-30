@@ -6585,7 +6585,9 @@ function suenoEstadoHTML(hoyK){
   /* CÓMO LLEGAS HOY, en una tarjeta: el nivel, las 3 noches, anotar y tu 1–9 a un toque. El párrafo
      de «lo que cuenta es lo reciente» va a su «por qué»; el informe de la semana, a Datos */
   const st=suenoEstado(hoyK),c=suenoCfg(),r=suenoReal(hoyK);
-  const barras=st.tres.map(function(x){const d=parseDate(x.k),h=x.n?x.n.h:0,pct=Math.min(100,h/(c.min*1.25)*100);
+  /* 7 noches (no solo las 3 del cálculo): una olvidada es un botón que abre la hoja DE ESA FECHA */
+  const siete=[];for(let i=6;i>=0;i--){const k=iso(addDays(parseDate(hoyK),-i));siete.push({k:k,n:suenoCuenta(k)});}
+  const barras=siete.map(function(x){const d=parseDate(x.k),h=x.n?x.n.h:0,pct=Math.min(100,h/(c.min*1.25)*100);
     return '<button class="sn3" data-a="sn-hoja" data-k="'+x.k+'" aria-label="'+esc(fechaCorta(x.k))+': '+(x.n?fmtHM(x.n.h*60)+(x.n.real?'':' estimado'):'sin apuntar')+'">'+
       '<i style="height:'+Math.max(x.n?6:2,pct*0.4)+'px" class="'+(x.n?(x.n.guardia?'g':''):'vacio')+(x.n&&!x.n.real?' est':'')+'"></i>'+
       '<b>'+(x.n?(x.n.real?'':'≈')+fmtC(Math.round(x.n.h*10)/10):'—')+'</b><span>'+DIA3[d.getDay()]+'</span></button>';}).join('');
@@ -6595,7 +6597,8 @@ function suenoEstadoHTML(hoyK){
       (nv?'<span class="snico" style="background:'+nv.c+'">'+nv.i+'</span>':'<span class="snico vacio">?</span>')+
       '<div style="flex:1;min-width:0"><b class="snnv" style="color:'+(nv?nv.c:'var(--ink2)')+'">'+(nv?nv.t:'Sin datos')+'</b>'+
         '<div class="mini">'+esc(st.fase.t)+(st.n?' · '+(st.n===1?'última noche':st.n+' noches')+': '+fmtC(st.suma)+' de '+fmtC(c.min*st.n)+' h':'')+'</div></div>'+
-      '<div class="sn3s" role="img" aria-label="horas que cuentan en las 3 últimas noches, objetivo '+fmtC(c.min)+' h">'+barras+'</div></div>'+
+      '</div>'+
+    '<div class="sn3s" role="group" aria-label="horas de las 7 últimas noches, objetivo '+fmtC(c.min)+' h; toca una sin apuntar para anotarla">'+barras+'</div>'+
     (!st.n?'<p class="mini" style="margin:6px 0 0">Apunta tus noches y te digo cómo llegas.</p>':'')+
     (st.tres.some(function(x){return x.n&&!x.n.real;})?'<p class="mini" style="margin:6px 0 0">La de la guardia la supongo en 2 h, sin siesta, hasta que la apuntes.</p>':'')+
     '<div class="row" style="gap:8px;margin-top:10px">'+(r?'<button class="btn s" style="flex:1" data-a="sn-hoja" data-k="'+hoyK+'">✎ Anoche: '+fmtHM(suenoTotal(r)*60)+(r.kss?' · '+r.kss+'/9':'')+'</button>':
@@ -11781,7 +11784,9 @@ function nutSuelo(obj){return Math.max(1500,Math.round(obj*0.8/50)*50);}
 function nutTecho(k){
   const obj=kcalObj();if(!obj)return null;
   const umbral=Math.max(300,obj*0.15),picos=[];let menos=0;
-  for(let i=1;i<=3;i++){const d=iso(addDays(parseDate(k),-i)),l=foodLog(d);if(!l.length)continue;
+  /* guardia y saliente no se compensan: esos días ya comes lo que se puede (decisión 2026-10-17) */
+  const inf=dayInfo(k),sh=shiftById(inf.shiftId),exento=(sh&&(isGuardia(sh)||esSaliente(sh)))||!!salidaDeGuardia(k);
+  for(let i=1;i<=3&&!exento;i++){const d=iso(addDays(parseDate(k),-i)),l=foodLog(d);if(!l.length)continue;
     const exc=Math.round(foodTotals(d).kcal-obj);if(exc<=umbral)continue;
     const r=Math.min(300,Math.round(exc/3/10)*10);picos.push({k:d,exc:exc,r:r});menos+=r;}
   const suelo=nutSuelo(obj);
@@ -13425,9 +13430,15 @@ function vitSugerencia(dk,datos){
      aunque traigan mucho hierro o magnesio */
   const deVerdad=function(a){return /^(fruta|verdura|legumbre|pescado|carne|huevo|lacteo|cereal|graso)$/.test(a.g||'')&&!/chocolate|cacao|galleta|boll|bizcoch|tarta|helado|crema de|nocilla|nutella/i.test(a.n||'');};
   const casa={};despensaS().forEach(function(x){const a=despAlim(x);if(a)casa[a.id]=1;});
-  const a=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0&&deVerdad(a);}).sort(function(x,y){return y[k]-x[k];})[0],r=a||alimRicosEn(k,40).filter(deVerdad)[0];
+  /* una ración real, no «100 g de ajo»: la del alimento («1 ración» o su primera medida: 1 diente de ajo = 5 g), si no la típica de su grupo;
+     y si esa ración aporta menos del 10 % de la referencia (ajo, especias) se pasa al siguiente */
+  const GR={fruta:150,verdura:150,legumbre:200,carne:125,pescado:125,lacteo:200,cereal:60,graso:30};
+  const racion=function(a){const r=a.r||[],e=r.filter(function(x){return /^1 ración/.test(x[0]);})[0]||r[0];return e?+e[1]:(GR[a.g]||100);};
+  const pctR=function(a){return microPct(k,a[k]*racion(a)/100);};
+  const orden=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0&&deVerdad(a);}).sort(function(x,y){return y[k]-x[k];});
+  const deCasa=orden.filter(function(a){return pctR(a)>=10;})[0],r=deCasa||alimRicosEn(k,80).filter(function(a){return deVerdad(a)&&pctR(a)>=10;})[0];
   if(!r)return null;
-  return {n:m.n,que:'100 g de '+r.n.toLowerCase()+(a?' (de tu nevera)':''),up:microPct(k,r[k])};}
+  return {n:m.n,que:'una ración de '+r.n.toLowerCase()+' ('+racion(r)+' g)'+(deCasa?' (de tu nevera)':''),up:pctR(r)};}
 function vitParadaHTML(dk,esHoy){
   /* la parada «cierre» al final de la línea del día: los 3 más bajos con dato; un toque abre el % diario */
   const bajos=vitDatos(dk).filter(function(x){return x.tiene;}).sort(function(a,b){return a.p-b.p;}).slice(0,3);
@@ -21003,7 +21014,9 @@ function numEuro(v){
   return (isFinite(n)&&n>0)?n:0;}
 function eur(n){
   const v=Math.round((+n||0)*100)/100;
-  return (Math.abs(v%1)<0.005?String(Math.round(v)):v.toFixed(2).replace('.',','))+' €';}
+  /* miles con punto: «1.000 €», «12.345,50 €» (fmtMil es una function: se eleva) */
+  const sg=v<0?'-':'',ab=Math.abs(v);
+  return (Math.abs(v%1)<0.005?sg+fmtMil(Math.round(ab)):sg+fmtMil(Math.trunc(ab))+','+ab.toFixed(2).slice(-2))+' €';}
 function dineroS(){
   if(!store.dinero||typeof store.dinero!=='object')store.dinero={};
   const d=store.dinero;
@@ -21518,7 +21531,7 @@ function finParse(texto){
     if(n2)out.neto=n2;}
   /* categorías: «Supermercado 283,06€ >» (las líneas «26 movimientos de 300€» son el presupuesto) */
   lin.forEach(function(l){
-    if(/movimient|previstos|Ingresos|Gastos|Neto|Bancos|de\s*\d+\s*€/i.test(l))return;
+    if(/^\s*Presupuesto/i.test(l)||/movimient|previstos|Ingresos|Gastos|Neto|Bancos|de\s*[\d.,\s]+€/i.test(l))return;
     const m=/^(.*?[A-Za-záéíóúñ].*?)\s+(-?\d[\dOoIl.,\/ ]{0,12}?)\s*€/.exec(l);
     if(!m)return;
     const nom=finEtiqueta(m[1]);
@@ -24886,7 +24899,10 @@ function act(a,el){
       (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(tx):Promise.reject())
         .then(function(){flash('tabla copiada: pégala en Excel o en Sheets');},function(){flash('no he podido copiar');});break;}
     case 'fin-guardar':flash(finGuardar());break;
-    case 'fin-quitar':{if(ui.fin&&ui.fin.res){ui.fin.res.cats.splice(+el.dataset.k,1);render();}break;}
+    case 'fin-quitar':{if(ui.fin&&ui.fin.res){const rs=ui.fin.res,q=rs.cats.splice(+el.dataset.k,1)[0];
+      /* quitar una fila baja el total del mes (decisión 2026-10-30), no queda como «variable sin categoría» */
+      if(q&&rs.gastos)rs.gastos={v:Math.max(0,Math.round((rs.gastos.v-q.v)*100)/100),ok:rs.gastos.ok};
+      render();}break;}
     case 'fin-descartar':ui.fin=null;ui.dineroVista='';render();window.scrollTo(0,0);break;
     case 'din-gastado':{const mk=el.dataset.mk,n=document.getElementById('dinGast'),txt=String(n?n.value:'').trim().replace(/\s|€/g,'');
       /* «1.420», «1420», «1.420,50» y «1420,5» son lo mismo */
