@@ -2124,3 +2124,31 @@ desde una web); duplicar la tarjeta de energía (no había ninguna en Hoy).
 «Lo que viene». La franja dura hasta 30 min después de la cama. En saliente el coach dice «paseo o nada» (no «movilidad») para
 coincidir con Entreno. Sin noche apuntada, el coach lo dice y propone lo de un día normal. Las respuestas del ✓ no entran en la
 copia de más allá de `store.sueno` (viajan con él).
+
+## Gran Ley · G12 · El modo viaje, sin red (2026-10-30)
+
+*Consejo por delegación, `consejo/2026-10-30.md` línea 35 («C · viajes»). Maqueta aprobada: `maquetas/modo-viaje.html`.*
+
+**Elegido.**
+- **Un solo sitio para activarlo:** Ajustes → YO → «Modo viaje» (`renderModoViaje`). Destino en texto libre, ida y vuelta, y cinco casillas
+  de pausa, todas marcadas (hábitos, entreno, sin pantallas, sueño, comida). Se activa y se apaga por fechas (`mvDia`), sin interruptor.
+  «Terminar el viaje antes» pone la vuelta en ayer (o quita el viaje si aún no ha empezado).
+- **Rachas en pausa sin tocar sus cálculos:** `habitoToca` devuelve «no toca» los días de viaje (ni piden ni fallan, y salen de los %);
+  `gymSemanasSeguidas` y `rachaConstancia` saltan las semanas con días de viaje (ni suman ni rompen). `snPantallas` (G11) devuelve
+  `null` y `coachHTML` no sale si está marcado; el aviso de cama tampoco suena en pausa de sueño.
+- **Hoy en viaje** (`renderHoyViaje`): cabecera «De viaje · día 2 de 4 · vuelves el domingo» y solo lo esencial (comida, sueño), la salida
+  y las rachas «en pausa ⏸». «Ver mi día completo» deja volver al Hoy de siempre sin perder el viaje.
+- **La salida:** día y hora puestos a mano, lista corta editable, aviso a 1 h y a 15 min con `avisosListos`/`swMensaje`
+  (`programarAvisoViaje`, una vez por hora puesta). Sin permiso, nada.
+- **El billete** (`mvBillete`): medio, precio y fecha → un pago en Dinero con la categoría nueva «viajes» (🧳, añadida a `DIN_CAT`, que es
+  como la app define sus categorías). Un mismo billete no se apunta dos veces; quitarlo del viaje quita también su gasto; borrarlo desde
+  Dinero lo quita de la lista. Al volver, un resumen amable sin puntuar (rachas, billetes) con «Vale».
+- Datos en `store.modoViaje`; sin él, todo igual que antes.
+
+**Descartado.** Buscar trenes, vuelos u horarios (sin red; dato real solo con OK expreso); una segunda entrada desde Hoy; un número de
+racha para «sin pantallas» (G11 no lleva racha); puntuar el viaje.
+
+**Supuestos.** El coach se pausa con la casilla de sueño. «Comida del plan» y «Sueño» en pausa solo quitan las exigencias del plan en
+Hoy (y el aviso de cama): la comida y el sueño siguen apuntables. La hora de salida es de un solo día (por defecto, el de ida). Las
+pruebas 395a-c (en `regression.test.js`) caen cada una al revertir su pieza y ninguna otra. G11 decía «sin pausa» para sin pantallas:
+aquí la pausa solo existe durante un viaje que el usuario activa y marca.

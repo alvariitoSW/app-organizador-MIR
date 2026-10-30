@@ -7256,7 +7256,7 @@ function programarAvisoCama(){
   if(!suenoCfg().avisoCama||!avisosListos())return;
   /* la marca de «ya avisado» es la de la NOCHE, no la del día: al abrir la app pasada la medianoche
      ya no vuelve a sonar ni se come el aviso de la noche siguiente */
-  const k=nocheDeAhora();if(store.sueno.camaHecho===k)return;
+  const k=nocheDeAhora();if(store.sueno.camaHecho===k||mvDia(k,'sueno'))return;
   const p=suenoCamaHoy(k);if(!p)return;
   const bm=mins(p.cama),cuando=parseDate(k);if(bm==null||!cuando)return;
   cuando.setMinutes(bm+(bm<12*60?1440:0)-15);
@@ -7302,6 +7302,7 @@ function coachHoy(k){
   const txt=des.charAt(0).toUpperCase()+des.slice(1)+', '+com+' y '+ent+'.';
   return {txt:txt,porque:porque+(pd?' La proteína ayuda a recuperar.':''),tipo:tipo};}
 function coachHTML(k){
+  if(mvDia(k,'sueno'))return '';   /* G12: el coach respeta la pausa del sueño */
   const e=energiaHoy(k);if(!e)return '';
   let c=null;try{c=coachHoy(k);}catch(x){c=null;}
   return '<div class="card coach"><h2>⚡ Tu energía de hoy</h2>'+
@@ -7315,6 +7316,7 @@ function pantS(){const s=store.sueno;return s.pant||(s.pant={resp:{}});}
 function snPantallas(d){
   /* la franja de la noche a la que pertenece «d» (por defecto, ahora): desde 45 min antes de la cama, y no en guardia */
   d=d||new Date();const k=d.getHours()<12?iso(addDays(d,-1)):iso(d);
+  if(mvDia(k,'pantallas'))return null;   /* G12: de viaje con «sin pantallas» en pausa */
   const p=suenoCamaHoy(k);if(!p)return null;
   const bm=mins(p.cama);if(bm==null)return null;const cama=bm<12*60?bm+1440:bm,ini=cama-PANT_ANTES;
   const ahora=(d.getHours()<12?d.getHours()*60+1440:d.getHours()*60)+d.getMinutes();
@@ -7348,6 +7350,159 @@ function programarAvisoPant(){
   _pantT=setTimeout(function(){const Q=snPantallas();if(!Q||pantS().avisado===Q.k)return;
     swMensaje({tipo:'aviso',tag:'pant-'+Q.k,titulo:'🌙 Sin pantallas',cuerpo:'Desde ahora, hasta la cama a las '+hCortaHM(Q.cama)+'.'});
     pantS().avisado=Q.k;save();},Math.max(0,t)*60000);}
+/* ===================== G12 · el modo viaje, sin red =====================
+   Se activa desde Ajustes → YO → «Modo viaje» (la única entrada). Todo lo escribe el usuario: destino,
+   fechas, hora de salida, lista y billetes; no busca trenes ni vuelos ni usa internet. Mientras dura, los
+   días del viaje no tocan lo que está en pausa: ni cuentan como fallo ni rompen la racha (y se ven «en pausa ⏸»).
+   Los datos: store.modoViaje={destino,ida,vuelta,pausa:{…},salida:{fecha,hora},lista:[{id,t,ok}],
+   billetes:[{id,medio,precio,fecha,pagoId}],avisados:[],terminado,visto}. */
+const MV_PAUSAS=[['habitos','Hábitos'],['entreno','Entreno'],['pantallas','Sin pantallas'],['sueno','Sueño (horas de cama)'],['comida','Comida del plan']];
+const MV_MEDIOS=['Tren','Avión','Autobús','Coche'];
+const MV_LISTA0=['Cargador y móvil','Billete y DNI','Llaves y ventanas','Agua y algo de comer'];
+const MV_DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function mvDia(k,que){
+  /* ¿es ese día de viaje (y, si se pide, está esa cosa en pausa)? */
+  const v=store.modoViaje;if(!v||!v.ida||!v.vuelta||k<v.ida||k>v.vuelta)return false;
+  return !que||!!(v.pausa&&v.pausa[que]);}
+function mvN(a,b){const x=parseDate(a),y=parseDate(b);if(!x||!y)return 0;
+  return Math.round((Date.UTC(y.getFullYear(),y.getMonth(),y.getDate())-Date.UTC(x.getFullYear(),x.getMonth(),x.getDate()))/864e5);}
+function mvSemanaPausada(lun,que){for(let i=0;i<7;i++)if(mvDia(iso(addDays(lun,i)),que))return true;return false;}
+function mvVigente(){
+  /* el viaje que se enseña: el de ahora, el que viene o el que acaba de acabar y aún no se ha cerrado */
+  const v=store.modoViaje;if(!v||!v.ida||!v.vuelta)return null;
+  return (v.vuelta>=iso(new Date())||!v.visto)?v:null;}
+function mvBilletes(){const v=store.modoViaje;if(!v)return [];
+  const ps=dineroS().pagos;
+  return (v.billetes||[]).filter(function(b){return ps.some(function(p){return p.id===b.pagoId;});});}
+function mvTotalBilletes(){return mvBilletes().reduce(function(a,b){return a+(+b.precio||0);},0);}
+function mvCuenta(v){const t=mvN(v.ida,v.vuelta)+1;return {t:t,n:Math.max(1,Math.min(t,mvN(v.ida,iso(new Date()))+1))};}
+function mvVuelves(v){
+  const h=iso(new Date()),d=mvN(h,v.vuelta);
+  return d<=0?'vuelves hoy':d===1?'vuelves mañana':'vuelves el '+MV_DIAS[parseDate(v.vuelta).getDay()];}
+function mvRachasHTML(v){
+  /* las rachas que están en pausa, con el número con el que se quedan */
+  const f=[];
+  if(v.pausa.habitos){const hs=habEnMarcha();if(hs.length){const m=Math.max.apply(null,hs.map(rachaHabito));f.push(['Hábitos · '+m+' día'+(m===1?'':'s')]);}}
+  if(v.pausa.entreno){const g=gymSemanasSeguidas();f.push([g>0?'Entreno · '+g+' semana'+(g===1?'':'s'):'Entreno']);}
+  if(v.pausa.pantallas)f.push(['Sin pantallas']);
+  if(!f.length)return '';
+  return '<div class="card mv"><h2>Tus rachas, a salvo</h2>'+f.map(function(x){
+    return '<div class="mvr"><span>'+esc(x[0])+'</span><span class="mvp">en pausa ⏸</span></div>';}).join('')+
+    '<p>Siguen donde estaban cuando vuelvas.</p></div>';}
+function mvSalidaHTML(v,hoy){
+  /* la hora la pones tú; la lista corta es tuya */
+  const s=v.salida;if(!s||s.fecha!==hoy||!s.hora)return '';
+  const now=new Date(),m=mins(s.hora),falta=m==null?null:m-(now.getHours()*60+now.getMinutes());
+  const lista=v.lista||[];
+  return '<div class="card mv"><h2>🚪 Sales de casa a las '+esc(hCortaHM(s.hora))+'</h2>'+
+    (falta!=null&&falta>0?'<p><b>Faltan '+(falta>=60?Math.floor(falta/60)+' h ':'')+(falta%60)+' min</b></p>':'')+
+    (lista.length?lista.map(function(x){
+      return '<label class="mvc"><input type="checkbox" data-a="mv-lista-ok" data-id="'+esc(x.id)+'"'+(x.ok?' checked':'')+'><span>'+esc(x.t)+'</span></label>';}).join(''):'')+
+    '</div>';}
+function mvResumenHTML(v){
+  /* al volver, sin puntuar */
+  if(!v||v.vuelta>=iso(new Date())||v.visto)return '';
+  const t=mvN(v.ida,v.vuelta)+1,r=[];
+  if(v.pausa.habitos&&habEnMarcha().length)r.push('hábitos '+Math.max.apply(null,habEnMarcha().map(rachaHabito)));
+  if(v.pausa.entreno)r.push('entreno '+gymSemanasSeguidas()+' semanas');
+  const tot=mvTotalBilletes();
+  return '<div class="card mv"><h2>🧳 Tu viaje'+(v.destino?' · '+esc(v.destino):'')+'</h2>'+
+    '<p>'+t+' día'+(t===1?'':'s')+'.'+(r.length?' Las rachas siguen: '+esc(r.join(', '))+'.':'')+'</p>'+
+    (tot>0?'<p>Gastaste '+esc(eur(tot))+' en billetes.</p>':'')+
+    '<p>Bienvenido de vuelta.</p>'+
+    '<button class="btn" data-a="mv-visto">Vale</button></div>';}
+function mvBandaHTML(){
+  /* en el día completo, mientras dura el viaje, un camino de vuelta a la vista corta */
+  if(!(ui.mvCompleto&&mvDia(iso(new Date()))))return '';
+  return '<div class="card mv"><p>De viaje. Estás viendo el día completo.</p><button class="btn" data-a="mv-completo">Volver al modo viaje</button></div>';}
+function renderHoyViaje(hoy){
+  const v=store.modoViaje,c=mvCuenta(v),cama=(function(){try{const p=suenoCamaHoy(nocheDeAhora());return p&&p.cama?hCortaHM(p.cama):'';}catch(e){return '';}})();
+  let pasos='';for(let i=1;i<=Math.min(c.t,31);i++)pasos+='<i'+(i<=c.n?' class="h"':'')+'></i>';
+  $('#main').innerHTML='<div class="grid">'+
+    '<div class="card mv mvcab"><h2>De viaje · día '+c.n+' de '+c.t+' · '+esc(mvVuelves(v))+'</h2>'+
+      (v.destino?'<p>'+esc(v.destino)+'</p>':'')+'<div class="mvpasos" role="img" aria-label="Día '+c.n+' de '+c.t+'">'+pasos+'</div></div>'+
+    '<div class="card mv"><h2>Lo esencial de hoy</h2>'+
+      '<div class="mvr"><span>Comida</span><span>Algo con proteína y verdura</span></div>'+
+      '<div class="mvr"><span>Sueño</span><span>'+(cama?'Cama sobre las '+esc(cama):'Duerme lo que puedas')+'</span></div>'+
+      '<button class="btn" data-a="tab" data-t="food">🍽 Apuntar una comida</button></div>'+
+    mvSalidaHTML(v,hoy)+mvRachasHTML(v)+
+    '<div class="card mv"><div class="row" style="gap:8px;flex-wrap:wrap">'+
+      '<button class="btn" data-a="aju-vista" data-v="modoviaje">Ajustes del viaje</button>'+
+      '<button class="btn" data-a="mv-completo">Ver mi día completo</button>'+
+      '<button class="btn" data-a="mv-fin">Terminar el viaje antes</button></div></div>'+
+  '</div>';}
+function renderModoViaje(){
+  const v=mvVigente(),hoy=iso(new Date()),P=(v&&v.pausa)||{};
+  const d1=v?v.ida:hoy,d2=v?v.vuelta:iso(addDays(new Date(),2));
+  const ck=MV_PAUSAS.map(function(p){return '<label class="mvc"><input type="checkbox" id="mvP_'+p[0]+'"'+((!v||P[p[0]])?' checked':'')+'><span>'+esc(p[1])+'</span></label>';}).join('');
+  let h='<div class="card mv"><h2>Tu viaje</h2>'+
+    '<label class="fld">Destino<input type="text" id="mvDestino" maxlength="60" value="'+esc(v?v.destino:'')+'" placeholder="Valencia, boda de Marta"></label>'+
+    '<div class="row" style="gap:8px"><label class="fld">Ida<input type="date" id="mvIda" value="'+esc(d1)+'"></label>'+
+    '<label class="fld">Vuelta<input type="date" id="mvVuelta" value="'+esc(d2)+'"></label></div>'+
+    '<p>'+(v?mvN(v.ida,v.vuelta)+1+' días. Se activa solo la mañana de la ida y se apaga al volver.':'Se activa solo la mañana de la ida y se apaga al volver.')+'</p></div>'+
+    '<div class="card mv"><h2>Qué se pone en pausa</h2>'+ck+'<p>Las rachas no se rompen: se congelan y siguen al volver.</p></div>'+
+    '<div class="card mv"><button class="btn p" data-a="mv-activa">'+(v?'Guardar los cambios':'Activar el modo viaje')+'</button>'+
+    (v&&v.vuelta>=hoy?'<button class="btn" data-a="mv-fin" style="margin-top:8px">'+(v.ida>hoy?'Quitar el viaje':'Terminar el viaje antes')+'</button>':'')+
+    '<p>Todo se queda en tu móvil. No busca trenes ni vuelos ni usa internet.</p></div>';
+  if(v){
+    const s=v.salida||{};
+    h+='<div class="card mv"><h2>La salida</h2><div class="row" style="gap:8px">'+
+      '<label class="fld">Día<input type="date" data-a="mv-salida-fecha" value="'+esc(s.fecha||v.ida)+'"></label>'+
+      '<label class="fld">Sales de casa a las<input type="time" data-a="mv-salida-hora" value="'+esc(s.hora||'')+'"></label></div>'+
+      '<p>La hora la pones tú; la app no consulta horarios. '+(avisosListos()?'Te aviso 1 hora antes y a los 15 minutos.':'Para el aviso, activa los avisos en Entreno.')+'</p>'+
+      '<h2 style="margin-top:12px">Antes de salir</h2>'+
+      (v.lista||[]).map(function(x){return '<div class="mvit"><label class="mvc"><input type="checkbox" data-a="mv-lista-ok" data-id="'+esc(x.id)+'"'+(x.ok?' checked':'')+'><span>'+esc(x.t)+'</span></label>'+
+        '<button class="btn mvx" data-a="mv-lista-del" data-id="'+esc(x.id)+'" aria-label="Quitar '+esc(x.t)+'">✕</button></div>';}).join('')+
+      '<div class="row" style="gap:8px;margin-top:8px"><input type="text" id="mvNuevo" maxlength="50" placeholder="Añadir otra cosa" aria-label="Añadir a la lista">'+
+      '<button class="btn p" data-a="mv-lista-add" style="flex:none">Añadir</button></div></div>';
+    const med=ui.mvMedio||'Tren';
+    h+='<div class="card mv"><h2>El billete</h2>'+
+      '<div class="mvmed" id="mvMedios">'+MV_MEDIOS.map(function(m){return '<button class="btn" data-a="mv-medio" data-v="'+m+'" aria-pressed="'+(m===med)+'">'+m+'</button>';}).join('')+'</div>'+
+      '<div class="row" style="gap:8px"><label class="fld">Precio (€)<input type="text" inputmode="decimal" id="mvPrecio" placeholder="64"></label>'+
+      '<label class="fld">Fecha<input type="date" id="mvFecha" value="'+esc(hoy)+'"></label></div>'+
+      '<button class="btn p" data-a="mv-billete">Apuntar el billete</button>'+
+      mvBilletes().map(function(b){return '<div class="mvit"><span class="mvbil">'+esc(b.medio)+' · '+esc(eur(b.precio))+' · '+esc(fechaCorta(b.fecha))+'</span>'+
+        '<button class="btn mvx" data-a="mv-billete-del" data-id="'+esc(b.id)+'" aria-label="Quitar el billete de '+esc(b.medio)+'">✕</button></div>';}).join('')+
+      '<p>Entra en Dinero como gasto de viajes, una sola vez.</p></div>';
+    h+=mvResumenHTML(v);}
+  cfgPantalla('🧳 Modo viaje','<div class="mv">'+h+'</div>');}
+function mvActiva(){
+  const g=function(id){const e=document.getElementById(id);return e?e.value:'';};
+  const ida=g('mvIda'),vuelta=g('mvVuelta');
+  if(!parseDate(ida)||!parseDate(vuelta)||!/^\d{4}-\d{2}-\d{2}$/.test(ida+'')||!/^\d{4}-\d{2}-\d{2}$/.test(vuelta+''))return 'pon la fecha de ida y la de vuelta';
+  if(vuelta<ida)return 'la vuelta no puede ser antes de la ida';
+  const pausa={};MV_PAUSAS.forEach(function(p){const e=document.getElementById('mvP_'+p[0]);pausa[p[0]]=!!(e&&e.checked);});
+  const o=store.modoViaje||{};
+  store.modoViaje={destino:g('mvDestino').trim().slice(0,60),ida:ida,vuelta:vuelta,pausa:pausa,
+    salida:o.salida||{fecha:ida,hora:''},lista:Array.isArray(o.lista)?o.lista:MV_LISTA0.map(function(t,i){return {id:'vl'+i,t:t,ok:false};}),
+    billetes:o.billetes||[],avisados:o.avisados||[],visto:false};
+  save();programarAvisoViaje();return 'modo viaje activado: '+(mvN(ida,vuelta)+1)+' días';}
+function mvFin(){
+  const v=store.modoViaje;if(!v)return '';const hoy=iso(new Date());
+  if(v.ida>=hoy){store.modoViaje=null;save();return 'viaje quitado';}
+  v.vuelta=iso(addDays(new Date(),-1));v.visto=false;save();return 'viaje terminado: todo vuelve a pedirse desde hoy';}
+function mvBillete(){
+  const v=store.modoViaje;if(!v)return '';
+  const g=function(id){const e=document.getElementById(id);return e?e.value:'';};
+  const precio=numEuro(g('mvPrecio')),fecha=g('mvFecha')||iso(new Date()),medio=ui.mvMedio||'Tren';
+  if(!precio)return 'ponle un precio al billete';
+  if(mvBilletes().some(function(b){return b.medio===medio&&+b.precio===precio&&b.fecha===fecha;}))return 'ese billete ya está apuntado';
+  addPago({fecha:fecha,nombre:medio+(v.destino?' · '+v.destino:''),importe:precio,cat:'viajes'});
+  const p=dineroS().pagos[dineroS().pagos.length-1];
+  (v.billetes||(v.billetes=[])).push({id:uid('vb'),medio:medio,precio:precio,fecha:fecha,pagoId:p.id});save();
+  return 'billete apuntado en Dinero (viajes): '+eur(precio);}
+let _mvT=[];
+function programarAvisoViaje(){
+  /* a 1 hora y a 15 minutos de la hora de salir, con el mismo sistema de avisos (sin permiso, nada) */
+  _mvT.forEach(clearTimeout);_mvT=[];
+  const v=store.modoViaje,s=v&&v.salida;if(!s||!s.fecha||!/^\d{2}:\d{2}$/.test(s.hora||'')||!avisosListos())return;
+  const f=parseDate(s.fecha);if(!f)return;const m=mins(s.hora),at=new Date(f.getFullYear(),f.getMonth(),f.getDate(),0,m,0).getTime();
+  [60,15].forEach(function(antes){
+    const key=s.fecha+'|'+s.hora+'|'+antes,ms=at-antes*60000-Date.now();
+    if((v.avisados||[]).indexOf(key)>=0||ms<-5*60000||ms>18*3600000)return;
+    _mvT.push(setTimeout(function(){
+      swMensaje({tipo:'aviso',tag:'viaje-'+antes,titulo:'🧳 Hora de salir',cuerpo:antes===60?'Sales de casa dentro de 1 hora. Repasa tu lista.':'Sales de casa en 15 minutos.'});
+      v.avisados=(v.avisados||[]).concat(key);save();},Math.max(0,ms)));});}
 /* ===================== el informe de la semana ===================== */
 function informeDatos(lunKey){
   const lun=parseDate(lunKey),ks=[];for(let i=0;i<7;i++)ks.push(iso(addDays(lun,i)));
@@ -7658,6 +7813,7 @@ function renderHoy(){
   if(ui.hoyVista==='alarmas'||ui.hoyVista==='semana')return renderNochePant();
   const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
   const esHoy=esHoyDeVerdad(hoy);
+  if(esHoy&&mvDia(hoy)&&!ui.mvCompleto)return renderHoyViaje(hoy);   /* G12: de viaje, lo esencial */
   const ft=foodTotals(hoy),pl=planTotalsOf(hoy);
   const fecha=DAYN[(dref.getDay()+6)%7]+' '+dref.getDate()+' de '+MONTH_FULL[dref.getMonth()];
   const dist=Math.round((Date.UTC(dref.getFullYear(),dref.getMonth(),dref.getDate())
@@ -7686,7 +7842,7 @@ function renderHoy(){
         esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">🌿'+(lloretDe(hoy)?' ✓':'')+'</button>'+
       '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
-    modoAvisoHTML()+
+    modoAvisoHTML()+mvBandaHTML()+
     '<div class="row" style="gap:8px;align-items:center"><div class="hoyest" style="color:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+
     (guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div><span class="sp"></span>'+entrenoContadorHTML(hoy)+'</div>'+
     /* EL DÍA COMO CARRIL, en el sitio donde estaban la barra horizontal y la lista de horas. Es
@@ -7712,7 +7868,7 @@ function renderHoy(){
     /* la cuenta atrás y «Próximos» eran dos listas de lo mismo: ahora es la carretera, que además enseña la distancia */
     /* con el conductor, el sueño y el «¿cómo amaneces?» van en la radio y «Para hoy» en el quiosco de la ciudad y
        el poste de los hábitos: debajo del dibujo solo queda lo que no está dentro de la cabina */
-    (esHoy?coachHTML(hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':paraHoyHTML(hoy))+loQueVieneHTML():
+    (esHoy?mvResumenHTML(store.modoViaje)+mvSalidaHTML(store.modoViaje||{},hoy)+coachHTML(hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':paraHoyHTML(hoy))+loQueVieneHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
   hoyBusMonta();carrMonta('hoy');
@@ -16057,6 +16213,7 @@ function rachaConstancia(meta){
   let n=0;
   for(let i=1;i<=52;i++){
     const lun=semanasAtras(i);
+    if(mvSemanaPausada(parseDate(lun),'entreno'))continue;   /* G12 */
     if(diasEntrenadosSemana(lun).length>=meta)n++;else break;}
   return n;}
 function mejorCarrera(desde){
@@ -16681,6 +16838,7 @@ function gymSemanasSeguidas(){
   const lun=mondayOf(new Date());
   for(let w=0;w<104;w++){const l=addDays(lun,-7*w);let d=0;
     for(let i=0;i<7;i++)if(gymHechoEn(iso(addDays(l,i))))d++;
+    if(w>0&&mvSemanaPausada(l,'entreno'))continue;   /* G12: semana de viaje en pausa: ni suma ni rompe */
     if(d>=min)n++;else if(w>0)break;}
   return n;}
 function gymSemanaLinkHTML(sel){
@@ -18231,6 +18389,7 @@ function habDesde(h){
   Object.keys(reg).forEach(function(k){if(reg[k]&&reg[k][h.id]&&(!d||k<d))d=k;});
   return (_hdM[h.id]=d);}
 function habitoToca(hab,key){
+  if(mvDia(key,'habitos'))return false;   /* G12: de viaje con hábitos en pausa, el día ni toca ni falla */
   /* la fase de ESE día: pasar a «ya te sale solo» ya no borra de la semana y de los % los días de antes */
   if(key<habDesde(hab))return false;   /* antes de existir no «tocaba»: no baja tu % ni el «antes» */
   if(habFaseEn(hab,key)!=='marcha')return false;
@@ -20822,7 +20981,7 @@ function cfgPantalla(titulo,cuerpo,extra){subPantalla('aju-vista','Ajustes',titu
    lo que te has gastado de verdad, y lo que llevas. No estima precios ni se inventa nada: los
    números salen de lo que tú apuntas. */
 const DIN_CAT=[['casa','🏠','casa y facturas'],['compra','🛒','compra'],['transporte','🚌','transporte'],
-  ['estudio','📚','estudio'],['salud','💊','salud'],['ocio','🍻','ocio'],['otros','💳','otros']];
+  ['estudio','📚','estudio'],['salud','💊','salud'],['ocio','🍻','ocio'],['viajes','🧳','viajes'],['otros','💳','otros']];
 function dinCatIco(k){const c=DIN_CAT.filter(function(x){return x[0]===k;})[0];return c?c[1]:'💳';}
 function dinCatTxt(k){const c=DIN_CAT.filter(function(x){return x[0]===k;})[0];return c?c[2]:'otros';}
 function leeImporte(v){
@@ -23552,6 +23711,7 @@ function renderAjustes(){
   const tm=store.tema||{};
   const v=ui.ajuVista||'';
   if(v==='rutina')return renderRutina();
+  if(v==='modoviaje')return renderModoViaje();
   if(v==='calendario'){
     /* «CALENDARIO DEL MÓVIL» OCUPABA 2,7 PANTALLAS (2 519 px, 18 campos) y se leía entero cada vez:
        el paso a paso de Google, cuatro ficheros con once colores cada uno, la suscripción y el
@@ -23807,6 +23967,7 @@ function renderAjustes(){
       '<button class="ali" data-a="perf-celiaco" role="switch" aria-checked="'+esCeliaco()+'"><span class="e">🌾</span><b>Sin gluten</b>'+
         '<span class="asw'+(esCeliaco()?' on':'')+'"></span></button>',
       fila('cfg-vista','viaje','🚌','Ir y volver',vj.on?vj.min+' min':'apagado'),
+      fila('aju-vista','modoviaje','🧳','Modo viaje',mvVigente()?(mvDia(iso(new Date()))?'de viaje':'preparado'):'apagado'),
       fila('aju-vista','sol','📍','Dónde estoy',sitioActual().nombre)])+
     grupo('LA APP',[
       fila('aju-vista','aspecto','🎨','Aspecto',(store.tema&&store.tema.brand?'a tu color':'oscuro')+' · la franja'),
@@ -24688,6 +24849,17 @@ function act(a,el){
       const min=($('#estMin')||{}).value||'',t=($('#estTema')||{}).value||'';
       flash(estAddSesion(min,t?[t]:[]));render();break;}
     case 'est-del-sesion':{flash(estDelSesion(el.dataset.id));render();break;}
+    case 'mv-activa':{const r=mvActiva();flash(r);if(/^modo viaje/.test(r))render();break;}
+    case 'mv-fin':{flash(mvFin());ui.mvCompleto=false;render();break;}
+    case 'mv-visto':{if(store.modoViaje){store.modoViaje.visto=true;save();}render();break;}
+    case 'mv-completo':{ui.mvCompleto=!ui.mvCompleto;render();window.scrollTo(0,0);break;}
+    case 'mv-medio':{ui.mvMedio=el.dataset.v;document.querySelectorAll('#mvMedios [data-a="mv-medio"]').forEach(function(b){b.setAttribute('aria-pressed',b===el?'true':'false');});break;}
+    case 'mv-billete':{const r=mvBillete();flash(r);if(/^billete apuntado/.test(r))render();break;}
+    case 'mv-billete-del':{const v=store.modoViaje,b=v&&(v.billetes||[]).filter(function(x){return x.id===id;})[0];
+      if(b){delPago(b.pagoId);v.billetes=v.billetes.filter(function(x){return x.id!==id;});save();flash('billete quitado, y su gasto de Dinero');}render();break;}
+    case 'mv-lista-add':{const e=document.getElementById('mvNuevo'),t=e?e.value.trim().slice(0,50):'';
+      if(store.modoViaje&&t){(store.modoViaje.lista||(store.modoViaje.lista=[])).push({id:uid('vl'),t:t,ok:false});save();}render();break;}
+    case 'mv-lista-del':{const v=store.modoViaje;if(v){v.lista=(v.lista||[]).filter(function(x){return x.id!==id;});save();}render();break;}
     case 'aju-vista':{ui.tab='ajustes';ui.ajuVista=el.dataset.v||'';ui.datosVista='';render();window.scrollTo(0,0);break;}
     case 'ir-perfil':{ui.tab='food';ui.foodVista='perfil';ui.ajuVista='';render();window.scrollTo(0,0);break;}
     case 'ir-sueno':irACard('cfg','sueno');break;
@@ -27888,6 +28060,11 @@ document.addEventListener('change',e=>{
   switch(a){
     case 'fin-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';finLeer(fs);}break;}
     case 'dinero-f':render();break;
+    case 'mv-salida-fecha':case 'mv-salida-hora':{const v=store.modoViaje;if(!v)break;if(!v.salida)v.salida={fecha:v.ida,hora:''};
+      if(a==='mv-salida-hora')v.salida.hora=/^\d{2}:\d{2}$/.test(el.value||'')?el.value:'';
+      else if(/^\d{4}-\d{2}-\d{2}$/.test(el.value||''))v.salida.fecha=el.value;
+      v.avisados=[];save();programarAvisoViaje();render();break;}
+    case 'mv-lista-ok':{const v=store.modoViaje,x=v&&(v.lista||[]).filter(function(q){return q.id===el.dataset.id;})[0];if(x){x.ok=!!el.checked;save();}render();break;}
     case 'tg-campo':{if(!ui.tmGrande)break;tgLee();const p=document.getElementById('tgPrev');if(p)p.textContent=tgPrevTexto();break;}
     case 'd5-precio':case 'd5-mes':case 'd5-tipo':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
       if(a==='d5-precio'){const v=leeImporte(el.value);if(!isFinite(v)||!(v>0)){flash('escribe un precio válido');render();break;}c.precio=v;}
@@ -28495,11 +28672,11 @@ impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
 copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
-programarAvisoHoy();programarAvisoCama();programarAvisoPant();snProgramaAvisos();
+programarAvisoHoy();programarAvisoCama();programarAvisoPant();programarAvisoViaje();snProgramaAvisos();
 /* al volver a la app (otra noche, otra hora) se recoloca el aviso de cama */
 document.addEventListener('visibilitychange',function(){if(document.hidden){ui.cnSeFue=Date.now();return;}
   if(ui.cnSeFue&&Date.now()-ui.cnSeFue>120000&&ui.cnAbierto){ui.cnAbierto=false;if(ui.tab==='consumo')render();}   /* 2 min en segundo plano: la cortina se cierra */
-  try{programarAvisoCama();programarAvisoPant();}catch(e){}});    /* «hoy toca …» antes de entrenar, si lo tienes activado */
+  try{programarAvisoCama();programarAvisoPant();programarAvisoViaje();}catch(e){}});    /* «hoy toca …» antes de entrenar, si lo tienes activado */
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
