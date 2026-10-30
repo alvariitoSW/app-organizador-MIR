@@ -7,7 +7,7 @@ tú puedes añadir o tachar a mano.
 - ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
 - ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
 - [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
-- [aparc-comer-eje-frase] La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
+- [aparc-comer-eje-frase] → entra en G2 (Consejo 30/10: en Hoy, arriba) · La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
 
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
@@ -151,7 +151,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - ~~[sup-2026-10-29-la-noche]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 
 - ~~[sup-2026-10-30-r3]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
-- [sup-2026-10-30-g1] G1: «alimentos de verdad» por grupo y por nombre (fuera chocolate, cacao, galletas, bollería, tarta, helado, cremas de untar); el botón de sueño solo sale el día de hoy; en Conductor no se añade · DECISIONS «Gran Ley · G1» · 2026-10-30
+- ~~[sup-2026-10-30-g1]~~ VALE (Consejo por delegación, 2026-10-30, acta `consejo/2026-10-30-g2.md`; el usuario: «que decida el congreso») · G1: «alimentos de verdad» por grupo y por nombre (fuera chocolate, cacao, galletas, bollería, tarta, helado, cremas de untar); el botón de sueño solo sale el día de hoy; en Conductor no se añade · DECISIONS «Gran Ley · G1» · 2026-10-30
 - ~~[sup-2026-10-30-r4]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 
 ## Cerrados
