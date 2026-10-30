@@ -22,7 +22,7 @@ traspaso explica por qué.
 | Tipo | Modelo | Última medida | Presupuesto siguiente | De qué tarea |
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
-| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) | ~0,8 M uno pequeño · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
+| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
 | maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~1,5 M sin él | reforma-r1-tu-mes (2026-10-29) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
@@ -56,6 +56,7 @@ traspaso explica por qué.
 | 2026-10-29 | consejo-reforma | estudio | opus-5-5 + sonnet-5-5 | 4 | 45 | **1,0 M** | sesión principal (34 %) | — |
 | 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
 | 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
+| 2026-10-30 | reforma-r4-fintonic | arreglo | opus-5-5 + sonnet-5-5 | 4 | 87 | **1,2 M** | sesión principal (51 %) | ficha + constructor sonnet + captura; la captura cazó «Todo cuadra» · ahorro: decir al verificador el texto exacto de la prueba |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
