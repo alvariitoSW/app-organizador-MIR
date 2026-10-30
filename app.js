@@ -4284,10 +4284,36 @@ function hacerCompra(soloMarcados){
   if(!n)return 'no había nada que meter en casa';
   /* lo comprado deja de estar marcado: la lista se queda limpia para la próxima */
   d.grupos.forEach(function(g){g[2].forEach(function(x){ui.marks.delete(x.id);});});
-  const f=food();f.ultimaCompra=iso(new Date());delete f.compraBaseOn;
+  const f=food();f.ultimaCompra=iso(new Date());delete f.compraBaseOn;delete f.compraRec;
   save();render();
   return n+' cosa'+(n===1?'':'s')+' a la despensa'+(soloMarcados?(' (las '+nm+' que marcaste)'):'')+
     '. La lista queda limpia.';}
+function recetaACompra(d,tach){
+  /* «Añadir a la compra» desde la receta: la receta entra en la compra de la semana (por pasillos,
+     sumada a lo que ya pide y sin gluten), con las líneas que tachaste fuera. No toca tus listas. */
+  tach=tach||{};
+  const sin=[];let n=0;
+  recIngr(d).forEach(function(x,j){if(tach[j])sin.push(j);else n++;});
+  if(!n)return 'lo tienes todo: no hay nada que comprar';
+  const f=food();if(!Array.isArray(f.compraRec))f.compraRec=[];
+  const antes=f.compraRec.length;
+  f.compraRec=f.compraRec.filter(function(e){return e.id!==d.id;});
+  const estaba=f.compraRec.length<antes;
+  f.compraRec.push({id:d.id,rac:+d.portions||1,sin:sin});
+  save();render();
+  return estaba?'ya estaba en la compra: actualizada'
+    :n+' ingrediente'+(n===1?'':'s')+' a la compra de la semana, por pasillos';}
+function recetasCompra(){
+  /* las recetas mandadas a la compra, listas para ingredientsFor: sin las líneas tachadas
+     (si tachaste algo de un plato con líneas escritas, se suman esas líneas y no sus alimentos) */
+  const out=[];
+  (food().compraRec||[]).forEach(function(e){
+    const d=dishById(e.id);if(!d)return;
+    const sin=e.sin||[],ok=function(_,j){return sin.indexOf(j)<0;};
+    const sombra=Object.assign({},d,(d.ingredients||[]).length
+      ?{ingredients:d.ingredients.filter(ok),alimsV:sin.length?false:d.alimsV}:{alims:(d.alims||[]).filter(ok)});
+    out.push({dish:sombra,cooked:e.rac});});
+  return out;}
 function listaAMano(texto){
   /* una lista escrita o pegada: cada línea, una cosa. Va a una lista tuya, no al menú, porque
      esto es «lo que quiero comprar» y no «lo que toca cocinar». */
@@ -20160,14 +20186,14 @@ function compraDatos0(){
   const days=weekDays(), pb=eje?{}:planBatches(days), need=eje?necesidadProximos(nDias):necesidadSemana(days), orig=eje?origenesProximos(nDias):{};
   const agg={},order=[];let recetas=0,sueltas=0;
   /* un solo embudo para los dos orígenes: lo que se cocina en tanda y lo que no */
-  const mete=function(ings){
+  const mete=function(ings,deReceta){
     ings.forEach(function(i){
       /* celíaco: lo que lleva gluten entra ya en su versión sin gluten */
       if(esCeliaco()&&glutenDe(i.item)==='si'){const sg=sinGlutenTexto(i.item),b=alimPorNombre(sg);i=Object.assign({},i,{item:sg.charAt(0).toUpperCase()+sg.slice(1),aid:b?b.id:i.aid});}
       const key=i.aid?('alim:'+i.aid):(i.item.toLowerCase()+'|'+(i.unit||''));
       const n=i.aid?(+i.num||0):parseFloat(String(i.q).replace(',','.'));
-      if(!agg[key]){agg[key]={item:i.item,unit:i.unit,num:(isNaN(n)?null:n),hasNum:!isNaN(n),notes:new Set(),aid:i.aid||'',from:new Set()};order.push(key);}
-      else{const g=agg[key];if(!isNaN(n)&&g.hasNum)g.num+=n;else if(i.also)g.notes.add(i.also);}
+      if(!agg[key]){agg[key]={item:i.item,unit:i.unit,num:(isNaN(n)?null:n),hasNum:!isNaN(n),notes:new Set(),aid:i.aid||'',from:new Set(),rec:!!deReceta};order.push(key);}
+      else{const g=agg[key];if(deReceta)g.rec=true;if(!isNaN(n)&&g.hasNum)g.num+=n;else if(i.also)g.notes.add(i.also);}
       (i.from||[]).forEach(function(f){agg[key].from.add(f);});
       if(i.also)agg[key].notes.add(i.also);});};
   /* 1 · lo que se cocina en tandas: la receta entera, que no existe media tanda */
@@ -20182,6 +20208,8 @@ function compraDatos0(){
     if((d.ingredients||[]).length)sueltos.push({dish:d,cooked:need[id]});
     else sinReceta.push({d:d,q:need[id]});});
   if(sueltos.length){sueltas=sueltos.length;mete(ingredientsFor(sueltos,true));}
+  /* 3 · las recetas que mandaste a la compra desde su página: por pasillos y sumadas a la semana */
+  const rc=recetasCompra();if(rc.length)mete(ingredientsFor(rc,true),true);
   const fresco=order.map(function(k){const m=agg[k];
     /* lo que se pesa se redondea a algo que se pueda comprar; lo que se CUENTA —aguacates, huevos,
        limones— sube a pieza entera: «0,5 aguacate» no existe en la frutería */
@@ -20200,8 +20228,8 @@ function compraDatos0(){
       :(piezas.length>2?(piezas.length+' recetas'):piezas.join(' + '));
     if(m.aid){const a=alimById(m.aid),g=roundNice(m.num),env=envaseDe(a,g);
       return {sort:m.item,texto:pesoTxt(g)+' '+m.item,de:(env?env+(de?' · ':''):'')+de,aid:m.aid,
-        basico:esBasicoCasa(a),origen:origenDe(m.from,orig)};}
-    return {sort:m.item,texto:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),de:de,basico:esBasicoCasa(m.item),origen:origenDe(m.from,orig)};});
+        basico:esBasicoCasa(a),origen:origenDe(m.from,orig),rec:!!m.rec};}
+    return {sort:m.item,texto:(m.hasNum?q+' ':'')+m.item+(m.unit&&!m.hasNum?' '+m.unit:''),de:de,basico:esBasicoCasa(m.item),origen:origenDe(m.from,orig),rec:!!m.rec};});
   fresco.sort(function(a,b){return a.sort.localeCompare(b.sort,'es');});
   const key=(store.rotation.mode==='date'?iso(weekDate):'tpl'+store.rotation.pattern);
   /* la lista de origen solo se nombra si hay más de una «de rutina»: con una sola era repetir el
@@ -20220,7 +20248,7 @@ function compraDatos0(){
     return {id:'base#'+x.d.id,texto:fmt(x.q)+'× '+(x.d.icon?x.d.icon+' ':'')+x.d.name,
       de:'del menú de la semana'};});
   const ejemplo=menuDeEjemplo();
-  if(ejemplo){fresco.length=0;talCual.length=0;}
+  if(ejemplo){const quedan=fresco.filter(function(r){return r.rec;});fresco.length=0;Array.prototype.push.apply(fresco,quedan);talCual.length=0;}
   const grupos=[
     ['fresco','Fresco de esta semana',fresco.filter(function(r){return !r.basico;}).map(function(r){return {id:key+'#'+r.sort,texto:r.texto,de:r.de,aid:r.aid,origen:r.origen};})],
     ['rutina','De rutina',rutina],
@@ -25797,7 +25825,7 @@ function act(a,el){
     case 'rec-abre':{if(!dishById(el.dataset.id))break;ui.cjeHoja={v:'receta',id:el.dataset.id,tach:{}};render();break;}
     case 'rec-tacha':{const h=ui.cjeHoja;if(!h||h.v!=='receta')break;h.tach=h.tach||{};const j=+el.dataset.j;h.tach[j]=!h.tach[j];render();break;}
     case 'rec-compra':{const h=ui.cjeHoja,d=h&&dishById(h.id);if(!d)break;
-      flash(listaAMano(recIngr(d).filter(function(x,j){return !(h.tach||{})[j];}).join('\n')));break;}
+      flash(recetaACompra(d,h.tach||{}));break;}
     case 'rec-comparte':{const h=ui.cjeHoja,d=h&&dishById(h.id);if(!d)break;const tx=recTexto(d);
       if(navigator.share){navigator.share({title:d.name,text:tx}).catch(function(){});}
       else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(tx).then(function(){flash('Receta copiada: pégala donde quieras');}).catch(function(){flash('No he podido copiarla');});}
@@ -28672,7 +28700,7 @@ window.PG={snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHo
   listasS,listaById,addLista,delLista,addItemLista,delItemLista,itemsDeRutina,platosConLista,
   seccionDeCompra,porSeccion,COMPRA_SECS,pasillosS,pasilloTuyo,setPasillo,secsOrdenadas,moverSeccion,
   despensaS,despensaAdd,despensaGasta,despensaQuitar,despClave,neveraSync,
-  hacerCompra,listaAMano,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
+  hacerCompra,listaAMano,recetaACompra,recetasCompra,diasDesdeCompra,salidaDe,SALIDAS,compraDatos,tengoEnCasa,
   compraCada,tocaComprar,compraCuenta,pasoDeGasto,avenaSegura,seccionDeCompra2:seccionDeCompra,
   bloquesDelDia,rangoCarril,carrilHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,ICS_COLORES,icsGrupoDe,icsColorGrupo,setIcsColor,icsCuentaGrupo,

@@ -150,7 +150,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
-### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · siguiente: **CH2**
+### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · siguiente: **CH3**
 
 Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
 la app que sigue a su cocina («la continuidad»: hoy micro + vitro pequeña, sin horno ni freidora de aire). Maqueta
@@ -159,7 +159,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 | Clave | Qué | Tipo | Quién | Presupuesto |
 |---|---|---|---|---|
 | ~~CH1~~ ✅ 30/10 (rama, 1,3 M; ficha `fichas/chef.md`) | Ficha, esquema del JSON (equipo, cocina, dificultad, días, por qué, error, `tmp`), `tests/recetario.test.js`, alimentos que faltan, catálogo corregido y ampliado | datos | sonnet con ficha | ~0,7 M |
-| CH2 | «A la compra» desde la receta → compra de la semana (pasillos, sin gluten, «ya lo tengo») | construir | sonnet con ficha | ~0,9 M |
+| CH2 ✅ | «A la compra» desde la receta → compra de la semana (pasillos, sin gluten, «ya lo tengo») | construir | sonnet con ficha | ~0,9 M |
 | CH3 | Maqueta corta: modo cocina, «Tu cocina», filtro Cocina, «Estoy reventado», aviso «Cambiado» de TikTok | maqueta | opus + sonnet | ~0,6 M |
 | CH4 | Primeros ~60 platos enteros, para micro + vitro | datos | sonnet (+ haiku en arreglos) | ~0,6 M |
 | CH5 | Recetario navegable (JSON de carga perezosa en `sw.js`, filtros) + «Tu cocina» ampliando `cocinaPref` | construir | sonnet con ficha | ~0,9 M |

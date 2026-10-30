@@ -2276,3 +2276,21 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
     nombre. Todo «X sin gluten» va también en `etiqueta` (hay que comprar el certificado).
   - Salen 93 ámbar y no ~70-80: los 95 nuevos traen caldos, guanciale y especias.
   - Los 95 nuevos son más que los ~85 del acta: los he dejado.
+
+## El Chef · CH2 · «Añadir a la compra» desde la receta entra en la compra de la semana (2026-10-30)
+- **Elegido**
+  - `rec-compra` ya no escribe en la lista «A mano»: guarda la receta en `food().compraRec` (`{id, rac, sin}`, con las
+    líneas tachadas fuera) con `recetaACompra()`, y `compraDatos0` la suma con el mismo `mete()` que la semana
+    (`recetasCompra()` + `ingredientsFor(…, true)`). Así sale por pasillos (`porSeccion`), sumada a lo que ya pide la
+    semana, en su versión sin gluten si eres celíaco y marcable de un toque como cualquier línea.
+  - Volver a pulsar en la misma receta la actualiza (no la duplica). «He hecho esta compra» vacía `compraRec`. En el
+    modo de ejemplo de la compra las líneas de receta se quedan (antes se habrían borrado con el resto).
+  - Prueba 400 (cadena: abrir receta → «Añadir a la compra» → la compra sale por pasillos, sin gluten y se marca);
+    la 384 ahora comprueba la compra de la semana en vez de la lista «A mano». Las dos caen al revertir.
+- **Descartado**
+  - Migrar o borrar la lista «A mano»: es una lista del usuario y sigue entrando en la compra «De rutina»; no se toca.
+  - Un selector de raciones en la página de receta: cambia lo que se ve (va a la maqueta CH3); hoy entra la receta entera.
+- **Supuestos**
+  - Raciones = las de la receta (`d.portions`). «Ya lo tengo» = tachar en la receta o tocar la línea en la compra.
+  - Una línea escrita a mano («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la
+    semana: es como ya funcionaba la compra; queda para pulir.

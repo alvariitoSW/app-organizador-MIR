@@ -14943,7 +14943,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.tach = await page.evaluate(() => [...document.querySelectorAll('#hojaDia .reci')].map((e) => e.getAttribute('aria-pressed')).join(','));
     r.hayCompra = !!(await page.$('#hojaDia [data-a="rec-compra"]'));
     if (r.hayCompra) { await page.click('#hojaDia [data-a="rec-compra"]'); await page.waitForTimeout(200); }
-    r.lista = await page.evaluate(() => { const l = (window.PG.store.listas || []).filter((x) => x.nombre === 'A mano')[0]; return l ? l.items.join('|') : ''; });
+    r.lista = await page.evaluate(() => { const e = (window.PG.food().compraRec || []).filter((x) => x.id === 'd384')[0]; const aMano = (window.PG.store.listas || []).some((x) => x.nombre === 'A mano'); return (e ? 'sin=' + JSON.stringify(e.sin) : 'sin entrada') + (aMano ? '|hay lista A mano' : ''); });
     r.link = await page.evaluate(() => { const a = document.querySelector('#hojaDia .recb a'); return a ? { href: a.href, t: a.target, rel: a.rel, txt: a.innerText } : null; });
     await page.evaluate(() => { window.__sh384 = null; Object.defineProperty(navigator, 'share', { value: (o) => { window.__sh384 = o; return Promise.resolve(); }, configurable: true }); });
     r.hayCom = !!(await page.$('#hojaDia [data-a="rec-comparte"]'));
@@ -14955,9 +14955,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.cp = await page.evaluate(() => ({ t: window.__cp384, flash: (document.querySelector('#flash') || {}).innerText || '' }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia384; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
-    check('384 Comer · página de receta: icono grande, 3 ingredientes (≥44 px) que se tachan al tocar, pasos ≥18 px, sin vídeo ni imagen incrustados; «Añadir a la compra» lleva solo los no tachados; «Ver en TikTok» abre fuera con noopener; «Compartir» manda nombre, ingredientes y pasos y sin share los copia con aviso',
+    check('384 Comer · página de receta: icono grande, 3 ingredientes (≥44 px) que se tachan al tocar, pasos ≥18 px, sin vídeo ni imagen incrustados; «Añadir a la compra» lleva los no tachados a la compra de la semana (sin lista «A mano»); «Ver en TikTok» abre fuera con noopener; «Compartir» manda nombre, ingredientes y pasos y sin share los copia con aviso',
       r.hayPlato && r.hayAbre && r.pag && r.pag.ic >= 48 && r.pag.ing === 3 && r.pag.hmin >= 44 && r.pag.paso >= 18 && r.pag.npasos === 3 && r.pag.fuera === 0 && r.pag.ancho <= 412 && r.pag.btns.every((h) => h >= 44) &&
-      r.hayIng && r.tach === 'true,false,false' && r.hayCompra && r.lista === '200 ml de nata|1 cebolla' && r.link && /tiktok\.com/.test(r.link.href) && r.link.t === '_blank' && /noopener/.test(r.link.rel) && /TikTok/.test(r.link.txt) &&
+      r.hayIng && r.tach === 'true,false,false' && r.hayCompra && r.lista === 'sin=[0]' && r.link && /tiktok\.com/.test(r.link.href) && r.link.t === '_blank' && /noopener/.test(r.link.rel) && /TikTok/.test(r.link.txt) &&
       r.hayCom && r.sh && /Pollo al curry/.test(r.sh.text) && /400 g de pollo/.test(r.sh.text) && /Cuece 15 minutos/.test(r.sh.text) && r.cp.t === r.sh.text && /copiada/i.test(r.cp.flash), JSON.stringify(r));
   }
   // 385) IMPORTAR · G5 · cola de TikTok, EN CADENA (412×915): plegada con «0» → abrirla → pegar 3 enlaces (uno repetido) en líneas → «Guardar en la cola» deja 2 → «Pasar a receta» del primero lo saca de la cola
@@ -15595,6 +15595,43 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       fichas.n >= 3 && fichas.svg === fichas.n && fichas.emoji === 0 && fichas.nombres.includes('taxi') && fichas.w >= 54 && fichas.h >= 56 && fichas.letra >= 11 &&
       cajon.n === 6 && cajon.svg === 6 && cajon.ico.join() === 'planta,hucha,libro,hoja420,eventos,notas' && cajon.txt.join() === 'Hábitos,Dinero,Estudio,4:20,Eventos,Notas' && cajon.x && cajon.xw >= 44 && cajon.xh >= 44 && cajon.aj && cajon.ajIco === 'ajustes' &&
       luego.tab === 'notas' && !luego.abierto, JSON.stringify({ fichas, cajon, luego }));
+  }
+
+  // 400) Comer · «Añadir a la compra» desde la receta entra en la COMPRA DE LA SEMANA (no en una lista «A mano»), en EN CADENA (412×915):
+  //      perfil celíaco → plato con pasta → Mis platos → Abrir la receta → «Añadir a la compra» → pestaña Compra: sus líneas salen por pasillos,
+  //      en versión sin gluten, la cebolla marcable de un toque y sin lista «A mano».
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia400 = JSON.parse(JSON.stringify(P.store));
+      P.store.listas = []; P.food().despensa = []; delete P.food().compraRec; P.ui.marks = new Set(); P.ui.compraTodo = true;
+      P.store.dishes.push({ id: 'd400', name: 'Macarrones de prueba', icon: '🍝', portions: 2, kcal: 600, prot: 20, tuyo: true,
+        ingredients: ['200 g de macarrones', '1 cebolla', '100 g de tomate triturado'], steps: ['Cuece la pasta.', 'Sofríe la cebolla.', 'Mezcla.'] });
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = { v: 'platos', f: '' }; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.hayPlato = !!(await page.$('[data-a="cje-pver"][data-id="d400"]'));
+    if (r.hayPlato) { await page.click('[data-a="cje-pver"][data-id="d400"]'); await page.waitForTimeout(150); }
+    r.hayAbre = !!(await page.$('[data-a="rec-abre"][data-id="d400"]'));
+    if (r.hayAbre) { await page.click('[data-a="rec-abre"][data-id="d400"]'); await page.waitForTimeout(200); }
+    r.hayCompra = !!(await page.$('#hojaDia [data-a="rec-compra"]'));
+    if (r.hayCompra) { await page.click('#hojaDia [data-a="rec-compra"]'); await page.waitForTimeout(200); }
+    await page.evaluate(() => { const P = window.PG; P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.ui.cjeHoja = null; P.ui.tab = 'shop'; P.ui.shopVista = ''; P.ui.compraSalida = 'todo'; P.render(); });
+    await page.waitForTimeout(250);
+    r.dom = await page.evaluate(() => { const li = [...document.querySelectorAll('#main li.linea')].map((e) => e.innerText.replace(/\s+/g, ' ').trim());
+      return { lineas: li, pasillos: [...document.querySelectorAll('#main button.pasillo')].map((b) => (b.querySelector('b') || {}).textContent) }; });
+    const L = r.dom.lineas.map((x) => x.toLowerCase());
+    r.sinGluten = L.some((x) => /sin gluten/.test(x) && /macarr|pasta/.test(x));
+    r.sinCruda = L.some((x) => /^[\d.,]+ \w+ macarrones/.test(x) && !/sin gluten/.test(x));
+    r.cebolla = L.some((x) => /cebolla/.test(x));
+    r.nPasillos = r.dom.pasillos.length;
+    r.aMano = await page.evaluate(() => (window.PG.store.listas || []).some((x) => x.nombre === 'A mano'));
+    const idc = await page.evaluate(() => { const e = [...document.querySelectorAll('#main li.linea')].filter((x) => /cebolla/i.test(x.innerText))[0]; return e ? e.dataset.id : ''; });
+    if (idc) { await page.click('#main li.linea[data-id="' + idc.replace(/"/g, '\\"') + '"]'); await page.waitForTimeout(200); }
+    r.marcada = await page.evaluate(() => [...document.querySelectorAll('#main li.linea')].some((e) => /cebolla/i.test(e.innerText) && e.classList.contains('ok')));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia400; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('400 Comer · «A la compra» desde la receta entra en la compra de la semana: por pasillos, sin gluten y marcable de un toque, sin lista «A mano»',
+      r.hayPlato && r.hayAbre && r.hayCompra && r.sinGluten && !r.sinCruda && r.cebolla && r.nPasillos >= 2 && !r.aMano && r.marcada, JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
