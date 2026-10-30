@@ -4,6 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- [enc-chef] Tanda «El Chef» aprobada el 30/10 (~10 M, delegada al Consejo): recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana, modo cocina que enseña, compra, la app que sigue a su cocina (hoy micro + vitro). Rama `ccr-583d2075-nzi0uc` (maqueta, acta, plan; sin código). Siguiente: **CH1** (ficha + esquema + prueba + catálogo corregido) · plan-v3 «Tanda El Chef» · 2026-10-30
 - ~~[aparc-suite-siembra]~~ HECHO 2026-10-30 (Remates L5, main 42b230d): 5 trozos y siembra del trozo 70, ~4 min · La suite en ~2 min (G13): partir la cadena 1-201 con una siembra por `window.PG` (jornada 8-15, `guardiaTipos` con relevo 08:00, rutinas con sesiones, platos y menú) al arrancar cada trozo; cortes válidos ya probados tras la 270: 282, 292, 302, 312, 322, 331, 333, 352, 362, 372, 382, 392 (y 200, 202). Más de 6 trozos con 4 núcleos no acelera y tira `actualiza`. El reparto por tiempo que se probó no se guardó (habría que reescribirlo) · DECISIONS «Gran Ley · G13» · 2026-10-30
 - ~~[aparc-rotulos-10px]~~ HECHO 2026-10-30 (Remates L3): ≥11 px, botones 44 px, casillas 16 px · Los rótulos en mayúsculas `.cap`/`.k` de toda la app van a 10,5 px y algunos `.mini` a 11,5 (Dinero, Sano, Entreno, 4:20); en 4:20 los botones de potencia miden 36 px de ancho y las casillas de privacidad y guardia 13 px. Es un estilo de toda la app: decidir en una tanda propia · verificador G7 y G10 · 2026-10-30
 - ~~[aparc-entreno-letra]~~ HECHO 2026-10-30 (Remates L3) · Portada de Entreno: `.ghero2 .k` a 10,5 px y `.glnk` a 12,5 px (ya eran así antes de la G7) · verificador G7 · 2026-10-30
@@ -130,6 +131,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 
 ## Supuestos sin confirmar
 
+- [sup-2026-10-30-chef] (Consejo «El Chef», acta `consejo/2026-10-30-chef.md`) · Vitro de 2 fuegos y olla de 5-6 L; micro sin grill (se cambia en «Tu cocina»); whisky y sidra cuentan como sin gluten (criterio FACE); «mediterránea» = norte de África, Oriente Próximo y sur de Francia; la «ciudadanía» es una consulta a 5 usuarios simulados · 2026-10-30
 - [sup-2026-10-30-comer-reloj2] (Consejo por delegación, acta `consejo/2026-10-30-cierre.md`) · Horas de comer: post-entreno 15 min tras acabar el entreno; comida del saliente 15:00 fija; sin paso «café», desayuno = levantarse + 20 min; guardia tras guardia sigue las reglas de guardia · DECISIONS «El Cierre · horas de comer…»
 - [sup-2026-10-30-iconos] (Consejo por delegación) · Iconos: levantarse = reloj; iconos decorativos (el texto ya nombra); el 🔥 de la racha y los emojis de comida se quedan · DECISIONS «El Cierre · iconos…»
 

@@ -82,6 +82,13 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   de iconos que se construye, cómo siguen las horas de comer a guardias y salientes, qué se quita (sin borrar datos) y
   **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
   que caen al revertir, privacidad y Actions en `success`. En el acta, «(Consejo por delegación)». Se acaba al cerrar la C4.
+- **Delegación del 30/10/2026 · «El Chef» (CH1-CH11).** El usuario: «apruebo absolutamente todo, adelante» (acta
+  `consejo/2026-10-30-chef.md`). Aprueba ~10 M (El Chef I ~6,9 M + El Chef II ~2,7 M) y las tres recomendaciones: cambio
+  sin gluten automático y visible con deshacer + «Mis marcas seguras»; la semana reserva siempre el táper de la guardia.
+  El Consejo decide lo reservado: **la maqueta CH3** (lo que cambia lo que ve), qué se quita (sin borrar datos) y **pasar a
+  `main`** (El Chef I al cerrar la CH8, El Chef II en la CH11). No cambia el cómo: suite completa en verde, `npm run sella` +
+  `version.json`, pruebas encadenadas que caen al revertir, privacidad y Actions en `success`. Sesiones «El Chef · CH<n> ·
+  …». En el acta, «(Consejo por delegación)». Se acaba al cerrar la CH11.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.
