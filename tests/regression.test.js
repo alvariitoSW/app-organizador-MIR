@@ -14645,6 +14645,30 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('373 Hoy y Mes · modo plantilla: «Usar las fechas del Mes» separado ≥8 px de «＋ añadir» en Hoy y de la fila de «hoy» en Mes; en modo fecha el aviso se va',
       r.hoy.hay && r.hoyAnade && r.hoy.arriba >= 8 && r.hoy.abajo >= 8 && r.mes.hay && r.mes.arriba >= 8 && r.mes.abajo >= 8 && r.hoy.ancho <= 412 && !r.tras.hay && r.modo === 'date', JSON.stringify(r));
   }
+  // 374) COMER · G1 · lector y vitaminas, EN CADENA (412×915): en el día de ayer (sin plan que sugerir), con la nevera vacía (salvo una tableta de chocolate negro) apuntas «un vaso de leche» por el lector →
+  //      tocas la línea de micros → «Vitaminas y minerales»: falta lo que más falta y la sugerencia es comida de verdad, nunca chocolate, cacao ni dulces
+  //      (criterio de Sanidad) → apuntas «pizza barbacoa 3 porciones» SIN coma → sale «Pizza barbacoa» de 300 g sin preguntas (antes no la entendía)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia374 = JSON.parse(JSON.stringify(P.store));
+      window.__d374 = P.iso(P.addDays ? P.addDays(new Date(), -1) : new Date(Date.now() - 864e5)); P.store.food.log[window.__d374] = []; P.store.food.despensa = []; P.despensaAdd('chocolate negro 70%', 1, '');
+      P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = window.__d374; P.render(); });
+    const r = {};
+    await page.fill('#frIn', 'un vaso de leche'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.n1 = await page.evaluate(() => window.PG.foodLog(window.__d374).length);
+    await page.click('#main .h2mic'); await page.waitForTimeout(250);
+    r.sug = await page.evaluate(() => ((document.querySelector('#main .vitsug') || {}).textContent || '').replace(/\s+/g, ' ').trim());
+    r.vista = await page.evaluate(() => window.PG.ui.foodVista);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); });
+    await page.fill('#frIn', 'pizza barbacoa 3 porciones'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.pizza = await page.evaluate(() => window.PG.foodLog(window.__d374).filter((e) => /pizza barbacoa/i.test(JSON.stringify(e))).map((e) => Math.round(e.kcal || 0)).join('|'));
+    r.dudas = await page.evaluate(() => !!(window.PG.ui.frase && (window.PG.ui.frase.dudas || []).length));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('374 Comer · nevera sin nada útil (solo chocolate): tras «un vaso de leche» la sugerencia de vitaminas es comida de verdad («100 g de …»), sin chocolate, cacao ni dulces; «pizza barbacoa 3 porciones» sin coma se apunta como Pizza barbacoa',
+      r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*100 g de /.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
+      r.pizza === '780' && !r.dudas, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

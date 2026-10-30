@@ -10083,8 +10083,8 @@ function fraseLeer(txt,opt){
   fx.comp.forEach(function(c){if((tipo==='bocata'||tipo==='tostada')&&plant.test(c))return;
     if((' '+t+' ').indexOf(' '+c+' ')>=0)t=t.replace(c,c.replace(/ /g,'_'));});
   if(fx.compFuera.indexOf(t.replace(/^(un|una) /,''))>=0)t=t.replace(/ /g,'_');
-  /* «pizza barbacoa del telepizza, 3 trozos»: la cantidad que viene después de la coma es de la pizza */
-  t=t.replace(/([^,+]*\bpizzas?\b[^,+]*?)\s*,\s*(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho)\s+(trozos?|porcion(?:es)?)\b/,'$2 $3 de $1');
+  /* «pizza barbacoa del telepizza, 3 trozos» (o sin la coma: «pizza barbacoa 3 porciones»): la cantidad de detrás es de la pizza */
+  t=t.replace(/([^,+]*\bpizzas?\b[^,+]*?)(?:\s*,\s*|\s+)(\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho)\s+(trozos?|porcion(?:es)?)\b/,'$2 $3 de $1');
   /* trocear, sabiendo qué va después de un «con» (acompaña) y qué no (es lo principal) */
   const trozos=[];let enCon=false;
   t.split(/((?:\s*(?:,|\+|\by\b|\be\b|\bcon\b)\s*)+)/).forEach(function(w,i){
@@ -12913,8 +12913,11 @@ function vitSugerencia(dk,datos){
     let v=0;d.alims.forEach(function(x){const a=alimById(x.id);if(a&&typeof a[k]==='number')v+=a[k]*(+x.g||0)/100;});
     const up=microPct(k,v/Math.max(1,+d.portions||1));
     if(up>0)return {n:m.n,que:(/^(comida|cena|merienda|media)/i.test(sg.lbl)?'la ':'el ')+sg.lbl.toLowerCase()+' ('+cjeNomPlan(d).toLowerCase()+')',up:up};}
+  /* criterio de Sanidad: se sugiere comida de verdad (fruta, verdura, legumbre, pescado…), nunca chocolate ni dulces
+     aunque traigan mucho hierro o magnesio */
+  const deVerdad=function(a){return /^(fruta|verdura|legumbre|pescado|carne|huevo|lacteo|cereal|graso)$/.test(a.g||'')&&!/chocolate|cacao|galleta|boll|bizcoch|tarta|helado|crema de|nocilla|nutella/i.test(a.n||'');};
   const casa={};despensaS().forEach(function(x){const a=despAlim(x);if(a)casa[a.id]=1;});
-  const a=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0;}).sort(function(x,y){return y[k]-x[k];})[0],r=a||alimRicosEn(k,1)[0];
+  const a=alimTodos().filter(function(a){return casa[a.id]&&+a[k]>0&&deVerdad(a);}).sort(function(x,y){return y[k]-x[k];})[0],r=a||alimRicosEn(k,40).filter(deVerdad)[0];
   if(!r)return null;
   return {n:m.n,que:'100 g de '+r.n.toLowerCase()+(a?' (de tu nevera)':''),up:microPct(k,r[k])};}
 function vitParadaHTML(dk,esHoy){
