@@ -4008,3 +4008,33 @@ button.tm-fi[aria-pressed=true] b{color:var(--bg)}
 .tm-bt.p{background:var(--ink);color:var(--bg)}
 .tm-hoy{display:block;width:100%;min-height:44px;margin:8px 0;padding:9px 12px;text-align:left;border:2px solid var(--ink);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14.5px;font-weight:800;cursor:pointer}
 @media (prefers-reduced-motion:no-preference){.tm-vaso svg g.l{transition:transform .5s cubic-bezier(.3,.8,.3,1)}}
+/* ===== Dinero · R3 · Gasto grande y «Ahorro y Bosque» (maquetas/dinero-tu-mes.html) ===== */
+.tm-chip{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;border-radius:12px;font-size:14px;font-weight:800;line-height:1.3;background:#ecfdf3;border:1.5px solid #86efac;color:#14532d}
+.tm-chip.sa{background:#fff1f2;border-color:#fda4af;color:#881337}
+html.dark .tm-chip{background:#12301f;border-color:#2f7a52;color:#c9f0d6}
+html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
+.tm-gbtn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:6px 14px;text-align:left}
+.tm-gbtn small{font-size:14px;font-weight:700}
+.tm-glista{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.tm-gfila{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 12px;text-align:left;border:2px dashed #be123c;border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.tm-gfila span:last-child{font-weight:700;color:var(--ink2);text-align:right}
+.tm-gfila:focus-visible,.tm-opc:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.tg-hoja .tg-l{display:block;margin:8px 0 0}
+.tg-hoja .tg-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.tm-opc{display:block;width:100%;min-height:64px;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:8px 12px;margin:0 0 8px;font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+.tm-opc small{display:block;font-size:14px;font-weight:700;color:var(--ink2)}
+.tm-opc[aria-pressed=true]{border-color:var(--ink);background:var(--bg2);box-shadow:inset 0 0 0 1px var(--ink)}
+.tm-opc[aria-pressed=true]::after{content:" ✓ elegido";font-size:14px;color:#15803d}
+.tg-prev{margin:0 0 8px;font-size:14px;font-weight:800}
+.tg-bts{grid-template-columns:1fr 1fr}
+.tm-bt:disabled{opacity:.5;cursor:default}
+.tm-gbtn{margin-top:8px}
+.ab .card{margin:0 0 10px}
+.ab-col .ab-n{font-size:38px;font-weight:900;letter-spacing:-1.5px;line-height:1.05;font-variant-numeric:tabular-nums}
+.ab-col .ab-n small{font-size:17px;letter-spacing:0;color:var(--ink2);font-weight:800}
+.ab-p{margin:2px 0;font-size:14px;color:var(--ink2)}.ab-p b{color:var(--ink)}
+.ab-h{margin:0;font-size:17px;font-weight:900}
+.ab-svg{display:block;width:100%;height:auto}
+.ab-ley{font-size:14px;color:var(--ink2);margin:4px 0 0}
+.lau-tabs button.ab-t{flex:1.6 1 0;white-space:normal;line-height:1.1}
+@media (prefers-reduced-motion:reduce){.tm-vaso svg g.l{transition:none}}

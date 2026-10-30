@@ -8034,6 +8034,7 @@ function abrirHojaDia(k){
 const HOJAS={
   dia:{abierta:function(){return ui.tab==='month'&&ui.hojaDia;},html:function(){return hojaDiaHTML();},cerrar:function(){ui.hojaDia='';ui.hojaVista='';ui.hojaRec=false;ui.hojaMas=false;}},
   dinero:{abierta:function(){return ui.tab==='dinero'&&!ui.dineroVista&&ui.dinHoja;},html:function(){return dinHojaHTML();},cerrar:function(){ui.dinHoja='';}},
+  tg:{abierta:function(){return ui.tab==='dinero'&&!ui.dineroVista&&!!ui.tmGrande;},html:function(){return tgHojaHTML();},cerrar:function(){ui.tmGrande=null;}},
   sol:{abierta:function(){return ui.tab==='hoy'&&!!ui.solHoja;},html:function(){return solHojaHTML();},cerrar:function(){ui.solHoja='';}},
   cien:{abierta:function(){return ui.tab==='hoy'&&ui.hoyVista==='sueno'&&!!ui.snCienH&&!ui.snHoja;},html:function(){return suenoCienciaHTML();},cerrar:function(){ui.snCienH=false;ui.snCien='';}},
   sueno:{abierta:function(){return ui.tab==='hoy'&&!!ui.snHoja;},html:function(){return suenoHojaHTML();},cerrar:function(){if(ui.snHoja){ui.snHoja='';ui.snTr=null;}}},
@@ -20509,7 +20510,7 @@ function renderDinero(){
   if(v==='categoria')return renderDinCategoria();
   /* cinco pestañas: Tu mes (portada), Bosque, Gastos, Ahorro y Compras; el cierre del mes (`mes`) cuelga de Gastos */
   const t=dinTabDe();
-  $('#main').innerHTML=t==='ahorro'?d4AhorroHTML():(t==='mes'?dinMes8HTML():(t==='gastos'?dinGastosHTML():(t==='compras'?dinComprasHTML():(t==='bosque'?dinBosqueHTML():dinTuMesHTML()))));}
+  $('#main').innerHTML=t==='ahorro'?dinAhoBosqueHTML():(t==='mes'?dinMes8HTML():(t==='gastos'?dinGastosHTML():(t==='compras'?dinComprasHTML():dinTuMesHTML())));}
 function dinSubcab(titulo,extra,volver){
   const vv=volver==null?'':volver;
   return '<div class="subcab">'+
@@ -20625,6 +20626,7 @@ function ahorroS(){
    estado: 'espera' | 'plan' | 'comprada' | 'no'. NADA de lo viejo (store.dinero, store.ahorro) se borra ni se toca: la
    migración COPIA una vez y, si falla, la app sigue con lo viejo. Entra en la copia de seguridad con el resto del store. */
 const D3_ESTADOS=['espera','plan','comprada','no'];
+const D3_GRANDES=['apartando','ahorrado'];
 function d3Num(v,mn,mx,def){const n=+v;return isFinite(n)&&n>=mn&&n<=mx?n:def;}
 function d4ApartadoLimpio(m){
   /* lo apartado al cobrar, por mes: {'2026-10':{cobrado,v}} (para no repetir y para el histórico) */
@@ -20640,9 +20642,11 @@ function dinero3Limpia(o){
     ahorro:{guardado:Math.max(0,Math.round((+A.guardado||0)*100)/100),objetivoMeses:Math.round(d3Num(A.objetivoMeses,1,36,6)),
       plazoMeses:Math.round(d3Num(A.plazoMeses,1,60,12)),desde:esFecha(A.desde||'')?A.desde:'',apartado:d4ApartadoLimpio(A.apartado)},
     compras:(Array.isArray(d.compras)?d.compras:[]).filter(function(c){return c&&c.id;}).slice(0,300).map(function(c){
-      return {id:String(c.id).slice(0,40),nombre:String(c.nombre||'').slice(0,60),precio:Math.max(0,+c.precio||0),llevas:Math.max(0,+c.llevas||0),
+      const o={id:String(c.id).slice(0,40),nombre:String(c.nombre||'').slice(0,60),precio:Math.max(0,+c.precio||0),llevas:Math.max(0,+c.llevas||0),
         mes:/^\d{4}-\d{2}$/.test(c.mes||'')?c.mes:'',estado:D3_ESTADOS.indexOf(c.estado)>=0?c.estado:'espera',
-        alta:esFecha(c.alta||'')?c.alta:'',tipo:String(c.tipo||'').slice(0,20)};})};}
+        alta:esFecha(c.alta||'')?c.alta:'',tipo:String(c.tipo||'').slice(0,20)};
+      if(D3_GRANDES.indexOf(c.grande)>=0)o.grande=c.grande;   /* gasto grande (R3): 'apartando' | 'ahorrado'; ausente = no es grande */
+      return o;})};}
 function dinero3Migra(){
   /* copia, no toca: el colchón y las huchas sin objetivo → lo guardado; cada hucha con objetivo → una compra en plan;
      sus deseos sin hacer → compras en espera; la meta antigua propone el objetivo en meses */
@@ -21523,8 +21527,12 @@ function d3Datos(){
   const vida=g>0?Math.round(A.guardado/g*10)/10:0,objE=Math.round(A.objetivoMeses*g/10)*10,falta=Math.max(0,objE-Math.round(A.guardado));
   const dd=parseDate(A.desde),mk0=dd?ahoMk(dd.getFullYear(),dd.getMonth()):mkHoy,llega=mkSuma(mk0,A.plazoMeses),rest=Math.max(1,mkEntre(mkHoy,llega));
   const ritmo=d3Ritmo();
-  return {A:A,g:g,vida:vida,objE:objE,falta:falta,llega:llega,futuro:mkEntre(mkHoy,llega)>0,rest:rest,ritmo:ritmo,
-    pide:falta?Math.ceil(falta/rest/10)*10:0,delante:ritmo>=falta/rest,
+  /* gastos grandes (R3): «apartando» resta su cuota a lo que va al colchón este mes; «ahorrado» sale del colchón, que tendrá que reponerlo */
+  const grandes=d.compras.filter(function(c){return c.estado==='plan'&&D3_GRANDES.indexOf(c.grande)>=0;}),
+    aparta=grandes.reduce(function(s,c){return s+(c.grande==='apartando'?d5Cuota(c,mkHoy):0);},0),
+    deAhorro=grandes.reduce(function(s,c){return s+(c.grande==='ahorrado'?Math.max(0,c.precio-Math.min(c.precio,c.llevas)):0);},0);
+  return {A:A,g:g,vida:vida,objE:objE,falta:falta+deAhorro,grandes:grandes,aparta:aparta,deAhorro:deAhorro,llega:llega,futuro:mkEntre(mkHoy,llega)>0,rest:rest,ritmo:ritmo,
+    pide:falta+deAhorro?Math.ceil((falta+deAhorro)/rest/10)*10:0,delante:ritmo>=(falta+deAhorro)/rest,
     frutos:d.compras.filter(function(c){return c.estado==='plan';}).length,claro:d3Claro()};}
 const D3_COMA=function(n){return String(n).replace('.',',');};
 let _d3Hojas='';
@@ -21589,31 +21597,6 @@ function d3GuardarHTML(D,vacio){
     '<div class="lau-fila"><input id="d3Guardado" class="lau-in" inputmode="decimal" autocomplete="off" placeholder="4.200" value="'+(A.guardado>0?esc(String(A.guardado).replace('.',',')):'')+'">'+
     '<button class="lau-btn p" data-a="d3-guardar">'+(vacio?'Plantar el bosque':'Apuntar')+'</button></div>'+
     '<p class="lau-mini">Lo que hay en tu cuenta de ahorro y en tus huchas, sumado. Solo vive en tu móvil.</p></div>';}
-function dinBosqueHTML(){
-  const D=d3Datos(),A=D.A;
-  if(A.guardado<=0){
-    return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('bosque')+
-      '<div class="card lau-card lau-vacio"><svg viewBox="0 0 120 90" width="120" height="90" role="img" aria-label="un brote de laurisilva en la niebla"><ellipse cx="60" cy="80" rx="46" ry="7" fill="var(--lau-musgo)"/><path d="M57 80C58 66 58 58 60 50H64C63 58 63 68 66 80Z" fill="var(--lau-tronco)"/><circle cx="62" cy="40" r="16" fill="var(--lau-copa)"/><circle cx="48" cy="48" r="11" fill="var(--lau-copa)"/><circle cx="76" cy="48" r="11" fill="var(--lau-copa)"/></svg>'+
-      '<h3 class="lau-h">Tu bosque aún está por plantar</h3>'+
-      '<p class="lau-p">Escribe cuánto tienes guardado y verás cuántos meses de vida te da: esa es la altura de la copa.</p></div>'+
-      d3GuardarHTML(D,true)+
-      (dinero3S().compras.length?'<button class="lau-btn" data-a="d6-tab" data-v="compras">Ver mis compras ('+dinero3S().compras.length+')</button>':'')+'</div>';}
-  const sin=D.g<=0,pil=sin?'':(D.falta===0?'✓ La copa ya llega':(D.delante?'▲ Vas por delante':'▼ Vas por detrás'));
-  const hacer=sin?['Cuéntame lo que gastas','para saber cuántos meses de vida guardas']:
-    (D.falta===0?['Ya llegaste','la copa llega al objetivo de '+A.objetivoMeses+' meses']:
-      ['Este mes, sube '+fmtMil(D.pide)+' €',D.futuro?'para que la copa llegue arriba en '+mkLargo(D.llega):'para llegar a tu objetivo cuanto antes']);
-  const cl=D.claro;
-  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('bosque')+
-    '<div class="lau-esc">'+d3EscenaSVG(D)+
-      '<div class="lau-ini"><div class="lau-peq">tu bosque hoy</div><div class="lau-gran">'+(sin?'—':D3_COMA(D.vida))+' <small>'+(sin?'meses de vida':'de '+A.objetivoMeses+' meses')+'</small></div>'+
-        '<div class="lau-sub">'+fmtMil(A.guardado)+' €'+(sin?'':' de '+fmtMil(D.objE)+' €')+'</div>'+(pil?'<span class="lau-pil">'+pil+'</span>':'')+'</div>'+
-      '<button class="lau-baya" data-a="d6-tab" data-v="compras" aria-label="Compras: '+(D.frutos?D.frutos+(D.frutos===1?' compra planificada':' compras planificadas'):'ninguna planificada todavía')+'"><span>Compras · '+D.frutos+(D.frutos===1?' fruto':' frutos')+'</span></button>'+
-      (cl?'<button class="lau-claro" data-a="d3-claro" data-mk="'+esc(cl.mk)+'" aria-label="Gastos: el claro del bosque. '+esc(cl.k)+', '+fmtMil(cl.v)+' euros al mes"><span><b>El claro</b>'+esc(cl.k)+'<br>'+fmtMil(cl.v)+' € al mes</span></button>':
-        '<button class="lau-claro" data-a="d6-tab" data-v="gastos" aria-label="Gastos: aún sin cifras de gasto"><span><b>El claro</b>mira tus gastos</span></button>')+
-      '<div class="lau-musgo">Musgo: '+fmtMil(A.guardado)+' € guardados<small>el agua que el suelo retiene</small></div>'+
-      '<div class="lau-hacer"><p class="lau-g">'+esc(hacer[0])+'</p><p>'+esc(hacer[1])+'</p></div>'+
-      '<button class="lau-ir" data-a="d6-tab" data-v="ahorro">Ver el bosque mes a mes ↓</button></div>'+
-    d4NominaHTML(D)+d3GuardarHTML(D,false)+'</div>';}
 /* ---------- D4 · Ahorro: «Tu bosque, mes a mes» y «Ya ha llegado la nómina» ---------- */
 function d4Cobro(){
   /* la nómina de este mes: cuánto se espera, si estamos en los días de cobro (desde que llega hasta 10 días después) y si ya se apartó */
@@ -21641,35 +21624,14 @@ function d4Hist(D){
   for(let k=1;k<=5;k++){const mk=mkSuma(mkH,-k),ap=D.A.apartado[mk],x=ap?null:ahorroDeMes(mk),v=ap?ap.v:(x&&x.ahorro>0?x.ahorro:0);
     if(!(v>0))break;acc-=v;out.unshift({mk:mk,v:Math.max(0,acc)/D.g});}
   return out;}
-function d4GrafSVG(D,H,mr,txt){
-  const A=D.A,rest=Math.min(D.rest,36),K=Math.max(rest,Math.min(mr,36)),h=H.length,N=h+K,x0=36,x1=398,st=(x1-x0)/Math.max(1,N),yb=282,yt=24,
-    ym=Math.max(A.objetivoMeses,D.vida,1)*1.15,X=function(i){return x0+i*st;},Y=function(v){return yb-v/ym*(yb-yt);},f=function(x){return Math.round(x*10)/10;},r=Math.min(8,st*.42),
-    hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth());
-  let s='<path d="M'+x0+' '+f(Y(A.objetivoMeses))+'H'+x1+'" stroke="var(--lau-ink2)" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>'+
-    '<text x="'+x0+'" y="'+f(Y(A.objetivoMeses)-16)+'" font-size="12" font-weight="700" fill="var(--lau-ink)">objetivo: '+A.objetivoMeses+' meses ('+fmtMil(D.objE)+' €)</text>'+
-    '<path d="M'+(x0-8)+' '+yb+'H'+(x1+6)+'" stroke="var(--lau-verde)" stroke-width="6" stroke-linecap="round"/>';
-  H.forEach(function(p,i){s+='<path d="M'+f(X(i))+' '+yb+'V'+f(Y(p.v))+'" stroke="var(--lau-tronco)" stroke-width="2.5"/><circle cx="'+f(X(i))+'" cy="'+f(Y(p.v))+'" r="'+f(r)+'" fill="var(--lau-copa)"/>';});
-  s+='<path d="M'+f(X(h))+' '+yb+'V'+f(Y(D.vida))+'" stroke="var(--lau-tronco)" stroke-width="2.5"/><circle cx="'+f(X(h))+'" cy="'+f(Y(D.vida))+'" r="'+f(r)+'" fill="var(--lau-copa)"/>';
-  for(let i=1;i<=rest;i++){const v=D.vida+(A.objetivoMeses-D.vida)*i/rest;
-    s+='<path d="M'+f(X(h+i))+' '+yb+'V'+f(Y(v))+'" stroke="var(--lau-verde)" stroke-width="1.3" stroke-dasharray="2 3"/><circle cx="'+f(X(h+i))+'" cy="'+f(Y(v))+'" r="'+f(r)+'" fill="var(--lau-pastel)" stroke="var(--lau-verde)" stroke-width="1.8" stroke-dasharray="3 3"/>';}
-  if(D.falta>0&&mr>0){let d='M'+f(X(h))+' '+f(Y(D.vida));const m2=Math.min(mr,36);
-    for(let i=1;i<=m2;i++)d+=' L'+f(X(h+i))+' '+f(Y(Math.min(A.objetivoMeses,D.vida+D.ritmo*i/D.g)));
-    const xe=X(h+m2),ini=xe<200;
-    s+='<path d="'+d+'" fill="none" stroke="var(--lau-marron)" stroke-width="3" stroke-dasharray="1 6" stroke-linecap="round"/><rect x="'+f(xe-6)+'" y="'+f(Y(A.objetivoMeses)-6)+'" width="12" height="12" fill="var(--lau-fondo)" stroke="var(--lau-marron)" stroke-width="3"/>'+
-      '<text x="'+f(xe+(ini?10:-10))+'" y="'+f(Y(A.objetivoMeses)+22)+'" font-size="12" font-weight="700" fill="var(--lau-marron)" text-anchor="'+(ini?'start':'end')+'">tu ritmo: '+esc(mkCorto(mkSuma(mkH,mr)))+'</text>';}
-  const eje=function(i,t,a){return '<text x="'+f(X(i))+'" y="306" font-size="12" text-anchor="'+(a||'middle')+'" fill="var(--lau-ink)">'+esc(t)+'</text><path d="M'+f(X(i))+' '+(yb+6)+'v5" stroke="var(--lau-ink)" stroke-width="1.5"/>';};
-  if(h)s+=eje(0,mkCorto(H[0].mk),'start');
-  s+=eje(h,'hoy',h?'middle':'start')+eje(h+rest,mkCorto(D.llega)+' '+String(ahoYm(D.llega).y).slice(2),'end');
-  const tit='Gráfica del bosque: '+(h?'los árboles llenos son los meses ya crecidos, hasta '+D3_COMA(D.vida)+' meses hoy. ':'Hoy el árbol tiene '+D3_COMA(D.vida)+' meses. ')+
-    'Los árboles de puntos son el plan de '+fmtMil(D.pide)+' euros al mes hasta '+A.objetivoMeses+' meses en '+mkLargo(D.llega)+'. '+txt;
-  return '<svg id="d4Graf" viewBox="0 0 412 330" width="100%" role="img" aria-label="'+esc(tit)+'" style="display:block;margin:0 auto;max-width:460px"><title>'+esc(tit)+'</title>'+s+'</svg>';}
 function d4AjustesHTML(){
   /* tu % de ahorro (el reparto entre huchas y el cuadre con el banco se fueron con la D6) */
   const mp=metaPct();
   return '<div class="card lau-card"><div class="lau-fila"><span class="lau-t"><b>Quieres ahorrar</b><span>el '+mp+' % de lo que entra</span></span>'+
     '<div class="d4step" aria-label="lo que quieres ahorrar, en % de lo que entra"><button data-a="d7-meta" data-d="-5" aria-label="ahorrar menos">−</button><b>'+mp+' %</b><button data-a="d7-meta" data-d="5" aria-label="ahorrar más">+</button></div></div></div>';}
-function d4AhorroHTML(){
-  const D=d3Datos(),A=D.A,vacio=A.guardado<=0&&D.g<=0,hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth());
+function d4PlanHTML(D){
+  /* el objetivo (meses de vida a guardar) y el plazo, y lo que pide el plan este mes */
+  const A=D.A,vacio=A.guardado<=0&&D.g<=0,hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth());
   const sw=function(k,vals,act){return '<div class="lau-sw" role="group" aria-label="'+(k==='objetivoMeses'?'Meses de vida a guardar':'Plazo en meses')+'">'+vals.map(function(m){
     return '<button data-a="'+act+'" data-v="'+m+'" aria-pressed="'+(A[k]===m)+'">'+m+' meses</button>';}).join('')+'</div>'+
     '<div class="lau-fila" style="margin-top:8px"><label class="lau-mini" for="d4o-'+k+'" style="margin:0">u otro:</label><input id="d4o-'+k+'" class="lau-in" style="max-width:110px" inputmode="numeric" autocomplete="off" data-a="d4-otro" data-k="'+k+'" placeholder="meses"'+
@@ -21680,22 +21642,63 @@ function d4AhorroHTML(){
   else if(!(rit>0))res='Ahora mismo no se ve que estés ahorrando al mes: apartando '+fmtMil(D.pide)+' € llegas en '+mkLargo(D.llega)+'.';
   else if(mr<=D.rest){const d=D.rest-mr;res='A tu ritmo ('+fmtMil(rit)+' €/mes) llegas en '+mkLargo(mkSuma(mkH,mr))+': '+(d?'vas por delante, '+d+(d===1?' mes':' meses')+' antes.':'justo a tiempo.');}
   else res='A tu ritmo ('+fmtMil(rit)+' €/mes) llegarías '+(mr-D.rest)+(mr-D.rest===1?' mes':' meses')+' tarde. Para llegar a tiempo, aparta ~'+fmtMil(D.pide)+' € al mes.';
-  const H=d4Hist(D),cl=D.claro,fila=function(t,s,n){return '<div class="lau-li"><div class="lau-t"><b>'+t+'</b><span>'+s+'</span></div><div class="lau-n"><b>'+n+'</b></div></div>';};
-  return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('ahorro')+
-    '<div class="card lau-card"><button class="lau-btn" data-a="d6-tab" data-v="bosque" style="min-height:44px;padding:8px 18px">← Volver al bosque</button>'+
-    '<h3 class="lau-h">Tu bosque, mes a mes</h3>'+
+  return '<div class="card lau-card"><h3 class="lau-h">Tu plan</h3>'+
     (vacio?'<p class="lau-p">Escribe lo que tienes guardado y lo que gastas, y aquí verás cuánto apartar cada mes.</p>':
       '<p class="lau-big" id="d4Cifra">'+(D.g>0?'~'+fmtMil(D.pide)+' € <small>al mes</small>':'—')+'</p>'+
       '<p class="lau-p">'+(D.g>0?'hasta '+esc(mkLargo(D.llega))+' para tener '+A.objetivoMeses+' meses de vida ('+fmtMil(D.objE)+' €). Faltan '+fmtMil(D.falta)+' €.':'Aún no sé cuánto gastas al mes.')+'</p>')+
     '<p class="lau-e" style="margin-top:12px" id="d4q1">¿Cuántos meses de vida quieres guardar?</p>'+sw('objetivoMeses',[3,6,9],'d4-obj')+
     '<p class="lau-e" style="margin-top:12px" id="d4q2">¿En cuánto tiempo?</p>'+sw('plazoMeses',[6,12,18],'d4-plazo')+
-    '<p class="lau-msg" aria-live="polite" id="d4Res">'+esc(res)+'</p>'+(vacio?'':d4GrafSVG(D,H,mr,res)+
-    '<p class="lau-mini">'+(H.length?'Árboles llenos: lo ya crecido, mes a mes. ':'Aún no hay meses con ahorro apuntado: hoy es el primer árbol. ')+'Árboles de puntos: el plan. Línea de puntos con cuadrado: tu ritmo, '+fmtMil(rit)+' €/mes.</p>')+'</div>'+
-    (vacio?d3GuardarHTML(D,true):'<div class="card lau-card">'+fila('Guardado hoy',D3_COMA(D.vida)+' meses de vida',fmtMil(A.guardado)+' €')+fila('Objetivo',A.objetivoMeses+' meses',fmtMil(D.objE)+' €')+fila('Tu ritmo real','lo que ahorras al mes',fmtMil(rit)+' €')+'</div>')+
-    d4NominaHTML(D)+d4AjustesHTML()+
-    (cl&&D.g>0?'<div class="card lau-card"><p class="lau-p"><b>Un empujón fácil:</b> si '+esc(cl.k)+' baja de '+fmtMil(cl.v)+' € a '+fmtMil(cl.v/2)+' €, el bosque gana '+fmtMil(cl.v/2)+' € más cada mes.</p>'+
-      '<div class="lau-enl"><button data-a="d3-claro" data-mk="'+esc(cl.mk)+'">Ver el claro (Gastos)</button></div></div>':'')+
-    '<p class="lau-mini" style="text-align:center;margin:0 10px">Invertir fuera: opcional; primero, la copa a '+A.objetivoMeses+' meses.</p></div>';}
+    '<p class="lau-msg" aria-live="polite" id="d4Res">'+esc(res)+'</p></div>';}
+/* ---------- R3 · «Ahorro y Bosque»: el colchón, un árbol por mes de colchón y lo que ahorraste cada mes ---------- */
+function abBosqueSVG(D,mesesFin,grandes){
+  const n=Math.max(1,Math.min(12,D.A.objetivoMeses)),sp=Math.min(62.4,340/n),x0=(380-sp*(n-1))/2,esc1=Math.min(1,sp/62.4),f=function(x){return Math.round(x*10)/10;};
+  let h='<rect width="380" height="176" rx="14" fill="#eef6ff"/>';
+  for(let i=0;i<n;i++){
+    const fill=Math.max(0,Math.min(1,mesesFin-i)),x=f(x0+i*sp),k=esc1*(fill>=1?1:.4+.6*fill);
+    h+=fill<=0?'<g class="ab-arb" data-lleno="0" transform="translate('+x+',138) scale('+f(esc1)+')"><title>Plantón '+(i+1)+': por crecer</title><path d="M0 0v-14M0 -10c-8 0-10-8-10-8M0 -14c8 0 10-8 10-8" stroke="#166534" stroke-width="2.5" fill="none" stroke-dasharray="3 3"/></g>':
+      '<g class="ab-arb" data-lleno="'+(fill>=1?1:0)+'" transform="translate('+x+',138) scale('+f(k)+')"><title>Árbol '+(i+1)+': '+(fill>=1?'crecido':'creciendo')+'</title><rect x="-5" y="-40" width="10" height="40" rx="3" fill="#78350f"/><ellipse cx="0" cy="-68" rx="28" ry="32" fill="#15803d"/><ellipse cx="-12" cy="-56" rx="17" ry="19" fill="#16a34a"/><ellipse cx="12" cy="-82" rx="15" ry="15" fill="#166534"/></g>';}
+  h+='<path d="M0 138q32-8 64 0t64 0 64 0 64 0 64 0 60 0V176H0z" fill="#86efac"/>';
+  for(let i=0;i<n;i++)h+='<text x="'+f(x0+i*sp)+'" y="162" text-anchor="middle" font-size="'+(n>9?13:14)+'" font-weight="800" fill="#14532d">'+(i+1)+'º</text>';
+  grandes.slice(0,6).forEach(function(c,j){
+    const x=Math.min(350,f(x0+sp*Math.min(n-1,3+j)+22*esc1)),y=f(40+(j%2)*38),lleno=c.grande==='apartando';
+    h+='<g class="ab-fruto" transform="translate('+x+','+y+')"><title>Fruto: '+esc(c.nombre)+', '+(lleno?'lo vas apartando':'sale de lo ahorrado')+'</title><circle r="17" fill="#fff" stroke="#be123c" stroke-width="3"/>'+
+      '<rect x="-9" y="-8" width="18" height="11" rx="1.5" fill="'+(lleno?'#be123c':'none')+'" stroke="#be123c" stroke-width="2"/><path d="M-12 6h24" stroke="#be123c" stroke-width="3" stroke-linecap="round"/></g>';});
+  return '<svg class="ab-svg" viewBox="0 0 380 176" role="img" aria-labelledby="abBt"><title id="abBt">Bosque: '+D3_COMA(Math.round(mesesFin*10)/10)+' meses de colchón a fin de mes, un árbol por mes hasta el objetivo de '+D.A.objetivoMeses+
+    (grandes.length?'; '+grandes.length+(grandes.length===1?' fruto rojo es un gasto grande':' frutos rojos son gastos grandes'):'')+'</title>'+h+'</svg>';}
+function abMesesSVG(D,T,mkH){
+  const cols=[];
+  for(let k=4;k>=0;k--){
+    const mk=mkSuma(mkH,-k);
+    if(k===0){cols.push({mk:mk,v:T.hay&&!T.sinVar?T.ahorras:0,ap:T.hay&&!T.sinVar?T.aparta:0,este:true});continue;}
+    const ap=D.A.apartado[mk],x=ap?null:ahorroDeMes(mk);
+    cols.push({mk:mk,v:ap?ap.v:(x&&x.ahorro>0?x.ahorro:0),ap:0});}
+  const mx=Math.max(1,Math.max.apply(null,cols.map(function(c){return c.v+c.ap;}))),W=76,y0=14,jh=74,f=function(x){return Math.round(x*10)/10;};
+  let h='';
+  cols.forEach(function(c,i){
+    const x=i*W+10,w=56,ph=jh*c.v/mx,p2=jh*c.ap/mx;
+    h+='<g class="ab-barra" data-mk="'+c.mk+'">'+(c.ap>0?'<rect x="'+x+'" y="'+f(y0+jh-ph-p2)+'" width="'+w+'" height="'+f(p2)+'" rx="4" fill="url(#abp)" stroke="#be123c" stroke-width="2"/>':'')+
+      '<rect x="'+x+'" y="'+f(y0+jh-ph)+'" width="'+w+'" height="'+f(Math.max(ph,c.v>0?2:0))+'" rx="4" fill="#15803d"/>'+
+      '<text x="'+(x+w/2)+'" y="'+(y0+jh+18)+'" text-anchor="middle" font-size="14" font-weight="900" fill="#0f172a">'+esc(mkCorto(c.mk))+(c.este?' (este)':'')+'</text>'+
+      '<text x="'+(x+w/2)+'" y="'+(y0+jh+36)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#334155">'+(c.ap>0?fmtMil(c.v)+' + '+fmtMil(c.ap):fmtMil(c.v)+' €')+'</text></g>';});
+  const tit='Ahorro por mes: '+cols.map(function(c){return esc(dinMesNom(c.mk))+' '+fmtMil(c.v)+(c.ap>0?' al colchón más '+fmtMil(c.ap)+' apartados (rayas rojas)':'');}).join(', ');
+  return '<svg class="ab-svg" viewBox="0 0 400 128" role="img" aria-labelledby="abMt"><title id="abMt">'+tit+'</title><defs><pattern id="abp" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#fff1f2"/><rect width="3" height="7" fill="#be123c"/></pattern></defs><line x1="0" x2="400" y1="88" y2="88" stroke="#cbd5e1"/>'+h+'</svg>';}
+function dinAhoBosqueHTML(){
+  const D=d3Datos(),T=tuMesDatos(),A=D.A,hoy=new Date(),mkH=ahoMk(hoy.getFullYear(),hoy.getMonth()),f=fmtMil;
+  const cole=T.hay&&!T.sinVar?T.ahorras:0,fin=A.guardado+cole,mes=function(x){return D.g>0?Math.round(x/D.g*10)/10:0;},mFin=mes(fin);
+  const chip=T.aparta>0?'🟩 '+f(T.ahorras)+' € al colchón + 💻 '+f(T.aparta)+' apartados':(cole>0?'🟩 Este mes, +'+f(cole)+' € al colchón':'');
+  const sale=D.grandes.filter(function(c){return c.grande==='ahorrado';});
+  return '<div class="grid dinv2 din8 mt lau ab">'+din8Tabs('ahorro')+
+    '<div class="card ab-col"><p class="ab-p">Colchón a fin de mes</p><div class="ab-n">'+f(fin)+' €'+(D.g>0?' <small>· '+D3_COMA(mFin)+' meses</small>':'')+'</div>'+
+      '<p class="ab-p">Hoy '+f(A.guardado)+' €'+(D.g>0?' · '+D3_COMA(D.vida)+' meses de vida':'')+'</p>'+
+      (chip?'<div class="tm-chip">'+chip+'</div>':'')+
+      sale.map(function(c){return '<div class="tm-chip sa">💻 '+esc(c.nombre)+' sale de lo ahorrado'+(c.mes?' en '+esc(mkCorto(c.mes)):'')+'</div>';}).join('')+'</div>'+
+    '<div class="card"><h3 class="ab-h">Tu Bosque</h3><p class="ab-p">Un árbol por cada mes de colchón'+(D.g>0?': <b>'+D3_COMA(D.vida)+' hoy → '+D3_COMA(mFin)+' a fin de mes</b>':'')+'.</p>'+
+      '<div class="ab-bosque">'+abBosqueSVG(D,mFin,D.grandes)+'</div>'+
+      '<p class="ab-ley">🌳 árbol = un mes de colchón · plantón punteado = lo que falta hasta '+A.objetivoMeses+' (objetivo '+f(D.objE)+' €)'+(D.grandes.length?' · fruto rojo = gasto grande (lleno si lo vas apartando)':'')+'</p></div>'+
+    '<div class="card"><h3 class="ab-h">Lo que ahorraste cada mes</h3><div class="ab-meses">'+abMesesSVG(D,T,mkH)+'</div></div>'+
+    d4PlanHTML(D)+d4NominaHTML(D)+d3GuardarHTML(D,A.guardado<=0)+d4AjustesHTML()+
+    (D.claro&&D.g>0?'<div class="card lau-card ab-empuje"><p class="lau-p"><b>Un empujón fácil:</b> si '+esc(D.claro.k)+' baja de '+f(D.claro.v)+' € a '+f(D.claro.v/2)+' €, el bosque gana '+f(D.claro.v/2)+' € más cada mes.</p>'+
+      '<div class="lau-enl"><button data-a="d3-claro" data-mk="'+esc(D.claro.mk)+'">Ver el claro (Gastos)</button></div></div>':'')+tgBotonHTML()+'</div>';}
 function dinSemanaHTML(){
   /* los recibos de la semana (de la antigua pestaña Hoy), ahora dentro de Gastos */
   const hoy=new Date(),sem=recibosEntre(iso(addDays(hoy,-1)),iso(addDays(hoy,8)));
@@ -21778,9 +21781,13 @@ function dinGastosHTML(){
   return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('gastos')+cuerpo+ideas+sus+comp+origen+dinSemanaHTML()+dinTaxisHTML(mkHoy)+mas+'</div>';}
 const D5_TIPOS=[['nec','Necesario'],['util','Útil para el trabajo'],['ilu','Me hace ilusión']];
 function d5Tipo(c){return c.tipo==='nec'||c.tipo==='util'?c.tipo:'ilu';}
+function d5Cuota(c,mkH){
+  /* lo que hay que apartar al mes para llegar a tiempo (0 sin mes): la misma cuenta en Compras y en los gastos grandes */
+  const m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0;
+  return m?Math.ceil(Math.max(0,(+c.precio||0)-Math.min(+c.precio||0,+c.llevas||0))/m):0;}
 function d5Fila(c,mkH){
   const t=d5Tipo(c),en=c.estado==='espera',pr=Math.max(0,+c.precio||0),ll=Math.min(pr,+c.llevas||0),pct=pr>0?Math.round(ll/pr*100):0,falta=Math.max(0,pr-ll),
-    m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0,mes=en||!m?0:Math.ceil(falta/m),abierta=ui.d5Abre===c.id,dias=Math.max(0,30-d5Dias(c)),
+    m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0,mes=en?0:d5Cuota(c,mkH),abierta=ui.d5Abre===c.id,dias=Math.max(0,30-d5Dias(c)),
     tn=D5_TIPOS.filter(function(x){return x[0]===t;})[0][1];
   let det='';
   if(abierta){
@@ -21803,7 +21810,7 @@ function d5ListaHTML(){
     L=d.compras.filter(function(c){return c.estado==='plan'||c.estado==='espera';});
   const ord=function(a,b){return o[d5Tipo(a)]-o[d5Tipo(b)]||String(a.mes||'9999').localeCompare(String(b.mes||'9999'));};
   const plan=L.filter(function(c){return c.estado==='plan';}).sort(ord),esp=L.filter(function(c){return c.estado==='espera';}).sort(ord);
-  const tot=plan.reduce(function(s,c){const m=c.mes?Math.max(1,mkEntre(mkH,c.mes)):0;return s+(m?Math.ceil(Math.max(0,c.precio-c.llevas)/m):0);},0);
+  const tot=plan.reduce(function(s,c){return s+d5Cuota(c,mkH);},0);
   const ep=epocaDe(mkH),base=ep?Math.round(ep.neto):nominaMedia(),g=mesTipo().gasto||0,sobra=base-g;
   const nota=ui.d5Nota?'<p class="lau-nota" id="d5Nota">'+(base>0?'Con la nómina base ('+fmtMil(base)+' €)'+(g>0?' y lo que gastas ('+fmtMil(g)+' €)':'')+(tot<=sobra||(!g&&tot<=base)?' <b>cabe</b>.':' <b>no cabe entera</b>.'):'Aún no sé tu nómina base.')+
     ' Si un mes cobras poco, se pausa primero lo de «me hace ilusión». Lo necesario no se toca.</p>':'';
@@ -21822,13 +21829,14 @@ function d5ListaHTML(){
     (esp.length?'<p class="lau-e" style="margin:12px 8px 4px">En espera 30 días</p>'+esp.map(function(c){return d5Fila(c,mkH);}).join(''):'')+nuevo;}
 function dinComprasHTML(){
   return '<div class="grid dinv2 din8 mt lau">'+din8Tabs('compras')+d5ListaHTML()+'</div>';}
-/* ---------- las cinco pestañas: Tu mes · Bosque · Gastos · Ahorro · Compras ---------- */
+/* ---------- las cuatro pestañas: Tu mes · Ahorro y Bosque · Gastos · Compras ---------- */
 function din8Tabs(on){
   /* «mes» (el cierre del mes) cuelga de Gastos */
   const o=on==='mes'?'gastos':on;
   return '<div class="dtop"><h2 class="subtit">💶 Dinero</h2></div><div class="d6seg d7seg lau-tabs" role="tablist" aria-label="Dinero">'+
-    [['','Tu mes'],['bosque','Bosque'],['gastos','Gastos'],['ahorro','Ahorro'],['compras','Compras']].map(function(t){
-      return '<button role="tab"'+(t[0]===o&&on!=='mes'?' class="on" aria-selected="true"':(t[0]===o?' class="on" aria-selected="true" data-a="d6-tab" data-v="gastos"':' aria-selected="false" data-a="d6-tab" data-v="'+t[0]+'"'))+'>'+t[1]+'</button>';}).join('')+'</div>';}
+    [['','Tu mes'],['ahorro','Ahorro y Bosque'],['gastos','Gastos'],['compras','Compras']].map(function(t){
+      const c=(t[0]==='ahorro'?'ab-t':'')+(t[0]===o?' on':'');
+      return '<button role="tab"'+(c?' class="'+c.trim()+'"':'')+(t[0]===o&&on!=='mes'?' aria-selected="true"':(t[0]===o?' aria-selected="true" data-a="d6-tab" data-v="gastos"':' aria-selected="false" data-a="d6-tab" data-v="'+t[0]+'"'))+'>'+t[1]+'</button>';}).join('')+'</div>';}
 /* ===================== DINERO · TU MES (El Vaso) =====================
    La portada de Dinero: con la nómina del mes y los fijos apuntados, lo que acabarás el mes teniendo y
    cuánto de eso ahorras, como un vaso por capas (fijos abajo, gastos, margen, ahorro arriba). Tocar el
@@ -21839,8 +21847,10 @@ function tuMesDatos(){
   const prev=Math.max(gastado,T.vars||Math.round(gastado/Math.max(1,M.dia)*M.dim));
   const acabas=ingreso-fijos-prev,tras=ingreso-fijos;
   const margen=Math.round(Math.max(0,tras)*0.1/10)*10;
-  const ahorras=Math.max(0,acabas-margen);
-  const paraGastar=Math.max(0,ingreso-fijos-gastado-ahorras);
+  const ahorroTot=Math.max(0,acabas-margen);
+  /* gastos grandes «apartando»: su cuota sale de lo que ibas a ahorrar y va aparte; el resto, al colchón */
+  const D3=d3Datos(),aparta=Math.min(ahorroTot,D3.aparta),ahorras=ahorroTot-aparta;
+  const paraGastar=Math.max(0,ingreso-fijos-gastado-ahorroTot);
   const lista=gastosFijos().map(function(g){return {g:g,pg:!!gastoPagado(g,y,m),f:fechaDeGasto(g,y,m)};})
     .sort(function(a,b){return (a.pg-b.pg)||a.f.localeCompare(b.f);});
   const pagado=lista.reduce(function(s,x){return s+(x.pg?+x.g.importe||0:0);},0);
@@ -21848,7 +21858,7 @@ function tuMesDatos(){
   /* sin gasto del día a día conocido (ni mes típico ni nada gastado) no se sabe con cuánto acabas: «ahorras» saldría inflado */
   const sinVar=!T.vars&&!gastado;
   return {M:M,hay:ingreso>0||fijos>0,sinVar:sinVar,ingreso:ingreso,fijos:fijos,gastado:gastado,prev:prev,acabas:acabas,tras:tras,margen:margen,
-    ahorras:ahorras,paraGastar:paraGastar,porDia:Math.floor(paraGastar/M.dias),dias:M.dias,est:M.est,lista:lista,
+    ahorras:ahorras,ahorroTot:ahorroTot,aparta:aparta,grandes:D3.grandes,deAhorro:D3.deAhorro,paraGastar:paraGastar,porDia:Math.floor(paraGastar/M.dias),dias:M.dias,est:M.est,lista:lista,
     pagado:Math.round(pagado),porPagar:Math.round(recibos-pagado),recibos:recibos};}
 function tmVasoSVG(D,sep){
   const paleta=['#1e40af','#0369a1','#6d28d9','#a21caf','#4338ca','#0f766e'],VASO='M8 6H162L148 228H22Z';
@@ -21858,14 +21868,14 @@ function tmVasoSVG(D,sep){
   if(D.sinVar)L.push({v:Math.max(0,D.tras),c:'#cbd5e1'});
   else{L.push({v:D.gastado,c:'#b45309'});}
   if(!D.sinVar&&D.prev>D.gastado)L.push({v:D.prev-D.gastado,c:'#f59e0b',pat:1,pc:'#fde68a'});
-  if(!D.sinVar&&D.acabas>0){L.push({v:Math.min(D.margen,D.acabas),c:'#cbd5e1'});L.push({v:D.ahorras,c:'#15803d'});}
+  if(!D.sinVar&&D.acabas>0){L.push({v:Math.min(D.margen,D.acabas),c:'#cbd5e1'});if(D.aparta>0)L.push({v:D.aparta,c:'#be123c',pat:1,pc:'#fff1f2',capa:'aparta'});L.push({v:D.ahorras,c:'#15803d'});}
   const nF=L.filter(function(l){return l.fijo;}).length,tot=Math.max(D.ingreso,L.reduce(function(s,l){return s+l.v;},0),1),K=216/tot,G=3;
   let cum=0,defs='',rects='';
   L.forEach(function(l,i){
     const h=l.v*K,y=228-cum*K-h;cum+=l.v;if(h<=0)return;
     if(l.pat)defs+='<pattern id="tmp'+i+'" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="'+(l.pc||'#fff')+'"/><rect width="3" height="7" fill="'+l.c+'"/></pattern>';
     const off=sep?(l.fijo?i:nF)*G:0;
-    rects+='<g class="l" style="transform:translateY('+(-off)+'px)"><rect x="0" y="'+y.toFixed(1)+'" width="170" height="'+h.toFixed(1)+'" fill="'+(l.pat?'url(#tmp'+i+')':l.c)+'" stroke="'+(l.fijo?l.c:'#fff')+'" stroke-width="1"/></g>';});
+    rects+='<g class="l"'+(l.capa?' data-capa="'+l.capa+'"':'')+' style="transform:translateY('+(-off)+'px)"><rect x="0" y="'+y.toFixed(1)+'" width="170" height="'+h.toFixed(1)+'" fill="'+(l.pat?'url(#tmp'+i+')':l.c)+'" stroke="'+(l.fijo?l.c:'#fff')+'" stroke-width="1"/></g>';});
   const ult=L.filter(function(l){return l.fijo;}).reduce(function(s,l){return s+l.v;},0);
   const lin=sep?'<line x1="14" x2="156" y1="'+(228-ult*K-nF*G-G/2).toFixed(1)+'" y2="'+(228-ult*K-nF*G-G/2).toFixed(1)+'" stroke="#0f172a" stroke-width="2.5" stroke-dasharray="5 3"/>':'';
   return '<svg viewBox="0 0 170 236" width="170" height="236" role="img" aria-labelledby="tmvt"><title id="tmvt">Vaso del mes por capas: fijos abajo, gastos normales, margen y lo que ahorras arriba</title>'+
@@ -21881,7 +21891,7 @@ function dinTuMesHTML(){
   const f=fmtMil,fila=function(c,t,v){return '<li class="tm-ley"><i style="background:'+c+'"></i><span>'+t+'</span><b>'+f(v)+' €</b></li>';};
   const ladoA='<div class="tm-gr">Fijos '+f(D.fijos)+' €</div>'+
     (D.lista.length?'<div>✓ '+f(D.pagado)+' € pagados · ○ '+f(D.porPagar)+' € por pagar</div>':'')+
-    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
+    '<ul class="tm-leyes" aria-label="Capas del vaso, de arriba abajo">'+(D.sinVar?fila('#cbd5e1','Te queda',Math.max(0,D.tras)):(D.acabas>0?fila('#15803d','Ahorras',D.ahorras)+(D.aparta>0?fila('#be123c','Apartado (rayas)',D.aparta):'')+fila('#cbd5e1','Margen',Math.min(D.margen,D.acabas)):'')+fila('#f59e0b','Gastos',D.prev))+fila('#475569','Fijos',D.fijos)+'</ul>'+
     '<div class="tm-toca">Toca el vaso ↓</div>';
   const ladoB='<div class="tm-quedan">Te quedan '+f(D.tras)+' €</div>'+
     '<ul class="tm-fijos" aria-label="Fijos del mes">'+D.lista.map(function(x){
@@ -21891,30 +21901,72 @@ function dinTuMesHTML(){
     '<label class="tm-bt p" style="cursor:pointer">📷 Subir Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';
   return cab+
     (D.sinVar?aviso:'<div class="card tm-hero"><div class="tm-t">Acabarás el mes con</div><div class="tm-fila"><span class="tm-n">'+(D.acabas<0?'−':'~')+f(Math.abs(D.acabas))+' €</span>'+
-      (D.acabas>0?'<span class="tm-a">· ahorras '+f(D.ahorras)+'</span>':'<span class="tm-a mal">· este mes no te llega</span>')+'</div></div>')+
+      (D.acabas>0?'<span class="tm-a">· ahorras '+f(D.ahorras)+'</span>':'<span class="tm-a mal">· este mes no te llega</span>')+'</div>'+tgChipsHTML(D)+'</div>')+
     '<div class="tm-vrow"><button class="tm-vaso" data-a="tumes-fijos" aria-pressed="'+sep+'" aria-label="Vaso del mes. Toca para separar los fijos y ver cuánto te queda tras pagarlos.">'+tmVasoSVG(D,sep)+'</button>'+
       '<div class="tm-lado" aria-live="polite">'+(sep?ladoB:ladoA)+'</div></div>'+
     (D.sinVar?'<div class="tm-cadena" role="group" aria-label="La cuenta del mes: '+f(D.ingreso)+' menos '+f(D.fijos)+' igual a '+f(D.tras)+'">'+
       '<div class="tm-fi">Empiezas<b>'+f(D.ingreso)+'</b></div><span class="tm-op" aria-hidden="true">−</span>'+
       '<button class="tm-fi tm-fx" data-a="tumes-fijos" aria-pressed="'+sep+'">Fijos<b>'+f(D.fijos)+'</b><span>'+(sep?'quedan '+f(D.tras):'toca')+'</span></button><span class="tm-op" aria-hidden="true">=</span>'+
-      '<div class="tm-fi fin">Te queda<b>'+f(D.tras)+'</b></div></div></div>':
+      '<div class="tm-fi fin">Te queda<b>'+f(D.tras)+'</b></div></div>'+tgBotonHTML()+tgFilasHTML(D)+'</div>':
     '<div class="tm-cadena" role="group" aria-label="La cuenta del mes: '+f(D.ingreso)+' menos '+f(D.fijos)+' menos '+f(D.prev)+' igual a '+f(D.acabas)+'">'+
       '<div class="tm-fi">Empiezas<b>'+f(D.ingreso)+'</b></div><span class="tm-op" aria-hidden="true">−</span>'+
       '<button class="tm-fi tm-fx" data-a="tumes-fijos" aria-pressed="'+sep+'">Fijos<b>'+f(D.fijos)+'</b><span>'+(sep?'quedan '+f(D.tras):'toca')+'</span></button><span class="tm-op" aria-hidden="true">−</span>'+
       '<div class="tm-fi">Gastos<b>'+f(D.prev)+'</b><span>llevas '+f(D.gastado)+'</span></div><span class="tm-op" aria-hidden="true">=</span>'+
       '<div class="tm-fi fin">Acabas<b>'+f(D.acabas)+'</b></div></div>'+
-    '<p class="tm-libre">Para gastar sin tocar el ahorro: <b>'+f(D.paraGastar)+' €</b> · unos <b>'+f(D.porDia)+' €/día</b></p></div>');}
+    '<p class="tm-libre">Para gastar sin tocar el ahorro: <b>'+f(D.paraGastar)+' €</b> · unos <b>'+f(D.porDia)+' €/día</b></p>'+tgBotonHTML()+tgFilasHTML(D)+'</div>');}
+/* ---- R3 · Gasto grande: la hoja «Apuntar gasto grande», los chips de Tu mes y sus filas ---- */
+function tgChipsHTML(D){
+  /* bajo «ahorras»: lo que va al colchón y lo apartado, o lo que sale de lo ahorrado (nada solo por color: lleva texto) */
+  const ap=D.aparta>0?'<div class="tm-chip">🟩 '+fmtMil(D.ahorras)+' € al colchón + 💻 '+fmtMil(D.aparta)+' apartados</div>':'';
+  return ap+D.grandes.filter(function(c){return c.grande==='ahorrado';}).map(function(c){
+    return '<div class="tm-chip sa">💻 '+esc(c.nombre)+' sale de lo ahorrado'+(c.mes?' en '+esc(mkCorto(c.mes)):'')+'</div>';}).join('');}
+function tgBotonHTML(){return '<button class="tm-bt p tm-gbtn" data-a="tg-abre">Apuntar gasto grande <small>viaje, portátil…</small></button>';}
+function tgFilasHTML(D){
+  const mkH=ahoMk(new Date().getFullYear(),new Date().getMonth());
+  return D.grandes.length?'<ul class="tm-glista" aria-label="Gastos grandes">'+D.grandes.map(function(c){
+    return '<li><button class="tm-gfila" data-a="tg-abre" data-id="'+esc(c.id)+'"><span>💻 '+esc(c.nombre)+'</span><span>'+fmtMil(c.precio)+' € · '+
+      (c.grande==='apartando'?'apartas '+fmtMil(d5Cuota(c,mkH))+' al mes':'sale de lo ahorrado')+(c.mes?' · '+esc(mkCorto(c.mes)):'')+'</span></button></li>';}).join('')+'</ul>':'';}
+function tgLee(){
+  /* los campos de la hoja pasan a ui.tmGrande: así repintar (al elegir la opción) no los vacía */
+  const G=ui.tmGrande;if(!G)return null;
+  const v=function(i){const e=document.getElementById(i);return e?e.value:null;};
+  if(v('tgNom')!=null)G.nom=String(v('tgNom')).slice(0,60);
+  if(v('tgPre')!=null)G.pre=String(v('tgPre'));
+  if(v('tgMes')!=null)G.mes=/^\d{4}-\d{2}$/.test(v('tgMes')||'')?v('tgMes'):'';
+  return G;}
+function tgPrevTexto(){
+  const G=ui.tmGrande,T=tuMesDatos(),pre=leeImporte(G.pre),mkH=ahoMk(new Date().getFullYear(),new Date().getMonth());
+  if(!G.modo)return 'Elige cómo lo pagas.';
+  if(!isFinite(pre)||!(pre>0))return 'Escribe el precio para ver cómo queda el mes.';
+  const c=G.id?dinero3S().compras.find(function(x){return x.id===G.id;}):null,llevas=c?c.llevas:0;
+  if(G.modo==='apartando'){
+    if(!G.mes)return 'Pon el mes para el que lo quieres y calculo cuánto apartar.';
+    const C=d5Cuota({precio:pre,llevas:llevas,mes:G.mes},mkH),otras=Math.max(0,T.aparta-(c&&c.grande==='apartando'&&c.estado==='plan'?d5Cuota(c,mkH):0));
+    return 'Este mes: '+fmtMil(Math.max(0,T.ahorroTot-otras-C))+' € al colchón + '+fmtMil(C)+' apartados.';}
+  return 'Este mes ahorras '+fmtMil(T.ahorras)+' €. '+(G.mes?'En '+mkLargo(G.mes)+' ':'Cuando lo pagues ')+'el colchón se lleva '+fmtMil(Math.max(0,pre-llevas))+' €.';}
+function tgHojaHTML(){
+  const G=ui.tmGrande,op=function(m,t,sub){return '<button class="tm-opc" data-a="tg-modo" data-v="'+m+'" aria-pressed="'+(G.modo===m)+'">'+t+'<small>'+sub+'</small></button>';};
+  return hojaMarco('hoja-cerrar','tg-hoja','Apuntar gasto grande','<h3 class="sh">Apuntar gasto grande</h3>'+
+    '<label class="lau-mini tg-l">¿Qué es?<input id="tgNom" class="lau-in" style="width:100%" autocomplete="off" maxlength="60" placeholder="Portátil" data-a="tg-campo" value="'+esc(G.nom||'')+'"></label>'+
+    '<div class="tg-2"><label class="lau-mini tg-l">Precio (€)<input id="tgPre" class="lau-in" inputmode="decimal" autocomplete="off" placeholder="1.100" data-a="tg-campo" value="'+esc(G.pre||'')+'"></label>'+
+    '<label class="lau-mini tg-l">Para qué mes<input id="tgMes" class="lau-in" type="month" data-a="tg-campo" value="'+esc(G.mes||'')+'"></label></div>'+
+    '<div role="group" aria-label="Cómo lo pagas">'+op('apartando','Lo voy apartando','Un poco cada mes hasta ese mes.')+op('ahorrado','Sale de lo ahorrado','Se lleva del colchón cuando lo pagues.')+'</div>'+
+    '<p id="tgPrev" class="tg-prev" aria-live="polite">'+esc(tgPrevTexto())+'</p>'+
+    '<div class="tm-bts tg-bts"><button class="tm-bt" data-a="tg-quita"'+(G.id?'':' disabled')+'>Quitar</button><button class="tm-bt p" data-a="tg-listo">Listo</button></div>');}
 function dinHoyLineaHTML(key,esHoy){
   /* debajo del cartel de la noche: lo que te queda del mes y, si toca, el fijo de mañana. «Hoy toca pagar» ya lo dice pagosHoyHTML */
   if(!esHoy)return '';
   const D=tuMesDatos();if(!D.hay)return '';
   const man=addDays(parseDate(key),1),sig=gastosDeFecha(iso(man)).filter(function(g){return !gastoPagado(g,man.getFullYear(),man.getMonth());});
-  if(!sig.length&&(D.sinVar||(D.est!=='ojo'&&D.est!=='pasa')))return '';
+  const gr=D.sinVar?'':D.grandes.map(function(c){return c.grande==='apartando'?'':c.nombre;}).filter(Boolean),
+    nA=D.grandes.filter(function(c){return c.grande==='apartando';}).map(function(c){return c.nombre;}),
+    extra=D.sinVar?'':(D.aparta>0?' · apartas '+fmtMil(D.aparta)+' a '+esc(nA.join(' y ')):'')+(gr.length?' · '+esc(gr.join(' y '))+' saldrá de lo ahorrado':'');
+  if(!sig.length&&!extra&&(D.sinVar||(D.est!=='ojo'&&D.est!=='pasa')))return '';
   const tot=sig.reduce(function(s,g){return s+(+g.importe||0);},0);
   if(D.sinVar)return '<button class="tm-hoy" data-a="d6-tab" data-v="">💶 Mañana pagas '+esc(sig.map(function(g){return g.nombre;}).join(' y '))+' ('+esc(eur(tot))+')</button>';
-  return '<button class="tm-hoy" data-a="d6-tab" data-v="">💶 Te quedan '+fmtMil(D.paraGastar)+' € · '+fmtMil(D.porDia)+' €/día hasta fin de mes'+
+  return '<button class="tm-hoy" data-a="d6-tab" data-v="">💶 Te quedan '+fmtMil(D.paraGastar)+' € · '+fmtMil(D.porDia)+' €/día hasta fin de mes'+extra+
     (sig.length?' · mañana pagas '+esc(sig.map(function(g){return g.nombre;}).join(' y '))+' ('+esc(eur(tot))+')':'')+'</button>';}
-function dinTabDe(){const t=ui.dinTab||'';return t==='ahorro'||t==='mes'||t==='gastos'||t==='compras'||t==='bosque'?t:'';}
+function dinTabDe(){const t=ui.dinTab||'';return t==='bosque'||t==='ahorro'?'ahorro':(t==='mes'||t==='gastos'||t==='compras'?t:'');}
 function dinTaxisHTML(mk){
   /* el taxi al hospital es un hábito que se quiere bajar, y aquí es lo que cuesta: tantos este mes, tantos euros,
      frente al mes pasado. Sin viaje con bus apuntado no hay nada que contar */
@@ -24671,6 +24723,21 @@ function act(a,el){
     case 'compra-todo':ui.compraTodo=!ui.compraTodo;render();break;
     case 'nav-atras':navAtras();break;   /* el «‹ atrás» de la cabecera (index.html) */
     /* también desde las tarjetas del asistente en Hoy: llevan a Dinero (antes solo cambiaban algo por detrás) */
+    case 'tg-abre':{const c=el.dataset.id?dinero3S().compras.find(function(x){return x.id===el.dataset.id;}):null;
+      ui.tmGrande=c?{id:c.id,nom:c.nombre,pre:String(c.precio).replace('.',','),mes:c.mes,modo:D3_GRANDES.indexOf(c.grande)>=0?c.grande:''}:{id:'',nom:'',pre:'',mes:'',modo:''};render();
+      const i=document.getElementById('tgNom');if(i)i.focus({preventScroll:true});break;}
+    case 'tg-modo':{const G=tgLee();if(!G)break;G.modo=el.dataset.v==='ahorrado'?'ahorrado':'apartando';render();break;}
+    case 'tg-listo':{const G=tgLee();if(!G)break;const pre=leeImporte(G.pre),nom=String(G.nom||'').trim().slice(0,60);
+      if(!nom){flash('ponle un nombre');break;}
+      if(!isFinite(pre)||!(pre>0)){flash('escribe el precio, por ejemplo 1.100');break;}
+      if(!G.modo){flash('elige cómo lo pagas');break;}
+      if(G.modo==='apartando'&&!G.mes){flash('pon el mes para el que lo quieres');break;}
+      const d=dinero3S(),c=G.id?d.compras.find(function(x){return x.id===G.id;}):null;
+      if(c){c.nombre=nom;c.precio=pre;c.mes=G.mes||'';c.grande=G.modo;c.estado='plan';}
+      else d.compras.push({id:uid('co'),nombre:nom,precio:pre,llevas:0,mes:G.mes||'',estado:'plan',alta:iso(new Date()),tipo:'ilu',grande:G.modo});
+      ui.tmGrande=null;save();render();flash('apuntado: '+nom);break;}
+    case 'tg-quita':{const G=ui.tmGrande,c=G&&G.id?dinero3S().compras.find(function(x){return x.id===G.id;}):null;
+      if(!c)break;c.estado='no';ui.tmGrande=null;save();render();flash('«'+c.nombre+'» fuera de tus gastos grandes (no se borra nada)');break;}
     case 'tumes-fijos':{ui.tmFijos=!ui.tmFijos;render();const f=document.querySelector('#main .'+(el.classList.contains('tm-fx')?'tm-fx':'tm-vaso'));if(f)f.focus({preventScroll:true});break;}
     case 'd6-tab':ui.tab='dinero';ui.dinTab=el.dataset.v||'';ui.dineroVista='';ui.dinHoja='';render();window.scrollTo(0,0);break;
     case 'd3-guardar':{const v=leeImporte((document.getElementById('d3Guardado')||{}).value);
@@ -27299,6 +27366,7 @@ document.addEventListener('change',e=>{
   switch(a){
     case 'fin-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';finLeer(fs);}break;}
     case 'dinero-f':render();break;
+    case 'tg-campo':{if(!ui.tmGrande)break;tgLee();const p=document.getElementById('tgPrev');if(p)p.textContent=tgPrevTexto();break;}
     case 'd5-precio':case 'd5-mes':case 'd5-tipo':{const c=dinero3S().compras.find(function(x){return x.id===el.dataset.id;});if(!c)break;
       if(a==='d5-precio'){const v=leeImporte(el.value);if(!isFinite(v)||!(v>0)){flash('escribe un precio válido');render();break;}c.precio=v;}
       else if(a==='d5-mes')c.mes=/^\d{4}-\d{2}$/.test(el.value||'')?el.value:'';

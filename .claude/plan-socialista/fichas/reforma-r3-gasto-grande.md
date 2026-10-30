@@ -47,15 +47,15 @@ l. 165-184; dibujo `bosque()`/`meses()`, l. 277-295). Tu mes ya está en main (R
   `#lauT`, `.lau-musgo` o `d6-tab` `bosque` se pasan a la pestaña nueva (no se borran).
 
 ## 4. Pasos
-- [ ] P1 Pruebas 368-370 que fallan: (368) Tu mes → Apuntar gasto grande → Portátil 1.100 para dentro de 2 meses → «Lo voy
+- [x] P1 Pruebas 368-370 que fallan: (368) Tu mes → Apuntar gasto grande → Portátil 1.100 para dentro de 2 meses → «Lo voy
   apartando» → Listo → chip «… al colchón + 550 apartados», `ahorras` baja, Hoy dice «apartas» → abrir la fila → Quitar →
   cifras como al principio; y con «Sale de lo ahorrado» `pide` sube; (369) migración: store viejo (huchas+meta+dinero+dinero3
   sin grande) → nada perdido, 0 grandes; `normalize` conserva/descarta `grande`; (370) Ahorro y Bosque: 4 pestañas, `dinTab`
   `bosque` abre la nueva, árboles = objetivo, fruto con un grande · tests/regression.test.js · constructor sonnet · ~12 pasos
-- [ ] P2 Datos: `grande` en Limpia, `d5Cuota`, `d3Datos`, `tuMesDatos` · app.js · constructor · ~8 pasos
-- [ ] P3 Hoja + acciones + chips + capa del vaso + filas + línea de Hoy + CSS · app.js, styles.css · constructor · ~18 pasos
-- [ ] P4 `dinAhoBosqueHTML` + pestañas + CSS `.ab-` · app.js, styles.css · constructor · ~16 pasos
-- [ ] P5 Pasar las pruebas viejas a la pestaña nueva; P1 cae al revertir; `tools/pruebas-corto.sh --solo …` · constructor · ~8
+- [x] P2 Datos: `grande` en Limpia, `d5Cuota`, `d3Datos`, `tuMesDatos` · app.js · constructor · ~8 pasos
+- [x] P3 Hoja + acciones + chips + capa del vaso + filas + línea de Hoy + CSS · app.js, styles.css · constructor · ~18 pasos
+- [x] P4 `dinAhoBosqueHTML` + pestañas + CSS `.ab-` · app.js, styles.css · constructor · ~16 pasos
+- [x] P5 Pasar las pruebas viejas a la pestaña nueva; P1 cae al revertir; `tools/pruebas-corto.sh --solo …` · constructor · ~8
 - [ ] P6 Capturas 412×915: Tu mes con apartando y con ahorrado, la hoja, Ahorro y Bosque con fruto y sin datos · verificador sonnet
 - [ ] P7 Suite completa, DECISIONS «La Reforma · R3», sello, main (Consejo por delegación), gasto y traspaso R4 · principal
 
