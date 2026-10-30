@@ -2152,3 +2152,11 @@ racha para «sin pantallas» (G11 no lleva racha); puntuar el viaje.
 Hoy (y el aviso de cama): la comida y el sueño siguen apuntables. La hora de salida es de un solo día (por defecto, el de ida). Las
 pruebas 395a-c (en `regression.test.js`) caen cada una al revertir su pieza y ninguna otra. G11 decía «sin pausa» para sin pantallas:
 aquí la pausa solo existe durante un viaje que el usuario activa y marca.
+
+## Gran Ley · G13 · La suite en ~2 min y los PNG de design/ (2026-10-30)
+
+**Elegido.** Los PNG de `design/` comprimidos con Pillow a paleta de 256 colores (70 → 22 MB, mismas rutas); `design/` no está en la caché de `sw.js` (`BASE` solo lleva la app y `fig/`). La suite se queda como estaba (3 trozos, cortes 202 y 270): nada de lo probado la mejoró.
+
+**Descartado (medido, cada tramo corrido suelto con node).** (1) Más cortes de la 270 al final (282, 292 … 392): pasan solos, pero 6-12 trozos a la vez en 4 núcleos tardaron MÁS (272-394 s) y tumban a `actualiza`: la suite no es solo espera, cada navegador gasta CPU. (2) Cortes en 1-201 (40, 47, 53b, 45#2, 69): arrancando de cero fallan las pruebas «Hoy junta las cinco patas», «la guardia entra y sale a su hora», «el carril», «la despensa» y «Entreno: la biblioteca se filtra»; necesitan la jornada 8-15, los tipos de guardia con relevo a las 08:00 y las rutinas con sesiones. (3) Repartir por tiempo y por núcleos se escribió y probó, pero sin cortes nuevos válidos en 1-201 no baja de ~5-6 min.
+
+**Supuestos.** Para llegar a ~2 min falta una siembra por `window.PG` (jornada, `guardiaTipos`, rutina y sesiones, platos y menú) al arrancar un trozo que parta la cadena 1-201; es la tarea siguiente. Nada se saltó ni se aflojó.
