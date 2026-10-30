@@ -12,9 +12,24 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Gran Ley está hecha (G1-G12 en main; G13 a medias: la suite sigue en ~5-6 min).** Lo siguiente: elegir en `/bitacora` entre los aparcados (siembra de la suite, rótulos de 10,5 px, noche olvidada, B6 «100 g de ajo», Fintonic «Presupuesto»).
+**La Gran Ley está hecha (G1-G12 en main; G13 a medias).** Los aparcados, estudiados por el Consejo (2026-10-30, 3.ª): tanda «Los Remates» abajo, esperando al usuario.
 
 ## Por hacer
+
+### «Los Remates» (lo que quedaba aparcado) · Consejo 2026-10-30 (3.ª) · acta `consejo/2026-10-30-3.md`
+
+[v3-remates] «que me digan cómo lo van a solucionar; lo que quede por aprobar, que lo debatan en sesión» (2026-10-30).
+**Espera al usuario:** presupuesto (~4,8 M), qué entra en la maqueta L2 y los supuestos. Sesiones «Remates · L<n> · …».
+
+| # | Sesión | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|
+| L1 | Arreglos: «100 g de ajo» → ración real [aparc-vit-b6-ajo]; Fintonic presupuesto y miles [aparc-fin-presupuesto]; noches sin dato de la barrita de Sueño como botón, 7 noches [aparc-sueno-noche-olvidada] | arreglo | sonnet con ficha | ~1,4 M |
+| L2 | Maqueta: letra ≥11 px y botones 44 px [aparc-rotulos-10px] [aparc-entreno-letra]; línea «Te faltan N noches» en Hoy [aparc-sueno-sitio]; viaje a mano + enlaces [v3-viajes]; casilla «minutos de móvil» [enc-bienestar-digital] — lo que apruebe el usuario | maqueta | sonnet | ~0,9 M |
+| L3 | Construir lo aprobado en L2 | construir | sonnet con ficha | ~1,5 M |
+| L4 | Supuestos: ratificar 18, revisar 4 (r5-comer, r4-fintonic, comer-reloj1, nutri) | arreglo | haiku/sonnet | ~0,3 M |
+| L5 | (opcional) Suite con siembra, tope 1 sesión, meta 3,5-4 min [aparc-suite-siembra] | herramientas | opus | ~0,7 M |
+
+Vigilar sin sesión: [aparc-reloj-324] [aparc-lloret-suite]. Aplazado hasta después de L3: [aparc-arte-iconos]. Descartado: leer el uso de pantalla automáticamente (una web no puede).
 
 ### «La Gran Ley» (todo lo pendiente) · Consejo 2026-10-30 · acta `consejo/2026-10-30.md`
 
