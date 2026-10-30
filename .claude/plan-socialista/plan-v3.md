@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G4 · Construir R7: proteína en Hoy + semana básica + aviso tras entreno** (con la maqueta R5 `maquetas/comer-reforma.html`; la G2 añade la frase arriba en Hoy y el antojo de microondas, `maquetas/comer-g2.html`)
+**Gran Ley · G5 · Construir R8 + S7: cola de TikTok, página de receta con Compartir, antojo de microondas** (maquetas R5 `comer-reforma.html` y G2 `comer-g2.html`, pantallas 3 y 4)
 
 ## Por hacer
 
@@ -31,7 +31,7 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 | ~~G1~~ | ✅ main 0d867cf · 30/10 · 1,7 M (se pasó: todo en opus) · vaso con muestra a rayas, aviso de plantilla con aire, pizza sin coma y vitaminas sin dulces, «Anotar anoche» en Reloj y Línea, R4 comprobada, parte programado (lu y ju 7:40) · pruebas 372-375 | arreglo | sonnet; haiku textos | ~1,0 M |
 | ~~G2~~ | ✅ 30/10 · `maquetas/comer-g2.html` · **completa la R5** (`comer-reforma.html`, que manda en proteína, receta, compra y nevera): «Escribir lo comido» arriba en Hoy y el antojo de microondas S7 (≤5 min · ≥20 g, dos alternativas, «Apuntar que me lo he comido») · sin concurso (Consejo por delegación, acta `consejo/2026-10-30-g2.md`) · ~0,6 M | maqueta | sonnet monta, haiku textos | ~1,5 M |
 | ~~G3~~ | ✅ main 56f30af · 30/10 · adelantada (sesión R6, con la maqueta R5) · compra base con un toque restando la casa, semana por caducidad, hoja del reparto según tu semana, zona ❄ Congelador, pescado 4 × 250 g, 8 platos que congelan bien (lista), `dishes[].congela` · pruebas 376-379 · ficha `fichas/reforma-r6-compra-congelador.md` | construir | sonnet con ficha | ~2,0 M |
-| G4 | Construir R7: proteína en Hoy + semana básica + aviso tras entreno | construir | sonnet | ~1,2 M |
+| ~~G4~~ | ✅ 30/10 · proteína en Hoy a 1,6 g/kg (solo si faltan >30 g, una sugerencia de la nevera; guardia «lo que se pueda»), aviso tras entreno (2 h), la frase arriba en Comer → Hoy con lupa (una sola caja), barra de Comer con el mismo número · S6 ya cubierta (no se construye) · pruebas 380-383 · ~2,1 M (se pasó: dos suites completas y retoques) | construir | sonnet | ~1,2 M |
 | G5 | Construir R8 + S7: cola TikTok, página de receta con Compartir, microondas | construir | sonnet | ~1,5 M |
 | G6 | MAQUETA Entreno: R9 + entrenador que respeta la guardia | maqueta | opus + sonnet | ~1,0 M |
 | G7 | Construir R10: 12 dibujos, un toque por serie, progresión doble, récord | construir | haiku dibujos, sonnet | ~2,0 M |

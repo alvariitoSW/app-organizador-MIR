@@ -11,7 +11,7 @@ tú puedes añadir o tachar a mano.
 - ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
 - ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
 - [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
-- [aparc-comer-eje-frase] → maquetada en G2, se construye en G3 (Consejo 30/10: en Hoy, arriba) · La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
+- ~~[aparc-comer-eje-frase]~~ HECHO G4 (30/10): la frase arriba en Comer → Hoy, con lupa (Consejo 30/10: en Hoy, arriba) · La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
 
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)

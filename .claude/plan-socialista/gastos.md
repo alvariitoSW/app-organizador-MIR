@@ -63,6 +63,7 @@ traspaso explica por qué.
 | 2026-10-30 | reforma-r6-compra-congelador | construir | opus-5-5 + sonnet-5-5 | 3 | 178 | **3,6 M** | R6 obra: compra base y congelador (47 %) | obra sonnet 1,7 M (64 pasos) + principal 1,6 M: main cambió dos veces a mitad (G1) y hubo que mezclar, renumerar pruebas y pasar 3 suites enteras · ahorro: antes de construir, git fetch de main y numerar las pruebas detrás de lo último de main |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
+| 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
 
 ## Ahorros que funcionan
 
