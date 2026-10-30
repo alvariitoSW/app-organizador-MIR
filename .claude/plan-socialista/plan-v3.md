@@ -172,6 +172,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 - [enc-bienestar-digital] Uso real de pantalla y un hábito «sin pantallas» fijo
 - [aparc-parte-diario] El parte cada mañana solo (falta la hora)
 - [aparc-suite-2min] La suite en ~2 minutos
+- [aparc-regleta-pisa] En la regleta de la mañana de Hoy, «Vestirse» y «Salir de casa» se pisan un poco (visto en El Cierre, 30/10)
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
