@@ -23,7 +23,7 @@ traspaso explica por qué.
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
 | arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
-| maqueta | opus + sonnet (+ haiku jurado) | R1 3,0 M con concurso · R5 1,0 M sin concurso (92 pasos, parte y salud incluidos) | ~2,7 M con concurso · ~0,9 M sin él | reforma-r5-comer (2026-10-30) |
+| maqueta | opus + sonnet (+ haiku jurado) | R1 3,0 M con concurso · R5 1,0 M sin concurso (92 pasos, parte y salud incluidos) | ~2,7 M con concurso · ~0,9 M sin él · ~0,6 M si solo completa otra (G2) | reforma-r5-comer (2026-10-30) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
 | construir (Reforma, ficha + 1 constructor) | opus + sonnet | 3,6 M (178 pasos; obra 1,7 M, principal 1,6 M, verificador 0,18 M, parte 0,07 M) | ~3,2 M (90 %); sin el lío de main a mitad, ~2,5 M | reforma-r6-compra-congelador (2026-10-30) |
@@ -62,6 +62,8 @@ traspaso explica por qué.
 | 2026-10-30 | gran-ley-g1 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 116 | **1,7 M** | sesión principal (89 %) | 4 arreglos + verificador sonnet + parte programado; se pasó (1,7 M de 1,0): la principal hizo todo en opus sin constructor sonnet · ahorro: ficha corta y un constructor sonnet para los 4 arreglos |
 | 2026-10-30 | reforma-r6-compra-congelador | construir | opus-5-5 + sonnet-5-5 | 3 | 178 | **3,6 M** | R6 obra: compra base y congelador (47 %) | obra sonnet 1,7 M (64 pasos) + principal 1,6 M: main cambió dos veces a mitad (G1) y hubo que mezclar, renumerar pruebas y pasar 3 suites enteras · ahorro: antes de construir, git fetch de main y numerar las pruebas detrás de lo último de main |
 <!-- fin de tareas medidas -->
+| 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
+| 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
 
 ## Ahorros que funcionan
 

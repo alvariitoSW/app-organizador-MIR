@@ -4,13 +4,14 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- [aparc-sueno-noche-olvidada] Una noche sin anotar solo se alcanza 2 días (barrita de Sueño, 3 noches); al tercero no hay ruta visible · verificador G2 · 2026-10-30
 
 - [aparc-reloj-324] La prueba 324 (tocar la sesión en «lo que viene» del reloj) cayó una vez en la suite completa (10:0x del 30/10, quedaba abierto «¿Quitar este evento?») y pasa sola, en su trozo y en la siguiente suite entera · tests/regression.test.js:12883
 - [aparc-lloret-suite] La prueba 205 del Lloretazo falló una vez en la suite completa (08:44 del 30/10); en las dos suites completas de la R6 (09:47 y 10:00 del 30/10) pasó. Se vigila; si no vuelve a caer, se cierra · tests/regression.test.js:7247
 - ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
 - ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
 - [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
-- [aparc-comer-eje-frase] La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
+- ~~[aparc-comer-eje-frase]~~ HECHO G4 (30/10): la frase arriba en Comer → Hoy, con lupa (Consejo 30/10: en Hoy, arriba) · La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
 
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
@@ -157,7 +158,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - ~~[sup-2026-10-29-la-noche]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 
 - ~~[sup-2026-10-30-r3]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
-- [sup-2026-10-30-g1] G1: «alimentos de verdad» por grupo y por nombre (fuera chocolate, cacao, galletas, bollería, tarta, helado, cremas de untar); el botón de sueño solo sale el día de hoy; en Conductor no se añade · DECISIONS «Gran Ley · G1» · 2026-10-30
+- ~~[sup-2026-10-30-g1]~~ VALE (Consejo por delegación, 2026-10-30, acta `consejo/2026-10-30-g2.md`; el usuario: «que decida el congreso») · G1: «alimentos de verdad» por grupo y por nombre (fuera chocolate, cacao, galletas, bollería, tarta, helado, cremas de untar); el botón de sueño solo sale el día de hoy; en Conductor no se añade · DECISIONS «Gran Ley · G1» · 2026-10-30
 - ~~[sup-2026-10-30-r4]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 
 ## Cerrados
@@ -222,3 +223,4 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-2026-10-30] Contado: main ec1370b desplegado y sin cambios; rama f2b7893 (R1) 13 commits por delante de main, sin código; siguiente R2 «Tu mes» (~1,2 M sonnet; ~0,9 M con ficha).
 - [parte-2026-10-30-b] Contado: R2 «Tu mes» en main 7942d02 (run 40983394688 success, sellado); R2 sin fila en gastos.md (sin medir); supuestos R2 (margen 10 %, línea de Hoy no ocultable, franja de casillas a mirar en el móvil) abiertos; ahora va R3 Gasto grande + Bosque y Ahorro (~1,8 M).
 - [parte-2026-10-30-c] Contado: R3 en main ed50e3a (run 41024716095 success, sellado); R3 medida 2,2 M; siguiente R4 Fintonic en pequeño (~0,8 M sonnet) elegida; 0 issues.
+- [parte-2026-10-30-f] Contado: G1 en main 29374b9 (success, sellado); siguiente G2 maqueta de Comer; rama con docs médicos sin pasar a main.

@@ -3,6 +3,29 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-10-29 · Recopilación de webs y apps médicas
+
+**Elegido:** una lista por temas en `docs/webs-medicas.md` (intensivos y ventilación, cardiología, urgencias y
+fiebre neutropénica, estudio MIR, guardias y nutrición), con enlace, resumen e informe de cada una. VentLoop y
+el visor aórtico quedan «guardados» como enlace + informe. **Descartado:** guardar copia de su código o de sus
+textos en el repositorio (son ajenos y sin licencia libre). **Supuestos:** `sup-2026-10-29-webs-medicas`.
+
+## 2026-10-29 · Estudio del visor de la raíz aórtica (artefacto público)
+
+**Elegido:** solo informe (`docs/informe-raiz-aortica-2026-10.md`): qué calcula (SC, z con Devereux, Lang y WASE,
+índices, rigidez, crecimiento, umbrales ACC/AHA 2022 y ESC 2024), cómo dibuja (Three.js con shader Fresnel,
+eco simulada píxel a píxel, Canvas 2D, PDF con jsPDF) y qué patrones nos sirven. Leído como datos de terceros,
+sin copiar código ni textos. **Descartado:** construir nada: no se pidió. **Supuestos:** `sup-2026-10-29-aorta`.
+
+## 2026-10-29 · Estudio del simulador de ventilación VentLoop
+
+**Elegido:** solo informe (`docs/informe-ventilador-2026-10.md`): qué hace VentLoop y cómo calcula
+(VC/PC/PSV, Rohrer, 64 unidades con apertura y cierre, pared torácica, Pmus, gases y circulación,
+Canvas 2D con paso fijo de 2 ms), y qué aprovechar o cambiar para un simulador nuestro de residente.
+Leído de la web pública, sin copiar código ni textos (lo descargado queda fuera del repositorio).
+**Descartado:** entrar en la app con cuenta (`vent.nodefield.jp`) y construir nada todavía: falta que el
+usuario decida dónde va y qué modos y casos lleva. **Supuestos:** los del registro `sup-2026-10-29-ventilador`.
+
 ## 2026-10-27 · Gastar menos tokens por sesión
 
 **Elegido** (visto bueno del usuario): REA deja de cargarse en cada sesión (`.mcp.json` → `tools/rea.mcp.json`;
@@ -1854,3 +1877,87 @@ en Mis platos. Reparto fijo de 2 en la nevera.
 lomo, pescado), no se calcula de la compra base editada. Las raciones ❄ siguen contando como ya cocinadas en lo que pide la
 compra. Si en «Hoy cocino» se cancela la hoja, no se crea el plato de la combinación. Los botones − y × de la despensa en la
 zona del congelador miden 30 px, como en el resto de la Nevera (ya era así).
+
+## Gran Ley · G1 · Arreglos y pulidos (2026-10-30)
+
+*Redactada después, el 30/10, por acuerdo del Consejo (`.claude/plan-socialista/consejo/2026-10-30-g2.md`).*
+
+**Elegido.** Cinco arreglos pequeños, cada uno con su prueba (372-375):
+- **Tu mes:** la muestra de «Apartado» en el vaso es a rayas, como su capa. La cifra va fuera del vaso y a 14 px (contraste 5,7:1).
+- **Hoy, modo plantilla:** el aviso «Usar las fechas del Mes» tiene 10 px de aire arriba y abajo (antes tapaba «＋ añadir»).
+- **Lector de comida:** «pizza barbacoa 3 porciones» sin coma. La sugerencia de vitaminas es comida de verdad, nunca chocolate ni dulces.
+- **Sueño:** «Anotar anoche» a la vista en Reloj y en Línea de Hoy, con la misma hoja que en Sueño.
+- **Cerrar R4 (Fintonic en pequeño):** el verificador la comprobó en el móvil (renombrar, quitar con 44 px y aviso «faltan X» en vez de «Todo cuadra»). No hacía falta arreglar nada.
+- **Parte de la mañana:** programado lunes y jueves a las 7:40 (hora de Madrid), en sesión nueva y con aviso al móvil. La primera vez será el lunes 2/11. No lleva conectores: no ve Actions, usa git.
+
+Lo hecho está en `main` (commit 0d867cf). Suite 825/825 en verde. Medido a 412×915.
+
+**Descartado.** Arreglar ya el «100 g de ajo» de la sugerencia de vitamina B6 (cantidad absurda). Queda aparcado como [aparc-vit-b6-ajo] en el registro. También queda aparcado [aparc-comer-eje-frase].
+
+**Supuestos.**
+- «Alimentos de verdad» se mira por grupo y por nombre. Fuera: chocolate, cacao, galletas, bollería, tarta, helado y cremas de untar.
+- El botón de sueño solo sale el día de hoy.
+- En Conductor no se añade. (VALE: Consejo por delegación, 30/10)
+
+## Gran Ley · G2 · Maqueta de Comer (2026-10-30)
+
+*Por el Consejo por delegación (acta `.claude/plan-socialista/consejo/2026-10-30-g2.md`). Maqueta: `maquetas/comer-g2.html`.*
+
+**Ajuste al juntar con `main` (mismo día).** Otra sesión cerró antes la R5 (`maquetas/comer-reforma.html`, abajo), aprobada
+por el Consejo. **Manda la R5** en proteína en Hoy («85 de 120 g · te faltan 35», solo si faltan >30 g), página de receta,
+compra y nevera. De esta maqueta se construye solo lo que la R5 no tiene: **la frase arriba en Hoy** y **el antojo de
+microondas** (pantallas 1 y 4). Las pantallas de proteína, Casa y receta quedan como referencia.
+
+**Elegido.** Una sola maqueta con el lenguaje de «El reloj», en 4 pantallas a 412×915, claro y oscuro:
+- **Hoy:** «Escribir lo comido» arriba (cierra [aparc-comer-eje-frase] cuando se construya), el reloj, «Te faltan X g de
+  proteína hoy» con suelo de 1,6 g/kg (la semana sigue con el objetivo de Ajustes) y un antojo de microondas propuesto.
+- **Casa:** la nevera con chip «❄ congelado» (sin lotes ni caducidades), «La compra de siempre» y «Lo que falta».
+- **Página de receta:** de dónde vino, raciones, tiempo, proteína por ración, ingredientes, pasos, «Añadir a la compra» y
+  «Compartir» (sin datos personales).
+- **Antojo de microondas:** por qué lo propone, receta corta, «≤5 min · ≥20 g», dos alternativas y «Apuntar que me lo he comido».
+Verificador: sin cortes ni scroll horizontal, letra ≥14 px (subidas las de 11-12), táctiles ≥44 px, contraste AA (paso de
+receta en oscuro corregido a 7:1).
+
+**Descartado.** Concurso de escuelas (repetía una decisión ya tomada, +1,2 M). Congelador con lotes y caducidades. Lista
+aparte de recetas de microondas. Un segundo número de proteína en Hoy.
+
+**Supuestos.**
+- Modo claro añadido a la maqueta (las de base solo tenían oscuro).
+- La caja de la frase lleva un botón ↵ a la derecha.
+- Comprobado en la app (G1): el sueño de una guardia se anota al día siguiente desde Reloj, Línea o Sueño, y el día después
+  desde la barrita de Sueño. A partir del tercer día no hay ruta visible: aparcado [aparc-sueno-noche-olvidada].
+
+## Gran Ley · G4 · Proteína en Hoy, aviso tras entreno y la frase en Comer (2026-10-30)
+
+**Elegido.**
+- **Proteína en Hoy** (`protHoyHTML`, `protHoyDatos`, `protHoyObj`): una tarjeta bajo el estado del día, antes del carril. Solo si
+  faltan **más de 30 g**: «🥚 85 de 120 g · te faltan 35», una barra y UNA sugerencia con «Apuntar» (acción `prot-hoy`). La
+  sugerencia es la de `protExtras()` (lo de la nevera) que más acerca sin pasarse; si todas se pasan, la más pequeña. No propone
+  nada «a comprar». Día de guardia: «🥚 Hoy, lo que se pueda: 40 g», sin «te faltan» ni rojo.
+- **Objetivo del día = 1,6 g/kg × peso** (`perfil.pesoKg`); sin peso, el de Ajustes. Ajustes y la semana no cambian.
+- **Aviso tras entreno** (`entrenoReciente`): una sesión de Entreno cerrada hoy cuya hora de fin (`sesiones[].fin`, la que guarda
+  `cerrarSesionCore`) cae en las últimas 2 h. La misma línea añade «Has entrenado: mejor algo de proteína en las 2 h siguientes.»
+  Sin hora fija ni notificaciones.
+- **La frase arriba en Hoy de Comer** (`renderComerEje`): `fraseCardHTML(true)` en la pestaña Hoy, sin foco automático (no abre
+  teclado), con los mismos gestos que la vista antigua. Cierra [aparc-comer-eje-frase]. Pruebas 380, 381 y 382.
+
+**Descartado.**
+- **Semana básica (S6): no se construye.** Ya está cubierta: la S3b dio «Mi semana» a mano con «¿Me la propones?» (`pl-montar`) y la
+  R6 «Tu semana por caducidad» y «Mi compra base». No hay un hueco claro y pequeño que cerrar.
+- Dejar los dos campos arriba en Comer: ahora hay una sola caja (S2, «Escribir lo comido»).
+- Mensaje «Hecho ✓ · 117 de 120 g» tras apuntar (maqueta): basta el aviso flotante y que la línea desaparezca.
+- Avisar tras entreno aunque falten ≤30 g: el acuerdo dice «esa misma línea».
+
+**Supuestos.**
+- Sin sesión de Entreno cerrada no hay aviso (el cardio suelto no guarda hora, así que no cuenta).
+- Con 1,6 g/kg el objetivo se redondea al gramo; la barra de Comer sigue con el objetivo de Ajustes (puede decir otra cifra).
+- «Apuntar» lo mete en el momento que toca ahora (`momentoAhora`).
+- La tarjeta va dentro de la tarjeta de Hoy, encima del carril, para verse sin bajar; solo se ve en el día de hoy.
+- La frase en Comer sirve para el día que estés mirando (como la vista antigua). Con una hoja de momento abierta se oculta la de arriba (dos campos con el mismo id dejaban sin pintar la lectura de la hoja); la prueba 317 se adaptó (ya no se abre la hoja: se toca la fila de lo apuntado).
+
+**Retoques del Consejo (mismo día).**
+- **Una sola caja** arriba en Comer → Hoy: se quita el botón «¿Qué has comido? o busca…» y la caja de frase lleva dentro una lupa 🔍
+  (44 px, «Buscar alimento») que abre el mismo buscador (`cje-busca`).
+- **Un solo número de proteína al día:** la barra de Comer → Hoy usa `protHoyObj()` (1,6 g/kg) cuando mira hoy; un día pasado y la
+  semana siguen con el objetivo de Ajustes. Prueba 383.
+- Pruebas 380 y 382 comprueban que el botón/campo existe antes de pulsar: al revertir caen ellas y el trozo sigue.

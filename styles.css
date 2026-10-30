@@ -2692,6 +2692,18 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjt.on{background:#34d399;color:#04121c;border-color:#34d399}
 .cjfr{margin-top:6px;padding-top:8px;border-top:1px solid var(--line)}
 .cjfr .frase{margin:0}
+.cjfrtop{margin:0 0 8px;padding:0;border:0}
+.cjfrtop .frase .btn,.cjfrtop .cjrc button{min-height:44px;font-size:14px}
+.cjfrtop .frase input{font-size:16px;min-height:44px}
+.cjfrtop .frbus{min-width:44px;min-height:44px;padding:0;display:grid;place-items:center}
+.prothoy{margin:10px 0;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2)}
+.prothoy .t{font-size:16px;font-weight:800}
+.prothoy .barra{height:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;margin:8px 0;overflow:hidden}
+.prothoy .barra i{display:block;height:100%;background:var(--brand);border-radius:8px}
+.prothoy .mini{font-size:14px;color:var(--ink2);margin-bottom:6px}
+.prothoy .sug{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.prothoy .sug span{font-size:15px;font-weight:700;min-width:0}
+.prothoy .sug .btn{font-size:14px;min-height:44px;min-width:44px;flex:none}
 .cjrc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .cjrc button{font:inherit;font-size:12.5px;padding:7px 11px;border-radius:99px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);cursor:pointer}
 .cjh .cjst{font-size:19px;font-weight:900;margin-bottom:2px}
