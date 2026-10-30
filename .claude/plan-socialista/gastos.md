@@ -71,6 +71,8 @@ traspaso explica por qué.
 | 2026-10-30 | G9 · maqueta de La Noche 2 | maqueta | sonnet | 1 | 13 | ~0,1 M (sin presidencia) | — | acuerdos ya escritos y aprobados: maqueta en un solo paso |
 | 2026-10-30 | G10 · cortina con PIN y descanso del 4:20 | construir | sonnet + verificador | 2 | 52 | ~0,9 M (presupuesto 1,5) | constructor 0,8 M | encargo completo + «si algo ajeno falla, dilo y sigue» |
 | 2026-10-30 | G12 · maqueta del modo viaje | maqueta | sonnet | 1 | 6 | ~0,1 M | — | acuerdo ya escrito |
+| 2026-10-30 | G11 · coach, energía y sin pantallas | construir | sonnet | 1 | 39 | 0,7 M (presupuesto 2,0) | 3,8 M de caché leída | encargo completo con las funciones de G4 y G7 a reutilizar: −65 % |
+| 2026-10-30 | G13 (1/2) · PNG de design/ | herramientas | haiku | 1 | 9 | 0,13 M | — | tarea mecánica en haiku |
 
 ## Ahorros que funcionan
 
