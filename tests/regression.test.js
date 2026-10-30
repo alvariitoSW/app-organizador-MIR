@@ -13492,7 +13492,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.food.log[P.iso(new Date())] = [];
       P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
     await page.waitForTimeout(200);
-    const lee = () => page.evaluate(() => ({ lupa: !!document.querySelector('#main .cjbusca'),
+    const lee = () => page.evaluate(() => ({ lupa: !!document.querySelector('#main .cjfrtop [data-a="cje-busca"]'),
       mac: Array.prototype.map.call(document.querySelectorAll('#main .cjahora .cjmac > span'), (x) => x.className).join(''),
       sig: (document.querySelector('#main .cjsig') || {}).dataset ? document.querySelector('#main .cjsig').dataset.p : '',
       hecho: !!document.querySelector('#main .cjsig [data-a="cje-ok"]'), otra: !!document.querySelector('#main .cjsig [data-a="cje-mom"]'),
@@ -14838,7 +14838,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ent: l ? /entrenado/.test(l.innerText) : false, ancho: document.documentElement.scrollWidth, prot: Math.round(window.PG.foodTotals(window.PG.iso(new Date())).prot) }; });
     const r = {};
     r.a = await lee();
-    await page.click('#main .prothoy [data-a="prot-hoy"]'); await page.waitForTimeout(300);
+    r.hayBtn = !!(await page.$('#main .prothoy [data-a="prot-hoy"]'));
+    if (r.hayBtn) { await page.click('#main .prothoy [data-a="prot-hoy"]'); await page.waitForTimeout(300); }
     r.b = await lee();
     await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.setDayOverride(hoy, 'sh-g', 'urg'); P.store.food.log[hoy] = [{ id: 'e380b', p: 'comida', nombre: 'Tostada', kcal: 200, prot: 40, carb: 30, gresa: 5, rac: 1 }]; P.save(); P.render(); }); await page.waitForTimeout(250);
     r.c = await lee();
@@ -14848,7 +14849,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp);
     check('380 Hoy · proteína: con 75 kg y 85 g sale «85 de 120 g · te faltan 35» (1,6 g/kg y no los 90 de Ajustes) con UNA sugerencia y «Apuntar» ≥44 px; apuntarla sube la proteína y quita la línea (faltan ≤30); en guardia con 40 g dice «lo que se pueda» sin «te faltan»; sin peso usa el de Ajustes (90 → «te faltan 50»)',
       /^🥚 85 de 120 g · te faltan 35$/.test(r.a.txt) && r.a.sug === 1 && r.a.bh >= 44 && !r.a.ent && r.a.ancho <= 412 &&
-      r.b.prot >= 100 && r.b.txt === '' && /lo que se pueda: 40 g/.test(r.c.txt) && !/faltan/.test(r.c.txt) && r.c.sug === 1 && /^🥚 40 de 90 g · te faltan 50$/.test(r.d.txt), JSON.stringify(r));
+      r.hayBtn && r.b.prot >= 100 && r.b.txt === '' && /lo que se pueda: 40 g/.test(r.c.txt) && !/faltan/.test(r.c.txt) && r.c.sug === 1 && /^🥚 40 de 90 g · te faltan 50$/.test(r.d.txt), JSON.stringify(r));
   }
   // 381) HOY · R7 · aviso tras entreno, EN CADENA (412×915): con la línea de proteína visible y SIN entreno no hay aviso → entreno terminado hace 1 h → la misma línea añade «has entrenado: mejor algo de proteína
   //      en las 2 h siguientes» → apuntar la sugerencia no lo duplica ni lo quita mientras falten >30 g → si el entreno acabó hace 3 h, ya no
@@ -14862,7 +14863,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = {};
     r.a = await lee();
     await pon(3600000); await page.waitForTimeout(250); r.b = await lee();
-    await page.click('#main .prothoy [data-a="prot-hoy"]'); await page.waitForTimeout(300); r.c = await lee();
+    if (await page.$('#main .prothoy [data-a="prot-hoy"]')) { await page.click('#main .prothoy [data-a="prot-hoy"]'); await page.waitForTimeout(300); } r.c = await lee();
     await pon(3 * 3600000); await page.waitForTimeout(250); r.d = await lee();
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia381; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
@@ -14876,9 +14877,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; window.__copia382 = JSON.parse(JSON.stringify(P.store)); P.store.food.log[P.iso(new Date())] = []; P.ui.frase = null; P.ui.frTxt = ''; P.ui.foodDate = ''; P.ui.tab = 'hoy'; P.render(); });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(250);
     const r = {};
-    r.a = await page.evaluate(() => { const i = document.querySelector('#main .cjfrtop #frIn'), g = document.querySelector('#main .cjfrtop'), b = document.querySelector('#main .cjfrtop [data-a="fr-leer"]');
+    r.a = await page.evaluate(() => { const lp = document.querySelector('#main .cjfrtop [data-a="cje-busca"]'); return { lupa: !!lp, lh: lp ? Math.round(lp.getBoundingClientRect().height) : 0, aria: lp ? lp.getAttribute('aria-label') : '', viejo: !!document.querySelector('#main .cjbusca') }; });
+    r.a0 = r.a; r.a = await page.evaluate(() => { const i = document.querySelector('#main .cjfrtop #frIn'), g = document.querySelector('#main .cjfrtop'), b = document.querySelector('#main .cjfrtop [data-a="fr-leer"]');
       const y = (e) => e ? Math.round(e.getBoundingClientRect().top) : -1; return { i: !!i, foco: document.activeElement === i, hi: i ? Math.round(i.getBoundingClientRect().height) : 0, hb: b ? Math.round(b.getBoundingClientRect().height) : 0, arriba: y(g) < 200, ancho: document.documentElement.scrollWidth }; });
-    await page.fill('#frIn', 'bocata de pavo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(400);
+    r.hayIn = !!(await page.$('#frIn'));
+    if (r.hayIn) { await page.fill('#frIn', 'bocata de pavo con queso'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(400); }
     r.b = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { n: l.length, nom: l.map((x) => x.nombre).join('|'), campo: (document.querySelector('#main #frIn') || {}).value, fila: /bocata/i.test(document.querySelector('#main .cjml').innerText), eje: !!document.querySelector('#main .cjml') }; });
     await page.click('[data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(200);
     r.c = await page.evaluate(() => !!document.querySelector('#main #frIn'));
@@ -14887,10 +14890,32 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // con una hoja de momento abierta solo hay UN campo de frase (dos con el mismo id dejaban la lectura de la hoja sin pintar)
     await page.click('#main [data-a="cje-mom"][data-p="comida"]'); await page.waitForTimeout(250);
     r.e = await page.evaluate(() => document.querySelectorAll('#frIn').length);
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia382; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia382; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
-    check('382 Comer · la frase arriba en Hoy: el campo «qué has comido» sale arriba de Hoy (≥44 px, sin foco ni teclado, sin scroll lateral); «bocata de pavo con queso» + Enter lo apunta y repinta (la fila de comidas lo enseña, el campo se vacía); Semana no lo trae y Hoy sí; con una hoja abierta hay un solo campo',
-      r.a.i && !r.a.foco && r.a.hi >= 44 && r.a.hb >= 44 && r.a.arriba && r.a.ancho <= 412 && r.b.n === 1 && /bocata/i.test(r.b.nom) && r.b.eje && r.b.fila && !r.b.campo && !r.c && r.d && r.e === 1, JSON.stringify(r));
+    check('382 Comer · la frase arriba en Hoy: el campo «qué has comido» sale arriba de Hoy (≥44 px, sin foco ni teclado, sin scroll lateral) con una lupa 🔍 «Buscar alimento» de 44 px y sin el botón viejo; «bocata de pavo con queso» + Enter lo apunta y repinta (la fila de comidas lo enseña, el campo se vacía); Semana no lo trae y Hoy sí; con una hoja abierta hay un solo campo',
+      r.hayIn && r.a0.lupa && r.a0.lh >= 44 && r.a0.aria === 'Buscar alimento' && !r.a0.viejo && r.a.i && !r.a.foco && r.a.hi >= 44 && r.a.hb >= 44 && r.a.arriba && r.a.ancho <= 412 && r.b.n === 1 && /bocata/i.test(r.b.nom) && r.b.eje && r.b.fila && !r.b.campo && !r.c && r.d && r.e === 1, JSON.stringify(r));
+  }
+  // 383) HOY/COMER · R7 · un solo número de proteína al día, EN CADENA (412×915): con 75 kg y objetivo de Ajustes 90 g, Hoy dice «de 120 g» → Comer → Hoy la barra de proteína dice «/120 g» (no 90) → la
+  //      lupa de la caja abre el buscador → volver y mirar el día de ayer (no es «hoy») usa el de Ajustes (90)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia383 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()); P.store.perfil.pesoKg = 75; P.store.food.objetivo.prot = 90; P.store.gym.sesiones = [];
+      P.store.food.log[hoy] = [{ id: 'e383', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 40, carb: 60, gresa: 10, rac: 1 }]; P.ui.hoyVista = ''; P.ui.foodDate = ''; P.ui.tab = 'food'; P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const r = {};
+    r.hoy = await page.evaluate(() => ((document.querySelector('#main .prothoy .t') || {}).innerText || '').match(/de (\d+) g/));
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(300);
+    const barra = () => page.evaluate(() => { const e = document.querySelector('#main .cjmac .p b'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; });
+    r.comer = await barra();
+    r.lupa = !!(await page.$('#main .cjfrtop [data-a="cje-busca"]'));
+    if (r.lupa) { await page.click('#main .cjfrtop [data-a="cje-busca"]'); await page.waitForTimeout(250); }
+    r.buscador = await page.evaluate(() => window.PG.ui.foodVista);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.foodDate = P.iso(new Date(Date.now() - 864e5)); P.render(); }); await page.waitForTimeout(250);
+    r.ayer = await barra();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia383; P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('383 Hoy/Comer · un solo número de proteína: Hoy dice «de 120 g» y la barra de Comer → Hoy dice «40/120 g» (no los 90 de Ajustes); la lupa de la caja abre el buscador; un día pasado sigue con el de Ajustes',
+      r.hoy && r.hoy[1] === '120' && /^40\s*\/120 g$/.test(r.comer) && r.lupa && r.buscador === 'buscar' && /\/90 g/.test(r.ayer), JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

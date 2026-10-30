@@ -10587,11 +10587,12 @@ function frItemDe(fr,d,o){
     const en=despensaS().filter(function(x){const da=despAlim(x);return da&&da.id===a.id;})[0];
     Object.assign(it,{id:a.id,g:o.g||(d.n?Math.round(d.n*frUnidad(a)):frGramosPapel(a,d.papel,fr.tipo,fr.nt)),casa:en?en.nom:'',nom:frCorto(a.n,fr.tipo),fuente:en?'nevera':'tabla'});}
   return it;}
-function fraseCardHTML(slim){
+function fraseCardHTML(slim,buscar){
   /* el campo y, debajo, lo que ha entendido en una o dos frases MIENTRAS escribes (#frLectura se
      rellena sin repintar: el teclado no se cierra). Enter apunta. */
   const fr=ui.frase;
   let h='<div class="frase"><span aria-hidden="true">✍️</span><input id="frIn" data-a="fr-in" placeholder="bocata de pavo con queso y mayo" value="'+esc(ui.frTxt!=null?ui.frTxt:(fr?fr.txt:''))+'" aria-label="qué has comido, en una frase" autocomplete="off" enterkeyhint="done">'+
+    (buscar?'<button class="btn s frbus" data-a="cje-busca" aria-label="Buscar alimento">'+gymIco('lupa','gico sm')+'</button>':'')+
     '<button class="btn p s" data-a="fr-leer">Apuntar</button></div>'+
     '<div id="frLectura" class="frlect" aria-live="polite">'+(fr?fraseLecturaHTML(fr):'')+'</div>';
   /* lo que sueles escribir (a esta hora otros días, y lo último), a un toque */
@@ -14687,7 +14688,7 @@ function renderComerEje(){
        proteína y las kcal, los micros en una línea y cada comida con su ✓ */
     const dk=ui.foodDate&&ui.foodDate<=hoyK?ui.foodDate:hoyK,esHoy=dk===hoyK,dd=parseDate(dk);
     const tar=esHoy?cjeTareas(A,hoyK):[],ft=foodTotals(dk),sg=esHoy?cjeSiguiente(dk):null;
-    body=(ui.cjeHoja?'':'<div class="cjfr cjfrtop">'+fraseCardHTML(true)+'</div>')+'<button class="cjbusca" data-a="cje-busca">'+gymIco('lupa','gico sm')+'<span>¿Qué has comido? o busca…</span></button>'+
+    body=(ui.cjeHoja?'':'<div class="cjfr cjfrtop">'+fraseCardHTML(true,true)+'</div>')+
       '<div class="cjdia"><button class="cji" data-a="food-prev" aria-label="día anterior">‹</button>'+
         '<b>'+(esHoy?'Hoy · ':'')+(esHoy?DIA3[dd.getDay()]:DIA3[dd.getDay()].replace(/^./,function(c){return c.toUpperCase();}))+' '+dd.getDate()+'</b>'+
         (esHoy?'':'<button class="dlink" data-a="food-today">hoy</button>')+
@@ -14713,7 +14714,7 @@ function cjeAhoraHTML(dk,esHoy,ft){
   /* «AHORA» de la línea del día: la hora, el día (con guardia si la hay) y kcal/P/HC/G frente al objetivo */
   const n=new Date(),dd=parseDate(dk),g=cjeDia(dk).guardia;
   return '<div class="card cjahora"><div class="row"><b>'+(esHoy?'Ahora · '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' · ':'')+
-    DIA3[dd.getDay()]+' '+dd.getDate()+'</b><span class="sp"></span>'+(g?'<span class="mini">guardia</span>':'')+'</div>'+cjeMacrosHTML(ft)+'</div>';}
+    DIA3[dd.getDay()]+' '+dd.getDate()+'</b><span class="sp"></span>'+(g?'<span class="mini">guardia</span>':'')+'</div>'+cjeMacrosHTML(ft,esHoy)+'</div>';}
 function momentoEscribir(){
   /* «¿Qué has comido?» abre en el momento que la línea llama LO SIGUIENTE (por la tarde, la cena), no en el del reloj */
   const sg=cjeSiguiente(iso(new Date()));return sg?sg.p:momentoAhora();}
@@ -14850,11 +14851,12 @@ function cjeSemana7HTML(){
   return '<div class="cap cjs7c">LA SEMANA DE UN VISTAZO</div><button class="cjs7" data-a="cje-tab" data-v="sem" aria-label="ver el plan de la semana">'+
     cjeSemana().map(function(x,i){const e=diaEspDe(x.key),ic=x.tipo.guardia?'🏥':(e&&e.tipo==='fuera'?'🍽️':(x.tipo.cocina?'🍳':'📦'));
       return '<span'+(x.key===hoyK?' class="hoy"':'')+'><b>'+'LMXJVSD'.charAt(i)+'</b><i>'+ic+'</i></span>';}).join('')+'</button>';}
-function cjeMacrosHTML(ft){
+function cjeMacrosHTML(ft,esHoy){
   /* LO COMIDO FRENTE AL OBJETIVO, LOS CUATRO: kcal, proteína, hidratos y grasa. Antes solo estaban
      proteína y kcal; hidratos y grasa existían en cada apunte pero no se veían en ningún sitio. Sin
      objetivo, el número a secas. Toca para el día comida a comida */
-  const ob=objetivoMacros(),f=[['kcal','kcal',ft.kcal,ob.kcal,''],['p','proteína',ft.prot,ob.prot,'g'],['c','hidratos',ft.carb,ob.carb,'g'],['g','grasa',ft.gresa,ob.gresa,'g']];
+  const ob=objetivoMacros();if(esHoy&&protHoyObj())ob.prot=protHoyObj();   /* un solo número de proteína al día: el de Hoy */
+  const f=[['kcal','kcal',ft.kcal,ob.kcal,''],['p','proteína',ft.prot,ob.prot,'g'],['c','hidratos',ft.carb,ob.carb,'g'],['g','grasa',ft.gresa,ob.gresa,'g']];
   return '<button class="cjmac" data-a="cje-hoja" data-v="dia" aria-label="el día por comidas">'+f.map(function(x){const v=Math.round(+x[2]||0),o=Math.round(+x[3]||0);
     const u=x[4]?' '+x[4]:'';
     return '<span class="'+x[0]+'"><small>'+x[1]+'</small><b>'+fmtMil(v)+(o?'<i>/'+fmtMil(o)+u+'</i>':u)+'</b>'+

@@ -2695,6 +2695,7 @@ details.cnci p{margin:0 12px 10px;font-size:13px;line-height:1.5}details.cnci p.
 .cjfrtop{margin:0 0 8px;padding:0;border:0}
 .cjfrtop .frase .btn,.cjfrtop .cjrc button{min-height:44px;font-size:14px}
 .cjfrtop .frase input{font-size:16px;min-height:44px}
+.cjfrtop .frbus{min-width:44px;min-height:44px;padding:0;display:grid;place-items:center}
 .prothoy{margin:10px 0;padding:10px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg2)}
 .prothoy .t{font-size:16px;font-weight:800}
 .prothoy .barra{height:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;margin:8px 0;overflow:hidden}

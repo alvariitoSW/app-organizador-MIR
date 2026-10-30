@@ -1944,7 +1944,7 @@ aparte de recetas de microondas. Un segundo número de proteína en Hoy.
 **Descartado.**
 - **Semana básica (S6): no se construye.** Ya está cubierta: la S3b dio «Mi semana» a mano con «¿Me la propones?» (`pl-montar`) y la
   R6 «Tu semana por caducidad» y «Mi compra base». No hay un hueco claro y pequeño que cerrar.
-- Quitar el botón «¿Qué has comido? o busca…»: sigue abriendo el buscador, que la frase no hace.
+- Dejar los dos campos arriba en Comer: ahora hay una sola caja (S2, «Escribir lo comido»).
 - Mensaje «Hecho ✓ · 117 de 120 g» tras apuntar (maqueta): basta el aviso flotante y que la línea desaparezca.
 - Avisar tras entreno aunque falten ≤30 g: el acuerdo dice «esa misma línea».
 
@@ -1954,3 +1954,10 @@ aparte de recetas de microondas. Un segundo número de proteína en Hoy.
 - «Apuntar» lo mete en el momento que toca ahora (`momentoAhora`).
 - La tarjeta va dentro de la tarjeta de Hoy, encima del carril, para verse sin bajar; solo se ve en el día de hoy.
 - La frase en Comer sirve para el día que estés mirando (como la vista antigua). Con una hoja de momento abierta se oculta la de arriba (dos campos con el mismo id dejaban sin pintar la lectura de la hoja); la prueba 317 se adaptó (ya no se abre la hoja: se toca la fila de lo apuntado).
+
+**Retoques del Consejo (mismo día).**
+- **Una sola caja** arriba en Comer → Hoy: se quita el botón «¿Qué has comido? o busca…» y la caja de frase lleva dentro una lupa 🔍
+  (44 px, «Buscar alimento») que abre el mismo buscador (`cje-busca`).
+- **Un solo número de proteína al día:** la barra de Comer → Hoy usa `protHoyObj()` (1,6 g/kg) cuando mira hoy; un día pasado y la
+  semana siguen con el objetivo de Ajustes. Prueba 383.
+- Pruebas 380 y 382 comprueban que el botón/campo existe antes de pulsar: al revertir caen ellas y el trozo sigue.
