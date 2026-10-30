@@ -204,3 +204,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [run-40877861030] 2026-10-29 · despliegue de main (ec1370b, Ley de La Noche N3) · success; sellado (version.json ec1370b posterior al código 27b8b68); 0 issues/PR · ok
 - [rama-706d99d] 2026-10-29 · rama ccr-874ee141-nk8306 = main + 4 commits solo de plan/acta (La Reforma); la rama magical-clarke tiene 6 docs médicos sin pasar a main (no son de la app) · ok
 - [parte-reforma-r1-2026-10-29] 2026-10-29 · parte con R1 (concurso de Dinero, maqueta) elegida; presupuesto ~2,5 M del plan (medida: 1,5 M sin concurso, 3,2 con) · propuesto
+
+- [parte-2026-10-30] Contado: main ec1370b desplegado y sin cambios; rama f2b7893 (R1) 13 commits por delante de main, sin código; siguiente R2 «Tu mes» (~1,2 M sonnet; ~0,9 M con ficha).
