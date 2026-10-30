@@ -72,6 +72,11 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   Gmail, un «sin pantallas» que no se pueda quitar y la hora del parte; van como preguntas (acta `consejo/2026-10-30.md`).
   No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas que caen al
   revertir, privacidad y Actions en `success`. Sesiones «Gran Ley · G<n> · …». Se acaba al cerrar la G13.
+- **Delegación del 30/10/2026 · «Los Remates» (L1-L5).** El usuario: «lo apruebo todo y le cedo al gobierno la decisión de
+  aprobar o repetir o cancelar las pruebas, pero lo quiero todo terminado». Aprueba ~4,8 M y que el Consejo decida lo
+  reservado: qué entra en la maqueta L2 y cuál se construye, los 4 supuestos por revisar, repetir o cancelar la L5, y
+  **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
+  que caen al revertir, privacidad y Actions en `success`. En el acta, «(Consejo por delegación)». Se acaba al cerrar la L5.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.
