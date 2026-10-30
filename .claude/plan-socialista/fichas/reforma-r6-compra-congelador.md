@@ -51,9 +51,11 @@ Maqueta aprobada `maquetas/comer-reforma.html` (vistas **Compra** y **Nevera**; 
 - [x] P3 Compra base (grupo, tarjeta, editar, caducidad) · sonnet (mismo) · ~15
 - [x] P4 Hoja del reparto y los tres «hecho» · sonnet (mismo) · ~15
 - [x] P5 Zona congelador + kilo en raciones + plegable + campos del plato · sonnet (mismo) · ~15
-- [ ] P6 Suite en corto + capturas Compra y Nevera (con la hoja) a 412×915 frente a la maqueta · verificador sonnet · ~12
-- [ ] P7 DECISIONS, plan, gasto, sello, 205, main y traspaso con el prompt de R7 · principal
+- [x] P6 Suite en corto + capturas Compra y Nevera (con la hoja) a 412×915 frente a la maqueta · verificador sonnet · ~12
+- [x] P7 DECISIONS, plan, gasto, sello, 205, main y traspaso con el prompt de R7 · principal
 
 ## 5. Comprobación
 H1→P1,P3 · H2→P1,P4 · H3→P1,P2,P5 · H4→P1,P2,P5. Sin dudas abiertas. Maqueta aprobada; las pruebas caen al revertir;
 412×915 en P6. Nada sale del móvil; textos del usuario con `esc()`.
+
+**Gasto:** 3,6 M de ~2,0 M (obra 1,7 M, principal 1,6 M por mezclar la G1 de main). En main 56f30af.
