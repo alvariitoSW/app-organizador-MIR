@@ -14917,6 +14917,102 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('383 Hoy/Comer · un solo número de proteína: Hoy dice «de 120 g» y la barra de Comer → Hoy dice «40/120 g» (no los 90 de Ajustes); la lupa de la caja abre el buscador; un día pasado sigue con el de Ajustes',
       r.hoy && r.hoy[1] === '120' && /^40\s*\/120 g$/.test(r.comer) && r.lupa && r.buscador === 'buscar' && /\/90 g/.test(r.ayer), JSON.stringify(r));
   }
+  // 384) COMER · G5 · página de receta, EN CADENA (412×915): Mis platos → abrir un plato con receta → «Abrir la receta» trae la página (icono grande, 3 ingredientes de ≥44 px, pasos de ≥18 px, sin vídeo ni iframe)
+  //      → tocar un ingrediente lo tacha → «Añadir a la compra» lleva solo los NO tachados a la lista → «Ver en TikTok» abre fuera (noopener) → «Compartir» manda nombre, ingredientes y pasos (y sin share lo copia)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia384 = JSON.parse(JSON.stringify(P.store));
+      P.store.dishes.push({ id: 'd384', name: 'Pollo al curry de prueba', icon: '🍛', portions: 4, kcal: 520, prot: 42, tuyo: true, url: 'https://www.tiktok.com/@cocina/video/123',
+        ingredients: ['400 g de pollo', '200 ml de nata', '1 cebolla'], steps: ['Dora el pollo.', 'Añade la nata y la cebolla.', 'Cuece 15 minutos.'] });
+      P.store.listas = []; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = { v: 'platos', f: '' }; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.hayPlato = !!(await page.$('[data-a="cje-pver"][data-id="d384"]'));
+    if (r.hayPlato) { await page.click('[data-a="cje-pver"][data-id="d384"]'); await page.waitForTimeout(150); }
+    r.hayAbre = !!(await page.$('[data-a="rec-abre"][data-id="d384"]'));
+    if (r.hayAbre) { await page.click('[data-a="rec-abre"][data-id="d384"]'); await page.waitForTimeout(200); }
+    r.pag = await page.evaluate(() => { const h = document.querySelector('#hojaDia .recp'); if (!h) return null; const q = (x) => h.querySelectorAll(x);
+      const hh = (e) => e ? Math.round(e.getBoundingClientRect().height) : 0;
+      return { ic: parseInt(getComputedStyle(h.querySelector('.recic')).fontSize), ing: q('.reci').length, hmin: Math.min.apply(null, [...q('.reci')].map(hh)), paso: parseInt(getComputedStyle(h.querySelector('.recs li')).fontSize), npasos: q('.recs li').length,
+        fuera: q('iframe,video,img,embed').length, ancho: document.documentElement.scrollWidth, btns: [...q('.recb .btn')].map(hh) }; });
+    r.hayIng = !!(await page.$('#hojaDia .reci'));
+    if (r.hayIng) { await page.click('#hojaDia .reci:nth-of-type(1)'); await page.waitForTimeout(120); }
+    r.tach = await page.evaluate(() => [...document.querySelectorAll('#hojaDia .reci')].map((e) => e.getAttribute('aria-pressed')).join(','));
+    r.hayCompra = !!(await page.$('#hojaDia [data-a="rec-compra"]'));
+    if (r.hayCompra) { await page.click('#hojaDia [data-a="rec-compra"]'); await page.waitForTimeout(200); }
+    r.lista = await page.evaluate(() => { const l = (window.PG.store.listas || []).filter((x) => x.nombre === 'A mano')[0]; return l ? l.items.join('|') : ''; });
+    r.link = await page.evaluate(() => { const a = document.querySelector('#hojaDia .recb a'); return a ? { href: a.href, t: a.target, rel: a.rel, txt: a.innerText } : null; });
+    await page.evaluate(() => { window.__sh384 = null; Object.defineProperty(navigator, 'share', { value: (o) => { window.__sh384 = o; return Promise.resolve(); }, configurable: true }); });
+    r.hayCom = !!(await page.$('#hojaDia [data-a="rec-comparte"]'));
+    if (r.hayCom) { await page.click('#hojaDia [data-a="rec-comparte"]'); await page.waitForTimeout(150); }
+    r.sh = await page.evaluate(() => window.__sh384);
+    await page.evaluate(() => { window.__cp384 = ''; Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText: (t) => { window.__cp384 = t; return Promise.resolve(); } }, configurable: true }); });
+    if (r.hayCom) { await page.click('#hojaDia [data-a="rec-comparte"]'); await page.waitForTimeout(200); }
+    r.cp = await page.evaluate(() => ({ t: window.__cp384, flash: (document.querySelector('#flash') || {}).innerText || '' }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia384; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('384 Comer · página de receta: icono grande, 3 ingredientes (≥44 px) que se tachan al tocar, pasos ≥18 px, sin vídeo ni imagen incrustados; «Añadir a la compra» lleva solo los no tachados; «Ver en TikTok» abre fuera con noopener; «Compartir» manda nombre, ingredientes y pasos y sin share los copia con aviso',
+      r.hayPlato && r.hayAbre && r.pag && r.pag.ic >= 48 && r.pag.ing === 3 && r.pag.hmin >= 44 && r.pag.paso >= 18 && r.pag.npasos === 3 && r.pag.fuera === 0 && r.pag.ancho <= 412 && r.pag.btns.every((h) => h >= 44) &&
+      r.hayIng && r.tach === 'true,false,false' && r.hayCompra && r.lista === '200 ml de nata|1 cebolla' && r.link && /tiktok\.com/.test(r.link.href) && r.link.t === '_blank' && /noopener/.test(r.link.rel) && /TikTok/.test(r.link.txt) &&
+      r.hayCom && r.sh && /Pollo al curry/.test(r.sh.text) && /400 g de pollo/.test(r.sh.text) && /Cuece 15 minutos/.test(r.sh.text) && r.cp.t === r.sh.text && /copiada/i.test(r.cp.flash), JSON.stringify(r));
+  }
+  // 385) IMPORTAR · G5 · cola de TikTok, EN CADENA (412×915): plegada con «0» → abrirla → pegar 3 enlaces (uno repetido) en líneas → «Guardar en la cola» deja 2 → «Pasar a receta» del primero lo saca de la cola
+  //      y lo pone en el campo del enlace (el segundo sigue en la cola) → quitar el que queda con × → la cola vuelve a estar vacía; todo en el estado local
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia385 = JSON.parse(JSON.stringify(P.store)); P.store.colaTT = []; P.ui.imp = null; P.ui.colaAb = false; P.ui.tab = 'import'; P.render(); });
+    await page.waitForTimeout(250);
+    const r = {};
+    r.plegada = await page.evaluate(() => { const h = document.querySelector('#main .cola .colah'); return { t: h ? h.innerText.replace(/\s+/g, ' ') : '', area: !!document.querySelector('#colaTxt'), h: h ? Math.round(h.getBoundingClientRect().height) : 0 }; });
+    r.hayVer = !!(await page.$('[data-a="cola-ver"]'));
+    if (r.hayVer) { await page.click('[data-a="cola-ver"]'); await page.waitForTimeout(150); }
+    r.hayArea = !!(await page.$('#colaTxt'));
+    if (r.hayArea) { await page.fill('#colaTxt', 'https://www.tiktok.com/@a/video/1\nhttps://vm.tiktok.com/ZM2/\nhttps://www.tiktok.com/@a/video/1'); }
+    r.hayAdd = !!(await page.$('[data-a="cola-add"]'));
+    if (r.hayAdd) { await page.click('[data-a="cola-add"]'); await page.waitForTimeout(200); }
+    r.dos = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .colai').length, q: window.PG.store.colaTT.length, hb: Math.round(((document.querySelector('#main .colai .btn')) || document.body).getBoundingClientRect().height), ancho: document.documentElement.scrollWidth }));
+    r.hayPasa = !!(await page.$('[data-a="cola-pasa"][data-i="0"]'));
+    if (r.hayPasa) { await page.click('[data-a="cola-pasa"][data-i="0"]'); await page.waitForTimeout(250); }
+    r.pasa = await page.evaluate(() => ({ url: (window.PG.ui.imp || {}).url, q: window.PG.store.colaTT.slice(), filas: document.querySelectorAll('#main .colai').length, campo: (document.getElementById('impUrl') || {}).value }));
+    r.hayX = !!(await page.$('[data-a="cola-quita"][data-i="0"]'));
+    if (r.hayX) { await page.click('[data-a="cola-quita"][data-i="0"]'); await page.waitForTimeout(150); }
+    r.vacia = await page.evaluate(() => ({ q: window.PG.store.colaTT.length, t: ((document.querySelector('#main .cola .colah') || {}).innerText || '').replace(/\s+/g, ' ') }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia385; P.ui.imp = null; P.ui.colaAb = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('385 Importar · cola de TikTok: plegada y con su cuenta; pegar 3 enlaces (uno repetido) deja 2; «Pasar a receta» saca el primero de la cola y lo pone en el campo del enlace; × la vacía; botones ≥44 px y sin scroll lateral',
+      /Cola de TikTok · 0/.test(r.plegada.t) && !r.plegada.area && r.plegada.h >= 44 && r.hayVer && r.hayArea && r.hayAdd && r.dos.filas === 2 && r.dos.q === 2 && r.dos.hb >= 44 && r.dos.ancho <= 412 &&
+      r.hayPasa && r.pasa.url === 'https://www.tiktok.com/@a/video/1' && r.pasa.q.length === 1 && /vm\.tiktok/.test(r.pasa.q[0]) && r.pasa.filas === 1 && r.pasa.campo === r.pasa.url && r.hayX && r.vacia.q === 0 && /Cola de TikTok · 0/.test(r.vacia.t), JSON.stringify(r));
+  }
+  // 386) COMER/HOY · G5 · antojo de microondas, EN CADENA (412×915): con 75 kg, 40 g de 120 y la nevera vacía, Hoy propone una de la lista (≤5 min, g de proteína) → Comer → Hoy trae la tarjeta «¿Algo rápido?» de ≥44 px →
+  //      abre la pantalla (por qué, receta con pasos, 2 alternativas) → elegir una alternativa cambia la receta → «Apuntar que me lo he comido» apunta esa con ≥20 g y cierra; sin ningún «no»
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia386 = JSON.parse(JSON.stringify(P.store)); const hoy = P.iso(new Date()); P.store.perfil.pesoKg = 75; P.store.food.despensa = []; P.store.gym.sesiones = [];
+      P.store.food.log[hoy] = [{ id: 'e386', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 40, carb: 60, gresa: 10, rac: 1 }]; P.ui.hoyVista = ''; P.ui.foodDate = ''; P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const r = {};
+    r.hoy = await page.evaluate(() => { const s = document.querySelector('#main .prothoy .sug span'); return { t: s ? s.innerText : '', fila: document.querySelectorAll('#main .prothoy .sug').length }; });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(300);
+    r.card = await page.evaluate(() => { const c = document.querySelector('#main .antcard'); return c ? { t: c.innerText.replace(/\s+/g, ' '), h: Math.round(c.getBoundingClientRect().height), n: document.querySelectorAll('#main .antcard').length } : null; });
+    r.hayCard = !!(await page.$('#main .antcard[data-a="micro-abre"]'));
+    if (r.hayCard) { await page.click('#main .antcard[data-a="micro-abre"]'); await page.waitForTimeout(250); }
+    const pant = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .antr'); return h ? { n: h.querySelector('b').innerText, pasos: h.querySelectorAll('ol li').length, ing: h.querySelectorAll('ul li').length, alts: document.querySelectorAll('#hojaDia [data-a="micro-cambia"]').length,
+      px: Math.min.apply(null, [...document.querySelectorAll('#hojaDia .btn,#hojaDia .cjalt')].map((e) => Math.round(e.getBoundingClientRect().height))), no: /\bno (puedes|debes|comas)|prohib/i.test(document.querySelector('#hojaDia').innerText), ancho: document.documentElement.scrollWidth } : null; });
+    r.a = await pant();
+    r.hayAlt = !!(await page.$('#hojaDia [data-a="micro-cambia"]'));
+    if (r.hayAlt) { await page.click('#hojaDia [data-a="micro-cambia"]'); await page.waitForTimeout(150); }
+    r.b = await pant();
+    r.hayApunta = !!(await page.$('#hojaDia [data-a="micro-apunta"]'));
+    if (r.hayApunta) { await page.click('#hojaDia [data-a="micro-apunta"]'); await page.waitForTimeout(250); }
+    r.fin = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { n: l.length, nom: (l[1] || {}).nombre, prot: (l[1] || {}).prot, hoja: !!document.querySelector('#hojaDia .hoja') }; });
+    r.lista = await page.evaluate(() => window.PG.MICRO.map((m) => m.min <= 5 && m.prot >= 20 && m.pasos.length >= 2 && m.pasos.length <= 4).every(Boolean) && window.PG.MICRO.length >= 6);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia386; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('386 Hoy/Comer · antojo de microondas: Hoy propone una de la lista (≤5 min, g) con la nevera vacía; Comer trae UNA tarjeta «¿Algo rápido?» de ≥44 px; abre la pantalla con receta, 2 alternativas y sin ningún «no»; cambiar de alternativa cambia la receta; «Apuntar» apunta esa (≥20 g) y cierra; la lista fija cumple ≤5 min y ≥20 g',
+      /≤\d min · \+\d+ g/.test(r.hoy.t) && r.hoy.fila === 1 && r.card && r.card.n === 1 && /¿Algo rápido\?/.test(r.card.t) && /≤\d min · \d+ g/.test(r.card.t) && r.card.h >= 44 && r.hayCard && r.a && r.a.pasos >= 2 && r.a.ing >= 2 && r.a.alts === 2 && r.a.px >= 44 && !r.a.no && r.a.ancho <= 412 &&
+      r.hayAlt && r.b && r.b.n !== r.a.n && r.hayApunta && r.fin.n === 2 && r.fin.nom === r.b.n && r.fin.prot >= 20 && !r.fin.hoja && r.lista, JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
