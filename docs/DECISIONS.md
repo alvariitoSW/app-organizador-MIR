@@ -1768,3 +1768,76 @@ la cadena desplegada (620-677 px): es la vista de detalle, la plegada mide 143-1
 
 **Supuestos.** Con camas reales entre 23:30 y 00:15 la cama arranca en la mediana (23:50) y baja 15 min cada 3 días: es lo que
 decidió el acta, no un fallo. La maqueta `la-noche-comun.js` conserva el texto viejo (es historia, no se publica).
+
+## La Reforma · R1 · Concurso «Tu mes» de Dinero (2026-10-29)
+
+**Elegido (Consejo por delegación).** Concurso de 5 escuelas sonnet con bases comunes
+(`.claude/plan-socialista/consejo/2026-10-29-2-tu-mes-bases.md`): La Cascada, Bento, El Calendario vivo, El Vaso y La Guagua
+(`maquetas/dinero-mes-1…5-*.html`). Las cinco pasan el oficio a 412×915 (sin errores, ancho 412, tocables ≥44 px; fijos → 1.652;
+portátil «apartando» → 150), salvo Bento, que con los fijos abiertos mide 1.096 px. Jurado haiku a ciegas: **El Vaso 10**,
+Cascada 9, Calendario 8, Guagua 8, Bento 7. Gana **El Vaso**: el dinero del mes es un vaso por capas (fijos abajo, gastos, margen,
+ahorro arriba) con la cadena 2.380 − 728 − 750 = ~900 y «ahorras 700» como lo que manda; tocar el vaso separa los fijos y dice
+«te quedan 1.652 €»; el portátil se apunta («lo voy apartando» / «sale de lo ahorrado» / quitar) y cambia el mes, el ahorro y la
+línea de Hoy. Artes Visuales la dejó navegable y aligerada en `maquetas/dinero-tu-mes.html` (Hoy | Dinero; Tu mes · Ahorro y
+Bosque), con el bosque de un árbol por mes de colchón de La Cascada y el «150 al colchón + 550 apartados» de Bento. Medido:
+Tu mes 728 px (769 con portátil), Ahorro y Bosque 877 (926 con portátil, 11 px de scroll), Hoy 613-634.
+
+**Descartado.** Escuelas en haiku (maquetaron peor y gastaron más en concursos anteriores). Ahorro a años vista como
+protagonista: el objetivo de 6 meses queda como dato pequeño. Bento como base (no cabe con los fijos abiertos).
+
+**Supuestos.** El mes va de nómina a nómina; «puedes ahorrar» deja ~200 € de margen; con el portátil «apartando», «para gastar»
+(812 € · 30 €/día) no cambia; el botón «🌳 Ahorro y Bosque» en Tu mes repite la pestaña y se puede quitar. Las cifras son
+inventadas.
+
+## La Reforma · R2 · Construir «Tu mes» (2026-10-30)
+
+**Elegido (Consejo por delegación).** La portada de Dinero es **Tu mes** (maqueta `maquetas/dinero-tu-mes.html`, El Vaso):
+arriba «Acabarás con ~X € · ahorras Y», el vaso por capas (fijos abajo, gastos, margen, ahorro arriba; etiquetas fuera de las
+capas, a 14 px) y la cadena «empiezas − fijos − gastos = acabas». Tocar el vaso o «Fijos» separa los fijos y dice «Te quedan N €»
+con la lista ✓ pagado / ○ por pagar. Cifras de `d6Mes` y `mesTipo` (`tuMesDatos()`, sin cálculos nuevos salvo «acabarás» y
+«ahorras»). Sin captura de Fintonic del mes no se dice «acabarás» ni «ahorras»: pide la captura. En Hoy, debajo del cartel de la
+noche, «💶 Te quedan N € · M €/día hasta fin de mes · mañana pagas X» solo si hay un fijo sin pagar mañana o el ritmo va en
+«ojo»/«pasa»; tocarla abre Tu mes. Pestañas: Tu mes · Bosque · Gastos · Ahorro · Compras (el Bosque se junta con Ahorro en R3).
+Pruebas 365-368 (caen al revertir cada parte y ninguna otra). De paso, tres pruebas que dependían del día (226, 268, 285) ya no:
+la 226 destapó «la desayuno» en la sugerencia de vitaminas (ahora «el desayuno»). Suite 817/817.
+
+**Descartado.** El mes de nómina a nómina de la maqueta (se queda el del calendario, como el resto de Dinero). Repetir «Hoy toca
+pagar» en la línea de Hoy (ya está en Para hoy). Animar el vaso al plegar (la app repinta la pantalla entera).
+
+**Supuestos.** «Puedes ahorrar» = acabarás − un margen del 10 % de lo que queda tras los fijos (redondeado a 10 €); gastos
+previstos = lo gastado o el mes típico, lo que sea mayor. La línea de Hoy no se puede ocultar todavía. La franja de casillas que
+asomó bajo Tu mes en una captura es un resto de pintado del navegador de pruebas (no hay elemento ahí): mirarlo en el móvil.
+
+## La Reforma · R3 · Gasto grande + Ahorro y Bosque juntos (2026-10-30)
+
+**Elegido (Consejo por delegación).** Un gasto grande (viaje, portátil) se apunta desde Tu mes o Ahorro y Bosque con la hoja
+«Apuntar gasto grande» (qué es, precio, para qué mes y «Lo voy apartando» / «Sale de lo ahorrado»). Se guarda como una compra
+más de `compras[]` con el campo opcional `grande` (ausente = no es grande). «Apartando» reparte el ahorro del mes: «🟩 N € al
+colchón + 💻 C apartados», con la capa roja a rayas en el vaso y «· apartas C a …» en la línea de Hoy; la cuota es la misma de
+Compras (`d5Cuota`). «De lo ahorrado» no toca el mes, pero `falta` y `pide` suben lo que hay que reponer. «Quitar» lo deja en
+`estado:'no'` y todo vuelve. Bosque y Ahorro, una pestaña (**Tu mes · Ahorro y Bosque · Gastos · Compras**; `bosque`/`ahorro`
+viejos abren la nueva): colchón a fin de mes, un árbol por mes de colchón hasta el objetivo con el gasto grande como fruto, las
+barras de cada mes y, debajo, objetivo, plazo, nómina y guardado como antes. Pruebas 368-370 (368 cae al revertir); ocho viejas
+pasadas a la pestaña nueva. `store.ahorro`, `store.dinero` y las compras no se borran (369 lo comprueba con datos viejos).
+
+**Descartado.** Borrar la compra al quitarla. El laurisilva (`d3EscenaSVG` se queda sin usar) y la gráfica `#d4Graf` de Ahorro.
+
+**Supuestos.** «Apartando» exige el mes; «de lo ahorrado», no. El gasto grande se guarda como «me hace ilusión», en plan y con
+0 apartado. «Para gastar» no cambia con el apartado (como en la maqueta). Las pestañas siguen a 12,5 px y las cifras de la cadena
+de Tu mes a 12 px (de antes de R3).
+
+## La Reforma · R4 · Fintonic en pequeño (2026-10-30)
+
+**Elegido.** En la revisión de la captura (acta 2026-10-29-2, addenda acuerdo 2), cada categoría leída se puede **renombrar**
+(campo de texto con la lista de categorías que ya conoces y tus recibos) y **quitar** (✕ de 44 px), además de cambiar el
+importe como antes. El aviso «⚠ No cuadran: faltan/sobran X» ya existía y se recalcula con cada cambio. Al guardar, dos filas
+con el mismo nombre **se suman** (antes una pisaba a la otra). Renombrar a «Alquiler» hace que Tu mes lo cuente como fijo.
+Prueba 371 (subir → renombrar → quitar → guardar → `gastoMes`/`mesPartes`), que cae al revertir.
+
+**Descartado.** «Pegar texto», partidas propias con memoria del reparto (retirados en la addenda) y «añadir fila».
+
+**Supuestos.** «Gasto a gasto» = fila a fila de lo que trae la captura (categorías de Fintonic, no movimientos sueltos).
+Quitar una fila no baja el total del mes: lo quitado cuenta como variable sin categoría. Si el nombre se deja vacío, se
+queda el de antes. En las categorías ya no sale «en otra captura: X» (la fila no tiene sitio; el ⚠ sigue).
+Pendiente visto: una línea como «Presupuesto de 300 288,00 €» se lee como una categoría de 300.288 (`finParse`), y `eur()`
+pinta «1000 €» sin punto de miles en esta pantalla.

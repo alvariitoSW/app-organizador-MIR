@@ -59,6 +59,19 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   que caen al revertir, privacidad y Actions en `success`. Cada sesión nueva de la tanda se titula
   **«Ley de La Noche · N<n> · <qué>»** para que el usuario sepa de dónde viene. En el acta, «(Consejo por delegación)».
   Se acaba al cerrar la N3. **Cerrada el 29/10/2026** (N3 en `main`): lo reservado vuelve al usuario.
+- **Delegación del 29/10/2026 · «La Reforma» (R1-R10).** El usuario aprueba ~15 M y que el Consejo decida lo reservado:
+  **las maquetas que se construyen** (R2, R5, R9), qué se quita (sin borrar datos) y **pasar a `main`**. Ya decidido por
+  él: Bosque y Ahorro **se juntan del todo** en una pestaña; las recetas llevan botón **Compartir** (lo manda él, imagen o
+  texto, sin datos personales). No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas
+  encadenadas que caen al revertir, privacidad y Actions en `success`. En el acta, «(Consejo por delegación)». Se acaba
+  al cerrar la R10.
+- **Delegación del 30/10/2026 · «La Gran Ley» (G1-G13).** El usuario: «todas las mejoras de bitácora y todo lo que
+  quedaba por hacer quiero que se haga ya, y que se active todo el mecanismo legislativo». Absorbe la de La Reforma.
+  El Consejo decide el presupuesto (~20 M), **las maquetas que se construyen** (G2, G6, G9, G12), qué se quita (sin
+  borrar datos) y **pasar a `main`**. Quedan fuera (regla 3, arquitectura y datos): red externa, la clave del 4:20,
+  Gmail, un «sin pantallas» que no se pueda quitar y la hora del parte; van como preguntas (acta `consejo/2026-10-30.md`).
+  No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas que caen al
+  revertir, privacidad y Actions en `success`. Sesiones «Gran Ley · G<n> · …». Se acaba al cerrar la G13.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.

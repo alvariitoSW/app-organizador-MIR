@@ -22,10 +22,11 @@ traspaso explica por qué.
 | Tipo | Modelo | Última medida | Presupuesto siguiente | De qué tarea |
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
-| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) | ~0,8 M uno pequeño · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
-| maqueta | opus + sonnet | 3,6 M (192 pasos, concurso) | ~3,2 M con concurso · ~1,5 M sin él | v3-comer-mapa (2026-10-28) |
+| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
+| maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~1,5 M sin él | reforma-r1-tu-mes (2026-10-29) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
+| construir (Reforma, ficha + 1 constructor) | opus + sonnet | 2,2 M (115 pasos; obra 1,2 M, principal 0,7 M, parte y salud 0,13 M) | ~2,0 M | reforma-r3-gasto-grande (2026-10-30) |
 | construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
 | construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
 | estudio | — | sin medir | — | — |
@@ -52,14 +53,27 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n0 | maqueta | opus-5-5 + sonnet-5-5 | 3 | 56 | **794 k** | sesión principal (74 %) | 3 maquetas (A cartel gana, empate decidido por Bienestar), 2 rondas de verificador, jurado opus; ficha N1-N2 |
 | 2026-10-29 | la-noche-n1 | construir | opus-5-5 + sonnet-5-5 | 2 | 66 | **1,1 M** | Construir N1 la cuenta atrás (76 %) | N1 de La Noche: cartel arriba de Hoy en 4 modos, quita sueño y mañana suelta; obra sonnet ~0,87 M, capturas ~0,08 M |
 | 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
+<<<<<<< HEAD
 | 2026-10-29 | la-noche-n3 | desplegar | opus-5-5 + sonnet-5-5 | 1 | 42 | **643 k** | sesión principal (75 %) | repaso del verificador, 2 arreglos con prueba (nota de Vete, apilado 07:58), suite 813/813 y main ec1370b |
 | 2026-10-29 | ventilador-ri | estudio | opus-5-5 | 0 | 28 | **587 k** | sesión principal (100 %) | web bloqueada al principio (un mensaje perdido); el código ordenado con prettier y leído por trozos bastó, sin ayudantes |
 | 2026-10-29 | aorta-ri | estudio | opus-5-5 | 0 | 39 | **918 k** | sesión principal (100 %) | HTML entero de una vez con la herramienta de artefactos; mapa de funciones con rg y lectura por secciones; sin ayudantes; misma sesión que ventilador-ri |
 | 2026-10-29 | webs-medicas | texto | opus-5-5 | 0 | 45 | **1,1 M** | sesión principal (100 %) | lista desde rg en el repo + list_repos; misma sesión larga que dos estudios |
 | 2026-10-29 | antaa-shock | estudio | opus-5-5 | 0 | 56 | **1,5 M** | sesión principal (100 %) | texto de las 62 diapositivas sacado del JSON de la página (__NEXT_DATA__), sin imágenes; sesión ya muy larga |
+=======
+| 2026-10-29 | consejo-reforma | estudio | opus-5-5 + sonnet-5-5 | 4 | 45 | **1,0 M** | sesión principal (34 %) | — |
+| 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
+| 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
+| 2026-10-30 | consejo-gran-ley | estudio | opus-5-5 + sonnet-5-5 | 3 | 30 | **688 k** | sesión principal (47 %) | mapa sonnet + 2 dictámenes en paralelo; el mapa encontró R4 casi hecha |
+| 2026-10-30 | reforma-r4-fintonic | arreglo | opus-5-5 + sonnet-5-5 | 4 | 87 | **1,2 M** | sesión principal (51 %) | ficha + constructor sonnet + captura; la captura cazó «Todo cuadra» · ahorro: decir al verificador el texto exacto de la prueba |
+| 2026-10-30 | gran-ley-g1 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 116 | **1,7 M** | sesión principal (89 %) | 4 arreglos + verificador sonnet + parte programado; se pasó (1,7 M de 1,0): la principal hizo todo en opus sin constructor sonnet · ahorro: ficha corta y un constructor sonnet para los 4 arreglos |
+>>>>>>> origin/main
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
+
+- **Un solo constructor sonnet con la ficha (R3, 30/10):** P1-P5 en 48 pasos y 1,2 M, sin releer app.js; la suite completa y las capturas a la vez, de fondo. Lo que más pesa ya es la principal (0,7 M): ficha con greps cortos, no leer funciones enteras.
+
+- **Concursos de maquetas (R1, 29/10):** bases con las cifras ya cuadradas y un guion común de oficio y de capturas a ciegas (`tools/concurso/`): cada escuela sonnet costó 0,22-0,37 M en ≤14 pasos, y el jurado no abre los HTML (solo capturas + texto). Lo que más gasta ya es la sesión principal (30 %): esperar en silencio, sin mirar capturas.
 
 - Un constructor que además QUITA pestañas y reescribe pruebas viejas se dispara (S3b P1: 7,4 M, 167 pasos): lo de quitar va en su encargo aparte, con tope de pasos.
 - La ficha dice qué se **quita** además de qué se añade: sin eso el constructor deja lo viejo debajo y hace falta otra vuelta (S3, ~250 k).

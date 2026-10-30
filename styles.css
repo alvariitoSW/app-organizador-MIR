@@ -1400,6 +1400,8 @@ ul.slots{list-style:none;margin:0;padding:0}
 .finfila{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:1px dashed var(--line)}
 .finfila:first-of-type{border-top:0}
 .finfila .t{flex:1;min-width:0;font-size:14px}
+.finfila input.t{width:auto;text-align:left;font-weight:600}
+.finfila .fin-x{min-width:44px;min-height:44px;padding:0;flex:none}
 .finfila input{width:104px;text-align:right;font-weight:700}
 .finfila .m{width:16px;text-align:center;font-weight:800}
 .finfila.ok .m{color:var(--ok)}
@@ -3969,3 +3971,73 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .npant .nsem small{grid-column:1/-1;color:var(--ink2);font-size:12.5px}
 .npant .nnota{color:var(--ink2);font-size:13px;background:var(--card2,var(--card));border-radius:12px;padding:10px 12px;margin:10px 0 0}
 .npant .nancho{width:100%;min-height:48px;margin-top:14px}
+/* ===== Dinero · Tu mes (El Vaso) ===== */
+.tm .tm-hero{padding:12px}
+.tm-t{font-size:13px;font-weight:800;color:var(--ink2)}
+.tm-fila{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tm-n{font-size:44px;font-weight:900;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}
+.tm-a{font-size:22px;font-weight:900;color:#15803d}.tm-a.mal{color:#be123c;font-size:16px}
+.tm-vrow{display:grid;grid-template-columns:170px 1fr;gap:10px;align-items:end}
+.tm-vaso{display:block;padding:0;border:0;background:transparent;border-radius:18px;width:170px;min-height:44px;cursor:pointer}
+.tm-vaso svg{display:block;width:170px;height:236px}
+.tm-vaso:focus-visible,.tm-fi:focus-visible,.tm-hoy:focus-visible,.tm-bt:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.tm-lado{font-size:14px;color:var(--ink2);padding-bottom:6px;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px}
+.tm-lado b{color:var(--ink)}
+.tm-gr{font-size:17px;font-weight:900;color:var(--ink)}
+.tm-toca{color:var(--brand);font-weight:900}
+.tm-leyes,.tm-fijos{list-style:none;margin:0;padding:0}
+.tm-ley{display:flex;align-items:center;gap:6px;font-size:14px;line-height:1.6}
+.tm-ley i{width:12px;height:12px;border-radius:3px;border:1px solid #64748b;flex:none}
+.tm-ley span{flex:1}
+.tm-quedan{display:inline-block;align-self:flex-start;background:var(--ink);color:var(--bg);border-radius:12px;padding:5px 10px;font-size:17px;font-weight:900}
+.tm-fijos{font-size:14px;line-height:1.55}
+.tm-fijos li{display:flex;justify-content:space-between;gap:6px}
+.tm-fijos .si{color:var(--ink);font-weight:800}
+.tm-fijos .no{color:var(--ink2);font-weight:700}
+.tm-cadena{display:grid;grid-template-columns:1fr 14px 1fr 14px 1fr 14px 1fr;align-items:center;margin-top:10px}
+.tm-op{text-align:center;font-weight:900;color:var(--ink2);font-size:17px}
+.tm-fi{background:var(--card);border:1px solid var(--line);border-radius:12px;min-height:56px;padding:5px 2px;text-align:center;font:inherit;font-size:12px;font-weight:700;color:var(--ink2);line-height:1.15;display:flex;flex-direction:column;justify-content:center}
+.tm-fi b{display:block;font-size:17px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+button.tm-fi{border:2px dashed #64748b;cursor:pointer}
+button.tm-fi[aria-pressed=true]{background:var(--ink);border:2px solid var(--ink);color:var(--bg)}
+button.tm-fi[aria-pressed=true] b{color:var(--bg)}
+.tm-fi.fin{background:var(--bg2);border-color:#94a3b8}
+.tm-libre{font-size:14px;color:var(--ink2);margin:10px 0;text-align:center}.tm-libre b{color:var(--ink)}
+.tm-vacio{text-align:center}.tm-vv{opacity:.75}.tm-vv svg{width:140px;height:auto}
+.tm-p{font-size:14px;color:var(--ink2);margin:8px 0 12px}
+.tm-bts{display:grid;gap:8px}
+.tm-bt{min-height:48px;border-radius:14px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+.tm-bt.p{background:var(--ink);color:var(--bg)}
+.tm-hoy{display:block;width:100%;min-height:44px;margin:8px 0;padding:9px 12px;text-align:left;border:2px solid var(--ink);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14.5px;font-weight:800;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.tm-vaso svg g.l{transition:transform .5s cubic-bezier(.3,.8,.3,1)}}
+/* ===== Dinero · R3 · Gasto grande y «Ahorro y Bosque» (maquetas/dinero-tu-mes.html) ===== */
+.tm-chip{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;border-radius:12px;font-size:14px;font-weight:800;line-height:1.3;background:#ecfdf3;border:1.5px solid #86efac;color:#14532d}
+.tm-chip.sa{background:#fff1f2;border-color:#fda4af;color:#881337}
+html.dark .tm-chip{background:#12301f;border-color:#2f7a52;color:#c9f0d6}
+html.dark .tm-chip.sa{background:#3a1520;border-color:#be123c;color:#fecdd3}
+.tm-gbtn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:6px 14px;text-align:left}
+.tm-gbtn small{font-size:14px;font-weight:700}
+.tm-glista{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.tm-gfila{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 12px;text-align:left;border:2px dashed #be123c;border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.tm-gfila span:last-child{font-weight:700;color:var(--ink2);text-align:right}
+.tm-gfila:focus-visible,.tm-opc:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.tg-hoja .tg-l{display:block;margin:8px 0 0;font-size:14px;min-width:0}
+.tg-hoja .tg-l input{width:100%;min-width:0;box-sizing:border-box}
+.tg-hoja .tg-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
+.tm-opc{display:block;width:100%;min-height:64px;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:8px 12px;margin:0 0 8px;font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+.tm-opc small{display:block;font-size:14px;font-weight:700;color:var(--ink2)}
+.tm-opc[aria-pressed=true]{border-color:var(--ink);background:var(--bg2);box-shadow:inset 0 0 0 1px var(--ink)}
+.tm-opc[aria-pressed=true]::after{content:" ✓ elegido";font-size:14px;color:#15803d}
+.tg-prev{margin:0 0 8px;font-size:14px;font-weight:800}
+.tg-bts{grid-template-columns:1fr 1fr}
+.tm-bt:disabled{opacity:.5;cursor:default}
+.tm-gbtn{margin-top:8px}
+.ab .card{margin:0 0 10px}
+.ab-col .ab-n{font-size:38px;font-weight:900;letter-spacing:-1.5px;line-height:1.05;font-variant-numeric:tabular-nums}
+.ab-col .ab-n small{font-size:17px;letter-spacing:0;color:var(--ink2);font-weight:800}
+.ab-p{margin:2px 0;font-size:14px;color:var(--ink2)}.ab-p b{color:var(--ink)}
+.ab-h{margin:0;font-size:17px;font-weight:900}
+.ab-svg{display:block;width:100%;height:auto}
+.ab-ley{font-size:14px;color:var(--ink2);margin:4px 0 0}
+.lau-tabs button.ab-t{flex:1.6 1 0;white-space:normal;line-height:1.1}
+@media (prefers-reduced-motion:reduce){.tm-vaso svg g.l{transition:none}}

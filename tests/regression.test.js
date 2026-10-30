@@ -8759,7 +8759,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // Ahorro (la ruta vieja «salud» ya no existe), donde el colchón dice cuántos meses cubre
     await page.evaluate(() => { const P = window.PG; P.ui.dineroVista = ''; P.ui.dinTab = 'ahorro'; P.render(); });
     const sal = await page.evaluate(() => { const t = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
-      return { ahorro: /Tu bosque, mes a mes/.test(t), colchon: /meses de vida/.test(t), vista: window.PG.ui.dineroVista }; });   // D4: Ahorro es el bosque mes a mes
+      return { ahorro: /Lo que ahorraste cada mes/.test(t), colchon: /meses de vida/.test(t), vista: window.PG.ui.dineroVista }; });   // D4: Ahorro es el bosque mes a mes
     await page.evaluate(() => { const P = window.PG; if (window.__origDate221) { window.Date = window.__origDate221; delete window.__origDate221; } P.ui.dineroVista = ''; P.ui.dinTab = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Dinero · Mes: lo del día a día del mes cerrado (sin lo fijo) con su consejo; una categoría con sus 6 meses y su tope dice lo que ganas al año; Ahorro es el bosque mes a mes',
       an.n >= 3 && !an.cats.includes('Alquiler y casa') && an.tips.some((t) => /Restaurantes a \d+ €/.test(t)) && cat.barras === 6 && cat.meta && cat.meta.meta > 0 && /€\/año/.test(cat.txt) &&
@@ -8957,7 +8957,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const p = await page.evaluate(() => window.PG.foodLog(window.PG.iso(new Date()))[0].p);
     await page.evaluate(() => { const P = window.PG; P.ui.feVer = ''; P.ui.foodVista = 'vitaminas'; P.render(); });
     /* la vista vieja de micros («LO QUE MÁS TE FALTA») la sustituye la hoja «% diario» con su sugerencia */
-    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /100 g de |de tu nevera|la (cena|comida|desayuno)/.test(s) }; });
+    const mic = await page.evaluate(() => { const s = (document.querySelector('#main .vitsug') || {}).textContent || ''; return { falta: /^Falta [^:]+:/.test(s), con: /te sube un \d+ %/.test(s) && /100 g de |de tu nevera|(la|el) (cena|comida|desayuno)/i.test(s) }; });
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); P.ui.feVer = P.foodLog(P.iso(new Date()))[0].id; P.render(); });
     await page.click('.fehoja [data-a="fe-borrar"]'); await page.waitForTimeout(120);
     const borrado = await page.evaluate(() => ({ n: window.PG.foodLog(window.PG.iso(new Date())).length, hoja: !!document.querySelector('.fehoja') }));
@@ -10433,7 +10433,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hu-caprichos', nombre: 'Caprichos', ico: '🎁', color: '#fbbf24', pct: 20, objetivo: 0, meta: '', saldo: 310 }];
       a.puroId = 'hu-colchon'; a.puroPct = 50;
       const A = P.asistS(); A.sil = {}; A.nunca = {};
-      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.save(); P.render();
+      P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.save(); P.render();
       const m = document.querySelector('#main').innerText.replace(/\s+/g, ' ');
       // tanda Dinero D3: Dinero ya no enseña «Te queda / Puedes gastar hoy» (acta del 28/10); lo que se comprueba es el cálculo y que el Bosque no pide apuntar gastos
       return { estima: P.bkQueda() === null && !/PUEDES GASTAR|TE QUEDA/.test(m), pide: !!P.d6Mes().presu, apunta: !!document.querySelector('#main [data-a="dinero-apuntar"]') }; });
@@ -10672,13 +10672,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (d) captura de hoy → «ya lo he apartado» → deshacer → otra vez; el cierre sigue por repartir
     await page.evaluate(() => { const P = window.PG, B = P.bancoS(), hoy = P.iso(new Date());
       B.cuentas = [{ id: 'c266', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: hoy, hora: '10:00', s: { c266: 1500 } }];
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.render(); });
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.render(); });
     r.d0 = await page.evaluate(() => { const Q = window.PG.bkQueda(); return { ap: Q.ap, mk: Q.mk0, cad: Q.caducada }; });
     const pulsa = async (sel) => { const b = await page.$(sel); if (b) { await b.click(); await page.waitForTimeout(120); } return !!b; };
     // D4: el botón «ya lo he apartado» de la tarjeta vieja se sustituye por «Ya ha llegado la nómina» del Bosque: cobrado → Hecho → deshacer, con gestos reales
     const musgo = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, x = P.ahorroMes(P.d4Cobro().mk, false) || {};
-      return { g: d.guardado, ap: d.apartado[P.d4Cobro().mk] ? d.apartado[P.d4Cobro().mk].v : 0, saldo: P.ahorroS().huchas.filter((h) => h.id === 'hu-a')[0].saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho, txt: (document.querySelector('#main .lau-musgo') || {}).textContent || '' }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.d4Nom = null; P.render(); });
+      return { g: d.guardado, ap: d.apartado[P.d4Cobro().mk] ? d.apartado[P.d4Cobro().mk].v : 0, saldo: P.ahorroS().huchas.filter((h) => h.id === 'hu-a')[0].saldo, ini: x.ini ? x.ini.v : 0, cierre: !!x.hecho, txt: (document.querySelector('#main .ab-col') || {}).textContent || '' }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.d4Nom = null; P.render(); });
     r.d1m = await musgo();
     await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
     r.d1 = await pulsa('#main [data-a="d4-nom-ok"]'); await page.waitForTimeout(120);
@@ -10803,7 +10803,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = {};
     await page.evaluate(() => { window.__copia268 = JSON.parse(JSON.stringify(window.PG.store)); });
     r.a = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), log = P.foodLog(k);
-      log.push({ id: 'fe268', when: '', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 25 }); P.save();
+      /* la toma se apunta en la categoría del hueco (en día de gimnasio la «Comida post-entreno» cuenta como post-entreno): no depende del día de la semana */
+      const cat = (l) => /post.?.?entreno|pre.?.?entreno/i.test(l) ? 'post-entreno' : 'comida';
+      const sl = P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal' && x.slot && /comida/i.test(x.slot.label || ''))[0];
+      log.push({ id: 'fe268', when: '', p: sl ? cat(sl.slot.label) : 'comida', nombre: 'Lentejas', kcal: 500, prot: 25 }); P.save();
       const it = P.hoyItems(k, P.dayInfo(k)).filter((x) => x.tipo === 'meal' && x.slot && /comida/i.test(x.slot.label || ''));
       return it.length ? it.some((x) => x.hecha) : 'sin comida en Hoy'; });
     r.b = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return /data-i="undefined"/.test(P.hoyTresHTML(P.hoyItems(k, P.dayInfo(k)), 1439, k)); });
@@ -11588,15 +11591,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // registro de la real ni hábito.
   {
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
-      const kt = kd(3), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      /* kt y el día anterior (kp) deben caer en la misma semana: si kt fuese lunes, kp sería de la semana pasada y «esta semana» no lo contaría */
+      const off = new Date(d.getTime() + 3 * 864e5).getDay() === 1 ? 4 : 3, kt = kd(off), kp = kd(off - 1), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
       P.__t285 = { kt, ov: (P.store.rotation.shiftByDay || {})[kt], mode: P.store.rotation.mode, viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), nH: P.habitosS().items.length, tab: P.ui.tab };
       P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.habitosS().items.push({ id: 'hb285t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
         { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
-      P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kd(2)] = { salio: '07:29' };
+      P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kp] = { salio: '07:29' };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
       const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small')].map((x) => x.textContent) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
-        taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kd(2)), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
+        taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kp), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
       return out; });
     // «deshacer» quita la hora; «he salido» (hoy) guarda la del móvil
     await page.click('#main [data-a="manana-deshacer"]');
@@ -13225,7 +13229,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'p340b', fecha: '2026-03-10', nombre: 'cena', importe: 40, cat: 'ocio', ts: 2 }, { id: 'p340c', fecha: '2026-03-12', nombre: 'compra', importe: 25.5, cat: 'compra', ts: 3 }];
       d.presupuesto = 0;
       const B = P.bancoS(); B.cuentas = [{ id: 'c340', nombre: 'Cuenta', num: '1111', rol: 'gasto' }]; B.capturas = [{ fecha: '2026-03-14', hora: '10:00', s: { c340: 1500 } }];
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.render();
       const g = (mk) => { const x = P.gastoMes(mk); return x ? [x.fuente, x.total, JSON.stringify(x.cats)].join('|') : null; };
       const M = P.d6Mes(), md = P.mesDinero(2026, 2), t = P.mesTipo(), Q = P.bkQueda(), ah = P.ahorroDeMes('2026-02');
       return { ene: g('2026-01'), feb: g('2026-02'), mar: g('2026-03'),
@@ -13242,7 +13246,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 341) DINERO 3.0 · D3 · MIGRACIÓN Y BOSQUE, EN CADENA: con huchas viejas (colchón y una sin objetivo con saldo, una con
   //      objetivo, deseos) y SIN store.dinero3, abrir Dinero crea lo nuevo COPIANDO (guardado = colchón + sin objetivo; la hucha con
   //      objetivo → compra en plan; el deseo sin hacer → compra en espera) y el Bosque lo enseña (musgo, un fruto, meses de vida);
-  //      ir a Compras y volver al Bosque no duplica nada, y lo viejo sigue idéntico (nada se borra). Sobrevive a recargar.
+  //      ir a Compras y volver a Ahorro y Bosque no duplica nada, y lo viejo sigue idéntico (nada se borra). Sobrevive a recargar.
   {
     const r = {};
     await page.evaluate(() => { const P = window.PG, s = P.store; window.__copia341 = JSON.parse(JSON.stringify(s));
@@ -13254,21 +13258,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hu-s', nombre: 'Imprevistos', ico: '🎁', color: '#fbbf24', pct: 20, objetivo: 0, meta: '', saldo: 200 }];
       a.puroId = 'hu-colchon'; a.puroPct = 50; window.__viejo341 = JSON.stringify([a.huchas, s.dinero]);
       P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'compras'; P.ui.dineroVista = ''; P.render(); });
-    await page.click('#main [data-a="d6-tab"][data-v=""]'); await page.waitForTimeout(150);
+    await page.click('#main [data-a="d6-tab"][data-v="ahorro"]'); await page.waitForTimeout(150);
     r.a = await page.evaluate(() => { const P = window.PG, d = P.store.dinero3, m = document.querySelector('#main');
       return { guardado: d.ahorro.guardado, migrado: d.migrado, compras: d.compras.map((c) => c.nombre + '|' + c.precio + '|' + c.llevas + '|' + c.estado).join(';'),
-        musgo: (m.querySelector('.lau-musgo') || {}).textContent, baya: ((m.querySelector('.lau-baya') || {}).textContent || ''), titulo: (m.querySelector('#lauT') || {}).textContent || '',
+        musgo: (m.querySelector('.ab-col') || {}).textContent, baya: P.d3Datos().frutos + ' fruto', titulo: (m.querySelector('.ab-bosque title') || {}).textContent || '',
         pestanas: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), hoyHero: /PUEDES GASTAR|TE QUEDA/.test(m.innerText), vida: P.d3Datos().vida,
         ancho: document.documentElement.scrollWidth, sinXSS: !m.querySelector('i') }; });
     await page.click('#main [data-a="d6-tab"][data-v="compras"]'); await page.waitForTimeout(100);
-    await page.click('#main [data-a="d6-tab"][data-v=""]'); await page.waitForTimeout(100);
+    await page.click('#main [data-a="d6-tab"][data-v="ahorro"]'); await page.waitForTimeout(100);
     r.b = await page.evaluate(() => { const P = window.PG, d = P.store.dinero3; return { n: d.compras.length, viejo: JSON.stringify([P.store.ahorro.huchas, P.store.dinero]) === window.__viejo341,
       recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))); return o.dinero3 && o.dinero3.ahorro.guardado + '/' + o.dinero3.compras.length; })() }; });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia341; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
-    check('Dinero 3.0 · migración: colchón + huchas sin objetivo → lo guardado (3.200 €); la hucha con objetivo → compra en plan; el deseo sin hacer → compra en espera; el Bosque lo enseña (musgo, 1 fruto, meses de vida) y las cuatro pestañas',
-      r.a.guardado === 3200 && r.a.migrado && r.a.compras === 'Japón <i>|2000|500|plan;vuelos|800|0|espera' && /3\.200 € guardados/.test(r.a.musgo) && /1 fruto/.test(r.a.baya) &&
-      /3\.200 euros/.test(r.a.titulo) && r.a.vida === 2 && r.a.pestanas === 'Bosque,Gastos,Ahorro,Compras' && !r.a.hoyHero && r.a.sinXSS, JSON.stringify(r.a));
-    check('Dinero 3.0 · migración: ir a Compras y volver al Bosque no duplica compras, lo viejo (huchas y recibos) queda idéntico y lo nuevo sobrevive a recargar',
+    check('Dinero 3.0 · migración: colchón + huchas sin objetivo → lo guardado (3.200 €); la hucha con objetivo → compra en plan; el deseo sin hacer → compra en espera; Ahorro y Bosque lo enseña (colchón, 1 compra en plan, meses de vida) y las cuatro pestañas',
+      r.a.guardado === 3200 && r.a.migrado && r.a.compras === 'Japón <i>|2000|500|plan;vuelos|800|0|espera' && /Hoy 3\.200 €/.test(r.a.musgo) && /1 fruto/.test(r.a.baya) &&
+      /meses de colchón/.test(r.a.titulo) && r.a.vida === 2 && r.a.pestanas === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && !r.a.hoyHero && r.a.sinXSS, JSON.stringify(r.a));
+    check('Dinero 3.0 · migración: ir a Compras y volver a Ahorro y Bosque no duplica compras, lo viejo (huchas y recibos) queda idéntico y lo nuevo sobrevive a recargar',
       r.b.n === 2 && r.b.viejo && r.b.recarga === '3200/2', JSON.stringify(r.b));
   }
 
@@ -13283,9 +13287,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { fecha: mkDe(1) + '-27', hora: '10:00', mes: mkDe(1), banco: null, ingresos: 2000, gastos: 1250, cats: { Alquiler: 650, Supermercado: 300, 'Comer fuera': 180, Ocio: 120 } }];
       a.gastado = {}; a.catCfg = {}; delete a.meta; window.__mk342 = [mkDe(0), mkDe(1)];
       s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2500, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()) }, compras: [{ id: 'c342', nombre: 'Portátil', precio: 900, llevas: 100, mes: '', estado: 'plan', alta: P.iso(new Date()), tipo: '' }] };
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.d3Mes = ''; P.render(); });
-    r.bosque = await page.evaluate(() => { const b = document.querySelector('#main .lau-claro'); return b ? b.textContent.replace(/\s+/g, ' ') : ''; });
-    await page.click('#main .lau-claro'); await page.waitForTimeout(150);
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.d3Mes = ''; P.render(); });
+    r.bosque = await page.evaluate(() => { const b = document.querySelector('#main .ab-empuje'); return b ? b.textContent.replace(/\s+/g, ' ') : ''; });
+    await page.click('#main [data-a="d3-claro"]'); await page.waitForTimeout(150);
     r.actual = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText.replace(/\s+/g, ' ');
       return { tab: window.PG.ui.dinTab, mes: window.PG.ui.d3Mes, total: /1\.290 €/.test(t), fijos: /Fijos 650 €/.test(t), vars: /Variables 640 €/.test(t), top: /Comer fuera/.test(t), ahorrar: /Con 3 cambios pequeños/.test(t),
         comp: /COMPARADO CON/.test(t) && /costó 40 € más/.test(t), ancho: document.documentElement.scrollWidth }; });
@@ -13297,7 +13301,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main .subcab .volver'); await page.waitForTimeout(150);
     r.vuelta = await page.evaluate(() => window.PG.ui.dinTab + '|' + /GASTADO EN/.test(document.querySelector('#main').innerText));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia342; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.d3Mes = ''; P.ui.dineroVista = ''; P.render(); });
-    check('Dinero 3.0 · Bosque → tocón → Gastos: el tocón es lo variable más grande (Comer fuera, 320 €) y lleva a Gastos de este mes con fijos, variables, «dónde ahorrar» y el comparado con el anterior',
+    check('Dinero 3.0 · Ahorro y Bosque → el empujón → Gastos: lo variable más grande (Comer fuera, 320 €) y lleva a Gastos de este mes con fijos, variables, «dónde ahorrar» y el comparado con el anterior',
       /Comer fuera/.test(r.bosque) && /320/.test(r.bosque) && r.actual.tab === 'gastos' && r.actual.mes === r.actual.mes && r.actual.total && r.actual.fijos && r.actual.vars && r.actual.top && r.actual.ahorrar && r.actual.comp, JSON.stringify(r));
     check('Dinero 3.0 · Gastos: el selector pasa al mes anterior con sus cifras, y desde Gastos se llega a Recibos y se vuelve a Gastos',
       r.previo.total && r.previo.sinComp && r.previo.pressed && r.recibos && r.vuelta === 'gastos|true', JSON.stringify({ p: r.previo, rec: r.recibos, v: r.vuelta }));
@@ -13312,24 +13316,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
       a.gastado = {}; delete a.meta;
       s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
     const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), c = (m.querySelector('#d4Cifra') || {}).textContent || '', d = window.PG.store.dinero3.ahorro;
-      return { cifra: +c.replace(/[^\d]/g, ''), obj: d.objetivoMeses, plazo: d.plazoMeses, svg: ((m.querySelector('#d4Graf') || {}).getAttribute('aria-label') || ''), ancho: document.documentElement.scrollWidth,
+      return { cifra: +c.replace(/[^\d]/g, ''), obj: d.objetivoMeses, plazo: d.plazoMeses, svg: ((m.querySelector('.ab-bosque svg title') || {}).textContent || ''), ancho: document.documentElement.scrollWidth,
         peq: [...m.querySelectorAll('.lau-card button, .lau-card input')].filter((b) => b.getBoundingClientRect().height < 43.5).map((b) => b.className + ':' + b.textContent.slice(0, 12) + ':' + Math.round(b.getBoundingClientRect().height)).join('|') }; });
     const vp343 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.click('#main .lau-ir'); await page.waitForTimeout(150);
     r.a = await lee();
     await page.click('#main [data-a="d4-obj"][data-v="9"]'); await page.waitForTimeout(100); r.b = await lee();
     await page.click('#main [data-a="d4-plazo"][data-v="6"]'); await page.waitForTimeout(100); r.c = await lee();
     await page.fill('#d4o-objetivoMeses', '4'); await page.press('#d4o-objetivoMeses', 'Tab'); await page.waitForTimeout(120); r.d = await lee();
     r.rec = await page.evaluate(() => { const P = window.PG, o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.objetivoMeses + '/' + o.plazoMeses; });
-    await page.click('#main .lau-btn[data-a="d6-tab"]'); await page.waitForTimeout(150);
-    r.vuelta = await page.evaluate(() => !!document.querySelector('#main .lau-esc') && window.PG.ui.dinTab === '');
+    await page.click('#main .lau-tabs [data-v="gastos"]'); await page.waitForTimeout(150); await page.click('#main .lau-tabs [data-v="ahorro"]'); await page.waitForTimeout(150);
+    r.vuelta = await page.evaluate(() => !!document.querySelector('#main .ab-bosque svg') && window.PG.ui.dinTab === 'ahorro');
     await page.setViewportSize(vp343);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia343; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
     check('Dinero 3.0 · Bosque → Ahorro: cambiar objetivo y plazo cambia «aparta X €/mes» (6 meses/12: menos que 9/12; 9/6: más) y la gráfica lo cuenta',
-      r.a.cifra > 0 && r.b.cifra > r.a.cifra && r.c.cifra > r.b.cifra && r.b.obj === 9 && r.c.plazo === 6 && /plan de \d/.test(r.c.svg) && /9 meses/.test(r.c.svg), JSON.stringify([r.a, r.b, r.c]));
-    check('Dinero 3.0 · Ahorro: escribir otro objetivo (4 meses) lo aplica, se guarda tras recargar y «Volver al bosque» vuelve al Bosque; a 412 sin scroll horizontal y con todo ≥44 px',
+      r.a.cifra > 0 && r.b.cifra > r.a.cifra && r.c.cifra > r.b.cifra && r.b.obj === 9 && r.c.plazo === 6 && /objetivo de 9/.test(r.c.svg), JSON.stringify([r.a, r.b, r.c]));
+    check('Dinero 3.0 · Ahorro: escribir otro objetivo (4 meses) lo aplica, se guarda tras recargar y ir a Gastos y volver a Ahorro y Bosque lo deja igual; a 412 sin scroll horizontal y con todo ≥44 px',
       r.d.obj === 4 && r.d.cifra < r.c.cifra && r.rec === '4/6' && r.vuelta && r.a.ancho <= 412 && r.a.peq === '', JSON.stringify({ d: r.d, rec: r.rec, v: r.vuelta, a: r.a.ancho, peq: r.a.peq }));
   }
 
@@ -13342,9 +13345,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.real = [1, 2].map((i) => ({ fecha: mkDe(i) + '-20', hora: '10:00', mes: mkDe(i), banco: null, ingresos: 2000, gastos: 1600, cats: { Alquiler: 700, Supermercado: 500, Ocio: 400 } }));
       a.gastado = {}; delete a.meta; a.epocas = [{ id: 'e344', nombre: 'R1', desde: '2000-01', neto: 2000, finde: 0, pagaJun: 0, pagaDic: 0 }]; a.cobrado = {};
       s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 2000, objetivoMeses: 6, plazoMeses: 12, desde: P.iso(new Date()), apartado: {} }, compras: [] };
-      P.ui.d4Nom = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+      P.ui.d4Nom = null; P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
     const est = () => page.evaluate(() => { const P = window.PG, d = P.store.dinero3.ahorro, mk = P.d4Cobro().mk;
-      return { g: d.guardado, ap: d.apartado[mk] ? d.apartado[mk].v : 0, musgo: ((document.querySelector('#main .lau-musgo') || {}).textContent || '').replace(/\s+/g, ' '), card: ((document.querySelector('#d4Nom') || {}).innerText || '').replace(/\s+/g, ' '),
+      return { g: d.guardado, ap: d.apartado[mk] ? d.apartado[mk].v : 0, musgo: ((document.querySelector('#main .ab-col') || {}).textContent || '').replace(/\s+/g, ' '), card: ((document.querySelector('#d4Nom') || {}).innerText || '').replace(/\s+/g, ' '),
         recarga: (() => { const o = P.normalize(JSON.parse(JSON.stringify(P.store))).dinero3.ahorro; return o.guardado + '/' + (o.apartado[mk] ? o.apartado[mk].v : 0); })() }; });
     r.a = await est();
     await page.click('#main [data-a="d4-nom"]'); await page.waitForTimeout(100);
@@ -13443,21 +13446,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       delete s.dinero3;
       const K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
       window.__viejo347 = JSON.stringify(K.map((k) => a[k]));
-      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
+      P.save(); P.ui.tab = 'dinero'; P.ui.dinTab = 'bosque'; P.ui.dineroVista = ''; P.ui.dinHoja = ''; P.render(); });
     const sigue = () => page.evaluate(() => { const P = window.PG, a = P.ahorroS(), K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
       return JSON.stringify(K.map((k) => a[k])) === window.__viejo347; });
     r.recorrido = [];
-    for (const v of ['gastos', 'ahorro', 'compras', '']) {
+    for (const v of ['gastos', 'ahorro', 'compras']) {
       await page.click(`#main .d7seg [data-v="${v}"]`); await page.waitForTimeout(120);
       r.recorrido.push(await page.evaluate((v) => ({ v, tab: window.PG.ui.dinTab, on: (document.querySelector('#main .d7seg .on') || {}).textContent, txt: document.querySelector('#main').innerText.replace(/\s+/g, ' ').slice(0, 90) }), v));
       r.recorrido[r.recorrido.length - 1].sigue = await sigue(); }
-    // Ahorro: sin «Cambiar el reparto» ni «Cuadrarlo»; «Volver al bosque» es una píldora; «tu ritmo» no pisa «objetivo: …»
+    // Ahorro y Bosque: sin «Cambiar el reparto» ni «Cuadrarlo»; con el % de ahorro, el bosque y las barras de cada mes
     await page.click('#main .d7seg [data-v="ahorro"]'); await page.waitForTimeout(150);
-    r.ahorro = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText, vb = m.querySelector('[data-a="d6-tab"][data-v=""]:not(.d7seg *)'), g = document.getElementById('d4Graf');
-      const cx = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom, txts = g ? [].slice.call(g.querySelectorAll('text')).map((e) => [e.textContent, e.getBoundingClientRect()]) : [];
-      const obj = txts.filter((q) => /^objetivo:/.test(q[0]))[0], rit = g ? g.querySelector('rect') : null;
-      return { reparto: /Cambiar el reparto/.test(t), cuadrar: /Cuadrarlo/.test(t), pct: !!m.querySelector('[data-a="d7-meta"]'), pildora: vb ? parseFloat(getComputedStyle(vb).borderTopLeftRadius) >= 20 : false,
-        pisa: obj && rit ? cx(obj[1], rit.getBoundingClientRect()) : 'sin gráfica', graf: !!g }; });
+    r.ahorro = await page.evaluate(() => { const m = document.querySelector('#main'), t = m.innerText;
+      return { reparto: /Cambiar el reparto/.test(t), cuadrar: /Cuadrarlo/.test(t), pct: !!m.querySelector('[data-a="d7-meta"]'), graf: !!m.querySelector('.ab-bosque svg'), barras: m.querySelectorAll('.ab-barra').length }; });
     // copia de seguridad: lo viejo va entero y lo migrado también
     r.copia = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.storeParaCopia())), a = c.ahorro || {}, d3 = c.dinero3 || {}, K = ['huchas', 'meta', 'banco', 'epocas', 'festivos', 'movs', 'metaPct', 'real', 'puroId', 'puroPct'];
       return { viejo: JSON.stringify(K.map((k) => a[k])) === window.__viejo347, guardado: d3.ahorro && d3.ahorro.guardado, japon: (d3.compras || []).filter((q) => q.nombre === 'Japón 347').map((q) => q.precio + '/' + q.llevas).join(),
@@ -13467,10 +13467,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return [a.huchas.map((q) => q.id + ':' + q.saldo + ':' + (q.deseos || []).length).join(), a.meta && a.meta.importe, a.banco.capturas.length + '/' + a.banco.cuentas.length, a.epocas.map((e) => e.id).join(),
         a.festivos.join(), a.movs.length, a.metaPct, a.real.length].join('|'); });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia347; P.save(); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render(); });
-    check('Dinero 3.0 · D6: con un móvil de antes, Bosque → Gastos → Ahorro → Compras se recorre con clics y lo viejo (huchas, meta, banco, épocas, festivos, movimientos) sigue intacto tras cada paso',
-      r.recorrido.length === 4 && r.recorrido.every((q) => q.sigue && q.tab === q.v && q.on) && pageErrors.length === errores0, JSON.stringify(r.recorrido));
-    check('Dinero 3.0 · D6: en Ahorro ya no hay «Cambiar el reparto» ni «Cuadrarlo»; sí el %; «Volver al bosque» es una píldora y «tu ritmo» no pisa la etiqueta del objetivo',
-      r.ahorro.graf && !r.ahorro.reparto && !r.ahorro.cuadrar && r.ahorro.pct && r.ahorro.pildora && r.ahorro.pisa === false, JSON.stringify(r.ahorro));
+    check('Dinero 3.0 · D6: con un móvil de antes, Gastos → Ahorro y Bosque → Compras se recorre con clics y lo viejo (huchas, meta, banco, épocas, festivos, movimientos) sigue intacto tras cada paso',
+      r.recorrido.length === 3 && r.recorrido.every((q) => q.sigue && q.tab === q.v && q.on) && pageErrors.length === errores0, JSON.stringify(r.recorrido));
+    check('Dinero 3.0 · D6: en Ahorro y Bosque no hay «Cambiar el reparto» ni «Cuadrarlo»; sí el %, el bosque y las 5 barras de cada mes',
+      r.ahorro.graf && !r.ahorro.reparto && !r.ahorro.cuadrar && r.ahorro.pct && r.ahorro.barras === 5, JSON.stringify(r.ahorro));
     check('Dinero 3.0 · D6: la copia de seguridad lleva lo viejo intacto (y vuelve igual tras normalizar) y lo migrado: musgo, Japón como compra (2.400 / 800) y el deseo en espera',
       r.copia.viejo && r.vuelta === 'hu-colchon:3000:0,hu-j347:800:1|9000|1/1|e347|2026-12-25|1|25|1' && r.copia.guardado >= 3000 && r.copia.japon === '2400/800' && r.copia.deseo === 'espera', JSON.stringify({ c: r.copia, v: r.vuelta }));
   }
@@ -14378,6 +14378,321 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp36);
     check('364 el .ics no trae «🌿 Vete del Lloret» ni «🚪 Sal de casa» de serie; con sus interruptores de Sueño encendidos trae los de cada noche con Lloret (21:45) y cada día de bus (07:31)',
       v.a.ll.length === 0 && v.a.sal.length === 0 && v.b.ll.length >= 4 && /^21:45@/.test(v.b.ll[0]) && v.b.sal.length === 0 && v.c.sal.length >= 3 && /^07:31@/.test(v.c.sal[0]) && v.on[0] === true && v.on[1] === true, JSON.stringify([v.a, v.b, v.c, v.on]));
+  }
+  // 365) DINERO · R2 «Tu mes» (412×915, hoy = jue 29/10/2026, nómina 2.380, fijos 728 con 118 sin pagar): Dinero abre en el vaso («Acabarás con ~… · ahorras …»
+  //      y la cadena empiezas − fijos − gastos = acabas); tocar el vaso separa los fijos («Te quedan 1.652 €» y la lista con ✓/○); la ficha «Fijos» lo pliega; el estado
+  //      vive en ui y el Bosque sigue en su pestaña. Sin scroll lateral.
+  // 366) HOY · la línea «💶 Te quedan N € · M €/día» con «mañana pagas X»: sale con un fijo sin pagar mañana, tocarla abre Dinero · Tu mes; sin nada que aporte, no sale.
+  // 367) DINERO · Tu mes sin nómina ni fijos: vaso vacío con «Apuntar mis fijos» (vista fijos) y «Mi nómina».
+  {
+    const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate365 || Date; window.__origDate365 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(10, 0, 29);
+    await page.evaluate(() => { window.__copia365 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (opt) => page.evaluate((opt) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia365));
+      const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      /* con una captura de Fintonic (200 € de día a día) se sabe con cuánto acabas; opt.sinVars = sin ninguna, que es el caso del aviso «Sube Fintonic…» */
+      a.real = opt.sinVars ? [] : [{ id: 'r365', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e365', nombre: 'R1', desde: '2000-01', neto: opt.nomina ? 2380 : 0, finde: 0, pagaJun: 0, pagaDic: 0 }];   // sin épocas normalize pone las de serie: «sin nómina» es neto 0
+      d.gastos = opt.fijos ? [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }, { id: 'g2', nombre: 'Luz y agua', importe: 60, dia: 5, cat: 'casa', on: true },
+        { id: 'g3', nombre: 'Seguro', importe: 25, dia: 30, cat: 'otros', on: true }, { id: 'g4', nombre: 'Spotify', importe: 18, dia: 31, cat: 'ocio', on: true },
+        { id: 'g5', nombre: 'Móvil', importe: 35, dia: 31, cat: 'casa', on: true }, { id: 'g6', nombre: 'Gimnasio', importe: 40, dia: 31, cat: 'salud', on: true }] : [];
+      d.pagos = opt.fijos ? [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p2', fecha: '2026-10-05', nombre: 'Luz y agua', importe: 60, cat: 'casa', gastoId: 'g2', ts: 2 }]
+        .concat(opt.seguroPagado ? [{ id: 'p3', fecha: '2026-10-30', nombre: 'Seguro', importe: 25, cat: 'otros', gastoId: 'g3', ts: 3 }] : []) : [];
+      if (opt.sinManana) d.gastos = d.gastos.filter((g) => g.id !== 'g3');
+      P.ui.tmFijos = false; P.ui.tab = opt.hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, opt);
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => m.querySelector(s), t = (s) => q(s) ? q(s).textContent.replace(/\s+/g, ' ').trim() : '';
+      const vaso = q('.tm-vaso'), fx = q('.tm-fx');
+      return { hay: !!q('.tm'), hero: t('.tm-hero'), lado: t('.tm-lado'), cadena: t('.tm-cadena'), fijosLista: m.querySelectorAll('.tm-fijos li').length, hechos: m.querySelectorAll('.tm-fijos li.si').length,
+        capas: m.querySelectorAll('.tm-vaso svg g.l').length, pv: vaso ? vaso.getAttribute('aria-pressed') : null, pf: fx ? fx.getAttribute('aria-pressed') : null, ui: window.PG.ui.tmFijos,
+        altoVaso: vaso ? Math.round(vaso.getBoundingClientRect().height) : 0, altoFx: fx ? Math.round(fx.getBoundingClientRect().height) : 0,
+        tabs: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), on: t('.lau-tabs button.on'), ancho: document.documentElement.scrollWidth,
+        vacio: !!q('.tm-vacio'), btns: [...m.querySelectorAll('.tm-vacio button')].map((b) => b.textContent.trim() + '>' + (b.dataset.v || '')).join('|'), titulo: t('.tm-vaso svg title'),
+        linea: t('.tm-hoy'), lineaA: q('.tm-hoy') ? q('.tm-hoy').dataset.a + ':' + q('.tm-hoy').dataset.v : '', lineaAlto: q('.tm-hoy') ? Math.round(q('.tm-hoy').getBoundingClientRect().height) : 0,
+        bosque: !!q('.ab-bosque') }; });
+    // 365
+    const r = {};
+    await siembra({ nomina: true, fijos: true }); await page.waitForTimeout(250);
+    r.a = await lee();
+    await page.click('#main .tm-vaso'); await page.waitForTimeout(250); r.b = await lee();
+    await page.click('#main .tm-fx'); await page.waitForTimeout(250); r.c = await lee();
+    await page.click('#main .tm-fx'); await page.waitForTimeout(250); r.d = await lee();
+    await page.click('#main .tm-vaso'); await page.waitForTimeout(250); r.e = await lee();
+    await page.click('#main [data-a="d6-tab"][data-v="ahorro"]'); await page.waitForTimeout(250); r.f = await lee();
+    check('365 Dinero · Tu mes: abre en el vaso con «Acabarás con ~… · ahorras …» y la cadena; tocar el vaso muestra «Te quedan 1.652 €» y los 6 fijos (2 ✓); la ficha Fijos lo pliega; el Bosque queda en su pestaña',
+      r.a.hay && /Acabarás/.test(r.a.hero) && /~1\.452 €/.test(r.a.hero) && /ahorras 1\.282/.test(r.a.hero) && /Empiezas\s*2\.380.*Fijos\s*728.*Gastos\s*200.*Acabas\s*1\.452/.test(r.a.cadena) && r.a.capas >= 5 &&
+      r.a.pv === 'false' && r.a.pf === 'false' && r.a.ui === false && !/Te quedan 1\.652/.test(r.a.lado) && /Fijos 728/.test(r.a.lado) && /118/.test(r.a.lado) &&
+      r.b.pv === 'true' && r.b.pf === 'true' && r.b.ui === true && /Te quedan 1\.652 €/.test(r.b.lado) && r.b.fijosLista === 6 && r.b.hechos === 2 &&
+      r.c.pv === 'false' && r.c.ui === false && !/Te quedan 1\.652/.test(r.c.lado) && r.d.ui === true && /Te quedan 1\.652 €/.test(r.d.lado) &&
+      r.e.ui === false && !r.f.hay && r.a.tabs === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && r.a.on === 'Tu mes' && r.f.on === 'Ahorro y Bosque' && r.f.bosque &&
+      r.a.altoVaso >= 44 && r.a.altoFx >= 44 && r.a.ancho <= 412 && r.b.ancho <= 412, JSON.stringify(r));
+    // 366
+    const h = {};
+    await siembra({ nomina: true, fijos: true, hoy: true }); await page.waitForTimeout(300); h.con = await lee();
+    { const el = await page.$('#main .tm-hoy'); h.clic = !!el; if (el) await el.click(); } await page.waitForTimeout(300); h.abre = await lee(); h.tab = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dinTab);
+    await siembra({ nomina: true, fijos: true, hoy: true, seguroPagado: true }); await page.waitForTimeout(300); h.pagado = await lee();
+    await siembra({ nomina: true, fijos: true, hoy: true, sinManana: true }); await page.waitForTimeout(300); h.sin = await lee();
+    await siembra({ hoy: true }); await page.waitForTimeout(300); h.nada = await lee();
+    check('366 Hoy · la línea «💶 Te quedan 170 € · 56 €/día hasta fin de mes · mañana pagas Seguro (25 €)» sale con un fijo sin pagar mañana y al tocarla abre Dinero · Tu mes; pagado, sin fijo mañana o sin datos, no sale',
+      /^💶 Te quedan 170 € · 56 €\/día hasta fin de mes · mañana pagas Seguro \(25 €\)$/.test(h.con.linea) && h.clic && h.con.lineaAlto >= 44 && h.con.ancho <= 412 && h.tab === 'dinero|' && h.abre.hay && /Acabarás/.test(h.abre.hero) &&
+      h.pagado.linea === '' && h.sin.linea === '' && h.nada.linea === '', JSON.stringify(h));
+    // 367
+    const v = {};
+    await siembra({}); await page.waitForTimeout(250); v.a = await lee();
+    await page.click('#main .tm-vacio [data-v="fijos"]'); await page.waitForTimeout(250); v.b = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dineroVista);
+    await siembra({}); await page.waitForTimeout(150);
+    await page.click('#main .tm-vacio [data-v="nomina"]'); await page.waitForTimeout(250); v.c = await page.evaluate(() => window.PG.ui.tab + '|' + window.PG.ui.dineroVista);
+    check('367 Dinero · Tu mes sin nómina ni fijos: vaso vacío con «Apuntar mis fijos» (vista fijos) y «Mi nómina» (vista nomina), sin cifras inventadas',
+      v.a.hay && v.a.vacio && v.a.btns === 'Apuntar mis fijos>fijos|Mi nómina>nomina' && !/Acabarás con ~/.test(v.a.hero) && v.a.fijosLista === 0 && v.b === 'dinero|fijos' && v.c === 'dinero|nomina' && v.a.ancho <= 412, JSON.stringify([v.a, v.b, v.c]));
+    // (misma tanda, 368) sin nada del día a día (ni captura ni gasto apuntado) «ahorras» saldría inflado: no se dice «acabarás con» ni «ahorras»; sale el aviso con el botón de subir Fintonic y el vaso enseña empiezas, fijos y te queda
+    const w = {};
+    await siembra({ nomina: true, fijos: true, sinVars: true }); await page.waitForTimeout(250); w.a = await lee();
+    w.sub = await page.evaluate(() => !!document.querySelector('#main .tm-hero input[data-a="fin-fotos"]'));
+    await page.click('#main .tm-fx'); await page.waitForTimeout(250); w.b = await lee();
+    await siembra({ nomina: true, fijos: true, sinVars: true, hoy: true }); await page.waitForTimeout(300); w.hoy = await lee();
+    check('367b Dinero · Tu mes sin gasto del día a día: no sale «Acabarás con» ni «ahorras», sale «Sube la captura de Fintonic…» con el botón de subir; el vaso dice Empiezas 2.380, Fijos 728, Te queda 1.652; tocar Fijos da «Te quedan 1.652 €»; Hoy no habla de €/día',
+      w.a.hay && !/Acabarás|ahorras/i.test(w.a.hero + w.a.lado + w.a.cadena) && /Sube la captura de Fintonic de este mes para saber con cuánto acabas/.test(w.a.hero) && w.sub &&
+      /Empiezas\s*2\.380.*Fijos\s*728.*Te queda\s*1\.652/.test(w.a.cadena) && !/Te quedan 1\.652/.test(w.a.lado) && /Te queda\s*1\.652/.test(w.a.lado) &&
+      w.b.ui === true && /Te quedan 1\.652 €/.test(w.b.lado) && w.b.fijosLista === 6 && !/ahorras/i.test(w.b.hero) && w.a.ancho <= 412 &&
+      /^💶 Mañana pagas Seguro \(25 €\)$/.test(w.hoy.linea) && !/€\/día/.test(w.hoy.linea), JSON.stringify(w));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia365; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.tmFijos = false; P.save(); P.render(); window.Date = window.__origDate365; });
+    await page.setViewportSize(vp36);
+  }
+  // 368) DINERO · R3 «Gasto grande», EN CADENA (412×915, hoy = jue 29/10/2026, nómina 2.380, fijos 728, ahorras 1.282): Tu mes → «Apuntar gasto grande» → Portátil 1.100 para dentro de 2 meses →
+  //      «Lo voy apartando» → Listo → chip «732 € al colchón + 550 apartados», «ahorras» baja a 732, el vaso gana su capa a rayas y Hoy dice «apartas 550 a Portátil» → abrir su fila → Quitar → todo como al
+  //      principio (la compra queda en estado «no», no se borra). Con «Sale de lo ahorrado» lo que pide el bosque (d3Datos().pide) sube y el chip dice que sale de lo ahorrado; Quitar lo deja como estaba.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate368 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia368 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (hoy) => page.evaluate((hoy) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia368));
+      const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r368', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e368', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }, { id: 'g2', nombre: 'Luz y agua', importe: 60, dia: 5, cat: 'casa', on: true },
+        { id: 'g3', nombre: 'Seguro', importe: 25, dia: 30, cat: 'otros', on: true }, { id: 'g4', nombre: 'Spotify', importe: 18, dia: 31, cat: 'ocio', on: true },
+        { id: 'g5', nombre: 'Móvil', importe: 35, dia: 31, cat: 'casa', on: true }, { id: 'g6', nombre: 'Gimnasio', importe: 40, dia: 31, cat: 'salud', on: true }];
+      d.pagos = [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p2', fecha: '2026-10-05', nombre: 'Luz y agua', importe: 60, cat: 'casa', gastoId: 'g2', ts: 2 }];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, hoy);
+    const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), q = (s) => m.querySelector(s), t = (s) => q(s) ? q(s).textContent.replace(/\s+/g, ' ').trim() : '';
+      const cs = P.dinero3S().compras;
+      return { hero: t('.tm-hero'), chip: t('.tm-chip'), filas: m.querySelectorAll('.tm-gfila').length, btn: !!q('.tm-gbtn'), capaRayas: !!q('.tm-vaso svg [data-capa="aparta"]'), linea: t('.tm-hoy'),
+        pide: P.d3Datos().pide, n: cs.length, estados: cs.map((c) => c.estado + ':' + (c.grande || '-')).join(','), ancho: document.documentElement.scrollWidth,
+        hoja: !!document.querySelector('#hojaDia .hoja[role="dialog"]') }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia .hoja'), q = (s) => h ? h.querySelector(s) : null;
+      return { hay: !!h, rol: h ? h.getAttribute('role') : '', prev: q('#tgPrev') ? q('#tgPrev').textContent.replace(/\s+/g, ' ').trim() : '',
+        pres: [...(h ? h.querySelectorAll('[data-a="tg-modo"]') : [])].map((b) => b.dataset.v + ':' + b.getAttribute('aria-pressed') + ':' + Math.round(b.getBoundingClientRect().height)).join('|'),
+        nom: q('#tgNom') ? q('#tgNom').value : '', quita: !!q('[data-a="tg-quita"]'), listo: !!q('[data-a="tg-listo"]') }; });
+    const apunta = async (modo) => {
+      await page.click('#main .tm-gbtn'); await page.waitForTimeout(200);
+      await page.fill('#tgNom', 'Portátil'); await page.fill('#tgPre', '1100'); await page.fill('#tgMes', '2026-12');
+      await page.click('#hojaDia [data-a="tg-modo"][data-v="' + modo + '"]'); await page.waitForTimeout(150);
+      const h = await hoja(); await page.click('#hojaDia [data-a="tg-listo"]'); await page.waitForTimeout(250); return h; };
+    const r = {};
+    await siembra(false); await page.waitForTimeout(250); r.a = await lee();
+    r.hojaA = await apunta('apartando'); r.b = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); r.hojaB = await hoja();
+    await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.c = await lee();
+    r.hojaC = await apunta('ahorrado'); r.d = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.e = await lee();
+    await siembra(true); await page.waitForTimeout(250); r.h0 = await lee();
+    await page.evaluate(() => { const P = window.PG; P.dinero3S().compras.push({ id: 'cg', nombre: 'Portátil', precio: 1100, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-29', tipo: 'util', grande: 'apartando' }); P.save(); P.render(); });
+    await page.waitForTimeout(250); r.h1 = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia368; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); window.Date = window.__origDate368; });
+    await page.setViewportSize(vp);
+    check('368 Dinero · gasto grande: Portátil 1.100 para dic «Lo voy apartando» → chip «732 € al colchón + 550 apartados», ahorras baja de 1.282 a 732, capa a rayas en el vaso y Hoy dice «apartas 550 a Portátil»; Quitar lo deja todo como estaba (estado «no», no se borra); con «Sale de lo ahorrado» pide sube y sale el chip; Quitar vuelve',
+      r.a.btn && r.a.filas === 0 && r.a.chip === '' && /ahorras 1\.282/.test(r.a.hero) && r.hojaA.hay && r.hojaA.rol === 'dialog' && r.hojaA.pres === 'apartando:true:' + r.hojaA.pres.split(':')[2].split('|')[0] + '|ahorrado:false:' + r.hojaA.pres.split('|')[1].split(':')[2] &&
+      /Este mes: 732 € al colchón \+ 550 apartados/.test(r.hojaA.prev) && r.hojaA.pres.split('|').every((x) => +x.split(':')[2] >= 44) &&
+      /732 € al colchón \+ .*550 apartados/.test(r.b.chip) && /ahorras 732/.test(r.b.hero) && r.b.filas === 1 && r.b.capaRayas && r.b.estados === 'plan:apartando' && r.b.pide === r.a.pide &&
+      r.hojaB.hay && r.hojaB.quita && r.hojaB.nom === 'Portátil' && r.c.estados === 'no:apartando' && r.c.n === 1 && r.c.chip === '' && r.c.filas === 0 && /ahorras 1\.282/.test(r.c.hero) && !r.c.capaRayas && r.c.pide === r.a.pide &&
+      /sale de lo ahorrado/.test(r.d.chip) && /ahorras 1\.282/.test(r.d.hero) && r.d.pide > r.a.pide && r.d.estados === 'no:apartando,plan:ahorrado' &&
+      r.e.chip === '' && r.e.pide === r.a.pide && r.e.estados === 'no:apartando,no:ahorrado' && r.e.n === 2 &&
+      !/apartas/.test(r.h0.linea) && /apartas 550 a Portátil/.test(r.h1.linea) && r.a.ancho <= 412 && r.b.ancho <= 412, JSON.stringify(r));
+  }
+  // 369) DINERO · R3 · datos viejos: un store con huchas y meta de ahorro, store.dinero y dinero3 SIN «grande» carga sin perder nada, ninguna compra es grande y Tu mes no enseña chips ni filas;
+  //      normalize conserva «grande» si es 'apartando' o 'ahorrado' y lo descarta si es otra cosa
+  {
+    const r = await page.evaluate(() => { const P = window.PG, copia = JSON.parse(JSON.stringify(P.store)), o = {};
+      const s = JSON.parse(JSON.stringify(copia));
+      s.ahorro = { huchas: [{ id: 'hu-colchon', nombre: 'Colchón', ico: '🔒', color: '#8b5cf6', pct: 50, objetivo: 0, meta: '', saldo: 3000 }, { id: 'hu-j', nombre: 'Japón', ico: '✈️', color: '#10b981', pct: 50, objetivo: 2000, meta: '', saldo: 500 }], puroId: 'hu-colchon', puroPct: 50, meta: { importe: 5000 } };
+      s.dinero = { gastos: [{ id: 'g369', nombre: 'Alquiler', importe: 650, dia: 1, cat: 'casa', on: true }], pagos: [] };
+      s.dinero3 = { v: 1, migrado: true, ahorro: { guardado: 3200, objetivoMeses: 6, plazoMeses: 12, desde: '2026-01-01' }, compras: [
+        { id: 'c1', nombre: 'Portátil', precio: 1100, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-01', tipo: 'util' }, { id: 'c2', nombre: 'Gafas', precio: 200, llevas: 0, mes: '', estado: 'espera', alta: '2026-10-01', tipo: 'ilu' }] };
+      const resumen = (x) => JSON.stringify([x.ahorro.huchas.map((h) => h.id + ':' + h.saldo + ':' + h.objetivo), x.dinero.gastos.map((g) => g.id + ':' + g.importe)]); const viejo = resumen(s);
+      P.store = s; o.sinGrande = P.store.dinero3.compras.map((c) => 'grande' in c ? c.grande : '-').join(','); o.n = P.store.dinero3.compras.length;
+      o.intacto = resumen(P.store) === viejo; o.res = resumen(P.store);
+      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.render();
+      o.filas = document.querySelectorAll('#main .tm-gfila').length; o.chip = document.querySelectorAll('#main .tm-chip').length; o.btn = !!document.querySelector('#main .tm-gbtn');
+      const s2 = JSON.parse(JSON.stringify(s)); const gs = ['apartando', 'ahorrado', 'otra', 7, null];
+      s2.dinero3.compras = gs.map((g, i) => ({ id: 'x' + i, nombre: 'X' + i, precio: 100, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-01', tipo: 'ilu', grande: g }));
+      P.store = s2; o.grandes = P.store.dinero3.compras.map((c) => c.grande || '-').join(',');
+      P.store = copia; P.ui.tab = 'hoy'; P.render(); return o; });
+    check('369 Dinero · datos viejos (huchas+meta+dinero+dinero3 sin «grande»): nada se pierde, ninguna compra es grande, Tu mes sin chips ni filas pero con el botón; normalize conserva apartando/ahorrado y descarta lo demás',
+      r.n === 2 && r.sinGrande === '-,-' && r.intacto && r.filas === 0 && r.chip === 0 && r.btn && r.grandes === 'apartando,ahorrado,-,-,-', JSON.stringify(r));
+  }
+  // 370) DINERO · R3 · «Ahorro y Bosque» en una pestaña: cuatro pestañas (Tu mes · Ahorro y Bosque · Gastos · Compras); ui.dinTab «bosque» (datos viejos) abre la nueva igual que «ahorro»; un árbol por mes
+  //      del objetivo (6), un fruto por cada gasto grande, cinco barras de «lo que ahorraste cada mes» y, desde ahí, «Apuntar gasto grande» abre la hoja
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia370 = JSON.parse(JSON.stringify(P.store)); const A = P.dinero3S(); A.ahorro.guardado = 4200; A.ahorro.objetivoMeses = 6; A.compras = [];
+      P.ahorroS().real = [{ id: 'r370', mes: '2026-10', fecha: '2026-10-20', gastos: 1400, cats: {} }]; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => m.querySelector(s);
+      return { tabs: [...m.querySelectorAll('.lau-tabs button')].map((b) => b.textContent).join(','), on: [...m.querySelectorAll('.lau-tabs button.on')].map((b) => b.textContent).join(','), pesta: window.PG.ui.dinTab,
+        arboles: m.querySelectorAll('.ab-arb').length, llenos: m.querySelectorAll('.ab-arb[data-lleno="1"]').length, frutos: m.querySelectorAll('.ab-fruto').length, barras: m.querySelectorAll('.ab-barra').length,
+        colchon: q('.ab-col') ? q('.ab-col').textContent.replace(/\s+/g, ' ').trim() : '', btn: !!q('.tm-gbtn'), nomina: !!q('#d4Nom'), guardar: !!q('#d3Guardado'), ancho: document.documentElement.scrollWidth, hoja: !!document.querySelector('#hojaDia .hoja') }; });
+    const r = {};
+    r.a = await lee();
+    await page.click('#main .lau-tabs [data-v="ahorro"]'); await page.waitForTimeout(250); r.b = await lee();
+    await page.evaluate(() => { const P = window.PG; P.dinero3S().compras.push({ id: 'cg370', nombre: 'Viaje', precio: 900, llevas: 0, mes: '2026-12', estado: 'plan', alta: '2026-10-29', tipo: 'ilu', grande: 'apartando' }); P.ui.dinTab = 'bosque'; P.render(); });
+    await page.waitForTimeout(250); r.c = await lee();
+    await page.click('#main .tm-gbtn'); await page.waitForTimeout(250); r.d = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia370; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('370 Dinero · Ahorro y Bosque: cuatro pestañas (Tu mes, Ahorro y Bosque, Gastos, Compras); «bosque» abre la nueva; 6 árboles (objetivo), sin fruto hasta que hay un gasto grande, 5 barras, nómina y guardado debajo; el botón abre la hoja',
+      r.a.tabs === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && r.b.on === 'Ahorro y Bosque' && r.b.arboles === 6 && r.b.llenos >= 1 && r.b.llenos < 6 && r.b.frutos === 0 && r.b.barras === 5 && /4\.200/.test(r.b.colchon) && r.b.btn && r.b.nomina && r.b.guardar &&
+      r.c.on === 'Ahorro y Bosque' && r.c.frutos === 1 && r.c.arboles === 6 && r.d.hoja && r.b.ancho <= 412 && r.c.ancho <= 412, JSON.stringify(r));
+  }
+  // 371) DINERO · R4 · Fintonic en pequeño, EN CADENA (412×915, hoy = 29/10/2026): subir una captura (OCR simulado) → renombrar «Belleza» a «Alquiler» (input de la fila + change) → quitar la fila del
+  //      «de 300» con ✕ → «suman 712 de 1.000» y «faltan 288» → guardar → gastoMes = {Supermercado 400, Alquiler 312} y Tu mes cuenta 312 como fijo (el total no cambia). H4: renombrar «Bares» a «Supermercado»
+  //      (ya existía) y guardar SUMA las dos filas. Restaura window.ocrTextos y el store.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate371 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia371 = JSON.parse(JSON.stringify(window.PG.store)); window.__ocr371 = window.ocrTextos; });
+    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 20; c.height = 20; return c.toDataURL('image/png').split(',')[1]; });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia371)); const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = []; a.gastado = {}; a.cobrado = {}; d.gastos = []; d.pagos = []; P.ui.fin = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const subir = async (texto) => {
+      await page.evaluate((t) => { window.ocrTextos = () => Promise.resolve([t]); }, texto);
+      await page.setInputFiles('#main input[data-a="fin-fotos"]', { name: 'c.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      await page.waitForFunction(() => window.PG.ui.fin && window.PG.ui.fin.estado === 'listo', null, { timeout: 10000 }); await page.waitForTimeout(150); };
+    const cambia = async (sel, valor) => { await page.fill(sel, valor); await page.dispatchEvent(sel, 'change'); await page.waitForTimeout(150); };
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), f = window.PG.ui.fin;
+      const x = m.querySelector('.fin-x'), rx = x ? x.getBoundingClientRect() : null;
+      return { filas: [...m.querySelectorAll('.finfila')].map((e) => { const n = e.querySelector('[data-a="fin-n"]'); return n ? n.value : ''; }).filter(Boolean).join('|'),
+        cats: f && f.res ? f.res.cats.map((c) => c.nombre + ':' + c.v).join('|') : '', xs: m.querySelectorAll('.fin-x').length, xw: rx ? Math.round(rx.width) : 0, xh: rx ? Math.round(rx.height) : 0,
+        txt: m.innerText.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth, lista: !!document.querySelector("#finCats") }; });
+    const r = {};
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nBelleza 312,00 €\nPresupuesto mensual 288,00 €');
+    r.a = await lee();
+    await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Alquiler'); r.b = await lee();
+    await page.click('#main .fin-x[data-k="2"]'); await page.waitForTimeout(150); r.c = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.d = await page.evaluate(() => { const g = window.gastoMes('2026-10'), p = window.mesPartes('2026-10'); return { cats: JSON.stringify(g.cats), total: g.total, fijos: p.fijos, F: p.F.join(','), vars: p.vars, fin: window.PG.ui.fin }; });
+    // H4: dos filas con el mismo nombre se suman
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 500,00 €\nSupermercado 400,00 €\nBares 100,00 €');
+    await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Supermercado');
+    r.e = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.f = await page.evaluate(() => JSON.stringify(window.gastoMes('2026-10').cats));
+    await page.evaluate(() => { const P = window.PG; window.ocrTextos = window.__ocr371; P.store = window.__copia371; P.ui.fin = null; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); window.Date = window.__origDate371; });
+    await page.setViewportSize(vp);
+    check('371 Dinero · Fintonic en pequeño: subir → renombrar Belleza a «Alquiler» → quitar la fila del presupuesto con ✕ (44×44) → «suman 712 de 1.000» y «faltan 288» → guardar → {Supermercado 400, Alquiler 312}, Alquiler cuenta como fijo; dos filas con el mismo nombre se suman',
+      r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Presupuesto/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
+      /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
+      r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
+  }
+  // 372) DINERO · G1 [aparc-tu-mes-r2], EN CADENA (412×915): Tu mes → «Apuntar gasto grande» → Portátil «Lo voy apartando» → Listo → la leyenda del vaso nombra «Apartado (rayas)»
+  //      fuera del vaso, a ≥14 px y con su muestra A RAYAS (como la capa, no un cuadro liso) → abrir su fila → Quitar → la fila de la leyenda desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate372 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia372 = JSON.parse(JSON.stringify(window.PG.store));
+      const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r372', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e372', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const li = [...document.querySelectorAll('#main .tm-ley')].find((l) => /Apartado/.test(l.textContent));
+      if (!li) return { hay: false, capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]') };
+      const i = li.querySelector('i'), cs = getComputedStyle(li);
+      return { hay: true, txt: li.textContent.replace(/\s+/g, ' ').trim(), px: parseFloat(cs.fontSize), fuera: !li.closest('svg'), rayas: /repeating-linear-gradient/.test(getComputedStyle(i).backgroundImage),
+        capa: !!document.querySelector('#main .tm-vaso [data-capa="aparta"]'), ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.a = await lee();
+    await page.click('#main .tm-gbtn'); await page.waitForTimeout(200);
+    await page.fill('#tgNom', 'Portátil'); await page.fill('#tgPre', '1100'); await page.fill('#tgMes', '2026-12');
+    await page.click('#hojaDia [data-a="tg-modo"][data-v="apartando"]'); await page.waitForTimeout(150);
+    await page.click('#hojaDia [data-a="tg-listo"]'); await page.waitForTimeout(250); r.b = await lee();
+    await page.click('#main .tm-gfila'); await page.waitForTimeout(200); await page.click('#hojaDia [data-a="tg-quita"]'); await page.waitForTimeout(250); r.c = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia372; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.tmGrande = null; P.save(); P.render(); window.Date = window.__origDate372; });
+    await page.setViewportSize(vp);
+    check('372 Dinero · Tu mes: al apartar para un gasto grande la leyenda nombra «Apartado (rayas) 550 €» fuera del vaso, a ≥14 px y con la muestra a rayas como su capa; al quitarlo desaparece',
+      !r.a.hay && !r.a.capa && r.b.hay && r.b.capa && /Apartado \(rayas\)\s*550 €/.test(r.b.txt) && r.b.px >= 14 && r.b.fuera && r.b.rayas && r.b.ancho <= 412 && !r.c.hay && !r.c.capa, JSON.stringify(r));
+  }
+  // 373) HOY y MES · G1 [aparc-hoy-plantilla], EN CADENA (412×915): semana en modo plantilla → en Hoy el aviso «Usar las fechas del Mes» queda separado ≥8 px de «＋ añadir»
+  //      (antes se tocaban) → en Mes, separado ≥8 px de la fila de «hoy» → vuelta a Hoy con la semana en modo fecha: el aviso desaparece
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.rotation.mode = 'pattern'; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    const mide = () => page.evaluate(() => { const b = document.querySelector('#main [data-a="mon-sync"]'); if (!b) return { hay: false };
+      const r = b.getBoundingClientRect(), bs = [...document.querySelectorAll('#main button')].filter((x) => x !== b).map((x) => x.getBoundingClientRect()).filter((q) => q.width && q.right > r.left && q.left < r.right);
+      const encima = bs.filter((q) => q.bottom <= r.top + 1).map((q) => r.top - q.bottom), debajo = bs.filter((q) => q.top >= r.bottom - 1).map((q) => q.top - r.bottom);
+      return { hay: true, arriba: encima.length ? Math.round(Math.min(...encima)) : 99, abajo: debajo.length ? Math.round(Math.min(...debajo)) : 99, ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.hoy = await mide();
+    r.hoyAnade = await page.evaluate(() => [...document.querySelectorAll('#main button')].some((x) => /añadir/.test(x.textContent)));
+    await page.click('#tabs [data-a="nav-cal"]'); if (await page.$('#calModes button[data-t="month"]')) await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300); r.mes = await mide();
+    await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.tab = 'hoy'; P.save(); P.render(); }); await page.waitForTimeout(200); r.tras = await mide(); r.modo = await page.evaluate(() => window.PG.store.rotation.mode);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('373 Hoy y Mes · modo plantilla: «Usar las fechas del Mes» separado ≥8 px de «＋ añadir» en Hoy y de la fila de «hoy» en Mes; en modo fecha el aviso se va',
+      r.hoy.hay && r.hoyAnade && r.hoy.arriba >= 8 && r.hoy.abajo >= 8 && r.mes.hay && r.mes.arriba >= 8 && r.mes.abajo >= 8 && r.hoy.ancho <= 412 && !r.tras.hay && r.modo === 'date', JSON.stringify(r));
+  }
+  // 374) COMER · G1 · lector y vitaminas, EN CADENA (412×915): en el día de ayer (sin plan que sugerir), con la nevera vacía (salvo una tableta de chocolate negro) apuntas «un vaso de leche» por el lector →
+  //      tocas la línea de micros → «Vitaminas y minerales»: falta lo que más falta y la sugerencia es comida de verdad, nunca chocolate, cacao ni dulces
+  //      (criterio de Sanidad) → apuntas «pizza barbacoa 3 porciones» SIN coma → sale «Pizza barbacoa» de 300 g sin preguntas (antes no la entendía)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia374 = JSON.parse(JSON.stringify(P.store));
+      window.__d374 = P.iso(P.addDays ? P.addDays(new Date(), -1) : new Date(Date.now() - 864e5)); P.store.food.log[window.__d374] = []; P.store.food.despensa = []; P.despensaAdd('chocolate negro 70%', 1, '');
+      P.ui.frase = null; P.ui.feVer = ''; P.ui.tab = 'food'; P.ui.foodVista = ''; P.ui.foodDate = window.__d374; P.render(); });
+    const r = {};
+    await page.fill('#frIn', 'un vaso de leche'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.n1 = await page.evaluate(() => window.PG.foodLog(window.__d374).length);
+    await page.click('#main .h2mic'); await page.waitForTimeout(250);
+    r.sug = await page.evaluate(() => ((document.querySelector('#main .vitsug') || {}).textContent || '').replace(/\s+/g, ' ').trim());
+    r.vista = await page.evaluate(() => window.PG.ui.foodVista);
+    await page.evaluate(() => { const P = window.PG; P.ui.foodVista = ''; P.render(); });
+    await page.fill('#frIn', 'pizza barbacoa 3 porciones'); await page.press('#frIn', 'Enter'); await page.waitForTimeout(250);
+    r.pizza = await page.evaluate(() => window.PG.foodLog(window.__d374).filter((e) => /pizza barbacoa/i.test(JSON.stringify(e))).map((e) => Math.round(e.kcal || 0)).join('|'));
+    r.dudas = await page.evaluate(() => !!(window.PG.ui.frase && (window.PG.ui.frase.dudas || []).length));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia374; P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.foodDate = ''; P.ui.frase = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('374 Comer · nevera sin nada útil (solo chocolate): tras «un vaso de leche» la sugerencia de vitaminas es comida de verdad («100 g de …»), sin chocolate, cacao ni dulces; «pizza barbacoa 3 porciones» sin coma se apunta como Pizza barbacoa',
+      r.n1 >= 1 && r.vista === 'vitaminas' && /^Falta [^:]+:\s*100 g de /.test(r.sug) && !/chocolate|cacao|galleta|boll|bizcoch|tarta|helado/i.test(r.sug) &&
+      r.pizza === '780' && !r.dudas, JSON.stringify(r));
+  }
+  // 375) HOY · G1 [aparc-sueno-vistas], EN CADENA (412×915): en la vista Reloj, sin la noche apuntada, sale «Anotar anoche» a la vista (antes solo dentro del cartel
+  //      de la noche desplegado y antes de las 12) → abre la hoja de la noche (la misma de Sueño) → Guardar → el botón pasa a «✎ Anoche: … · cambiar o añadir» →
+  //      vista Línea: el mismo botón → abre la misma hoja; en Conductor no se añade (allí lo ofrece el propio conductor)
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); window.__modo375 = P.ui.hoyModo; try { window.__ls375 = localStorage.getItem('guardias-hoymodo2'); } catch (e) {}
+      delete P.suenoRealS()[P.iso(new Date())]; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    const lee = () => page.evaluate(() => { const b = document.querySelector('#main .snbtn[data-a="sn-hoja"]'), h = document.querySelector('.hoja [data-a="sn-tguardar"]');
+      return { btn: b ? b.textContent.replace(/\s+/g, ' ').trim() : '', alto: b ? Math.round(b.getBoundingClientRect().height) : 0, hoja: !!h,
+        tit: h ? ((h.closest('.hoja').querySelector('.sh') || {}).textContent || '') : '', ancho: document.documentElement.scrollWidth }; });
+    const r = {};
+    await page.waitForTimeout(250); r.reloj = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaR = await lee();
+    await page.click('.hoja [data-a="sn-tguardar"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.tras = await lee();
+    r.guardado = await page.evaluate(() => !!window.PG.suenoRealS()[window.PG.iso(new Date())]);
+    await page.click('#main [data-a="hoy-modo"][data-v="linea"]'); await page.waitForTimeout(250); r.linea = await lee();
+    await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaL = await lee();
+    await page.evaluate(() => { const P = window.PG; P.ui.snHoja = ''; P.ui.snTr = null; P.render(); });
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250); r.bus = await lee();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.hoyModo = window.__modo375; try { if (window.__ls375 == null) localStorage.removeItem('guardias-hoymodo2'); else localStorage.setItem('guardias-hoymodo2', window.__ls375); } catch (e) {} P.ui.snHoja = ''; P.ui.snTr = null; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('375 Hoy · Reloj y Línea: «Anotar anoche» a la vista (≥44 px) abre la hoja de la noche; al guardar dice «✎ Anoche: … · cambiar o añadir»; en Línea el mismo botón abre la misma hoja; en Conductor no se duplica',
+      /Anotar anoche|Cuánto dormiste/.test(r.reloj.btn) && r.reloj.alto >= 44 && r.hojaR.hoja && /Anoche|Noche/.test(r.hojaR.tit) && !r.tras.hoja && r.guardado &&
+      /^✎ (Anoche|Hoy): .* · cambiar o añadir$/.test(r.tras.btn) && r.linea.btn === r.tras.btn && r.hojaL.hoja && r.bus.btn === '' && r.reloj.ancho <= 412, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 

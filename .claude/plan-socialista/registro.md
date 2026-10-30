@@ -4,9 +4,11 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
+- ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
+- [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
+- [aparc-comer-eje-frase] La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
 
-- [aparc-medicas-a-fiebres] 2026-10-29: los estudios médicos de esta sesión (VentLoop, visor aórtico, clase de shock e Impella) eran para `fiebres-neutropenias` (UCI); el usuario los lleva allí a una sesión de gobierno. Aquí quedan `docs/webs-medicas.md` y los dos informes; decidir si se borran de este repo cuando estén allí
-- ~~[aparc-la-noche-a-main]~~ HECHO 2026-10-29: la Ley de La Noche (N1-N3) en main ec1370b (run 40877861030); delegación cerrada
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
 - ~~[aparc-s2b-a-main]~~ HECHO 2026-10-28: el lector de frases (S2b) en main 2e30a00 (run 40732849988)
 - ~~[aparc-s2-a-main]~~ HECHO 2026-10-28: las maquetas de la S2 ya están en main (eddb09d)
@@ -108,8 +110,10 @@ Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-
 
 ### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
 Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/informe-sueno-2026-10.md`, DECISIONS «Apuntar el sueño desde la radio del conductor»).
-- [aparc-sueno-vistas] Revisar si en Estación, Reloj y Línea apuntar el sueño también está escondido · desde 2026-10-27
+- ~~[aparc-sueno-vistas]~~ HECHO 2026-10-30 (G1, main 0d867cf): «Anotar anoche» a la vista en Reloj y Línea (Estación ya lo ofrecía el conductor)
 - [aparc-sueno-sitio] Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
+
+- [aparc-fin-presupuesto] Fintonic: una línea «Presupuesto de 300 288,00 €» se lee como categoría de 300.288 (`finParse`, el filtro `de\s*\d+\s*€` no la quita) y `eur()` pinta «1000 €» sin punto de miles en la revisión · DECISIONS «La Reforma · R4» · desde 2026-10-30
 
 ## Para recordarte
 
@@ -118,11 +122,9 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
-- [sup-2026-10-29-webs-medicas] Recopilación médica: solo están los enlaces que constan en el repositorio (los de chats antiguos que no se apuntaron no salen); se añadieron tus repos médicos de GitHub solo por el nombre, sin abrirlos; las fuentes de Comer entran como «nutrición»; «guardar» = enlace + informe, sin copia del código · `docs/webs-medicas.md` · contado el 2026-10-29
-- [sup-2026-10-29-aorta] Informe del visor de raíz aórtica: es una página pública de otra persona, sin licencia indicada (solo ideas); estudiada la versión del 29-10-2026; no se ha comprobado que sus cifras (WASE, umbrales) coincidan con los artículos · `docs/informe-raiz-aortica-2026-10.md` · contado el 2026-10-29
-- [sup-2026-10-29-ventilador] Informe VentLoop: se estudió solo la web pública (la app de verdad pide cuenta y la red no deja entrar en vent.nodefield.jp); los modos SIMV/PRVC de la versión de pago quedan como desconocidos; la propuesta empieza por un modelo de un compartimento y deja las 64 unidades para SDRA/prono · `docs/informe-ventilador-2026-10.md` · contado el 2026-10-29
-- [sup-2026-10-29-la-vuelta] La Vuelta: 50 min dentro de 15-16, vuelta al 35 % (+10/sem), 0,5 kg/semana por defecto; plan de vuelta viejo sigue con su fórmula; si el turno pisa 15:00 y 15:30, ese día no hay fuerza; rutina del parque fija (6 ejercicios, sin filtrar openGym); los círculos de la semana siguen bajo la lámina · DECISIONS «La Vuelta» · contado el 2026-10-29
-- [sup-2026-10-28-dinero] Dinero (D1-D6, Consejo por delegación): lo viejo (huchas, meta, banco, épocas) se queda guardado sin enseñarse; el colchón y las huchas sin objetivo → «guardado», las huchas con objetivo → compras planificadas, los deseos sin hacer → compras en espera; objetivo por defecto 6 meses en 12; lo no necesario espera 30 días y pasa solo a planificado (sin «Sigo queriéndolo»); una compra sin mes no suma al «al mes»; la pantalla del banco (capturas) ya no existe y «Cuadrarlo» se fue; la pestaña Mes vieja sigue colgando de Gastos («Cierre del mes») · DECISIONS D1-D6 y acta `consejo/2026-10-28-dinero-ejecucion.md` · contado el 2026-10-28
+- ~~[sup-2026-10-29-tu-mes]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
+- ~~[sup-2026-10-29-la-vuelta]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
+- ~~[sup-2026-10-28-dinero]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 - [sup-2026-10-28-comer-reloj2] Comer del reloj (S3b): el montar sigue de lunes a domingo; «Cocino ese día» solo marca el 🍳; en guardia no hay texto libre; el pie de Semana cuenta solo cenas; «a ojo» = 250/450/700 kcal con 15/50/35 y no se memoriza; sin nevera la sugerencia de vitaminas propone el alimento más rico; el congelador dibuja una caja por plato; la barra Hoy·Semana·Casa solo en pantallas sueltas · DECISIONS «El Comer del reloj, sesión 2» · contado el 2026-10-28
 - [sup-2026-10-28-comer-reloj1] Comer del reloj (S3 sesión 1): horas fijas sin ajuste (desayuno 9:00, cena 21:30, post-entreno 18:30, picoteo 17:00); merienda y picoteo no son «lo siguiente»; teclear gramos pone la fila en ✓; la cantidad de la rueda no se recuerda; «investigar» sin cambios hasta la S3b · DECISIONS.md:1505 · contado el 2026-10-28
 - [sup-2026-10-28-lector] Lector (S2b): las kcal esperadas del banco se ajustaron a lo que lee la app (±35 %) cuando la lectura era buena; valores por 100 g de los 27 alimentos nuevos de tablas típicas; «un cacho / un pedazo» = una ración; «de primero…, de segundo…» = comida; la seguridad (✓/≈) se calcula al momento · DECISIONS «El lector de frases a fondo» · contado el 2026-10-28
@@ -145,6 +147,12 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [sup-2026-10-19-plan] Plan: cocinas una hora después de salir (o a mediodía si libras), ollas de 2–6 raciones, los días de entreno valen para cocinar si no hay otros, se quitó «la semana con tus platos» · DECISIONS «El Plan, las tres en una» · contado el 2026-10-19
 - [sup-2026-10-19-auditoria] limpieza: una clase CSS está viva si su nombre aparece en app.js/index/sw/fig; las compuestas al vuelo ('t-', 'ev') se quedan; lo de dentro de :is()/:not() no se toca · DECISIONS «Lo mínimo primero» · contado el 2026-10-19
 - [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
+
+- ~~[sup-2026-10-29-la-noche]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
+
+- ~~[sup-2026-10-30-r3]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
+- [sup-2026-10-30-g1] G1: «alimentos de verdad» por grupo y por nombre (fuera chocolate, cacao, galletas, bollería, tarta, helado, cremas de untar); el botón de sueño solo sale el día de hoy; en Conductor no se añade · DECISIONS «Gran Ley · G1» · 2026-10-30
+- ~~[sup-2026-10-30-r4]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 
 ## Cerrados
 - ~~[sup-2026-10-27-sello]~~ VALE (usuario, 2026-10-27) Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
@@ -201,3 +209,10 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [run-40732849988] 2026-10-28 · despliegue de main (2e30a00, lector de frases S2b) · success; sellado (version.json 2e30a00 posterior al código f7dc69b); rama 1 por delante (solo plan); 0 issues/PR · ok
 - [parte-s3-2026-10-28] 2026-10-28 · parte con la S3 (Comer del reloj) elegida; presupuesto ~2,1 M medido (plan 1,8 M ×2); propuesto decidir antes qué entra en la sesión 1 · propuesto
 - [parte-s3b-2026-10-28] 2026-10-28 · parte: rama con la S3 sesión 1 (12 commits, app.js/styles.css sin sellar, suite 754/754) sin pasar a main; main 2e30a00 success; siguiente S3b (~2,8 M); el usuario pide S3b y luego pasar todo a main · propuesto
+- [run-40877861030] 2026-10-29 · despliegue de main (ec1370b, Ley de La Noche N3) · success; sellado (version.json ec1370b posterior al código 27b8b68); 0 issues/PR · ok
+- [rama-706d99d] 2026-10-29 · rama ccr-874ee141-nk8306 = main + 4 commits solo de plan/acta (La Reforma); la rama magical-clarke tiene 6 docs médicos sin pasar a main (no son de la app) · ok
+- [parte-reforma-r1-2026-10-29] 2026-10-29 · parte con R1 (concurso de Dinero, maqueta) elegida; presupuesto ~2,5 M del plan (medida: 1,5 M sin concurso, 3,2 con) · propuesto
+
+- [parte-2026-10-30] Contado: main ec1370b desplegado y sin cambios; rama f2b7893 (R1) 13 commits por delante de main, sin código; siguiente R2 «Tu mes» (~1,2 M sonnet; ~0,9 M con ficha).
+- [parte-2026-10-30-b] Contado: R2 «Tu mes» en main 7942d02 (run 40983394688 success, sellado); R2 sin fila en gastos.md (sin medir); supuestos R2 (margen 10 %, línea de Hoy no ocultable, franja de casillas a mirar en el móvil) abiertos; ahora va R3 Gasto grande + Bosque y Ahorro (~1,8 M).
+- [parte-2026-10-30-c] Contado: R3 en main ed50e3a (run 41024716095 success, sellado); R3 medida 2,2 M; siguiente R4 Fintonic en pequeño (~0,8 M sonnet) elegida; 0 issues.
