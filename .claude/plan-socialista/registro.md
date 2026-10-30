@@ -111,6 +111,8 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [aparc-sueno-vistas] Revisar si en Estación, Reloj y Línea apuntar el sueño también está escondido · desde 2026-10-27
 - [aparc-sueno-sitio] Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
 
+- [aparc-fin-presupuesto] Fintonic: una línea «Presupuesto de 300 288,00 €» se lee como categoría de 300.288 (`finParse`, el filtro `de\s*\d+\s*€` no la quita) y `eur()` pinta «1000 €» sin punto de miles en la revisión · DECISIONS «La Reforma · R4» · desde 2026-10-30
+
 ## Para recordarte
 
 <!-- - [rec-AAAA-MM-DD-tema] lo que pediste que te recordara · AAAA-MM-DD (lo escribe /bitacora) -->
@@ -145,6 +147,9 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [sup-2026-10-19-pruebas] pruebas en corto: no para en el primer banco que falla y guarda el registro en .claude/.ultima-suite.log · contado el 2026-10-19
 
 - [sup-2026-10-29-la-noche] La Noche (N0-N3): «Vete del Lloret» = cama−15−35; fila plegada con 🚪 salir de casa; alarmas siempre las de hoy y guardias fuera de Tu semana; cama arranca en la mediana 23:50 y baja 15 min cada 3 días · DECISIONS.md:1690-1746 · contado el 2026-10-29
+
+- [sup-2026-10-30-r3] R3: «apartando» exige el mes y «de lo ahorrado» no; el gasto grande se guarda «me hace ilusión», en plan y con 0 apartado; «para gastar» no cambia con el apartado; pestañas a 12,5 px y cifras de la cadena a 12 px · DECISIONS «La Reforma · R3» (1786-1804) · contado el 2026-10-30
+- [sup-2026-10-30-r4] R4: «gasto a gasto» = fila a fila de categorías de la captura; quitar una fila no baja el total (pasa a variable sin categoría); nombre vacío deja el de antes; en las categorías ya no sale «en otra captura: X» · DECISIONS «La Reforma · R4» · 2026-10-30
 
 ## Cerrados
 - ~~[sup-2026-10-27-sello]~~ VALE (usuario, 2026-10-27) Sello OFF: nombres de aditivos de una tabla propia de 113 (el que falta, solo el código); sin `additives_tags` = «sin dato», lista vacía = «0»; productos sin código de barras real, las tres casillas en «sin dato»; tabla y platos sin sello; en el buscador sin dato no hay letra · DECISIONS «Comer: el sello de Open Food Facts…» · contado el 2026-10-27
@@ -207,3 +212,4 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 
 - [parte-2026-10-30] Contado: main ec1370b desplegado y sin cambios; rama f2b7893 (R1) 13 commits por delante de main, sin código; siguiente R2 «Tu mes» (~1,2 M sonnet; ~0,9 M con ficha).
 - [parte-2026-10-30-b] Contado: R2 «Tu mes» en main 7942d02 (run 40983394688 success, sellado); R2 sin fila en gastos.md (sin medir); supuestos R2 (margen 10 %, línea de Hoy no ocultable, franja de casillas a mirar en el móvil) abiertos; ahora va R3 Gasto grande + Bosque y Ahorro (~1,8 M).
+- [parte-2026-10-30-c] Contado: R3 en main ed50e3a (run 41024716095 success, sellado); R3 medida 2,2 M; siguiente R4 Fintonic en pequeño (~0,8 M sonnet) elegida; 0 issues.

@@ -113,7 +113,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | ~~R1~~ | ✅ 29/10 · gana **El Vaso** → `maquetas/dinero-tu-mes.html` (acta 2026-10-29-2, «R1») · **Concurso de Dinero** (antes R2): 4-5 escuelas baratas (sonnet/haiku) maquetan «Tu mes» moderno: con cuánto empiezas el mes, los fijos, lo que te queda, con cuánto acabarás y cuánto ahorras **este mes**; el gasto grande; Bosque y Ahorro juntos; la línea de Hoy. Jurado a ciegas y el Consejo elige (por delegación) | maqueta | escuelas sonnet/haiku; jurado haiku; Artes Visuales opus deja la ganadora navegable | ~2,5 M |
 | ~~R2~~ | ✅ main 7942d02 · 30/10 · sin medir · Construir «Tu mes» con la maqueta `maquetas/dinero-tu-mes.html` (El Vaso): vaso y cadena 2.380 − 728 − 750, fijos → te queda, «acabarás con» y «ahorras este mes» + línea en Hoy. El gasto grande y el Bosque quedan para R3 | construir | sonnet con ficha | ~1,2 M |
 | ~~R3~~ | ✅ main 0561783 · 30/10 · 2,2 M · Construir gasto grande + Bosque y Ahorro juntos, mirando a meses (ficha `fichas/reforma-r3-gasto-grande.md`) | construir | sonnet con ficha | ~1,8 M |
-| R4 | Fintonic, en pequeño: revisión gasto a gasto editable antes de guardar y aviso si no cuadra (sin pegar texto) | arreglo | sonnet | ~0,8 M |
+| ~~R4~~ | ✅ main 8786ed2 · 30/10 · 1,2 M (con parte y salud) · Fintonic en pequeño: renombrar y quitar filas en la revisión, aviso si no cuadra (ficha `fichas/reforma-r4-fintonic.md`) | arreglo | sonnet | ~0,8 M |
 | R5 | Maqueta de Comer: compra base, congelador, proteína, página de receta | maqueta | opus + sonnet | ~1,5 M |
 | R6 | Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
 | R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |

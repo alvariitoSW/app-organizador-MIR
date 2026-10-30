@@ -14554,6 +14554,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.a.tabs === 'Tu mes,Ahorro y Bosque,Gastos,Compras' && r.b.on === 'Ahorro y Bosque' && r.b.arboles === 6 && r.b.llenos >= 1 && r.b.llenos < 6 && r.b.frutos === 0 && r.b.barras === 5 && /4\.200/.test(r.b.colchon) && r.b.btn && r.b.nomina && r.b.guardar &&
       r.c.on === 'Ahorro y Bosque' && r.c.frutos === 1 && r.c.arboles === 6 && r.d.hoja && r.b.ancho <= 412 && r.c.ancho <= 412, JSON.stringify(r));
   }
+  // 371) DINERO · R4 · Fintonic en pequeño, EN CADENA (412×915, hoy = 29/10/2026): subir una captura (OCR simulado) → renombrar «Belleza» a «Alquiler» (input de la fila + change) → quitar la fila del
+  //      «de 300» con ✕ → «suman 712 de 1.000» y «faltan 288» → guardar → gastoMes = {Supermercado 400, Alquiler 312} y Tu mes cuenta 312 como fijo (el total no cambia). H4: renombrar «Bares» a «Supermercado»
+  //      (ya existía) y guardar SUMA las dos filas. Restaura window.ocrTextos y el store.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const Orig = Date; window.__origDate371 = Orig; const fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      window.__copia371 = JSON.parse(JSON.stringify(window.PG.store)); window.__ocr371 = window.ocrTextos; });
+    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 20; c.height = 20; return c.toDataURL('image/png').split(',')[1]; });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia371)); const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = []; a.gastado = {}; a.cobrado = {}; d.gastos = []; d.pagos = []; P.ui.fin = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const subir = async (texto) => {
+      await page.evaluate((t) => { window.ocrTextos = () => Promise.resolve([t]); }, texto);
+      await page.setInputFiles('#main input[data-a="fin-fotos"]', { name: 'c.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+      await page.waitForFunction(() => window.PG.ui.fin && window.PG.ui.fin.estado === 'listo', null, { timeout: 10000 }); await page.waitForTimeout(150); };
+    const cambia = async (sel, valor) => { await page.fill(sel, valor); await page.dispatchEvent(sel, 'change'); await page.waitForTimeout(150); };
+    const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), f = window.PG.ui.fin;
+      const x = m.querySelector('.fin-x'), rx = x ? x.getBoundingClientRect() : null;
+      return { filas: [...m.querySelectorAll('.finfila')].map((e) => { const n = e.querySelector('[data-a="fin-n"]'); return n ? n.value : ''; }).filter(Boolean).join('|'),
+        cats: f && f.res ? f.res.cats.map((c) => c.nombre + ':' + c.v).join('|') : '', xs: m.querySelectorAll('.fin-x').length, xw: rx ? Math.round(rx.width) : 0, xh: rx ? Math.round(rx.height) : 0,
+        txt: m.innerText.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth, lista: !!document.querySelector("#finCats") }; });
+    const r = {};
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 1.000,00 €\nSupermercado 400,00 €\nBelleza 312,00 €\nPresupuesto mensual 288,00 €');
+    r.a = await lee();
+    await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Alquiler'); r.b = await lee();
+    await page.click('#main .fin-x[data-k="2"]'); await page.waitForTimeout(150); r.c = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.d = await page.evaluate(() => { const g = window.gastoMes('2026-10'), p = window.mesPartes('2026-10'); return { cats: JSON.stringify(g.cats), total: g.total, fijos: p.fijos, F: p.F.join(','), vars: p.vars, fin: window.PG.ui.fin }; });
+    // H4: dos filas con el mismo nombre se suman
+    await siembra(); await page.waitForTimeout(250);
+    await subir('Análisis\n1 oct - 31 oct 2026\nGastos 500,00 €\nSupermercado 400,00 €\nBares 100,00 €');
+    await cambia('#main .finfila:has([data-k="cat:1"]) [data-a="fin-n"]', 'Supermercado');
+    r.e = await lee();
+    await page.click('#main [data-a="fin-guardar"]'); await page.waitForTimeout(300);
+    r.f = await page.evaluate(() => JSON.stringify(window.gastoMes('2026-10').cats));
+    await page.evaluate(() => { const P = window.PG; window.ocrTextos = window.__ocr371; P.store = window.__copia371; P.ui.fin = null; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); window.Date = window.__origDate371; });
+    await page.setViewportSize(vp);
+    check('371 Dinero · Fintonic en pequeño: subir → renombrar Belleza a «Alquiler» → quitar la fila del presupuesto con ✕ (44×44) → «suman 712 de 1.000» y «faltan 288» → guardar → {Supermercado 400, Alquiler 312}, Alquiler cuenta como fijo; dos filas con el mismo nombre se suman',
+      r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Presupuesto/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
+      /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
+      r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

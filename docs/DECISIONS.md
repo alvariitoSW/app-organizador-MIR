@@ -1802,3 +1802,19 @@ pasadas a la pestaña nueva. `store.ahorro`, `store.dinero` y las compras no se 
 **Supuestos.** «Apartando» exige el mes; «de lo ahorrado», no. El gasto grande se guarda como «me hace ilusión», en plan y con
 0 apartado. «Para gastar» no cambia con el apartado (como en la maqueta). Las pestañas siguen a 12,5 px y las cifras de la cadena
 de Tu mes a 12 px (de antes de R3).
+
+## La Reforma · R4 · Fintonic en pequeño (2026-10-30)
+
+**Elegido.** En la revisión de la captura (acta 2026-10-29-2, addenda acuerdo 2), cada categoría leída se puede **renombrar**
+(campo de texto con la lista de categorías que ya conoces y tus recibos) y **quitar** (✕ de 44 px), además de cambiar el
+importe como antes. El aviso «⚠ No cuadran: faltan/sobran X» ya existía y se recalcula con cada cambio. Al guardar, dos filas
+con el mismo nombre **se suman** (antes una pisaba a la otra). Renombrar a «Alquiler» hace que Tu mes lo cuente como fijo.
+Prueba 371 (subir → renombrar → quitar → guardar → `gastoMes`/`mesPartes`), que cae al revertir.
+
+**Descartado.** «Pegar texto», partidas propias con memoria del reparto (retirados en la addenda) y «añadir fila».
+
+**Supuestos.** «Gasto a gasto» = fila a fila de lo que trae la captura (categorías de Fintonic, no movimientos sueltos).
+Quitar una fila no baja el total del mes: lo quitado cuenta como variable sin categoría. Si el nombre se deja vacío, se
+queda el de antes. En las categorías ya no sale «en otra captura: X» (la fila no tiene sitio; el ⚠ sigue).
+Pendiente visto: una línea como «Presupuesto de 300 288,00 €» se lee como una categoría de 300.288 (`finParse`), y `eur()`
+pinta «1000 €» sin punto de miles en esta pantalla.
