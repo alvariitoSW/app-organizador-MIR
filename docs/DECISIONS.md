@@ -2026,3 +2026,53 @@ de mano y no de rodilla.
 **Supuestos.** «1-2 en recámara» = la regla que ya tenía la app (RPE < 9 y RIR ≠ 0; sin dato cuenta como bien). El entrenador solo actúa sobre HOY; en otros
 días se ve la tarjeta de siempre (y la rutina pegada a guardia sigue con «pero estás de guardia»). La movilidad son 4 gestos fijos. Saliente al 65 % del peso
 de hoy, redondeado al salto del ejercicio. Light theme comprobado solo por tokens (la captura en claro no cambió de tema en el driver).
+
+## Gran Ley · G8 · El lector entiende la comida rápida (2026-10-30)
+
+*Por el Consejo por delegación. Prueba 392 y 50 frases nuevas en `tests/frases.json` (841 → 891).*
+
+**Elegido.** Sin red y reutilizando lo que ya había: la tabla de cadenas `FUERA_CADENAS` (app.js) y el lector `fraseLeer`; solo se completa y se afina.
+- **Tablas:** Big Tasty, Happy Meal (hamburguesa, cheeseburger, 4 McNuggets; con patatas pequeñas y agua), menú Big Tasty (McDonald's); Whopper Jr. (Burger King);
+  «Porción de pizza (mediana)» sin sabor (Telepizza y Domino's); cadena nueva **100 Montaditos** (6 montaditos). Cifras redondeadas y prudentes, de la información
+  nutricional que publica cada cadena; el resto de lo pedido (Big Mac, McPollo, Cuarto de Libra, McNuggets, patatas, Whopper, Long Chicken, KFC, Taco Bell…) ya estaba.
+- **Con y sin marca:** «cuarto de libra», «crunchy taco», «burrito de Taco Bell», «cubo de KFC», «9 mcnuggets», «happy meal de nuggets», «montadito» y «bk» se
+  traducen en `FR_PALABRAS`/`FR_CADENAS`. Si hay cadena, manda lo de la cadena sobre el alimento genérico o el plato casero que se llame igual («nachos de Taco Bell»,
+  «quesadilla de Taco Bell»), y no se pregunta «¿qué pizza?» si la cadena tiene su porción.
+- **Menú con bebida:** «menú Big Mac con coca cola zero» **cambia** la bebida del menú (`it.beb`, `frMenuBeb`), antes la sumaba (1009 en vez de 840). Se apunta con esas macros.
+- **Menú del día:** el genérico del bar baja de 1510 a ~1110 kcal (judías 250 + lomo 550 + flan 180 + pan 130), corregible por huecos como siempre.
+- **«Un paquete de X»:** el paquete individual está en la ración del alimento (`['1 paquete', g]`): patatas de bolsa 40 g, cacahuetes y frutos secos 50 g, galletas y chocolate 40 g.
+  Un paquete de otra cosa («de copos de avena de Hacendado») sigue siendo el producto, no una unidad.
+- Arreglo de paso: «dos porciones» no se leía como porción (el plural `porcione`).
+
+**Descartado.** Una tabla nueva de platos para la comida rápida (ya existe la de cadenas con menús); un modelo de «paquete» por categoría (basta la ración del alimento);
+buscar datos en la red.
+
+**Supuestos.** Bebida del menú por defecto: la **normal** (es lo que lleva el menú y no infravalora kcal); zero/light/«sin azúcar», agua, cerveza, fanta o nestea si lo dices.
+«Cubo» de KFC = Bucket 8 piezas. «Happy Meal» a secas = el de hamburguesa. «Un montadito» sin relleno = montadito medio de fiambre (230 kcal). «Un paquete de galletas» =
+40 g (individual), no el familiar. «9 nuggets de McDonald's» = 1,5 × el de 6 (390 kcal), no una entrada propia por tamaño.
+
+## Gran Ley · G9 · Maqueta de La Noche 2 (2026-10-30)
+
+*Por el Consejo por delegación, dentro de lo aprobado por el usuario en el parte (`consejo/2026-10-30-parte.md`, P2 y P3).
+Maqueta: `maquetas/la-noche-2.html`. Sin concurso.*
+
+**Elegido.** Lenguaje de La Noche (El cartel), 5 pantallas a 412×915 en claro y oscuro:
+- **Energía del día y coach:** batería de 4 tramos en palabras («Media: dormiste 5 h tras la guardia») sobre `snEnergiaDia`
+  y UNA recomendación que junta descanso, comida y entreno, con su porqué. En Hoy, encima de «Esta noche». Sin puntuar.
+- **Sin pantallas:** desde 45 min antes de la cama (se mueve con las guardias; en guardia no hay), **sin botón de quitar
+  ni de pausar** («solo pidiéndoselo a Claude»), aviso al empezar, ✓ por la mañana sin castigo y una guía única para la
+  «Hora de dormir» de Bienestar digital (la web no ve el uso del móvil).
+- **4:20 con cortina:** PIN de 4 cifras, texto honrado («tapa la sección; no cifra tus datos»), «¿Lo olvidaste?» → Ajustes →
+  Copia de seguridad; lo del 4:20 fuera de su sección sale neutro con la cortina puesta.
+- **4:20 · Descanso:** 7 / 14 / 21 días o bajar a la mitad, «Día 4 de 14», aviso de que los primeros 7 días se duerme peor,
+  3 ayudas para dormir y «recaer no borra nada: seguimos desde aquí».
+- **Ajustes:** cambiar el PIN, quitar la cortina con aviso y qué protege.
+
+**Descartado.** Cifrar de verdad (si se olvida la clave se pierde todo), un simple interruptor, puntuar el cansancio,
+moralizar el consumo, leer el uso de pantalla (imposible desde una web).
+
+**Supuestos.** El coach va en Hoy encima de «Esta noche»; cifras y textos de ejemplo.
+
+*Nota de la G8:* la prueba 244 (el reloj de Hoy) fallaba según la hora: lo de encima del reloj crece y lo baja por debajo
+de los 720 px de la ventana de prueba, y los toques caían fuera. La prueba ahora trae el reloj a la vista antes de tocar;
+la app no cambia (a 915 px se ve entero).

@@ -9597,6 +9597,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.eventos.push({ id: 'ev244', titulo: 'Curso 244', hora: P.hm(h * 60 - 60), fin: P.hm(h * 60 + 60), modo: 'fecha', fecha: k, on: true });
       P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.ui.hoySel = null; P.ui.hoyIt = null; P.render(); return h * 60; });
     await page.waitForTimeout(150);
+    // según la hora, lo de encima del reloj crece y lo baja por debajo de los 720 px de la ventana de prueba: se trae a la vista
+    await page.evaluate(() => document.querySelector('#main .hoyreloj svg').scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(80);
     const pt = (m, r) => page.evaluate(([m, r]) => { const s = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / s.width, t = m / 1440 * 2 * Math.PI;
       return { x: s.left + (150 + r * Math.sin(t) + 60) / k, y: s.top + (150 - r * Math.cos(t) + 14) / k }; }, [m, r]);
     const est = () => page.evaluate(() => { const P = window.PG, it = P.ui.hoySel ? P.hoyItems(P.ui.hoySel.k, P.dayInfo(P.ui.hoySel.k))[P.ui.hoySel.i] : null;
@@ -15130,6 +15133,31 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('391 Entreno · entrenador de la guardia: el saliente ofrece 25 min al 65 % (10,5 kg de 16, 2 series), movilidad que se apunta y «hoy descanso» reversible, sin culpa; la guardia dice «hoy no toca» y ofrece movilidad',
       r391.sal && /25 min/.test(r391.lista.t) && /antes 16/.test(r391.lista.t) && r391.lista.mov && r391.lista.btn >= 44 && r391.hayMov && r391.card.join() === 'movilidad10' && /descansas, y está bien/.test(r391.desc) && r391.haySal &&
       r391.viv.kg === '10,5' && r391.viv.filas === 2 && r391.guardia && /Hoy no toca/.test(r391.guardia.t) && r391.guardia.mov && !/culpa|deberías/i.test(r391.lista.t + r391.desc), JSON.stringify(r391));
+  }
+  // 392) COMER · G8 — el lector entiende la comida rápida: en la caja de frase de Comer, «big tasty y patatas medianas» se lee
+  // como UNA hamburguesa de McDonald's + sus patatas (840 + 330 kcal, 42 g de proteína) y se apunta; y encadenado, «menú Big Mac
+  // con coca cola zero» cambia la bebida del menú en vez de sumarla (840, no 1009). Antes «big tasty» no se conocía (preguntaba).
+  {
+    const r = {};
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia392', JSON.stringify(P.store)); P.store.food.log = {}; P.ui.frase = null; P.ui.tab = 'food'; P.ui.foodVista = 'buscar'; P.ui.foodBusca = ''; P.ui.foodPos = 'comida'; P.ui.foodDate = ''; P.render(); });
+    await page.waitForTimeout(150);
+    const hoyK = await page.evaluate(() => window.PG.iso(new Date()));
+    const ult = () => page.evaluate((k) => { const l = window.PG.foodLog(k), e = l[l.length - 1]; return e ? { n: e.nombre, kcal: Math.round(e.kcal), prot: Math.round(e.prot || (e.macro && e.macro.prot) || 0), cuenta: l.length } : null; }, hoyK);
+    await page.fill('#fbQ', 'big tasty y patatas medianas'); await page.waitForTimeout(450);
+    r.l1 = await page.evaluate(() => { const f = window.PG.fbLectura(window.PG.ui.foodBusca); return f ? { dudas: f.dudas.length, k: window.PG.fraseMacros(f).kcal, p: Math.round(window.PG.fraseMacros(f).prot), it: f.items.map((x) => x.nom) } : null; });
+    const ok1 = await page.$('#fbRes [data-a="fb-lec-ok"]'); r.hayOk1 = !!ok1;
+    if (ok1) { await ok1.click(); await page.waitForTimeout(250); }
+    r.a1 = await ult();
+    await page.evaluate(() => { const P = window.PG; P.ui.foodBusca = ''; P.ui.frase = null; P.ui.foodVista = ''; P.ui.foodPos = 'comida'; P.render(); }); await page.waitForTimeout(100);
+    await page.fill('#frIn', 'menú big mac con coca cola zero'); await page.waitForTimeout(450);
+    r.l2 = await page.evaluate(() => { const f = window.PG.ui.frase; return f ? { dudas: f.dudas.length, k: window.PG.fraseMacros(f).kcal, it: f.items.map((x) => x.nom) } : null; });
+    const ok2 = await page.$('[data-a="fr-ok"]'); r.hayOk2 = !!ok2;
+    if (ok2) { await ok2.click(); await page.waitForTimeout(250); }
+    r.a2 = await ult();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia392')); localStorage.removeItem('__copia392'); P.ui.foodBusca = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    check('392 Comer · «big tasty y patatas medianas» se lee y se apunta como 1170 kcal / 42 g de proteína (sin preguntar), y «menú Big Mac con coca cola zero» apunta 840 kcal (la bebida se cambia, no se suma)',
+      r.hayOk1 && r.l1 && r.l1.dudas === 0 && r.l1.k === 1170 && r.l1.p === 42 && r.a1 && r.a1.kcal === 1170 && r.a1.prot === 42 &&
+      r.hayOk2 && r.l2 && r.l2.dudas === 0 && r.l2.k === 840 && r.a2 && r.a2.cuenta === 2 && r.a2.kcal === 840, JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
