@@ -2195,3 +2195,17 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - La fila de móvil por día solo sale si hay algún dato; la semana de Sueño es la del informe semanal (`suenoSemanaHTML`).
   - La tarjeta «Sal de casa» ya salía todo el día de la salida; el detalle y los enlaces del vuelo solo con <3 h. No hay agenda en el Hoy de viaje, así que «parada» es la propia tarjeta.
   - El título de esa tarjeta pasa de «Sales de casa a las» a «Sal de casa a las».
+
+## Remates · L5 · La suite más corta (2026-10-30)
+- **Elegido**
+  - La suite completa va en **5 trozos** (`TROZOS=5`): 1-69 · 70-201 · 202-269 · 270-351 · 352-final. Con 3 trozos tardaba ~6,6 min (el trozo 270-final, 395 s); ahora tarda **3 min 55 s** (el trozo más largo, 235 s), con 878/878 en verde y `actualiza` sin caerse.
+  - El trozo que empieza en la 70 arranca con la **siembra** `tests/siembra-70.js` (vía `window.PG`), que reproduce lo que dejan las pruebas 1-69: pantalla de 412×915, jornada de 8 a 15, `sh-f` hasta las 08:00, despertar a las 06:50, rotación por fechas, relevo a las 08:00 en `guardiaTipos`, objetivo de 2400 kcal, `food.pref`, el plato de la 47g en la primera toma y los platos de la 44, la 47e y la 62 (en el mismo orden y con la toma de «Pollo al limón»). La sacamos comparando el localStorage de la cadena en el corte con un arranque en limpio.
+  - `tools/pruebas-reparto.py`: `CORTES_VALIDOS` pasa a 70, 202, 270 y 352, y `SIEMBRA = {'70': …}`. Si hay tantos cortes válidos como hacen falta, los usa todos.
+  - Justicia: con el arreglo de «lo que ya tienes en casa» quitado a mano (`compraDatos0`, `x.tengo`), el trozo sembrado cae en sus dos pruebas. Se deshizo con `git checkout app.js`.
+- **Descartado**
+  - Solo mover el corte: el tramo 202-269 (217 s) no tiene cortes válidos y el 1-201 no se puede partir sin siembra, así que con 4 trozos no se baja de ~330 s.
+  - Copiar el localStorage entero de la cadena como fichero de prueba: pesa 78 KB, no se lee y caduca sin avisar.
+  - Más de 5 trozos: G13 midió que en 4 núcleos se vuelve más lento.
+- **Supuestos**
+  - Con 5 navegadores en 4 núcleos no se pierde tiempo (medido). El margen hasta los 4 min es de solo unos 5 s.
+  - Si una prueba de la 1 a la 69 cambia lo que deja puesto, hay que poner al día `tests/siembra-70.js`: un fallo nuevo en el trozo 2 que no salga con `TROZOS=1` apunta a la siembra.

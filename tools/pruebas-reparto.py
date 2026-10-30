@@ -17,8 +17,11 @@ cab = next(i for i, l in enumerate(L) if l.startswith('  // 1) el ciclo'))
 cola = next(i for i, l in enumerate(L) if "check('sin errores de JavaScript no capturados" in l)
 marca = re.compile(r'^  // ([0-9]+[a-z]?\)|=====)')
 
+# La 70 se puede cortar porque su trozo arranca con tests/siembra-70.js (jornada 8-15, relevo 08:00, platos y menú).
 # las pruebas delante de las que se puede cortar (su número tal cual sale en el comentario: «// 240)»)
-CORTES_VALIDOS = ['202', '270']
+CORTES_VALIDOS = ['70', '202', '270', '352']
+# el trozo que empieza en una de estas pruebas arranca con su siembra (lo que las de antes dejan puesto)
+SIEMBRA = {'70': 'tests/siembra-70.js'}
 
 n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 inicios = [i for i in range(cab, cola) if marca.match(L[i])]
@@ -28,6 +31,8 @@ num = lambda i: (re.match(r'^  // ([0-9]+[a-z]?)\)', L[i]) or [None, None])[1]
 validos = [i for i in inicios[1:] if not CORTES_VALIDOS or num(i) in CORTES_VALIDOS]
 total = sum(peso.values())
 cortes, acum = [], 0
+if len(validos) == n - 1:   # tantos cortes como hacen falta: todos (con 5 trozos, 1-69 · 70-201 · 202-269 · 270-351 · 352-final)
+    cortes, inicios = validos[:], []
 for i in inicios:
     if len(cortes) == n - 1:
         break
@@ -36,6 +41,7 @@ for i in inicios:
     acum += peso[i]
 bordes = [cab] + cortes + [cola]
 for k in range(len(bordes) - 1):
-    trozo = L[:cab] + L[bordes[k]:bordes[k + 1]] + L[cola:]
+    siembra = open(os.path.join(RAIZ, SIEMBRA[num(bordes[k])]), encoding='utf-8').read().split('\n') if num(bordes[k]) in SIEMBRA else []
+    trozo = L[:cab] + siembra + L[bordes[k]:bordes[k + 1]] + L[cola:]
     open(os.path.join(RAIZ, 'tests', 'zz-trozo-%d.test.js' % (k + 1)), 'w', encoding='utf-8').write('\n'.join(trozo))
     print('trozo %d: desde la línea %d (%s), %d líneas' % (k + 1, bordes[k] + 1, (num(bordes[k]) or L[bordes[k]].strip()[:40]), bordes[k + 1] - bordes[k]))

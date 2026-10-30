@@ -11,7 +11,7 @@
 #
 # LA SUITE COMPLETA VA EN PARALELO: el banco grande (regression, ~11 min en fila) se parte en TROZOS seguidos
 # (tools/pruebas-reparto.py) y cada trozo corre en su navegador a la vez que los demás y que los bancos pequeños.
-# Tarda lo que el trozo más largo (~5 min en vez de ~12). Solo se corta donde las pruebas arrancan solas, así que
+# Tarda lo que el trozo más largo (~4 min en vez de ~12; 5 trozos, el de la 70 con siembra). Solo se corta donde las pruebas arrancan solas, así que
 # ninguna cadena de pruebas se rompe. Las del arranque (antes de la 1) van en cada trozo: por eso salen unas pocas más.
 #
 # A diferencia de npm test, no para en el primer banco que falla: los pasa todos y sale con 1 si alguno falló.
@@ -29,7 +29,7 @@ if [ "${1:-}" = "--solo" ]; then
 fi
 PEQUENOS=(tests/frases.test.js tests/compartir.test.js tests/enlaces.test.js tests/actualiza.test.js
   tests/worker-recetas.test.mjs tests/worker-calendario.test.mjs)
-TROZOS=${TROZOS:-3}
+TROZOS=${TROZOS:-5}
 BANCOS=("$@")
 EN_PARALELO=0
 if [ ${#BANCOS[@]} -eq 0 ]; then

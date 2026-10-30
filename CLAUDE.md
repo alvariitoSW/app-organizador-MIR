@@ -29,7 +29,7 @@ y los dibujos en `fig/`. Se publica en GitHub Pages desde `main`. Los datos vive
 - Trabaja en `claude/magical-clarke-dlp8mb`. Commit y `git push -u origin claude/magical-clarke-dlp8mb`.
 - Las pruebas, en corto: **`npm run test:corto`** (o `tools/pruebas-corto.sh tests/x.test.js`) enseña solo
   lo que falla y un resumen por banco; el registro entero queda en `.claude/.ultima-suite.log`. Mientras
-  trabajas, solo las tuyas: `tools/pruebas-corto.sh --solo 274 320` (menos de un minuto frente a ~5 de la completa, que va en 3 trozos a la vez).
+  trabajas, solo las tuyas: `tools/pruebas-corto.sh --solo 274 320` (menos de un minuto frente a ~4 de la completa, que va en 5 trozos a la vez).
 - A `main` solo con la **suite completa en verde** (`npm run test:corto`), y antes **`npm run sella`** + commit de
   `version.json` (si no, el móvil no se actualiza; el hook `sella-antes-de-main` lo impide). Después,
   `git push origin HEAD:main` y comprobar que el run de Actions en `main` acaba en `success`.
