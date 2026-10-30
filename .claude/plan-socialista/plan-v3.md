@@ -16,6 +16,18 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## Por hacer
 
+### «El Cierre» (lo último del plan) · delegada el 2026-10-30 · sesión «El Cierre · iconos y horas de comer»
+
+[v3-cierre] «terminamos de una vez ya la app entera» (2026-10-30). **Aprobada por delegación**: ~3,5 M; el Consejo elige
+la maqueta, decide y pasa a `main`.
+
+| # | Sesión | Tipo | Quién hace qué | Presupuesto |
+|---|---|---|---|---|
+| C1 | Maqueta de iconos: `ico()` (fig/iconos.js) en la barra de abajo y en la tabla `ICO` de Hoy (~10 iconos), con el muestrario de `design/arte/direccion/iconos/` y la letra nueva de los Remates; el Consejo elige [aparc-arte-iconos] | maqueta | sonnet | ~0,9 M |
+| C2 | Construir los iconos (sin romper las pruebas que buscan emoji: cambiarlas solo en el icono) | construir | sonnet con ficha | ~1,0 M |
+| C3 | Horas de comer que siguen a guardias y salientes (desayuno, comida, cena según jornada/guardia/saliente que ya conoce la app) [v3-horas-guardia] | construir | sonnet con ficha | ~1,0 M |
+| C4 | Cierre: verificador a 412×915, suite completa, sella, main, Actions | arreglo | sonnet | ~0,6 M |
+
 ### «Los Remates» (lo que quedaba aparcado) · Consejo 2026-10-30 (3.ª) · acta `consejo/2026-10-30-3.md`
 
 [v3-remates] «que me digan cómo lo van a solucionar; lo que quede por aprobar, que lo debatan en sesión» (2026-10-30).
@@ -151,7 +163,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 ## Ideas (dichas, sin ordenar ni aclarar)
 
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
-- [v3-horas-guardia] Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
+- (→ El Cierre C3) [v3-horas-guardia] Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
 - [v3-lector-resto] Lo que el lector aún no sabe (S2b): cartas que faltan (Happy Meal, Big Tasty, Double Cheeseburger, tacos de carne de Taco Bell), «menú del día de X: sándwich club» pone el pan dos veces, «un paquete de…» (¿entero?). DECISIONS «El lector de frases a fondo».
 
 - ~~[v3-gmail]~~ fuera del plan (parte aprobado 30/10)
