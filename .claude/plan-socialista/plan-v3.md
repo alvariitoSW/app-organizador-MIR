@@ -12,22 +12,22 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Gran Ley está hecha (G1-G12 en main; G13 a medias).** Los aparcados, estudiados por el Consejo (2026-10-30, 3.ª): tanda «Los Remates» abajo, esperando al usuario.
+**La Gran Ley está hecha (G1-G12 en main; G13 a medias).** «Los Remates» también (main 42b230d, 30/10). Queda: los iconos [aparc-arte-iconos] y [v3-horas-guardia] en Ideas.
 
 ## Por hacer
 
 ### «Los Remates» (lo que quedaba aparcado) · Consejo 2026-10-30 (3.ª) · acta `consejo/2026-10-30-3.md`
 
 [v3-remates] «que me digan cómo lo van a solucionar; lo que quede por aprobar, que lo debatan en sesión» (2026-10-30).
-**Aprobada por delegación (30/10)**: ~4,8 M, L2 entera, supuestos decididos en el acta. Sesiones «Remates · L<n> · …».
+**HECHA · main 42b230d · 30/10** (aprobada por delegación: ~4,8 M, L2 entera, supuestos decididos en el acta). Sesiones «Remates · L<n> · …».
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| L1 | Arreglos: «100 g de ajo» → ración real [aparc-vit-b6-ajo]; Fintonic presupuesto y miles [aparc-fin-presupuesto]; noches sin dato de la barrita de Sueño como botón, 7 noches [aparc-sueno-noche-olvidada] | arreglo | sonnet con ficha | ~1,4 M |
-| L2 | Maqueta: letra ≥11 px y botones 44 px [aparc-rotulos-10px] [aparc-entreno-letra]; línea «Te faltan N noches» en Hoy [aparc-sueno-sitio]; viaje a mano + enlaces [v3-viajes]; casilla «minutos de móvil» [enc-bienestar-digital] — lo que apruebe el usuario | maqueta | sonnet | ~0,9 M |
-| L3 | Construir lo aprobado en L2 | construir | sonnet con ficha | ~1,5 M |
-| L4 | Supuestos: ratificar 18, revisar 4 (r5-comer, r4-fintonic, comer-reloj1, nutri) | arreglo | haiku/sonnet | ~0,3 M |
-| L5 | (opcional) Suite con siembra, tope 1 sesión, meta 3,5-4 min [aparc-suite-siembra] | herramientas | opus | ~0,7 M |
+| ~~L1~~ | ✅ 396a-f · Arreglos: «100 g de ajo» → ración real [aparc-vit-b6-ajo]; Fintonic presupuesto y miles [aparc-fin-presupuesto]; noches sin dato de la barrita de Sueño como botón, 7 noches [aparc-sueno-noche-olvidada] | arreglo | sonnet con ficha | ~1,4 M |
+| ~~L2~~ | ✅ `maquetas/remates.html` · Maqueta: letra ≥11 px y botones 44 px [aparc-rotulos-10px] [aparc-entreno-letra]; línea «Te faltan N noches» en Hoy [aparc-sueno-sitio]; viaje a mano + enlaces [v3-viajes]; casilla «minutos de móvil» [enc-bienestar-digital] — lo que apruebe el usuario | maqueta | sonnet | ~0,9 M |
+| ~~L3~~ | ✅ 397a-d · Construir lo aprobado en L2 (y ninguna letra del 4:20 bajo 11 px) | construir | sonnet con ficha | ~1,5 M |
+| ~~L4~~ | ✅ registro al día · Supuestos: ratificar 18, revisar 4 (r5-comer, r4-fintonic, comer-reloj1, nutri) | arreglo | haiku/sonnet | ~0,3 M |
+| ~~L5~~ | ✅ 3 min 58 s, 5 trozos y `tests/siembra-70.js` · Suite con siembra, tope 1 sesión, meta 3,5-4 min [aparc-suite-siembra] | herramientas | opus | ~0,7 M |
 
 Vigilar sin sesión: [aparc-reloj-324] [aparc-lloret-suite]. Aplazado hasta después de L3: [aparc-arte-iconos]. Descartado: leer el uso de pantalla automáticamente (una web no puede).
 
@@ -163,6 +163,8 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-remates] Los Remates L1-L5: ración real en vitaminas, Fintonic (presupuesto, miles, quitar fila), sin compensar en guardia, 7 noches tocables, letra ≥11 px y botones 44 px, «Te faltan N noches» en Hoy, vuelo a mano con Maps/DGT, minutos de móvil, suite en ~4 min · main 42b230d · 2026-10-30
 
 - [v3-reforma-r1] La Reforma · R1 · Concurso «Tu mes»: 5 escuelas sonnet, jurado haiku a ciegas, gana El Vaso; navegable en `maquetas/dinero-tu-mes.html` · rama ccr-874ee141-nk8306 (maqueta, no va a main) · 2026-10-29
 - [v3-ley-noche] Ley de La Noche N1-N3 · main ec1370b · 2026-10-29

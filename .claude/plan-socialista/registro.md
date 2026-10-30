@@ -4,16 +4,16 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
-- [aparc-suite-siembra] La suite en ~2 min (G13): partir la cadena 1-201 con una siembra por `window.PG` (jornada 8-15, `guardiaTipos` con relevo 08:00, rutinas con sesiones, platos y menú) al arrancar cada trozo; cortes válidos ya probados tras la 270: 282, 292, 302, 312, 322, 331, 333, 352, 362, 372, 382, 392 (y 200, 202). Más de 6 trozos con 4 núcleos no acelera y tira `actualiza`. El reparto por tiempo que se probó no se guardó (habría que reescribirlo) · DECISIONS «Gran Ley · G13» · 2026-10-30
-- [aparc-rotulos-10px] Los rótulos en mayúsculas `.cap`/`.k` de toda la app van a 10,5 px y algunos `.mini` a 11,5 (Dinero, Sano, Entreno, 4:20); en 4:20 los botones de potencia miden 36 px de ancho y las casillas de privacidad y guardia 13 px. Es un estilo de toda la app: decidir en una tanda propia · verificador G7 y G10 · 2026-10-30
-- [aparc-entreno-letra] Portada de Entreno: `.ghero2 .k` a 10,5 px y `.glnk` a 12,5 px (ya eran así antes de la G7) · verificador G7 · 2026-10-30
-- [aparc-sueno-noche-olvidada] Una noche sin anotar solo se alcanza 2 días (barrita de Sueño, 3 noches); al tercero no hay ruta visible · verificador G2 · 2026-10-30
+- ~~[aparc-suite-siembra]~~ HECHO 2026-10-30 (Remates L5, main 42b230d): 5 trozos y siembra del trozo 70, ~4 min · La suite en ~2 min (G13): partir la cadena 1-201 con una siembra por `window.PG` (jornada 8-15, `guardiaTipos` con relevo 08:00, rutinas con sesiones, platos y menú) al arrancar cada trozo; cortes válidos ya probados tras la 270: 282, 292, 302, 312, 322, 331, 333, 352, 362, 372, 382, 392 (y 200, 202). Más de 6 trozos con 4 núcleos no acelera y tira `actualiza`. El reparto por tiempo que se probó no se guardó (habría que reescribirlo) · DECISIONS «Gran Ley · G13» · 2026-10-30
+- ~~[aparc-rotulos-10px]~~ HECHO 2026-10-30 (Remates L3): ≥11 px, botones 44 px, casillas 16 px · Los rótulos en mayúsculas `.cap`/`.k` de toda la app van a 10,5 px y algunos `.mini` a 11,5 (Dinero, Sano, Entreno, 4:20); en 4:20 los botones de potencia miden 36 px de ancho y las casillas de privacidad y guardia 13 px. Es un estilo de toda la app: decidir en una tanda propia · verificador G7 y G10 · 2026-10-30
+- ~~[aparc-entreno-letra]~~ HECHO 2026-10-30 (Remates L3) · Portada de Entreno: `.ghero2 .k` a 10,5 px y `.glnk` a 12,5 px (ya eran así antes de la G7) · verificador G7 · 2026-10-30
+- ~~[aparc-sueno-noche-olvidada]~~ HECHO 2026-10-30 (Remates L1): 7 noches tocables en Sueño · Una noche sin anotar solo se alcanza 2 días (barrita de Sueño, 3 noches); al tercero no hay ruta visible · verificador G2 · 2026-10-30
 
 - [aparc-reloj-324] La prueba 324 (tocar la sesión en «lo que viene» del reloj) cayó una vez en la suite completa (10:0x del 30/10, quedaba abierto «¿Quitar este evento?») y pasa sola, en su trozo y en la siguiente suite entera · tests/regression.test.js:12883
 - [aparc-lloret-suite] La prueba 205 del Lloretazo falló una vez en la suite completa (08:44 del 30/10); en las dos suites completas de la R6 (09:47 y 10:00 del 30/10) pasó. Se vigila; si no vuelve a caer, se cierra · tests/regression.test.js:7247
 - ~~[aparc-tu-mes-r2]~~ HECHO 2026-10-30 (G1, main 0d867cf): muestra a rayas, cifras fuera a 14 px, contraste 5,7:1
 - ~~[aparc-hoy-plantilla]~~ HECHO 2026-10-30 (G1, main 0d867cf): 10 px de aire arriba y abajo
-- [aparc-vit-b6-ajo] La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
+- ~~[aparc-vit-b6-ajo]~~ HECHO 2026-10-30 (Remates L1): ración real, fuera lo que aporta <10 % · La sugerencia de vitamina B6 puede decir «100 g de ajo» (cantidad absurda) · DECISIONS «Gran Ley · G1» · 2026-10-30
 - ~~[aparc-comer-eje-frase]~~ HECHO G4 (30/10): la frase arriba en Comer → Hoy, con lupa (Consejo 30/10: en Hoy, arriba) · La vista `eje` de Comer (la que abre la pestaña) no tiene la caja de la frase `#frIn` (visto por el verificador) · ¿a propósito? · 2026-10-30
 
 - ~~[aparc-s3-a-main]~~ HECHO 2026-10-28: la S3 entera (sesión 1 + S3b) en main 9b53fd3 (run 40759212824)
@@ -74,7 +74,7 @@ Todo lo de la 3.0 (lo que está en marcha, el orden de lo que falta, las ideas y
 
 ### A futuro (sin fecha)
 
-- [enc-bienestar-digital] Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
+- ~~[enc-bienestar-digital]~~ HECHO en lo posible 2026-10-30 (Remates L3): minutos de móvil a mano; leerlo solo es imposible desde una web · Leer el **uso real de pantalla** (Bienestar digital del móvil) para hábitos y pantallas, y un hábito **«sin pantallas» fijo**, que no se pueda quitar desde la app (solo pidiéndoselo a Claude Code) · sup. 22
 - [aparc-parte-diario] Programar el parte para que salga solo cada mañana (falta decidir la hora) · desde 2026-10-14
 
 ### Comida: ingeniería inversa para mejorar SOLO ese apartado  ·  [enc-comida-ri]  (pedido el 2026-10-26)
@@ -118,9 +118,9 @@ Pendiente del usuario: elegir cuál construir primero y, si quiere micros/Nutri-
 ### Sueño: no se podía apuntar bien desde la radio  ·  [enc-sueno-radio]  (pedido el 2026-10-27)
 Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/informe-sueno-2026-10.md`, DECISIONS «Apuntar el sueño desde la radio del conductor»).
 - ~~[aparc-sueno-vistas]~~ HECHO 2026-10-30 (G1, main 0d867cf): «Anotar anoche» a la vista en Reloj y Línea (Estación ya lo ofrecía el conductor)
-- [aparc-sueno-sitio] Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
+- ~~[aparc-sueno-sitio]~~ HECHO 2026-10-30 (Remates L3): «Te faltan N noches · anotar» en Hoy · Si sigue costando encontrarlo: rediseñar dónde vive el sueño en Hoy (maquetas primero) · desde 2026-10-27
 
-- [aparc-fin-presupuesto] Fintonic: una línea «Presupuesto de 300 288,00 €» se lee como categoría de 300.288 (`finParse`, el filtro `de\s*\d+\s*€` no la quita) y `eur()` pinta «1000 €» sin punto de miles en la revisión · DECISIONS «La Reforma · R4» · desde 2026-10-30
+- ~~[aparc-fin-presupuesto]~~ HECHO 2026-10-30 (Remates L1) · Fintonic: una línea «Presupuesto de 300 288,00 €» se lee como categoría de 300.288 (`finParse`, el filtro `de\s*\d+\s*€` no la quita) y `eur()` pinta «1000 €» sin punto de miles en la revisión · DECISIONS «La Reforma · R4» · desde 2026-10-30
 
 ## Para recordarte
 
