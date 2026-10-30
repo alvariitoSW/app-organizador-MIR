@@ -21038,7 +21038,7 @@ function renderFintonic(){
   const dudas=[r.banco,r.ingresos,r.gastos].concat(r.cats).filter(function(o){return o&&!o.ok;}).length;
   $('#main').innerHTML='<div class="grid">'+cab+
     '<p class="note" style="margin:0">He leído '+f.total+' captura'+(f.total===1?'':'s')+' del <b>'+esc(fechaCorta(f.fecha))+'</b>. '+
-      (dudas?('La letra de Fintonic es fina y a veces confundo cifras: <b style="color:var(--warn)">'+dudas+' con ⚠</b>, revísalas y corrígelas. '):'Todo cuadra. ')+
+      (dudas?('La letra de Fintonic es fina y a veces confundo cifras: <b style="color:var(--warn)">'+dudas+' con ⚠</b>, revísalas y corrígelas. '):(r.gastos&&Math.abs(sum-r.gastos.v)>=0.5?'':'Todo cuadra. '))+
       'Nada se guarda hasta que pulses «guardar».</p>'+
     '<div class="card"><h2>La captura</h2><div class="row" style="gap:8px">'+
       '<label class="fld" style="flex:1">día<input type="date" value="'+esc(f.fecha)+'" data-a="fin-fecha"></label>'+

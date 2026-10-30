@@ -14594,7 +14594,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp);
     check('371 Dinero · Fintonic en pequeño: subir → renombrar Belleza a «Alquiler» → quitar la fila del presupuesto con ✕ (44×44) → «suman 712 de 1.000» y «faltan 288» → guardar → {Supermercado 400, Alquiler 312}, Alquiler cuenta como fijo; dos filas con el mismo nombre se suman',
       r.a.xs === 3 && r.a.lista && /Supermercado\|Belleza\|Presupuesto/.test(r.a.filas) && r.b.cats.indexOf('Alquiler:312') >= 0 && /Alquiler/.test(r.b.filas) && r.c.xs === 2 && r.c.xw >= 44 && r.c.xh >= 44 &&
-      /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
+      /suman 712 € de 1\.?000 €/.test(r.c.txt) && /faltan 288/.test(r.c.txt) && !/Todo cuadra/.test(r.c.txt) && r.a.ancho <= 412 && r.c.ancho <= 412 &&
       r.d.cats === '{"Supermercado":400,"Alquiler":312}' && r.d.total === 1000 && r.d.fijos === 312 && r.d.F === 'Alquiler' && r.d.fin === null && r.e.cats === 'Supermercado:400|Supermercado:100' && r.f === '{"Supermercado":500}', JSON.stringify(r));
   }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
