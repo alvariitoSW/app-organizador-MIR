@@ -23,7 +23,7 @@ traspaso explica por qué.
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
 | arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
-| maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~1,5 M sin él | reforma-r1-tu-mes (2026-10-29) |
+| maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~0,6 M sin él con lenguaje ya elegido (G2) | reforma-r1-tu-mes (2026-10-29) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
 | construir (Reforma, ficha + 1 constructor) | opus + sonnet | 2,2 M (115 pasos; obra 1,2 M, principal 0,7 M, parte y salud 0,13 M) | ~2,0 M | reforma-r3-gasto-grande (2026-10-30) |
@@ -60,6 +60,7 @@ traspaso explica por qué.
 | 2026-10-30 | reforma-r4-fintonic | arreglo | opus-5-5 + sonnet-5-5 | 4 | 87 | **1,2 M** | sesión principal (51 %) | ficha + constructor sonnet + captura; la captura cazó «Todo cuadra» · ahorro: decir al verificador el texto exacto de la prueba |
 | 2026-10-30 | gran-ley-g1 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 116 | **1,7 M** | sesión principal (89 %) | 4 arreglos + verificador sonnet + parte programado; se pasó (1,7 M de 1,0): la principal hizo todo en opus sin constructor sonnet · ahorro: ficha corta y un constructor sonnet para los 4 arreglos |
 <!-- fin de tareas medidas -->
+| 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 
 ## Ahorros que funcionan
 

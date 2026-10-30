@@ -1862,3 +1862,26 @@ Lo hecho está en `main` (commit 0d867cf). Suite 825/825 en verde. Medido a 412�
 - «Alimentos de verdad» se mira por grupo y por nombre. Fuera: chocolate, cacao, galletas, bollería, tarta, helado y cremas de untar.
 - El botón de sueño solo sale el día de hoy.
 - En Conductor no se añade. (VALE: Consejo por delegación, 30/10)
+
+## Gran Ley · G2 · Maqueta de Comer (2026-10-30)
+
+*Por el Consejo por delegación (acta `.claude/plan-socialista/consejo/2026-10-30-g2.md`). Maqueta: `maquetas/comer-g2.html`.*
+
+**Elegido.** Una sola maqueta con el lenguaje de «El reloj», en 4 pantallas a 412×915, claro y oscuro:
+- **Hoy:** «Escribir lo comido» arriba (cierra [aparc-comer-eje-frase] cuando se construya), el reloj, «Te faltan X g de
+  proteína hoy» con suelo de 1,6 g/kg (la semana sigue con el objetivo de Ajustes) y un antojo de microondas propuesto.
+- **Casa:** la nevera con chip «❄ congelado» (sin lotes ni caducidades), «La compra de siempre» y «Lo que falta».
+- **Página de receta:** de dónde vino, raciones, tiempo, proteína por ración, ingredientes, pasos, «Añadir a la compra» y
+  «Compartir» (sin datos personales).
+- **Antojo de microondas:** por qué lo propone, receta corta, «≤5 min · ≥20 g», dos alternativas y «Apuntar que me lo he comido».
+Verificador: sin cortes ni scroll horizontal, letra ≥14 px (subidas las de 11-12), táctiles ≥44 px, contraste AA (paso de
+receta en oscuro corregido a 7:1).
+
+**Descartado.** Concurso de escuelas (repetía una decisión ya tomada, +1,2 M). Congelador con lotes y caducidades. Lista
+aparte de recetas de microondas. Un segundo número de proteína en Hoy.
+
+**Supuestos.**
+- Modo claro añadido a la maqueta (las de base solo tenían oscuro).
+- La caja de la frase lleva un botón ↵ a la derecha.
+- Comprobado en la app (G1): el sueño de una guardia se anota al día siguiente desde Reloj, Línea o Sueño, y el día después
+  desde la barrita de Sueño. A partir del tercer día no hay ruta visible: aparcado [aparc-sueno-noche-olvidada].

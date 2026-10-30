@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G2 · MAQUETA Comer** (la siguiente: sesión nueva)
+**Gran Ley · G3 · Construir compra base + congelador** (con la maqueta `maquetas/comer-g2.html`, pantalla Casa; y la frase arriba en Hoy)
 
 ## Por hacer
 
@@ -29,7 +29,7 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
 | ~~G1~~ | ✅ main 0d867cf · 30/10 · 1,7 M (se pasó: todo en opus) · vaso con muestra a rayas, aviso de plantilla con aire, pizza sin coma y vitaminas sin dulces, «Anotar anoche» en Reloj y Línea, R4 comprobada, parte programado (lu y ju 7:40) · pruebas 372-375 | arreglo | sonnet; haiku textos | ~1,0 M |
-| G2 | MAQUETA Comer, **sin concurso** (Consejo por delegación, 30/10 · acta `consejo/2026-10-30-g2.md`): 4 pantallas con «El reloj»: Hoy (frase arriba + «te faltan X g» a 1,6 g/kg + antojo ≤5 min · ≥20 g), Casa (nevera con «congelado» + compra base), página de receta (Añadir a la compra · Compartir), antojo de microondas · antes: entrada G1 en DECISIONS · el verificador comprueba anotar el sueño al día siguiente | maqueta | opus decide, sonnet monta, haiku textos | ~1,5 M (plan B a 1,8 M) |
+| ~~G2~~ | ✅ 30/10 · `maquetas/comer-g2.html` · 4 pantallas (Hoy con frase arriba + proteína a 1,6 + antojo; Casa con ❄; receta con Añadir/Compartir; antojo de microondas) · sin concurso (Consejo por delegación) · ~0,6 M | maqueta | sonnet monta, haiku textos | ~1,5 M |
 | G3 | Construir R6: compra base + congelador | construir | sonnet con ficha | ~2,0 M |
 | G4 | Construir R7: proteína en Hoy + semana básica + aviso tras entreno | construir | sonnet | ~1,2 M |
 | G5 | Construir R8 + S7: cola TikTok, página de receta con Compartir, microondas | construir | sonnet | ~1,5 M |
