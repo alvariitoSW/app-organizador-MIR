@@ -56,9 +56,11 @@ l. 165-184; dibujo `bosque()`/`meses()`, l. 277-295). Tu mes ya está en main (R
 - [x] P3 Hoja + acciones + chips + capa del vaso + filas + línea de Hoy + CSS · app.js, styles.css · constructor · ~18 pasos
 - [x] P4 `dinAhoBosqueHTML` + pestañas + CSS `.ab-` · app.js, styles.css · constructor · ~16 pasos
 - [x] P5 Pasar las pruebas viejas a la pestaña nueva; P1 cae al revertir; `tools/pruebas-corto.sh --solo …` · constructor · ~8
-- [ ] P6 Capturas 412×915: Tu mes con apartando y con ahorrado, la hoja, Ahorro y Bosque con fruto y sin datos · verificador sonnet
-- [ ] P7 Suite completa, DECISIONS «La Reforma · R3», sello, main (Consejo por delegación), gasto y traspaso R4 · principal
+- [x] P6 Capturas 412×915: Tu mes con apartando y con ahorrado, la hoja, Ahorro y Bosque con fruto y sin datos · verificador sonnet
+- [x] P7 Suite completa, DECISIONS «La Reforma · R3», sello, main (Consejo por delegación), gasto y traspaso R4 · principal
 
 ## 5. Comprobación
 H1→P1(368),P3 · H2→P1(368),P2,P3 · H3→P1(368),P3 · H4→P1(370),P4 · H5→P1(369),P2. Sin dudas abiertas. Maqueta aprobada;
 prueba que cae al revertir (P5); 412×915 (P6). No borra `store.ahorro`/`store.dinero` ni compras (quitar = `no`).
+
+**Medido (30/10):** 2,2 M de ~1,8 M previstos (obra sonnet 1,2 M · principal 0,7 M · capturas 0,12 M · parte y salud 0,13 M). main 0561783.

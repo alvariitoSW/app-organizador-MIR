@@ -26,6 +26,7 @@ traspaso explica por qué.
 | maqueta | opus + sonnet (+ haiku jurado) | 3,0 M (166 pasos, concurso de 5 sonnet; parte y salud incluidos) | ~2,7 M con concurso · ~1,5 M sin él | reforma-r1-tu-mes (2026-10-29) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
+| construir (Reforma, ficha + 1 constructor) | opus + sonnet | 2,2 M (115 pasos; obra 1,2 M, principal 0,7 M, parte y salud 0,13 M) | ~2,0 M | reforma-r3-gasto-grande (2026-10-30) |
 | construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
 | construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
 | estudio | — | sin medir | — | — |
@@ -54,9 +55,12 @@ traspaso explica por qué.
 | 2026-10-29 | la-noche-n2 | construir | opus-5-5 + sonnet-5-5 | 2 | 76 | **1,8 M** | Obra N2 de La Noche (74 %) | P6-P11: hoja, alarmas, semana, escalón y .ics; pasó de presupuesto (1,8 M) por la obra en 40 pasos |
 | 2026-10-29 | consejo-reforma | estudio | opus-5-5 + sonnet-5-5 | 4 | 45 | **1,0 M** | sesión principal (34 %) | — |
 | 2026-10-29 | reforma-r1-tu-mes | maqueta | opus-5-5 + sonnet-5-5 + haiku-5-5 | 9 | 166 | **3,0 M** | sesión principal (30 %) | concurso de 5 escuelas sonnet + jurado haiku + Artes Visuales opus · ahorro: bases con cifras ya cuadradas, guion de oficio y de capturas común (juzga.cjs), escuelas con tope de pasos |
+| 2026-10-30 | reforma-r3-gasto-grande | construir | opus-5-5 + sonnet-5-5 | 4 | 115 | **2,2 M** | Constructor R3 gasto grande (57 %) | constructor sonnet con ficha (208 k) · capturas y suite aparte; el parte y la salud al abrir |
 <!-- fin de tareas medidas -->
 
 ## Ahorros que funcionan
+
+- **Un solo constructor sonnet con la ficha (R3, 30/10):** P1-P5 en 48 pasos y 1,2 M, sin releer app.js; la suite completa y las capturas a la vez, de fondo. Lo que más pesa ya es la principal (0,7 M): ficha con greps cortos, no leer funciones enteras.
 
 - **Concursos de maquetas (R1, 29/10):** bases con las cifras ya cuadradas y un guion común de oficio y de capturas a ciegas (`tools/concurso/`): cada escuela sonnet costó 0,22-0,37 M en ≤14 pasos, y el jurado no abre los HTML (solo capturas + texto). Lo que más gasta ya es la sesión principal (30 %): esperar en silencio, sin mirar capturas.
 
