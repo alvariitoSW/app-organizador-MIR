@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**Gran Ley · G13 · la suite en ~2 min** (lo último de la Gran Ley)
+**La Gran Ley está hecha (G1-G12 en main; G13 a medias: la suite sigue en ~5-6 min).** Lo siguiente: elegir en `/bitacora` entre los aparcados (siembra de la suite, rótulos de 10,5 px, noche olvidada, B6 «100 g de ajo», Fintonic «Presupuesto»).
 
 ## Por hacer
 
@@ -40,7 +40,7 @@ Sesiones «Gran Ley · G<n> · …»; 6 supuestos se preguntan en cada cierre de
 | ~~G10~~ | ✅ 30/10 · cortina con PIN (solo hash con sal; 5 fallos = 30 s; se cierra al salir, al cerrar y tras 2 min) y neutro fuera del 4:20 (Más, Hoy, Tu semana, hábitos, conductor), quitarla desde Copia de seguridad; descanso 7/14/21 o a la mitad con «seguimos desde aquí» · pruebas 393a-d · revisión de seguridad hecha | construir | sonnet | ~1,5 M |
 | ~~G11~~ | ✅ 30/10 · energía del día (4 tramos) y UNA recomendación del coach en Hoy (sin puntuar), sin pantallas 45 min antes de la cama, fijo y sin botón, aviso al empezar, ✓ por la mañana sin racha, guía de «Hora de dormir» · pruebas 394a-c | construir | sonnet | ~2,0 M |
 | ~~G12~~ | ✅ 30/10 · modo viaje sin red en Ajustes → YO: rachas en pausa (hábitos, entreno, sin pantallas, coach), Hoy en viaje, salida a mano con aviso, billete como gasto en «viajes» 🧳, resumen al volver · pruebas 395a-c · maqueta `maquetas/modo-viaje.html` | maqueta → construir | sonnet | ~2,5 M |
-| G13 | Suite en ~2 min y PNG de `design/` · PNG ✅ (70 → 22 MB, Pillow, `design/` fuera de la caché de sw.js); falta la suite | herramientas | sonnet + haiku | ~1,4 M |
+| ~~G13~~ | ½ 30/10 · PNG ✅ (70 → 22 MB, `design/` fuera de la caché de sw.js) · **suite en ~2 min NO conseguida**: más trozos no acelera (12 trozos 272 s y `actualiza` cae; cada navegador gasta CPU) y la cadena 1-201 no se parte sin siembra → aparcado [aparc-suite-siembra] · DECISIONS «Gran Ley · G13» | herramientas | sonnet + haiku | ~1,4 M |
 
 Las tablas de abajo (Comer, La Reforma, «Después») quedan como historia: lo que falta de ellas está en esta cola.
 

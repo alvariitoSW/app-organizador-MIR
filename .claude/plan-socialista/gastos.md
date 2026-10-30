@@ -74,6 +74,7 @@ traspaso explica por qué.
 | 2026-10-30 | G11 · coach, energía y sin pantallas | construir | sonnet | 1 | 39 | 0,7 M (presupuesto 2,0) | 3,8 M de caché leída | encargo completo con las funciones de G4 y G7 a reutilizar: −65 % |
 | 2026-10-30 | G13 (1/2) · PNG de design/ | herramientas | haiku | 1 | 9 | 0,13 M | — | tarea mecánica en haiku |
 | 2026-10-30 | G12 · modo viaje (maqueta + obra) | maqueta → construir | sonnet + verificador | 3 | 63 | ~1,1 M (presupuesto 2,5) | constructor ~0,9 M | maqueta adelantada en paralelo y encargo completo |
+| 2026-10-30 | G13 (2/2) · la suite en ~2 min (no conseguida) | herramientas | sonnet | 1 | 67 | ~1,0 M | muchas pasadas completas de 5-6 min | medir CPU antes de suponer que es «solo espera»; la siembra va en tarea propia |
 
 ## Ahorros que funcionan
 
