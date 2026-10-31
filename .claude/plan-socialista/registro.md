@@ -134,6 +134,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-31-consejo-mananas] (Consejo Las Mañanas) · la app instalada y Chrome comparten los datos en Android, así que la pausa de MacroDroid cuenta aunque se abra en pestaña (comprobar en LM4); menús de Android de la guía según Pixel/Samsung genéricos · acta `consejo/2026-10-31-mananas.md`
 - [sup-2026-10-31-mananas-lm1] (Las Mañanas LM1, por delegación) · «Bus» y «Último» en una sola etiqueta de la regleta; alarmas «Quedan 30 min»/«Quedan 10 min» a las 07:01 y 07:21 (salida −30 y −10); etiquetas de ejemplo «Noticias, Mensajes, Vídeos»; la confirmación de la pausa enseña la etiqueta, no la hora · DECISIONS «Las Mañanas · LM1»
 - [sup-2026-10-31-chef-ch3] (El Chef CH3, por delegación) · «Tu cocina» con fuegos 1/2/4 y olla 3/5/6 L (hoy 2 fuegos, 5 L); «Con horno, 17 platos más» cuenta solo los nuevos (los 34 adaptados vuelven a su receta); en «Estoy reventado», 3 platos sin horno y con despensa básica · DECISIONS «El Chef · CH3»
 - [sup-2026-10-30-chef-ch2] «Añadir a la compra» mete la receta entera (sus raciones), sin selector; volver a pulsar la actualiza; «ya lo tengo» = tachar en la receta o tocar la línea en la compra; la lista «A mano» que ya tengas se queda como está · DECISIONS «El Chef · CH2»
