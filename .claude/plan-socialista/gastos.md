@@ -67,6 +67,7 @@ traspaso explica por qué.
 | 2026-10-30 | cierre | construir | opus-5-5 + sonnet-5-5 | 4 | 100 | **1,4 M** | C1 maqueta de iconos (34 %) | C1+C2 en el mismo ayudante; C1 y C3 en paralelo |
 | 2026-10-30 | chef-ch1 | datos | opus-5-5 | 0 | 53 | **1,3 M** | sesión principal (100 %) | CH1 sin ayudantes: prueba en node (0 s) en vez de navegador; el catálogo con un script de transformación. Una suite completa. |
 | 2026-10-30 | chef-ch2 | construir | opus-5-5 + sonnet-5-5 | 2 | 51 | **734 k** | sesión principal (58 %) | dirigido en opus, obra en sonnet, verificador; suite 880/881 (397c aparcada) |
+| 2026-10-31 | chef-ch2-main | desplegar | opus-5-5 + sonnet-5-5 | 2 | 105 | **1,8 M** | sesión principal (83 %) | subida a main; arregladas 3 pruebas del día 31 y la 397c |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
