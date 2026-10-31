@@ -4,6 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- [enc-mananas] Tanda «Las Mañanas» aprobada el 31/10 (~4,2 M, delegada). Rama `ccr-583d2075-nzi0uc`. **LM1 hecha** (31/10: maqueta `maquetas/las-mananas.html`, aprobada por el Consejo). Siguiente: **LM2** (marcas «En pie»/«Vestido», hoja del móvil, `normalize`, solape de la regleta con prueba encadenada) · plan-v3 «Tanda Las Mañanas»
 - [hecho 31/10, main] [aparc-pruebas-dia-31] Eran fallos de las pruebas, no de la app: la 315 dejaba una guardia en el último día del mes (el 31 era hoy) y la de Compras sumaba 6 meses al 31 y saltaba a mayo · tests/regression.test.js
 - [aparc-compra-linea-escrita] En la compra, una línea escrita a mano de una receta («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la semana («300 g Tomate triturado»): salen dos líneas. Ya era así; visto en la CH2 de El Chef (30/10) · docs/DECISIONS.md «El Chef · CH2»
 - [hecho 31/10, rama] [aparc-vuelo-medianoche] La prueba 397c (vuelo en el modo viaje) cae si la suite corre de noche: pone el vuelo a «ahora + 4 h» y a las 21:40 UTC cae pasada la medianoche (visto en la suite de la CH1 de El Chef, 30/10; lo demás, 879/880 en verde). Arreglar la prueba (hora fija) antes del `main` de la CH8 · tests/regression.test.js:15501
@@ -133,6 +134,7 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
+- [sup-2026-10-31-mananas-lm1] (Las Mañanas LM1, por delegación) · «Bus» y «Último» en una sola etiqueta de la regleta; alarmas «Quedan 30 min»/«Quedan 10 min» a las 07:01 y 07:21 (salida −30 y −10); etiquetas de ejemplo «Noticias, Mensajes, Vídeos»; la confirmación de la pausa enseña la etiqueta, no la hora · DECISIONS «Las Mañanas · LM1»
 - [sup-2026-10-31-chef-ch3] (El Chef CH3, por delegación) · «Tu cocina» con fuegos 1/2/4 y olla 3/5/6 L (hoy 2 fuegos, 5 L); «Con horno, 17 platos más» cuenta solo los nuevos (los 34 adaptados vuelven a su receta); en «Estoy reventado», 3 platos sin horno y con despensa básica · DECISIONS «El Chef · CH3»
 - [sup-2026-10-30-chef-ch2] «Añadir a la compra» mete la receta entera (sus raciones), sin selector; volver a pulsar la actualiza; «ya lo tengo» = tachar en la receta o tocar la línea en la compra; la lista «A mano» que ya tengas se queda como está · DECISIONS «El Chef · CH2»
 

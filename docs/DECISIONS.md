@@ -2318,3 +2318,17 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - **Supuestos**
   - Olla en 3/5/6 L y fuegos 1/2/4 como opciones; hoy 2 fuegos y 5 L.
   - Las kcal, horas y fechas de las pantallas son de ejemplo; los platos de «Estoy reventado» también.
+
+## Las Mañanas · LM1 · Maqueta (2026-10-31, Consejo por delegación)
+- **Elegido**
+  - `maquetas/las-mananas.html` con las 7 pantallas del acta `consejo/2026-10-31-mananas.md`, en claro y oscuro: Hoy con
+    «En pie / Vestido / He salido» y la regleta en dos filas (sin el solape de «Vestirse» y «Salir de casa»), hoja «¿Móvil
+    esta mañana?», «Tu semana» con 3 tramos real/previsto y una frase, 2 alarmas de mitad de mañana en la pantalla de
+    alarmas, guía de Android, pausa de 5 s y guía de MacroDroid.
+  - Diferencias en neutro («+18 min»), sin rojo ni semáforos; la frase solo con 4 mañanas o más.
+- **Descartado**
+  - Concurso de maquetas (Hacienda: el Consejo ya fijó qué va en cada pantalla).
+  - Guardar la hora de cada pausa: solo el recuento por día y etiqueta (acuerdo de privacidad).
+- **Supuestos**
+  - «Bus» y «Último» van en una sola etiqueta de la regleta (a esa escala se pisaban).
+  - Alarmas «Quedan 30 min» 07:01 y «Quedan 10 min» 07:21 con salida a las 07:31; horas y etiquetas son de ejemplo.
