@@ -150,7 +150,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
-### Tanda «Las Mañanas» · el móvil y la hora de salir (pedida el 31/10, **antes** que la CH4 de El Chef) · Consejo 2026-10-31 · acta `consejo/2026-10-31-mananas.md` · **espera al usuario** (3 preguntas)
+### Tanda «Las Mañanas» · el móvil y la hora de salir (pedida el 31/10, **antes** que la CH4 de El Chef) · Consejo 2026-10-31 · acta `consejo/2026-10-31-mananas.md` · **aprobada** (31/10: ~4,2 M, delegada; 1a · 2a · 3a) · siguiente: **LM1**
 
 [v3-movil-mananas] «Conectarla con Bienestar digital para que vea el uso del móvil y me ayude; últimamente necesito 1 h
 para salir de casa y en parte es por el móvil.» Ya hay «minutos de móvil» a mano (L3). Una web no puede leer el uso sola.
