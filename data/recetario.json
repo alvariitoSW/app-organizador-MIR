@@ -1836,6 +1836,1685 @@
       "aviso": "",
       "gluten": "no",
       "duda": "La revithia clásica se hace en horno en cazuela de barro; aquí va en olla en la vitro, con el mismo resultado cremoso."
+    },
+    {
+      "n": "Marmitako",
+      "e": "🐟",
+      "alias": [
+        "marmitako",
+        "marmitako de bonito",
+        "atún con patatas vasco"
+      ],
+      "m": "cn",
+      "min": 45,
+      "rac": 4,
+      "ing": [
+        [
+          "Atún fresco",
+          120
+        ],
+        [
+          "Patata",
+          200
+        ],
+        [
+          "Pimiento verde",
+          40
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas y «cáscalas»: clava el cuchillo y tuerce para romper trozos irregulares de 3 cm. Corta el pimiento y la cebolla en cuadraditos y el atún en dados de 3 cm.",
+        "Pon la olla de 5 L en el fuego grande al 6 con el aceite. Sofríe cebolla, pimiento y ajo laminado 8 min, removiendo, hasta que estén blandos sin tostarse.",
+        "Aparta del fuego, echa el pimentón y el tomate, remueve 10 segundos y añade las patatas con agua justa para cubrirlas (unos 2 dedos por encima). Vuelve al fuego al 7 hasta que hierva.",
+        "Baja al 4, tapa a medias y cuece 18 min, hasta que la patata esté casi tierna y el caldo algo trabado por su almidón. Sala.",
+        "Apaga el fuego. Salpimenta el atún, métela en la olla, tapa y deja 5 min: se hace con el calor que queda y queda rosado y jugoso. Sirve enseguida."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 8,
+          "t": "Sofrito"
+        },
+        {
+          "p": 3,
+          "min": 18,
+          "t": "Cocción de las patatas"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Atún con el calor residual"
+        }
+      ],
+      "kcal": 459,
+      "prot": 33,
+      "region": "PV",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Las patatas cascadas (no cortadas) sueltan almidón y espesan el caldo sin harina.",
+        "El atún va al final y con el fuego apagado: cocido más de 5 min se queda seco y con sabor a lata.",
+        "El pimentón se echa fuera del fuego: con la olla caliente se quema en segundos y amarga.",
+        "Con agua justa el caldo queda corto y sabroso; si cubres de más, queda aguado.",
+        "Al recalentar, hazlo suave y poco rato para que el atún no se pase."
+      ],
+      "error": "Cocer el atún con las patatas desde el principio: queda duro y seco. Entra solo al final, con el fuego apagado.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Patatas a la riojana",
+      "e": "🥔",
+      "alias": [
+        "patatas con chorizo",
+        "patatas a la riojana con chorizo",
+        "patatas riojanas"
+      ],
+      "m": "cn",
+      "min": 50,
+      "rac": 4,
+      "ing": [
+        [
+          "Patata",
+          250
+        ],
+        [
+          "Chorizo",
+          30
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Pimiento verde",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          3
+        ],
+        [
+          "Aceite de oliva",
+          8
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas y cáscalas en trozos de 3 cm. Pica la cebolla y el pimiento en cuadraditos, el ajo fino, y corta el chorizo en rodajas gruesas.",
+        "En la olla de 5 L al fuego 6 pon el aceite y el chorizo 2 min, hasta que suelte su grasa roja. Añade cebolla, pimiento y ajo y baja al 4: 8 min removiendo.",
+        "Retira la olla del fuego, echa el pimentón, remueve unos segundos y pon enseguida las patatas con agua que las cubra justo.",
+        "Vuelve al fuego al 7 hasta que hierva, baja al 3-4, tapa a medias y cuece 25 min. Las patatas tienen que quedar tiernas y el caldo ligado.",
+        "Prueba y sala si hace falta (el chorizo ya da sal). Deja reposar 10 min tapado antes de servir: espesa solo."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 8,
+          "t": "Sofrito con el chorizo"
+        },
+        {
+          "p": 3,
+          "min": 25,
+          "t": "Cocción de las patatas"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 435,
+      "prot": 14,
+      "region": "RIO",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Cascar las patatas rompe sus fibras y suelta almidón: el caldo se liga sin harina ni pan.",
+        "El pimentón, fuera del fuego: se quema en segundos y amarga todo el guiso.",
+        "El chorizo se sofríe primero para que su grasa teñida de pimentón sea la base del sabor.",
+        "A fuego bajo las patatas se hacen sin deshacerse; a borbotones se rompen y enturbian.",
+        "Del día siguiente están aún más buenas, porque la patata absorbe el caldo."
+      ],
+      "error": "Cortar las patatas con el cuchillo y hervirlas fuerte: no espesan y se deshacen. Cáscalas y cuece a fuego suave.",
+      "etiqueta": [
+        "Chorizo"
+      ],
+      "aviso": "El chorizo puede llevar gluten en trazas o aditivos: elige uno cuyo envase diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Pollo al chilindrón",
+      "e": "🍗",
+      "alias": [
+        "chilindrón",
+        "pollo chilindrón",
+        "pollo al chilindron"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Muslo de pollo",
+          180
+        ],
+        [
+          "Jamón serrano",
+          25
+        ],
+        [
+          "Pimiento rojo",
+          80
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Tomate triturado",
+          80
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Salpimenta el pollo en trozos (muslos con hueso, sin piel si quieres). Corta el jamón en tacos, el pimiento en tiras, la cebolla en pluma y el ajo laminado.",
+        "En una cazuela o olla de 3 L al fuego 7 con el aceite, dora el pollo 4 min por cada lado hasta que tome color. Sácalo a un plato.",
+        "En la misma grasa, baja al 4 y sofríe el jamón 1 min, luego cebolla, pimiento y ajo 10 min, removiendo, hasta que estén muy blandos.",
+        "Fuera del fuego echa el pimentón, remueve y añade el tomate. Vuelve al fuego al 4 y cuece 5 min hasta que pierda el agua.",
+        "Devuelve el pollo, añade un chorro de agua, tapa y cuece al 3 durante 30 min, dando la vuelta a media cocción. Debe quedar la salsa espesa y el pollo tierno."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 10,
+          "t": "Sofrito"
+        },
+        {
+          "p": 3,
+          "min": 5,
+          "t": "Reducir el tomate"
+        },
+        {
+          "p": 4,
+          "min": 30,
+          "t": "Guisado del pollo"
+        }
+      ],
+      "kcal": 441,
+      "prot": 46,
+      "region": "ARA",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 3,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Dorar el pollo primero sella los jugos y da el sabor tostado que luego pasa a la salsa.",
+        "El pimiento muy pochado se vuelve dulce y la salsa se liga sola, sin harina.",
+        "El jamón va al principio: su grasa y su sal condimentan todo el guiso.",
+        "El pimentón fuera del fuego, para que no se queme y amargue.",
+        "Reposado un día, la salsa se asienta y el pollo sabe más."
+      ],
+      "error": "Dorar el pollo con el fuego flojo: hierve en vez de sellarse y la salsa sale sosa. Fuego 7 y no lo amontones.",
+      "etiqueta": [
+        "Jamón serrano"
+      ],
+      "aviso": "Un jamón serrano curado suele ser seguro, pero mira que el envase no lleve harina ni aditivos con gluten (o que diga «sin gluten»).",
+      "gluten": "depende"
+    },
+    {
+      "n": "Pollo guisado con patatas",
+      "e": "🍲",
+      "alias": [
+        "pollo con patatas",
+        "guiso de pollo con patatas",
+        "pollo en guiso"
+      ],
+      "m": "cn",
+      "min": 50,
+      "rac": 4,
+      "ing": [
+        [
+          "Muslo de pollo",
+          180
+        ],
+        [
+          "Patata",
+          200
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Zanahoria",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Guisante",
+          30
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Sala el pollo en trozos. Pela las patatas y cáscalas en trozos de 3 cm; corta la cebolla y la zanahoria en cuadraditos y el ajo fino.",
+        "En la olla de 5 L al fuego 7 con el aceite, dora el pollo 3 min por lado. Sácalo.",
+        "Baja al 4 y sofríe cebolla, zanahoria y ajo 8 min. Fuera del fuego, echa el pimentón y vuelve el pollo con las patatas.",
+        "Cubre con agua justa, sube al 7 hasta que hierva y baja al 3. Tapa a medias y cuece 25 min.",
+        "Añade los guisantes los últimos 5 min. Prueba, rectifica de sal y deja reposar tapado 10 min."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 6,
+          "t": "Dorar el pollo"
+        },
+        {
+          "p": 2,
+          "min": 8,
+          "t": "Sofrito"
+        },
+        {
+          "p": 3,
+          "min": 25,
+          "t": "Cocción"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Guisantes"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 521,
+      "prot": 42,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 15
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Dorar el pollo antes da color y sabor al caldo; sin dorar queda pálido.",
+        "Las patatas cascadas ligan el caldo con su almidón.",
+        "Hervor suave: a borbotones el pollo se seca y las patatas se rompen.",
+        "Los guisantes al final conservan color y textura.",
+        "Con olla exprés: 12-15 min desde que sube la válvula, fuego medio (4-5)."
+      ],
+      "error": "Cubrir de agua de más: el guiso queda aguado. Que el agua apenas asome por encima.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Pollo con tomate",
+      "e": "🍅",
+      "alias": [
+        "pollo en salsa de tomate",
+        "pollo con tomate casero",
+        "pollo al tomate"
+      ],
+      "m": "cn",
+      "min": 45,
+      "rac": 4,
+      "ing": [
+        [
+          "Muslo de pollo",
+          180
+        ],
+        [
+          "Tomate triturado",
+          150
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Pimiento verde",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Orégano",
+          0.5
+        ],
+        [
+          "Arroz blanco",
+          50
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Sala el pollo. Pica la cebolla y el pimiento finos, y el ajo laminado.",
+        "Dora el pollo en una cazuela de 3 L al fuego 7 con la mitad del aceite, 4 min por lado. Sácalo.",
+        "Baja al 4 con el resto del aceite y pocha cebolla, pimiento y ajo 10 min. Añade el tomate y el orégano y cuece 10 min más, hasta que oscurezca y el aceite asome (así se hace el tomate frito casero).",
+        "Vuelve a poner el pollo en la salsa, añade medio vaso de agua, tapa y cuece al 3 durante 20 min.",
+        "A la vez, en el otro fuego, cuece el arroz en agua con sal (por cada vaso de arroz, dos de agua) al 4 durante 15 min tapado, y déjalo reposar 5 min. Sirve el pollo sobre el arroz."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 20,
+          "t": "Hacer el tomate"
+        },
+        {
+          "p": 3,
+          "min": 20,
+          "t": "Guisado del pollo"
+        },
+        {
+          "p": 4,
+          "min": 15,
+          "t": "Arroz"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Reposo del arroz"
+        }
+      ],
+      "kcal": 580,
+      "prot": 42,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 2,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Cocinar el tomate despacio quita su acidez y concentra el sabor.",
+        "Dorar primero el pollo da cuerpo a la salsa.",
+        "Un pellizco de orégano al tomate lo redondea sin añadir sal.",
+        "El arroz aparte queda suelto: en la salsa se pasa y la enturbia.",
+        "La salsa mejora al día siguiente."
+      ],
+      "error": "Usar tomate frito de bote sin mirar: puede llevar gluten. Con el triturado y unos minutos de fuego queda mejor y es seguro.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "Pongo tomate triturado cocinado en casa en lugar del tomate frito de bote, que a veces trae gluten; así no hace falta etiqueta."
+    },
+    {
+      "n": "Ternera guisada con patatas",
+      "e": "🥩",
+      "alias": [
+        "guiso de ternera",
+        "ternera con patatas",
+        "carne guisada con patatas"
+      ],
+      "m": "cn",
+      "min": 90,
+      "rac": 4,
+      "ing": [
+        [
+          "Ternera magra",
+          150
+        ],
+        [
+          "Patata",
+          200
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Zanahoria",
+          50
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta la ternera en tacos de 3 cm y sálala. Pica cebolla, zanahoria y ajo; pela las patatas y cáscalas en trozos.",
+        "En la olla de 5 L al fuego 7 con el aceite, sella la carne en dos tandas, 2 min por lado, sin amontonarla. Sácala.",
+        "Al 4, pocha cebolla, zanahoria y ajo 8 min. Fuera del fuego, el pimentón y el tomate; remueve y devuelve la carne. Cubre con agua.",
+        "Sube al 7 hasta que hierva, quita la espuma, baja al 2-3, tapa a medias y cuece 45 min sin harina: la ternera debe empezar a ceder.",
+        "Añade las patatas y cuece otros 25 min hasta que estén tiernas y la ternera se deshaga con el tenedor. Reposo 10 min."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 6,
+          "t": "Sellar la carne"
+        },
+        {
+          "p": 3,
+          "min": 45,
+          "t": "Cocción de la carne"
+        },
+        {
+          "p": 4,
+          "min": 25,
+          "t": "Con las patatas"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 499,
+      "prot": 38,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 2,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Sellar la carne en tandas: si la amontonas suelta agua y se cuece en vez de dorarse.",
+        "El fuego bajo y largo ablanda el colágeno de la ternera; el fuego fuerte la endurece.",
+        "Sin enharinar, el guiso espesa con las patatas cascadas y la verdura.",
+        "Las patatas entran más tarde, para que no se deshagan.",
+        "Con olla exprés: 25 min la carne y 8 min más con las patatas."
+      ],
+      "error": "Hervir el guiso fuerte con la tapa puesta: la carne queda dura y la salsa turbia. Fuego mínimo.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Albóndigas de pollo en salsa",
+      "e": "🍝",
+      "alias": [
+        "albóndigas de pollo",
+        "albóndigas caseras en salsa",
+        "albóndigas sin gluten"
+      ],
+      "m": "cn",
+      "min": 50,
+      "rac": 4,
+      "ing": [
+        [
+          "Carne picada de pollo",
+          150
+        ],
+        [
+          "Huevo",
+          15
+        ],
+        [
+          "Pan rallado sin gluten",
+          15
+        ],
+        [
+          "Ajo",
+          2
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Zanahoria",
+          40
+        ],
+        [
+          "Tomate triturado",
+          100
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Mezcla la carne con el huevo, el pan rallado sin gluten, el ajo y el perejil picados y sal. Amasa lo justo y haz bolas del tamaño de una nuez, sin enharinar. Si se pegan, mójate las manos.",
+        "Pela las patatas, córtalas en dados de 2 cm y cuécelas en el micro, con 3 cucharadas de agua y tapadas, 6 min a 800 W.",
+        "En una cazuela de 3 L al fuego 4 con el aceite, pocha cebolla y zanahoria picadas 8 min. Añade el tomate y medio vaso de agua y cuece 5 min.",
+        "Cuando hierva suave (fuego 3), mete las albóndigas una a una sin moverlas. Tapa y cuece 12 min.",
+        "Añade las patatas, mueve la cazuela por las asas, y cuece 8 min más. Prueba la sal y deja 5 min reposar."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 6,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 2,
+          "min": 8,
+          "t": "Sofrito"
+        },
+        {
+          "p": 3,
+          "min": 12,
+          "t": "Albóndigas"
+        },
+        {
+          "p": 4,
+          "min": 8,
+          "t": "Con las patatas"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 569,
+      "prot": 34,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Las albóndigas se cuecen directamente en la salsa, sin freír ni enharinar, y así no hay harina de trigo.",
+        "No las muevas hasta que estén cuajadas: cuajan por fuera y se sostienen.",
+        "El huevo y el pan rallado sin gluten ligan la masa y la mantienen jugosa.",
+        "Mojarte las manos evita que la masa se pegue.",
+        "Mejor sin hervir fuerte: la carne de pollo se seca."
+      ],
+      "error": "Mover las albóndigas al principio: se rompen. Déjalas 3 min quietas y luego mueve la cazuela.",
+      "etiqueta": [
+        "Pan rallado sin gluten"
+      ],
+      "aviso": "Compra pan rallado que diga «sin gluten» o con la espiga barrada: el normal lleva trigo.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Carne con tomate",
+      "e": "🥘",
+      "alias": [
+        "carne guisada con tomate",
+        "ternera con tomate",
+        "carne en salsa de tomate"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Ternera magra",
+          140
+        ],
+        [
+          "Tomate triturado",
+          150
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Pimiento rojo",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Orégano",
+          0.5
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta la ternera en tacos de 2-3 cm y sálala. Pica cebolla, pimiento y ajo; pela las patatas y córtalas en dados de 2 cm.",
+        "En la olla de 3 L, al fuego 7 con la mitad del aceite, sella la carne por tandas 2 min por lado. Sácala.",
+        "Al 4, con el resto del aceite, pocha cebolla, pimiento y ajo 10 min. Añade el tomate y el orégano y cuece 10 min más, hasta que el aceite asome.",
+        "Devuelve la carne con medio vaso de agua; tapa y cuece al 2-3 durante 35 min. Mientras, cuece las patatas en el micro tapadas con 3 cucharadas de agua, 6 min a 800 W.",
+        "Añade las patatas a la olla, mueve y cuece 5 min más. Reposo 5 min antes de servir."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 20,
+          "t": "Sofrito y tomate"
+        },
+        {
+          "p": 3,
+          "min": 35,
+          "t": "Guisado de la carne"
+        },
+        {
+          "p": 3,
+          "min": 6,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Última cocción"
+        }
+      ],
+      "kcal": 491,
+      "prot": 37,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Hacer el tomate con calma le quita acidez y deja un sabor más profundo que el de bote.",
+        "Fuego bajo y largo: la ternera se vuelve tierna sin filamentos.",
+        "Las patatas al micro ahorran un fuego y no se rompen en el guiso.",
+        "Cuanto más cocido el sofrito, más dulce la salsa.",
+        "Del día siguiente está mejor: se mezclan los sabores."
+      ],
+      "error": "Echar toda la carne de golpe a dorar: suelta agua y se cuece gris. Hazlo en dos tandas.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "Uso tomate triturado cocinado en casa en lugar de tomate frito de bote; sin etiqueta que vigilar."
+    },
+    {
+      "n": "Atún encebollado",
+      "e": "🧅",
+      "alias": [
+        "atún con cebolla",
+        "atún encebollado andaluz",
+        "bonito encebollado"
+      ],
+      "m": "cn",
+      "min": 30,
+      "rac": 4,
+      "ing": [
+        [
+          "Atún fresco",
+          140
+        ],
+        [
+          "Cebolla",
+          150
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Vinagre",
+          5
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas, córtalas en dados de 2 cm y cuécelas en el micro tapadas con 3 cucharadas de agua, 6 min a 800 W. Corta la cebolla en pluma fina y el atún en tacos.",
+        "En una sartén honda al fuego 5 con el aceite, pocha la cebolla con una pizca de sal y el ajo laminado 15 min, removiendo, hasta que esté dorada y sedosa.",
+        "Fuera del fuego, echa el pimentón y el vinagre; remueve y vuelve al fuego al 4 un minuto para que evapore el vinagre.",
+        "Sube al 6, mete el atún salpimentado y las patatas y dale 2 min por cada lado, justo hasta que blanquee por fuera.",
+        "Tapa, apaga y deja 2 min más. El centro debe quedar un poco rosado."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 6,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 1,
+          "min": 15,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 3,
+          "min": 4,
+          "t": "Dorar el atún"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Reposo tapado"
+        }
+      ],
+      "kcal": 491,
+      "prot": 37,
+      "region": "AND",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La cebolla pochada lenta suelta su azúcar y hace la salsa; con prisa quema y amarga.",
+        "Un chorrito de vinagre equilibra la dulzura de la cebolla.",
+        "El atún a fuego fuerte y poco rato queda jugoso; mucho rato, seco.",
+        "El pimentón fuera del fuego, para que no se queme.",
+        "Sal la cebolla al principio: suelta agua y se pocha sin tostarse."
+      ],
+      "error": "Pasarse con el atún: a partir de 8-10 min en total queda como suela. Cuenta los tiempos.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "El clásico lleva vino o jerez; aquí uso vinagre, más fácil de encontrar seguro para celíacos."
+    },
+    {
+      "n": "Bonito con tomate",
+      "e": "🐠",
+      "alias": [
+        "bonito del norte con tomate",
+        "marmitako con tomate",
+        "bonito en tomate"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Atún fresco",
+          140
+        ],
+        [
+          "Tomate triturado",
+          150
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Pimiento verde",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas, córtalas en dados de 2 cm y cuécelas en el micro con 3 cucharadas de agua, tapadas, 6 min a 800 W. Pica cebolla, pimiento y ajo; corta el pescado en tacos.",
+        "En una cazuela de 3 L al fuego 4 con el aceite, pocha cebolla, pimiento y ajo 10 min.",
+        "Añade el tomate y sube al 5. Cuece 12 min hasta que el aceite asome. Prueba y sala.",
+        "Pon las patatas y el pescado salpimentado dentro, pégalos al tomate, baja al 3, tapa y cuece 6 min.",
+        "Apaga y deja reposar tapado 3 min. No muevas con cuchara: gira la cazuela."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 6,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 1,
+          "min": 10,
+          "t": "Sofrito"
+        },
+        {
+          "p": 2,
+          "min": 12,
+          "t": "Hacer el tomate"
+        },
+        {
+          "p": 3,
+          "min": 6,
+          "t": "Pescado en la salsa"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 504,
+      "prot": 39,
+      "region": "CTB",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El tomate se cuece antes de meter el pescado: así no hace falta alargar la cocción del bonito.",
+        "El bonito se cuece poco y con la tapa: se hace al vapor de la salsa.",
+        "Las patatas al micro, con poco agua, evitan ensuciar otra olla.",
+        "Sin vino ni harina: el sabor viene del tomate y del pimiento.",
+        "Reposa tapado para que el centro acabe de hacerse sin secar."
+      ],
+      "error": "Hervir el bonito en la salsa: pasa de 8 min y queda seco. Fuego bajo y poco rato.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "El bonito del norte fresco no está en la tabla; uso «Atún fresco» (valores parecidos). Tomate triturado en lugar de tomate frito de bote."
+    },
+    {
+      "n": "Bacalao a la vizcaína",
+      "e": "🐟",
+      "alias": [
+        "bacalao vizcaína",
+        "bacalao al estilo vizcaíno",
+        "bacalao con salsa vizcaína"
+      ],
+      "m": "cn",
+      "min": 45,
+      "rac": 4,
+      "ing": [
+        [
+          "Bacalao desalado",
+          150
+        ],
+        [
+          "Cebolla",
+          100
+        ],
+        [
+          "Pimientos del piquillo",
+          40
+        ],
+        [
+          "Zanahoria",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Pimentón",
+          3
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Sal",
+          0.5
+        ]
+      ],
+      "pasos": [
+        "Cuece las patatas enteras o en dados en el micro con 3 cucharadas de agua, tapadas, 7 min a 800 W. Si el bacalao no viene desalado, desálalo 24-36 h cambiando el agua.",
+        "En una cazuela de 3 L al fuego 3 con el aceite, pocha cebolla en pluma, zanahoria y ajo 20 min, muy despacio, sin que cojan color.",
+        "Fuera del fuego, echa el pimentón, el tomate y el piquillo picado; tritura con la batidora hasta que sea una salsa fina y devuélvela a la cazuela al 3, 5 min.",
+        "Coloca el bacalao con la piel hacia arriba y las patatas, tapa y cuece 8 min al 3. Sin remover.",
+        "Apaga y reposa 3 min. Prueba antes de salar: el bacalao ya trae sal."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 7,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 1,
+          "min": 20,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 2,
+          "min": 5,
+          "t": "Salsa"
+        },
+        {
+          "p": 3,
+          "min": 8,
+          "t": "Bacalao"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 460,
+      "prot": 33,
+      "region": "PV",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 3,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La cebolla muy lenta y sin dorar da una salsa dulce y rosada, la base de la vizcaína.",
+        "Se liga la salsa triturándola, sin pan frito: el pan de la receta clásica lleva gluten.",
+        "El bacalao entra al final y con tapa: se hace al vapor y no se desmigaja.",
+        "Prueba la sal tras el bacalao: casi nunca hace falta más.",
+        "Del día siguiente, recalienta suave para que no se deshaga."
+      ],
+      "error": "Echar sal antes de probar: el bacalao desalado aún lleva y queda salado. Prueba siempre al final.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "El pimiento choricero no está en la tabla; lo sustituyo por pimentón y piquillo, que dan un color y sabor parecidos. Sin pan frito."
+    },
+    {
+      "n": "Pescado con tomate en cazuela (psari plaki)",
+      "e": "🐟",
+      "alias": [
+        "psari plaki",
+        "pescado a la griega con tomate",
+        "pescado plaki"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Merluza",
+          150
+        ],
+        [
+          "Tomate triturado",
+          120
+        ],
+        [
+          "Cebolla",
+          60
+        ],
+        [
+          "Pimiento verde",
+          40
+        ],
+        [
+          "Zanahoria",
+          30
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Limón",
+          20
+        ],
+        [
+          "Perejil",
+          3
+        ],
+        [
+          "Orégano",
+          0.5
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas, córtalas en rodajas de 1 cm y cuécelas 6 min a 800 W en el micro con 3 cucharadas de agua y tapadas. Corta cebolla y zanahoria finas, y el pimiento en tiras.",
+        "En una cazuela ancha de 3 L al fuego 4 con el aceite, pocha cebolla, zanahoria, pimiento y ajo 10 min.",
+        "Añade el tomate, el orégano y medio vaso de agua. Cuece al 4 durante 10 min hasta que espese.",
+        "Pon las patatas en el fondo de la salsa y el pescado encima, salpimentado. Tapa y cuece al 3 durante 10 min.",
+        "Apaga, exprime el limón por encima, espolvorea el perejil y reposa 3 min tapado."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 6,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 1,
+          "min": 10,
+          "t": "Sofrito"
+        },
+        {
+          "p": 2,
+          "min": 10,
+          "t": "Salsa"
+        },
+        {
+          "p": 3,
+          "min": 10,
+          "t": "Pescado en la cazuela"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 474,
+      "prot": 32,
+      "region": "GR",
+      "cocina": "gr",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Es la versión «en cazuela» del plato, que en Grecia se hace en horno: se hace igual de jugoso con la tapa puesta.",
+        "El limón al final conserva su frescor; cocido amarga.",
+        "El orégano da el toque griego sin añadir sal.",
+        "El pescado al vapor de la salsa se hace sin secarse.",
+        "Las patatas debajo absorben el jugo y se hacen un plato completo."
+      ],
+      "error": "Cocer el pescado destapado: se seca y la salsa se pasa. Tapa y fuego 3.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "El plato clásico se hace en horno; aquí va en cazuela con tapa (sin horno), por eso el nombre dice «en cazuela»."
+    },
+    {
+      "n": "Suquet de peix",
+      "e": "🥣",
+      "alias": [
+        "suquet",
+        "suquet de pescado",
+        "suquet catalán"
+      ],
+      "m": "cn",
+      "min": 45,
+      "rac": 4,
+      "ing": [
+        [
+          "Rape",
+          120
+        ],
+        [
+          "Gamba",
+          40
+        ],
+        [
+          "Patata",
+          180
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Tomate triturado",
+          60
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Azafrán",
+          0.05
+        ],
+        [
+          "Pan sin gluten",
+          15
+        ],
+        [
+          "Almendra",
+          8
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas y cáscalas en trozos de 3 cm. Corta el rape en tacos y pela las gambas si quieres (las cáscaras dan sabor al caldo).",
+        "En la olla de 5 L al fuego 5 con el aceite, pocha la cebolla 8 min. Añade ajo y tomate y cuece 5 min más. Fuera del fuego echa el pimentón.",
+        "Echa las patatas, cubre con agua justa, sube al 7 hasta que hierva y baja al 4: 15 min, hasta que estén casi tiernas.",
+        "Mientras, haz la picada: machaca en el mortero el pan sin gluten tostado en seco, la almendra, el ajo y el azafrán con un chorro de agua, hasta que sea una pasta.",
+        "Pon la picada en la olla y mueve. Añade el rape y las gambas, tapa y cuece al 3 durante 5 min. Apaga, sala, perejil y reposo 5 min."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 13,
+          "t": "Sofrito"
+        },
+        {
+          "p": 2,
+          "min": 15,
+          "t": "Patatas"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Rape y gambas"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 503,
+      "prot": 33,
+      "region": "CAT",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 3,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La picada espesa y da el sabor típico sin harina ni pan de trigo.",
+        "Las patatas cascadas aportan almidón y ligan el caldo.",
+        "El pescado entra al final: se cuece en 5 min y queda tierno.",
+        "El azafrán se disuelve en un poco de agua caliente para que reparta su color.",
+        "Sin hervir fuerte: el rape se endurece."
+      ],
+      "error": "Meter el pescado con el caldo hirviendo a lo loco: se rompe y se seca. Fuego suave y 5 min.",
+      "etiqueta": [
+        "Pan sin gluten"
+      ],
+      "aviso": "Usa un pan o biscote que ponga «sin gluten»; sirve cualquier pan de tu marca habitual de celíaco.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Tajín de pollo con limón y aceitunas",
+      "e": "🍋",
+      "alias": [
+        "tajine de pollo",
+        "pollo con limón y aceitunas",
+        "tajín marroquí de pollo"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Muslo de pollo",
+          180
+        ],
+        [
+          "Cebolla",
+          60
+        ],
+        [
+          "Limón",
+          30
+        ],
+        [
+          "Aceituna",
+          25
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Comino",
+          1
+        ],
+        [
+          "Curry en polvo",
+          1.5
+        ],
+        [
+          "Azafrán",
+          0.05
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Arroz blanco",
+          50
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Mezcla el pollo con las especias (pimentón, comino, curry), el ajo picado, el azafrán, sal y una cucharadita del aceite. Déjalo 10 min. Corta la cebolla en pluma y el limón en gajos finos.",
+        "En una cazuela de 3 L al fuego 6 con el resto del aceite, dora el pollo 3 min por lado. Sácalo.",
+        "Baja al 4: pocha la cebolla 8 min. Devuelve el pollo con medio vaso de agua. Tapa y cuece al 3 durante 30 min.",
+        "Añade las aceitunas y los gajos de limón y cuece 10 min más destapado al 3, hasta que la salsa quede corta.",
+        "A la vez, cuece el arroz con agua y sal al 4 durante 15 min tapado, y reposa 5 min. Sirve el pollo sobre el arroz."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 8,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 2,
+          "min": 30,
+          "t": "Guisado"
+        },
+        {
+          "p": 3,
+          "min": 10,
+          "t": "Con limón y aceitunas"
+        },
+        {
+          "p": 4,
+          "min": 15,
+          "t": "Arroz"
+        }
+      ],
+      "kcal": 568,
+      "prot": 41,
+      "region": "MED",
+      "cocina": "med",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 2,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 3,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Marinar las especias en el pollo reparte el sabor hasta el hueso.",
+        "La cebolla soltando su agua hace la salsa sin añadir caldo.",
+        "El limón entero va al final y poco: cocido mucho amarga.",
+        "Las aceitunas ya traen sal: no pases de sal.",
+        "El arroz aparte absorbe la salsa justa."
+      ],
+      "error": "Echar mucho comino o curry: tapa todo lo demás. Una pizca y pruebas.",
+      "etiqueta": [
+        "Curry en polvo"
+      ],
+      "aviso": "Las mezclas de especias (curry) a veces llevan trigo como antiaglomerante: compra una marca que diga «sin gluten», o usa solo especias sueltas.",
+      "gluten": "depende",
+      "duda": "El tajín clásico se cuece en su recipiente de barro; aquí va en cazuela con tapa."
+    },
+    {
+      "n": "Pollo al limón",
+      "e": "🍋",
+      "alias": [
+        "pollo con limón",
+        "pechuga al limón",
+        "pollo limón"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Pechuga de pollo",
+          150
+        ],
+        [
+          "Limón",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Patata",
+          200
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta la pechuga en filetes de 1,5 cm y sálalos. Pela las patatas, córtalas en dados de 2 cm y cuécelas en el micro con 3 cucharadas de agua, tapadas, 7 min a 800 W.",
+        "Ralla la piel de medio limón y exprime el zumo del limón entero. Pica el ajo y el perejil.",
+        "En una sartén grande al fuego 7 con el aceite, dora los filetes 2 min por lado. Añade el ajo y 30 segundos después las patatas.",
+        "Baja al 4, vierte el zumo con un chorro de agua y cuece 5 min, dando la vuelta a los filetes. La salsa debe quedar ligera y brillante.",
+        "Fuera del fuego echa la ralladura y el perejil. Reposo 2 min tapado."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 7,
+          "t": "Patatas al micro"
+        },
+        {
+          "p": 2,
+          "min": 4,
+          "t": "Dorar el pollo"
+        },
+        {
+          "p": 3,
+          "min": 5,
+          "t": "Salsa de limón"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 457,
+      "prot": 38,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La pechuga fina se hace en 4-5 min: gruesa se queda seca por dentro.",
+        "La ralladura da el aroma sin amargor; el blanco del limón amarga.",
+        "El zumo al final, con fuego bajo, hace salsa sin harina.",
+        "El ajo entra tarde para que no se queme.",
+        "Se come mejor recién hecho; recalienta con un chorro de agua."
+      ],
+      "error": "Pasarse con el fuego: la pechuga se endurece. Al 7 solo para dorar, luego al 4.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
     }
   ]
 }
