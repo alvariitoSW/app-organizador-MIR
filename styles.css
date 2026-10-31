@@ -4212,6 +4212,7 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 
 /* LM4: la pausa antes de abrir una app y su guía de MacroDroid */
 .pz .pzhora{text-align:center;margin:6px 0 10px}
+#main .pz .mini{font-size:14px;color:var(--ink);opacity:.8}
 .pzcir{width:210px;height:210px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:conic-gradient(var(--brand) 0 50%,var(--line) 50% 100%)}
 .pzcir div{width:176px;height:176px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:84px;font-weight:900;font-variant-numeric:tabular-nums}
 .pz .pzq{text-align:center;font-size:22px;font-weight:700;margin:14px 0}

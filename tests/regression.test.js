@@ -15845,7 +15845,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await p.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.mananaMovil = { key: P.iso(new Date()), min: null, con: [], otra: false }; P.render(); });
     await p.waitForTimeout(200);
     const R = { hoja: await p.evaluate(() => !!document.querySelector('#hojaDia [data-a="pausa-guia"]')) };
-    await p.click('#hojaDia [data-a="pausa-guia"]'); await p.waitForTimeout(250);
+    await p.click('#hojaDia [data-a="pausa-guia"]'); await p.waitForSelector('#main .pzp'); await p.waitForTimeout(400);
     const g = () => p.evaluate(() => { const m = document.querySelector('#main'); return { vista: window.PG.ui.hoyVista, hoja: !!document.querySelector('#hojaDia [role="dialog"]'), pasos: m.querySelectorAll('.pzp').length, code: (m.querySelector('code') || {}).textContent || '',
       on: [...m.querySelectorAll('[data-a="macro-etq"][aria-pressed="true"]')].map((x) => x.textContent.trim()), txt: m.textContent.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth,
       bajos: [...m.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 44).length }; });
