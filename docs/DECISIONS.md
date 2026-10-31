@@ -2387,3 +2387,21 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - **Supuestos**
   - Un tramo cuenta si dura entre 0 y 4 h; «Cama → En pie» tiene previsto 0.
   - Las alarmas de mitad de mañana van al `.ics` sin ningún dato del móvil ni de las marcas.
+
+## Las Mañanas · LM5 · Cierre y paso a main (2026-10-31)
+- **Elegido**
+  - Comprobado tras juntar LM2, LM3 y LM4 en la misma rama: en `app.js` están las marcas y la hoja del móvil
+    (`mananaMovilHTML`, `mm-*`), Tu semana por tramos y las alarmas (`mananaTramos`, `nocheTramosHTML`, `sn-avmitad`,
+    `nocheAndroidHTML`) y la pausa con su guía (`pausaEntrante`, `pausaHTML`, `macroGuiaHTML`, `PAUSA_ETQ`). Sin funciones
+    duplicadas (las dos `guardia` son internas y ya estaban en `main`).
+  - Suite completa en verde después de juntar (regresión 896/896 y los otros 7 bancos).
+  - Verificador a 412×915 (oscuro): las 7 pantallas se ven bien, sin desbordes ni errores en consola; la regleta ya no pisa
+    «Vestirse» con «Salir de casa»; `?pausa=<script>` no abre nada y limpia la URL.
+  - Seguridad: ningún `fetch` nuevo; `sw.js` sin cambios (no cachea imágenes); la etiqueta de `?pausa=` pasa por
+    `/^[a-z]{1,12}$/` y la lista cerrada; las etiquetas «¿Con qué?» se validan en `normalize` y se pintan con `esc()`; la copia
+    de seguridad quita `con` (solo números); el `.ics` y las alarmas solo dicen la hora de salida.
+- **Descartado**
+  - Subir a 14 px los textos `.mini`/`small` y los botones `.btn.s` (12–12,5 px) y las etiquetas de la regleta (8,5–10 px):
+    es un patrón de toda la app, no de esta tanda; cambiarlo cambia lo que ve y se le propone aparte.
+- **Supuestos**
+  - La casilla del `.ics` (13 px) vale porque toda su etiqueta (46 px de alto) es el área de toque.
