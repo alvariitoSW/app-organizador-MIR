@@ -2294,3 +2294,11 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - Raciones = las de la receta (`d.portions`). «Ya lo tengo» = tachar en la receta o tocar la línea en la compra.
   - Una línea escrita a mano («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la
     semana: es como ya funcionaba la compra; queda para pulir.
+
+## Pruebas que caían el día 31 (2026-10-31)
+- **Elegido:** arreglar las pruebas, no la app. La 315 pinta una guardia en el último día del mes y solo restauraba
+  `shiftByDay`: ahora también `daySet` (el 31 esa guardia caía hoy y tumbaba el techo de Comer y la vuelta del gimnasio).
+  La de Dinero · Compras pone el día 1 antes de sumar 6 meses (31 oct + 6 meses saltaba a mayo: 18 € en vez de 20 €).
+  La 397c acepta la hora de salida con el día puesto cuando el vuelo cae de noche.
+- **Descartado:** tocar `setMonth` en la app: el mes lo elige el usuario en un selector, no se calcula así.
+- **Supuestos:** ninguno nuevo.

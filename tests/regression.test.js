@@ -12493,7 +12493,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // mes, cuenta lo pintado (los 4 meses + 1) aunque ese día aún no haya llegado. Fija: a mitad de octubre salía 24 en vez de 30.
   {
     const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), k = (n) => P.iso(new Date(d.getFullYear(), d.getMonth() + n, 1)).slice(0, 7);
-      P.__t315 = { finR1: P.store.rotation.finR1, quita: P.store.rotation.quitaR1, mode: P.store.rotation.mode, tab: P.ui.tab, sbd: JSON.stringify(P.store.rotation.shiftByDay || {}) };
+      P.__t315 = { finR1: P.store.rotation.finR1, quita: P.store.rotation.quitaR1, mode: P.store.rotation.mode, tab: P.ui.tab, sbd: JSON.stringify(P.store.rotation.shiftByDay || {}),
+        ds: JSON.stringify(P.store.rotation.daySet || {}) };   /* la guardia del último día va a daySet: el día 31 era HOY y se quedaba puesta */
       const meses = [-4, -3, -2, -1, 0].map(k), SB = P.store.rotation.shiftByDay || {};
       Object.keys(SB).filter((x) => meses.indexOf(x.slice(0, 7)) >= 0).forEach((x) => P.setDayOverride(x, null, ''));
       P.save();
@@ -12511,7 +12512,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((x) => { const P = window.PG; P.setDayOverride(x.ultimo, 'sh-g', 'urg'); P.save(); P.render(); }, ini);
     await page.waitForTimeout(150);
     r.b = await lee();
-    await page.evaluate(() => { const P = window.PG, t = P.__t315; P.store.rotation.shiftByDay = JSON.parse(t.sbd);
+    await page.evaluate(() => { const P = window.PG, t = P.__t315; P.store.rotation.shiftByDay = JSON.parse(t.sbd); P.store.rotation.daySet = JSON.parse(t.ds);
       if (t.finR1 == null) delete P.store.rotation.finR1; else P.store.rotation.finR1 = t.finR1; if (t.quita == null) delete P.store.rotation.quitaR1; else P.store.rotation.quitaR1 = t.quita;
       P.store.rotation.mode = t.mode; P.ui.tab = t.tab; delete P.__t315; P.save(); P.render(); });
     check('R1: el mes en curso cuenta entero (su cupo, o lo pintado) y no sale «sin poner»; pintado, cuenta lo pintado aunque el día no haya llegado',
@@ -13389,7 +13390,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main [data-a="d5-nuevo"]'); await page.waitForTimeout(100);
     await page.fill('#d5Nom', 'Auriculares <img src=x onerror=1>'); await page.fill('#d5Pre', '120');
     await page.selectOption('#d5Tip', 'ilu');
-    await page.evaluate(() => { const d = new Date(); d.setMonth(d.getMonth() + 6); document.getElementById('d5Mes').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); });
+    await page.evaluate(() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 6); document.getElementById('d5Mes').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); });
     await page.click('#main [data-a="d5-add"]'); await page.waitForTimeout(150);
     r.espera = await lee();
     await page.evaluate(() => { const P = window.PG, c = P.store.dinero3.compras[0], d = P.parseDate(c.alta); d.setDate(d.getDate() - 31); c.alta = P.iso(d); P.save(); P.render(); });
