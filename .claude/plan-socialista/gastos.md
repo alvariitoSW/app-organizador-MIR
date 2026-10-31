@@ -72,6 +72,7 @@ traspaso explica por qué.
 | 2026-10-31 | consejo-mananas | estudio | opus-5-5 + sonnet-5-5 + haiku-5-5 | 4 | 56 | **870 k** | sesión principal (35 %) | — |
 | 2026-10-31 | mananas-lm1 | maqueta | opus-5-5 + sonnet-5-5 | 2 | 26 | **458 k** | sesión principal (45 %) | LM1 sin concurso, 7 pantallas, un encargo al sonnet y una pasada del verificador |
 | 2026-10-31 | mananas-lm2 | construir | opus-5-5 + sonnet-5-5 | 2 | 70 | **1,2 M** | Construir LM2 Las Mañanas (53 %) | — |
+| 2026-10-31 | mananas-lm3 | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 70 | **1,2 M** | sesión principal (64 %) | LM3: Tu semana por tramos, alarmas de mitad de mañana, guía Android; sonnet construye, haiku textos, verificador |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
