@@ -168,6 +168,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 | CH8 | TikTok → sin gluten al importar + «Mis marcas seguras» (según la respuesta) | construir | sonnet con ficha | ~0,9 M |
 | CH9 | Resto del catálogo entero (~270 platos), por lotes | datos | sonnet ×5 | ~1,5 M |
 | CH10 | Ruta de 8 técnicas + «Ahora puedes hacer N platos más» al ganar horno | construir | sonnet con ficha | ~0,6 M |
+| CH10b | **Pulido de toda la app** con las skills de `emilkowalski/skills` (MIT; pedido el 31/10): `mobile-native` (falta `100dvh`, `@media (hover: hover)` y repasar inputs ≥16 px), `animation-performance` y `review-animations` (curvas ease-out, `:active` con `scale(0.97)`, solo transform/opacity, `prefers-reduced-motion`). Se instalan en `.claude/skills/` solo esas 3 (texto, sin código). `verificador` mide antes y después a 412×915 | arreglo | sonnet con ficha | ~0,9 M |
 | CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 
 ### Después (sin planificar todavía)
