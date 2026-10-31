@@ -3515,6 +3515,1572 @@
       "etiqueta": [],
       "aviso": "",
       "gluten": "no"
+    },
+    {
+      "n": "Sardinas en escabeche",
+      "e": "🐟",
+      "alias": [
+        "sardinas escabechadas",
+        "escabeche de sardinas",
+        "sardinas en vinagre"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Sardina",
+          130
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Vinagre",
+          25
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Pimienta negra",
+          0.5
+        ],
+        [
+          "Cebolla",
+          20
+        ],
+        [
+          "Pan sin gluten",
+          40
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pide las sardinas limpias, sin cabeza ni tripa, y sécalas con papel. Sálalas por fuera. No las enharines: así no entra gluten y quedan más ligeras.",
+        "Pon una sartén ancha en la vitro al 6 con la mitad del aceite. Dora las sardinas 2 min por cada lado, sin amontonarlas (en dos tandas si hace falta). Pásalas a una fuente honda o un táper.",
+        "En la misma sartén, baja al 3 y echa el resto del aceite con los ajos laminados y la cebolla en tiras finas. Rehoga 5 min sin que se doren.",
+        "Aparta la sartén del fuego, deja que se temple 1 min, añade el pimentón y la pimienta, remueve 10 segundos y echa en seguida el vinagre con 4 cucharadas de agua. Vuelve al fuego 2 al 2 durante 3 min para que pierda el olor fuerte a vinagre.",
+        "Vierte el escabeche templado sobre las sardinas hasta cubrirlas. Deja enfriar a temperatura ambiente (máximo 2 h), tapa y guarda en la nevera.",
+        "Déjalas reposar al menos 12 h antes de comerlas. Sirve 2-3 sardinas por persona con un poco de cebolla del escabeche y el pan sin gluten al lado."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 4,
+          "t": "Dorar las sardinas por los dos lados"
+        },
+        {
+          "p": 2,
+          "min": 5,
+          "t": "Rehogar ajo y cebolla"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Templar el escabeche"
+        },
+        {
+          "p": 5,
+          "min": 720,
+          "t": "Reposo en la nevera"
+        }
+      ],
+      "kcal": 528,
+      "prot": 34,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Pimentón fuera del fuego: si se quema, amarga todo el escabeche.",
+        "El vinagre hay que hervirlo un momento para quitarle la acidez agresiva.",
+        "Cubrir el pescado del todo con el escabeche lo conserva y lo mantiene jugoso.",
+        "Un día de reposo y el pescado coge el sabor y la espina se ablanda un poco.",
+        "Sin harina el pescado queda más limpio de sabor y apto para celíacos, siempre que el vinagre lo sea."
+      ],
+      "error": "Echar el vinagre sobre el pimentón en fuego fuerte: se quema y amarga. Aparta la sartén del fuego antes y no pases del 2 al hervirlo.",
+      "etiqueta": [
+        "Vinagre",
+        "Pan sin gluten"
+      ],
+      "aviso": "El vinagre ha de ser de vino o de manzana (nunca de malta) y el pan, con la espiga barrada o «sin gluten» en el envase.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Pez espada a la plancha",
+      "e": "🐟",
+      "alias": [
+        "emperador a la plancha",
+        "pez espada con limón",
+        "espadón a la plancha"
+      ],
+      "m": "cn",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Atún fresco",
+          170
+        ],
+        [
+          "Aceite de oliva",
+          8
+        ],
+        [
+          "Limón",
+          20
+        ],
+        [
+          "Ajo",
+          2
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Patata cocida",
+          150
+        ],
+        [
+          "Ensalada de bolsa",
+          60
+        ],
+        [
+          "Tomate cherry",
+          50
+        ],
+        [
+          "Aceite de oliva virgen extra",
+          6
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Saca el pescado de la nevera 10 min antes. Sécalo bien con papel, sálalo y úntalo con la mitad del aceite.",
+        "Pica el ajo y el perejil muy finos y mézclalos con el zumo de medio limón y el resto del aceite: ese es el aliño.",
+        "Calienta una sartén antiadherente en la vitro al 8 durante 2 min, hasta que esté bien caliente. Pon el pescado y no lo muevas: 3 min por un lado.",
+        "Dale la vuelta, baja al 6 y hazlo 2-3 min más por el otro lado. Por dentro debe quedar blanquecino y jugoso, no seco.",
+        "Mientras, calienta la patata cocida en el micro 1 min a 800 W y prepara la ensalada con los tomates cherry partidos.",
+        "Sirve el pescado con el aliño por encima, la patata y la ensalada."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 3,
+          "t": "Primera cara"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Segunda cara"
+        },
+        {
+          "p": 4,
+          "min": 1,
+          "t": "Calentar la patata"
+        }
+      ],
+      "duda": "El pez espada no está en la tabla de alimentos: lo he aproximado con atún fresco (parecido en calorías y proteína). Cambia poco el resultado.",
+      "kcal": 528,
+      "prot": 43,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La sartén muy caliente sella la superficie y el pescado conserva su jugo.",
+        "No moverlo al principio evita que se pegue y se rompa.",
+        "El aliño de ajo y limón al final: así no se quema el ajo y el limón mantiene su frescor.",
+        "Sacarlo antes de la nevera evita que quede crudo por dentro y seco por fuera."
+      ],
+      "error": "Pasarse de tiempo: el pez espada se queda duro y seco. Más de 6 min en total es demasiado para un filete de 2 cm.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Merluza a la koskera",
+      "e": "🐟",
+      "alias": [
+        "merluza en salsa verde con guisantes",
+        "merluza koskera",
+        "merluza con guisantes y espárragos"
+      ],
+      "m": "cn",
+      "min": 25,
+      "rac": 2,
+      "ing": [
+        [
+          "Merluza",
+          180
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Ajo",
+          5
+        ],
+        [
+          "Perejil",
+          4
+        ],
+        [
+          "Guisantes congelados",
+          50
+        ],
+        [
+          "Espárrago",
+          50
+        ],
+        [
+          "Harina de arroz sin gluten",
+          6
+        ],
+        [
+          "Caldo de pescado",
+          120
+        ],
+        [
+          "Huevo cocido",
+          50
+        ],
+        [
+          "Patata cocida",
+          120
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Sala los lomos de merluza. Pica el ajo en láminas y el perejil fino. Cuece antes el huevo (10 min) si no lo tienes hecho, y pélalo.",
+        "En una sartén honda o cazuela, pon el aceite y los ajos en la vitro al 4. Cuando empiecen a dorarse, añade la harina de arroz y remueve 30 segundos.",
+        "Echa el caldo de pescado poco a poco, removiendo, y sube al 6 hasta que hierva. Cuando espese un poco, baja al 3.",
+        "Añade los guisantes y los espárragos cortados. Cuece 3 min.",
+        "Pon los lomos de merluza en la salsa, tapa y cuece 5 min al 3, moviendo la cazuela de vez en cuando (sin cuchara, para que no se rompan).",
+        "Añade el perejil y el huevo cocido en cuartos. Sirve con la patata cocida, templada 1 min en el micro."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 10,
+          "t": "Cocer el huevo"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Verduras en la salsa"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Merluza en la salsa"
+        }
+      ],
+      "duda": "El caldo de pescado de la tabla sustituye al vino blanco y a las almejas de la receta clásica, que no están en la tabla.",
+      "kcal": 535,
+      "prot": 45,
+      "region": "PV",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La harina de arroz espesa la salsa sin gluten y sin grumos si la tuestas 30 segundos.",
+        "Mover la cazuela en lugar de remover hace que la merluza suelte su gelatina y ligue la salsa.",
+        "Perejil al final: si cuece, pierde color y aroma.",
+        "El caldo de pescado casero o de buena marca da el fondo de sabor de la salsa."
+      ],
+      "error": "Hervir fuerte la merluza: se deshace y queda seca. Mantén el 3 y deja que tiemble apenas.",
+      "etiqueta": [
+        "Caldo de pescado",
+        "Harina de arroz sin gluten"
+      ],
+      "aviso": "Muchos caldos y fumets llevan harina o trigo, y la harina de arroz ha de decir «sin gluten»: mira que el envase diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Chipirones encebollados",
+      "e": "🦑",
+      "alias": [
+        "chipirones con cebolla",
+        "calamares encebollados",
+        "chipirones en su tinta con cebolla"
+      ],
+      "m": "cn",
+      "min": 30,
+      "rac": 2,
+      "ing": [
+        [
+          "Calamar",
+          200
+        ],
+        [
+          "Cebolla",
+          120
+        ],
+        [
+          "Pimiento verde",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Arroz cocido",
+          150
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Limpia los chipirones (o pídelos limpios): sécalos y córtalos en trozos si son grandes. Corta la cebolla y el pimiento en tiras finas y el ajo en láminas.",
+        "Pon una sartén ancha con el aceite en la vitro al 4. Echa la cebolla, el pimiento y el ajo con una pizca de sal y rehoga 12 min, removiendo, hasta que estén blandos y dorados.",
+        "Sube a 7 y añade los chipirones. Saltea 2 min: se ponen blancos y sueltan agua.",
+        "Echa el pimentón y el tomate. Baja al 3, tapa y cuece 10 min, hasta que los chipirones estén tiernos y la salsa espese.",
+        "Prueba un trozo: tiene que cortarse con el tenedor. Si está duro, 5 min más.",
+        "Calienta el arroz cocido en el micro 1 min 30 s a 800 W. Sirve los chipirones sobre el arroz con el perejil picado."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 12,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 2,
+          "min": 2,
+          "t": "Sellar los chipirones"
+        },
+        {
+          "p": 3,
+          "min": 10,
+          "t": "Cocer tapado"
+        },
+        {
+          "p": 5,
+          "min": 1.5,
+          "t": "Calentar el arroz"
+        }
+      ],
+      "duda": "No hay chipirón en la tabla: lo he aproximado con calamar (parecido en calorías y proteína).",
+      "kcal": 588,
+      "prot": 38,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": true,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La cebolla muy pochada aporta dulzor y espesa sola la salsa, sin harina.",
+        "Sellar a fuego fuerte y poco tiempo y luego cocer suave: o cortos y duros, o largos y tiernos.",
+        "El pimentón con la salsa y no antes: en fuego fuerte se quema y amarga.",
+        "La cocción tapada ablanda el calamar con su propio vapor."
+      ],
+      "error": "Cocerlos a medias: 5 o 6 min los pone gomosos. O muy poco tiempo o más de 20 min.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Lubina en papillote al micro",
+      "e": "🐟",
+      "alias": [
+        "lubina al cartoccio",
+        "lubina al micro",
+        "lubina con verduras al vapor"
+      ],
+      "m": "cn",
+      "min": 25,
+      "rac": 2,
+      "ing": [
+        [
+          "Lubina",
+          200
+        ],
+        [
+          "Calabacín",
+          100
+        ],
+        [
+          "Tomate cherry",
+          60
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Limón",
+          10
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Patata",
+          150
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta la patata en rodajas finas, ponla en un plato hondo con 3 cucharadas de agua, tapa con otro plato y cuece en el micro 5 min a 800 W. Escúrrela.",
+        "Corta el calabacín en rodajas finas, la cebolla en tiras finas y los cherry por la mitad. Mézclalos con la mitad del aceite y sal.",
+        "Corta dos trozos de papel de horno de unos 40 cm. Reparte las verduras en el centro y pon encima la lubina salada, con un chorrito de limón y el perejil.",
+        "Cierra el papel como un paquete, doblando bien los bordes para que no escape el vapor. Ponlos en un plato hondo o en una fuente apta para micro.",
+        "Micro a 700 W durante 6 min por los dos paquetes juntos. Déjalos 2 min sin abrir y comprueba que el pescado esté opaco por dentro (si no, 1 min más).",
+        "Abre con cuidado, que sale vapor muy caliente. Sirve con la patata y el resto del aceite crudo por encima."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 5,
+          "t": "Patata en el micro"
+        },
+        {
+          "p": 4,
+          "min": 6,
+          "t": "Papillote en el micro"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Reposo cerrado"
+        }
+      ],
+      "duda": "Receta clásica al horno (al cartoccio) adaptada al micro con papel de horno: el sabor es parecido, pero el pescado no se dora.",
+      "kcal": 443,
+      "prot": 42,
+      "region": "IT",
+      "cocina": "it",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 0,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "El paquete cerrado atrapa el vapor: el pescado se hace en su propio jugo y queda tierno.",
+        "Las verduras bien finas se cuecen a la vez que el pescado.",
+        "Dejar 2 min cerrado remata la cocción por dentro sin secar.",
+        "700 W en lugar de 800 evita que el pescado se haga demasiado por fuera."
+      ],
+      "error": "Un paquete mal cerrado o con el pescado tan grueso que se queda crudo por dentro. Cierra bien los bordes y, si el lomo es grueso, añade 1-2 min.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Merluza a la gallega",
+      "e": "🐟",
+      "alias": [
+        "merluza con patatas y pimentón",
+        "merluza cocida con refrito",
+        "merluza gallega"
+      ],
+      "m": "cn",
+      "min": 30,
+      "rac": 2,
+      "ing": [
+        [
+          "Merluza",
+          180
+        ],
+        [
+          "Patata",
+          200
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Pimentón",
+          2
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Sal",
+          1.5
+        ],
+        [
+          "Agua",
+          300
+        ]
+      ],
+      "pasos": [
+        "Pela la patata y córtala en rodajas de medio centímetro. Corta la cebolla en aros finos y los ajos en láminas.",
+        "Pon en una olla de 3 L la patata, la cebolla y 1,5 cucharadita de sal con el agua. Fuego 7 hasta que hierva; baja al 4 y cuece 12 min.",
+        "Pon la merluza salada encima de las patatas. Tapa y cuece 5 min al 3. Apaga y deja 2 min tapada.",
+        "Mientras, calienta el aceite en una sartén pequeña al 3 con los ajos hasta que apenas se doren (1-2 min). Retírala del fuego.",
+        "Echa el pimentón en el aceite templado, remueve 10 segundos para que no se queme y viértelo por encima del pescado y las patatas.",
+        "Sirve en el plato con un poco del caldo de la cocción."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 12,
+          "t": "Cocer las patatas"
+        },
+        {
+          "p": 2,
+          "min": 5,
+          "t": "Cocer la merluza encima"
+        },
+        {
+          "p": 2,
+          "min": 2,
+          "t": "Reposo tapado"
+        },
+        {
+          "p": 3,
+          "min": 2,
+          "t": "Dorar el ajo"
+        }
+      ],
+      "kcal": 469,
+      "prot": 36,
+      "region": "GAL",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 2,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Las patatas van primero porque tardan más; la merluza se cuece al vapor sobre ellas.",
+        "Pimentón fuera del fuego: con calor fuerte se quema y amarga.",
+        "Un poco del agua de cocer ligada al aceite da la salsita del plato.",
+        "La sal desde el principio sala bien la patata por dentro."
+      ],
+      "error": "Quemar el pimentón: apaga el fuego o retira la sartén antes de echarlo.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Truchas a la navarra",
+      "e": "🐟",
+      "alias": [
+        "trucha con jamón",
+        "truchas rellenas de jamón",
+        "trucha a la navarra"
+      ],
+      "m": "cn",
+      "min": 25,
+      "rac": 2,
+      "ing": [
+        [
+          "Trucha",
+          200
+        ],
+        [
+          "Jamón serrano",
+          20
+        ],
+        [
+          "Harina de arroz sin gluten",
+          8
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Limón",
+          10
+        ],
+        [
+          "Ensalada de bolsa",
+          60
+        ],
+        [
+          "Patata cocida",
+          100
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pide las truchas limpias y abiertas. Sécalas con papel y sálalas por dentro y por fuera.",
+        "Reparte el jamón en lonchas finas dentro de cada trucha, con el ajo picado y un poco de perejil. Cierra y pásalas por la harina de arroz, sacudiendo el exceso.",
+        "Pon una sartén grande con el aceite en la vitro al 6. Cuando esté caliente, dora las truchas 4 min por un lado.",
+        "Dales la vuelta con cuidado, baja al 4 y cuece 4 min por el otro lado, tapada con una tapa.",
+        "Mientras, calienta la patata cocida en el micro 1 min a 800 W y prepara la ensalada.",
+        "Sirve las truchas con un chorrito de limón, la patata y la ensalada."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 4,
+          "t": "Primera cara"
+        },
+        {
+          "p": 3,
+          "min": 4,
+          "t": "Segunda cara"
+        },
+        {
+          "p": 4,
+          "min": 1,
+          "t": "Calentar la patata"
+        }
+      ],
+      "kcal": 597,
+      "prot": 50,
+      "region": "NAV",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La harina de arroz sin gluten hace una corteza fina y crujiente y mantiene la trucha entera.",
+        "El jamón da sal y sabor: no hace falta añadir más sal por dentro.",
+        "Tapar al darle la vuelta termina la cocción por dentro sin quemar la piel.",
+        "Una sartén grande evita amontonar y que el pescado se cueza al vapor en vez de dorar."
+      ],
+      "error": "Dar la vuelta demasiado pronto: la piel se pega y se rompe. Espera a que se despegue sola de la sartén.",
+      "etiqueta": [
+        "Jamón serrano",
+        "Harina de arroz sin gluten"
+      ],
+      "aviso": "Mira que el jamón no lleve añadidos con gluten y que la harina diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Bacalao al ajoarriero",
+      "e": "🐟",
+      "alias": [
+        "ajoarriero de bacalao",
+        "bacalao ajoarriero",
+        "bacalao a la arriera"
+      ],
+      "m": "cn",
+      "min": 30,
+      "rac": 4,
+      "ing": [
+        [
+          "Bacalao desalado",
+          130
+        ],
+        [
+          "Pimiento rojo",
+          60
+        ],
+        [
+          "Tomate triturado",
+          60
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Patata cocida",
+          100
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Perejil",
+          2
+        ]
+      ],
+      "pasos": [
+        "Desmiga el bacalao desalado a mano, quitando espinas y piel. Corta la cebolla y el pimiento en tiras finas y el ajo en láminas.",
+        "Pon una cazuela o sartén honda con el aceite en la vitro al 4. Rehoga la cebolla y el pimiento 10 min con los ajos hasta que estén muy blandos.",
+        "Añade el pimentón, remueve unos segundos y echa el tomate. Sube al 5 y deja que se reduzca 5 min.",
+        "Baja al 3, añade el bacalao desmigado y cocina 5 min removiendo suave. No debe hervir fuerte.",
+        "Añade la patata cocida en dados para que se caliente 2 min más.",
+        "Sirve con perejil picado. De un día para otro está aún mejor."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 10,
+          "t": "Rehogar verduras"
+        },
+        {
+          "p": 2,
+          "min": 5,
+          "t": "Reducir el tomate"
+        },
+        {
+          "p": 3,
+          "min": 5,
+          "t": "Cocinar el bacalao"
+        }
+      ],
+      "kcal": 387,
+      "prot": 28,
+      "region": "NAV",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El pimiento y la cebolla muy blandos dan la base dulce del plato.",
+        "El bacalao entra al final y poco rato: si cuece mucho, se seca y se pone fibroso.",
+        "El tomate reducido da cuerpo sin harina ni pan.",
+        "Reposado un día, el bacalao suelta su sabor en la salsa."
+      ],
+      "error": "No desalar bien el bacalao y que quede salado: comprueba antes un trocito crudo, o cambia el agua antes si lo tienes seco.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Sardinas a la plancha",
+      "e": "🐟",
+      "alias": [
+        "sardinas asadas",
+        "sardinas a la brasa en sartén",
+        "sardinas con sal gorda"
+      ],
+      "m": "cn",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Sardina",
+          200
+        ],
+        [
+          "Aceite de oliva",
+          5
+        ],
+        [
+          "Limón",
+          20
+        ],
+        [
+          "Tomate",
+          150
+        ],
+        [
+          "Pimiento verde",
+          40
+        ],
+        [
+          "Cebolla",
+          20
+        ],
+        [
+          "Aceite de oliva virgen extra",
+          8
+        ],
+        [
+          "Sal",
+          2
+        ]
+      ],
+      "pasos": [
+        "Pide las sardinas enteras y limpias de tripa. Sécalas con papel y sálalas por fuera con sal gorda. Abre la ventana: huele.",
+        "Corta el tomate, el pimiento y la cebolla en trozos pequeños, aliña con el aceite virgen y sal. Es la ensalada de acompañamiento.",
+        "Unta la sartén con un poquito de aceite y ponla en la vitro al 9 hasta que esté muy caliente (3 min). Con extractor o ventana abiertos.",
+        "Pon las sardinas sin amontonar y no las muevas: 3 min por un lado. Dales la vuelta y 2-3 min por el otro.",
+        "Sírvelas calientes con un chorrito de limón y la ensalada."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 3,
+          "t": "Calentar la sartén"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Primera cara"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Segunda cara"
+        }
+      ],
+      "kcal": 580,
+      "prot": 52,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Una sartén muy caliente da piel dorada sin que la sardina se cueza ni se seque.",
+        "Sal gorda en la piel ayuda a dorar y sazona por fuera.",
+        "No moverlas hasta que se despeguen solas: si no, se rompen.",
+        "El limón al final evita que la carne se «cocine» por el ácido y pierda textura."
+      ],
+      "error": "Sardinas sin secar o sartén fría: se pegan y se rompen. Sécalas y calienta bien.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Tortilla de espinacas",
+      "e": "🥚",
+      "alias": [
+        "tortilla con espinacas",
+        "tortilla verde",
+        "tortilla de espinaca"
+      ],
+      "m": "cn",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Huevo",
+          120
+        ],
+        [
+          "Espinaca",
+          100
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Ajo",
+          2
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Patata cocida",
+          150
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pica la cebolla y el ajo muy finos. Lava las espinacas y escúrrelas bien.",
+        "Calienta una sartén de 22-24 cm con la mitad del aceite en la vitro al 4. Rehoga la cebolla y el ajo 4 min y añade las espinacas. Cuece 2 min hasta que se reduzcan y se evapore el agua.",
+        "Bate los huevos con la sal en un bol y añade las espinacas escurridas y la patata cocida en dados.",
+        "Limpia la sartén, añade el resto del aceite y ponla al 5. Echa la mezcla y cuaja 3 min, moviendo los bordes con una espátula.",
+        "Pon un plato encima, dale la vuelta con decisión y deslízala otra vez en la sartén. Cuaja 2 min más por el otro lado al 4.",
+        "Déjala reposar 1 min. Sirve templada o fría."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 4,
+          "t": "Rehogar cebolla y ajo"
+        },
+        {
+          "p": 1,
+          "min": 2,
+          "t": "Reducir las espinacas"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Primera cara"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Segunda cara"
+        }
+      ],
+      "kcal": 427,
+      "prot": 21,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Escurrir las espinacas evita que suelten agua y la tortilla quede aguada.",
+        "La patata cocida añade cuerpo sin freírla: menos aceite.",
+        "Una sartén adecuada al tamaño: con una grande queda delgada y seca.",
+        "Un minuto de reposo hace que cuaje por dentro."
+      ],
+      "error": "Que quede cruda por dentro o se rompa al darle la vuelta. Cuaja bien por un lado y usa un plato que cubra toda la sartén.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Tortilla de calabacín",
+      "e": "🥚",
+      "alias": [
+        "tortilla con calabacín",
+        "tortilla de calabacin y cebolla",
+        "tortilla de zucchini"
+      ],
+      "m": "cn",
+      "min": 20,
+      "rac": 2,
+      "ing": [
+        [
+          "Huevo",
+          120
+        ],
+        [
+          "Calabacín",
+          150
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Patata",
+          100
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta el calabacín y la patata en dados pequeños y la cebolla en tiras finas. Sala todo.",
+        "Pon la patata con 2 cucharadas de agua en un plato hondo y cuece en el micro 3 min a 800 W, tapada con otro plato.",
+        "Calienta el aceite en una sartén de 22-24 cm en la vitro al 4. Pocha la cebolla y el calabacín 8 min, removiendo.",
+        "Bate los huevos y mezcla con las verduras y la patata, escurridas del exceso de aceite.",
+        "Sube al 5, echa la mezcla en la sartén y cuaja 3 min. Dale la vuelta con un plato y cuaja 2 min más por el otro lado, al 4.",
+        "Deja reposar 1 min y sirve."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 3,
+          "t": "Patata en el micro"
+        },
+        {
+          "p": 2,
+          "min": 8,
+          "t": "Pochar verduras"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Primera cara"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Segunda cara"
+        }
+      ],
+      "kcal": 396,
+      "prot": 19,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Pochar el calabacín lo seca y la tortilla no queda aguada.",
+        "Cocer la patata antes en el micro ahorra aceite y tiempo.",
+        "Escurrir las verduras evita que la tortilla quede grasienta.",
+        "Reposar 1 min hace que corte limpia."
+      ],
+      "error": "Calabacín crudo directamente al huevo: suelta agua y la tortilla se deshace. Pocha siempre antes.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Piperrada",
+      "e": "🫑",
+      "alias": [
+        "piperrada vasca",
+        "pipérade",
+        "pimientos con huevo a la vasca"
+      ],
+      "m": "cn",
+      "min": 25,
+      "rac": 4,
+      "ing": [
+        [
+          "Pimiento verde",
+          80
+        ],
+        [
+          "Pimiento rojo",
+          60
+        ],
+        [
+          "Cebolla",
+          60
+        ],
+        [
+          "Tomate triturado",
+          100
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Huevo",
+          120
+        ],
+        [
+          "Pan sin gluten",
+          50
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta los pimientos y la cebolla en tiras finas (unos 4 mm) y el ajo en láminas.",
+        "Pon el aceite en una sartén honda o cazuela en la vitro al 4. Echa la cebolla y los pimientos con sal. Rehoga 12 min, removiendo, hasta que estén muy blandos.",
+        "Añade el ajo y 2 min después el tomate. Baja al 3 y cuece 8 min para que espese.",
+        "Para cada ración, casca 2 huevos sobre la salsa caliente y remueve suave 2 min al 3 hasta que cuajen cremosos. Para varias raciones, guarda la base y haz los huevos en el momento.",
+        "Sirve con el pan sin gluten tostado al lado."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 12,
+          "t": "Pochar las verduras"
+        },
+        {
+          "p": 2,
+          "min": 8,
+          "t": "Reducir el tomate"
+        },
+        {
+          "p": 3,
+          "min": 2,
+          "t": "Cuajar los huevos"
+        }
+      ],
+      "kcal": 500,
+      "prot": 20,
+      "region": "PV",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El pimiento bien pochado es dulce y tierno, no crudo.",
+        "Los huevos entran al final y sobre el calor residual: cuajan cremosos y no secos.",
+        "La base se hace en tanda y los huevos al momento: así no se pasan.",
+        "El tomate reducido da cuerpo sin harina ni pan."
+      ],
+      "error": "Los huevos con la base hirviendo: se hacen duros. Baja a fuego mínimo antes de echarlos.",
+      "etiqueta": [
+        "Pan sin gluten"
+      ],
+      "aviso": "Que el pan diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Shakshuka",
+      "e": "🍳",
+      "alias": [
+        "shakshouka",
+        "huevos en salsa de tomate",
+        "huevos al plato con tomate"
+      ],
+      "m": "cn",
+      "min": 25,
+      "rac": 2,
+      "ing": [
+        [
+          "Huevo",
+          120
+        ],
+        [
+          "Tomate triturado",
+          200
+        ],
+        [
+          "Cebolla",
+          60
+        ],
+        [
+          "Pimiento rojo",
+          60
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Comino",
+          1
+        ],
+        [
+          "Pimentón",
+          2
+        ],
+        [
+          "Pan sin gluten",
+          50
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta la cebolla y el pimiento en dados pequeños y el ajo fino.",
+        "Pon el aceite en una sartén honda con tapa en la vitro al 4. Rehoga la cebolla y el pimiento 8 min, removiendo.",
+        "Añade el ajo, el comino y el pimentón. Remueve 20 segundos y echa el tomate. Baja al 3 y cuece tapado 10 min.",
+        "Haz 4 huecos en la salsa con una cuchara y casca un huevo en cada uno. Sala los huevos.",
+        "Tapa y cuece 5 min al 2-3, hasta que la clara cuaje y la yema quede blanda.",
+        "Sirve en la propia sartén con el pan sin gluten para mojar."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 8,
+          "t": "Rehogar verduras"
+        },
+        {
+          "p": 2,
+          "min": 10,
+          "t": "Cocer la salsa tapada"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Cuajar los huevos"
+        }
+      ],
+      "kcal": 509,
+      "prot": 22,
+      "region": "MED",
+      "cocina": "med",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 1,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La salsa espesa deja huecos que mantienen el huevo en su sitio.",
+        "Tapar cuaja la clara con vapor sin que la yema se endurezca.",
+        "Las especias en el aceite caliente un momento sueltan más aroma.",
+        "Sal y huevo cocidos a fuego suave: más fuerte endurece la clara."
+      ],
+      "error": "Pasarse con la tapa: la yema queda dura. Mira a los 4 min.",
+      "etiqueta": [
+        "Pan sin gluten"
+      ],
+      "aviso": "Que el pan diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Atascaburras",
+      "e": "🥔",
+      "alias": [
+        "atascaburras manchego",
+        "ajoarriero manchego",
+        "puré de bacalao con nueces"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Bacalao desalado",
+          100
+        ],
+        [
+          "Patata",
+          220
+        ],
+        [
+          "Ajo",
+          6
+        ],
+        [
+          "Nuez",
+          15
+        ],
+        [
+          "Huevo cocido",
+          50
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pela las patatas y córtalas en trozos. Ponlas en una olla de 3 L con agua fría y sal. Fuego 7 hasta que hierva; baja al 4 y cuece 15 min.",
+        "A los 10 min de hervir, añade el bacalao desalado a la misma olla. Cuécelo 5 min.",
+        "Mientras, cuece el huevo 10 min en un cazo aparte (o hazlo antes) y pélalo.",
+        "Escurre las patatas y el bacalao, reservando un vaso del agua. Quita piel y espinas del bacalao.",
+        "En un mortero, machaca el ajo con la nuez. Pasa todo a la olla caliente y chafa las patatas con el bacalao, el aceite y un poco del agua reservada hasta lograr un puré rústico.",
+        "Sirve con el huevo cocido troceado por encima y una pizca de pimentón."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 15,
+          "t": "Cocer las patatas"
+        },
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Cocer el bacalao"
+        },
+        {
+          "p": 2,
+          "min": 10,
+          "t": "Cocer el huevo"
+        }
+      ],
+      "kcal": 570,
+      "prot": 31,
+      "region": "CLM",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 2,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El agua de cocción reservada da cremosidad sin añadir más grasa.",
+        "Desalar bien el bacalao antes es clave: si no, el puré sale salado.",
+        "Machacar en lugar de triturar mantiene la textura rústica.",
+        "La nuez en el mortero hace espeso el puré sin pan ni harina."
+      ],
+      "error": "Triturar con batidora: el almidón de la patata se vuelve pegajoso. Chafa a mano.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Huevos rellenos",
+      "e": "🥚",
+      "alias": [
+        "huevos rellenos de atún",
+        "huevos duros rellenos",
+        "huevos rellenos con mayonesa"
+      ],
+      "m": "cn",
+      "min": 25,
+      "rac": 4,
+      "ing": [
+        [
+          "Huevo cocido",
+          120
+        ],
+        [
+          "Atún en lata al natural",
+          40
+        ],
+        [
+          "Mayonesa",
+          20
+        ],
+        [
+          "Tomate cherry",
+          60
+        ],
+        [
+          "Ensalada de bolsa",
+          50
+        ],
+        [
+          "Pimientos del piquillo",
+          20
+        ],
+        [
+          "Sal",
+          0.5
+        ]
+      ],
+      "pasos": [
+        "Pon los huevos en un cazo con agua fría y sal en la vitro al 7. Cuando hierva, baja al 4 y cuece 10 min.",
+        "Pásalos a un bol con agua fría y hielo 5 min. Pélalos bajo el agua.",
+        "Córtalos por la mitad a lo largo y saca las yemas con cuidado. Aplástalas en un bol con el atún escurrido y la mayonesa.",
+        "Rellena las claras con la mezcla, con una cuchara o una manga pastelera.",
+        "Sirve sobre la ensalada de bolsa con los cherry partidos y los piquillos en tiras."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 10,
+          "t": "Cocer los huevos"
+        },
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Enfriar en agua"
+        }
+      ],
+      "kcal": 395,
+      "prot": 27,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 1.5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El agua fría tras la cocción corta la cocción y evita el aro verdoso en la yema.",
+        "Pelarlos bajo el agua ayuda a que salga la cáscara sin llevarse la clara.",
+        "Rellenar con una manga queda más limpio y más rápido.",
+        "Los rellenos mejoran de un día para otro, pero se aguantan 2 días máximo."
+      ],
+      "error": "Cocer los huevos de más: yema gris y seca. 10 min exactos desde que hierve.",
+      "etiqueta": [
+        "Mayonesa"
+      ],
+      "aviso": "Que la mayonesa de bote diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
     }
   ]
 }
