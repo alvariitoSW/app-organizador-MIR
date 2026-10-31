@@ -133,8 +133,6 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [rec-2026-10-27-gasto] En cada parte, planificar el gasto: tokens estimados por tarea y en qué se puede ahorrar · 2026-10-27
 
 ## Supuestos sin confirmar
-- [sup-2026-10-30-comer-reloj2] (Consejo por delegación, acta `consejo/2026-10-30-cierre.md`) · Horas de comer: post-entreno 15 min tras acabar el entreno; comida del saliente 15:00 fija; sin paso «café», desayuno = levantarse + 20 min; guardia tras guardia sigue las reglas de guardia · DECISIONS «El Cierre · horas de comer…»
-- [sup-2026-10-30-iconos] (Consejo por delegación) · Iconos: levantarse = reloj; iconos decorativos (el texto ya nombra); el 🔥 de la racha y los emojis de comida se quedan · DECISIONS «El Cierre · iconos…»
 
 - ~~[sup-2026-10-30-r5-comer]~~ VALE (Consejo por delegación, 2026-10-30, acta `consejo/2026-10-30-3.md`) · Maqueta de Comer: contestado en la R6 (30/10): reparto **según tu semana** (no 2 fijos), compra base al tocar el botón, platos base solo como lista. Sigue sin «vale»: ❄ 3 meses (merluza y fajitas 2) y una sola sugerencia de proteína · DECISIONS «La Reforma · R5/R6»
 - ~~[sup-2026-10-30-r4-fintonic]~~ CAMBIADO (Consejo por delegación, 2026-10-30, acta `consejo/2026-10-30-3.md`): quitar una fila sí baja el total del mes; lo demás, tal cual · Fintonic en pequeño (R4): «gasto a gasto» = fila a fila de las categorías de la captura; quitar una fila no baja el total del mes (cuenta como variable sin categoría); nombre vacío = se queda el de antes; ya no sale «en otra captura: X». Visto y pendiente: «Presupuesto de 300 288,00 €» se lee como 300.288 y `eur()` pinta «1000 €» sin punto · DECISIONS «La Reforma · R4» · contado el 2026-10-30
@@ -171,6 +169,8 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - ~~[sup-2026-10-30-r4]~~ CONFIRMADO por el usuario 2026-10-30 (cierre G1): tal cual
 
 ## Cerrados
+- ~~[sup-2026-10-30-comer-reloj2]~~ VALE (usuario, 2026-10-31) (Consejo por delegación, acta `consejo/2026-10-30-cierre.md`) · Horas de comer: post-entreno 15 min tras acabar el entreno; comida del saliente 15:00 fija; sin paso «café», desayuno = levantarse + 20 min; guardia tras guardia sigue las reglas de guardia · DECISIONS «El Cierre · horas de comer…»
+- ~~[sup-2026-10-30-iconos]~~ VALE (usuario, 2026-10-31) (Consejo por delegación) · Iconos: levantarse = reloj; iconos decorativos (el texto ya nombra); el 🔥 de la racha y los emojis de comida se quedan · DECISIONS «El Cierre · iconos…»
 - ~~[sup-2026-10-30-chef-ch2]~~ VALE (usuario, 2026-10-31) «Añadir a la compra» mete la receta entera (sus raciones), sin selector; volver a pulsar la actualiza; «ya lo tengo» = tachar en la receta o tocar la línea en la compra; la lista «A mano» que ya tengas se queda como está · DECISIONS «El Chef · CH2»
 - ~~[sup-2026-10-30-chef-ch1]~~ VALE (usuario, 2026-10-31) (El Chef CH1, por delegación) · «X sin gluten» solo para lo procesado (panceta y azafrán, con su nombre); los embutidos van con su nombre y en ámbar; 93 platos en ámbar (no ~70-80) y 95 de fuera (no ~85) · DECISIONS «El Chef · CH1»
 - ~~[sup-2026-10-30-chef]~~ VALE (usuario, 2026-10-31) (Consejo «El Chef», acta `consejo/2026-10-30-chef.md`) · Vitro de 2 fuegos y olla de 5-6 L; micro sin grill (se cambia en «Tu cocina»); whisky y sidra cuentan como sin gluten (criterio FACE); «mediterránea» = norte de África, Oriente Próximo y sur de Francia; la «ciudadanía» es una consulta a 5 usuarios simulados · 2026-10-30
