@@ -14286,7 +14286,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
     await page.setViewportSize(vp36);
     check('362 desplegar → «⏰ Alarmas del móvil» enseña vete (21:45), cama (22:35) y sal de casa (07:31) con su hora; «Ya las he puesto» vuelve a Hoy y recuerda la cama',
-      /Pon estas alarmas en tu Reloj/.test(t.a.txt) && t.a.filas.length === 3 && /Vete del Lloret.*21:45/.test(t.a.filas[0]) && /A la cama.*22:35/.test(t.a.filas[1]) && /Sal de casa.*07:31/.test(t.a.filas[2]) && t.a.volver && t.a.ancho <= 412
+      /Pon estas alarmas en tu Reloj/.test(t.a.txt) && t.a.filas.length === 5 && /Quedan 30 min.*07:01/.test(t.a.filas[3]) && /Quedan 10 min.*07:21/.test(t.a.filas[4]) && /Vete del Lloret.*21:45/.test(t.a.filas[0]) && /A la cama.*22:35/.test(t.a.filas[1]) && /Sal de casa.*07:31/.test(t.a.filas[2]) && t.a.volver && t.a.ancho <= 412
       && /Vete del Lloret|En casa|A la cama/.test(t.b.txt) && t.ok[0] === '22:35' && t.ok[1] === '', JSON.stringify([t.a, t.b, t.ok]));
     check('362 «📊 Tu semana»: 3 filas en minutos (cama +32, levantarte +9, salir +4; la semana pasada +48, +14, +11), sin rojo, y «‹ Hoy» vuelve',
       /Tu semana en minutos/.test(t.c.txt) && t.c.filas.length === 3 && /A la cama.*\+32 min.*\+48/.test(t.c.filas[0]) && /Levantarte.*\+9 min.*\+14/.test(t.c.filas[1]) && /Salir de casa.*\+4 min.*\+11/.test(t.c.filas[2]) && !t.c.rojo && t.c.ancho <= 412 && /Vete del Lloret/.test(t.d.txt), JSON.stringify([t.c, t.d.txt]));
