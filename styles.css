@@ -4166,3 +4166,23 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 
 /* Remates: ninguna letra del 4:20 por debajo de 11 px */
 .cn small{font-size:11px}
+
+/* LM2 · Las Mañanas: En pie / Vestido / He salido y la hoja del móvil */
+.noche .nmarcas{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.noche .nmarcas .btn{min-height:44px;margin:0;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+.noche .nmarcas .nsali{margin-top:0}
+.noche .nmarcas .btn.hecho{background:color-mix(in srgb,var(--ok,#22c55e) 18%,var(--card));border:1px solid var(--ok,#22c55e);color:var(--ink)}
+.noche .nmarcas .btn small{font-size:12px;color:var(--ink2)}
+.noche>.mini{margin:6px 2px 0}
+.mmhoja .mmok{margin:0 0 6px;color:var(--ok,#22c55e);font-weight:800}
+.mmhoja .mmmin{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.mmhoja .mmmin .chip{min-height:56px;justify-content:center;font-size:18px}
+.mmhoja .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.mmhoja .chip{min-height:44px}
+.mmhoja .mmotra{display:flex;gap:6px;margin-bottom:10px}.mmhoja .mmotra input{flex:1;min-height:44px;font-size:16px}
+.mmhoja .mmno{margin-top:6px}
+.mmhoja .chip{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-weight:800;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+.mmhoja .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.mmhoja .mmmin .chip{border-radius:12px;padding:6px 0}
+.mmhoja .nancho{width:100%;min-height:48px;margin-top:6px}
+.mmhoja .btn[disabled]{opacity:.45}

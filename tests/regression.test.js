@@ -11604,7 +11604,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kp] = { salio: '07:29' };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
-      const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small')].map((x) => x.textContent) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
+      const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small'), ...e.querySelectorAll('.mnh.pta b')].map((x) => x.textContent.replace(/ \d+:\d+$/, '')) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
         taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kp), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
       return out; });
     // «deshacer» quita la hora; «he salido» (hoy) guarda la del móvil
@@ -15635,6 +15635,145 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp);
     check('400 Comer · «A la compra» desde la receta entra en la compra de la semana: por pasillos, sin gluten y marcable de un toque, sin lista «A mano»',
       r.hayPlato && r.hayAbre && r.hayCompra && r.sinGluten && !r.sinCruda && r.cebolla && r.nPasillos >= 2 && !r.aMano && r.marcada, JSON.stringify(r));
+  }
+
+  // 401) LAS MAÑANAS · LM2: «🧍 En pie» y «👕 Vestido» en la noche (marcar, desmarcar, sobrevivir a normalize).
+  {
+    const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia40 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia40));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+    const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
+    const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
+      const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
+      return { pie: f(q('pie')), vestido: f(q('vestido')), sali: f(sa), mini: n && n.querySelector('.mini') ? n.querySelector('.mini').textContent : '', man: JSON.stringify(window.PG.store.manana['2026-10-30'] || null) }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia [role="dialog"]'); if (!h) return null;
+      const b = (t) => [...h.querySelectorAll('button')].filter((x) => x.textContent.trim() === t)[0];
+      return { txt: h.textContent.replace(/\s+/g, ' ').trim(), guardarOff: !!(b('Guardar') && b('Guardar').disabled), altoMin: Math.round(h.querySelector('[data-a="mm-min"]').getBoundingClientRect().height),
+        on: [...h.querySelectorAll('[aria-pressed="true"]')].map((x) => x.textContent.trim()), tags: [...h.querySelectorAll('[data-a="mm-con"]')].map((x) => x.textContent.trim()) }; });
+    const R = {};
+    // 401
+    await siembra(); await pon(6, 50, 30); await page.evaluate(() => window.PG.render()); await page.waitForTimeout(200);
+    R.a0 = await fichas();
+    await page.click(sel + '[data-k="pie"]'); await page.waitForTimeout(150); R.a1 = await fichas();
+    await pon(7, 12, 30); await page.evaluate(() => window.PG.render());
+    R.a2 = await fichas();
+    await page.click(sel + '[data-k="vestido"]'); await page.waitForTimeout(150); R.a3 = await fichas();
+    R.a4 = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); P.render(); return JSON.stringify(P.store.manana['2026-10-30']); });
+    await page.click(sel + '[data-k="pie"]'); await page.waitForTimeout(150); R.a5 = await fichas();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
+    await page.setViewportSize(vp40);
+    check('401 06:50 «🧍 En pie» → ✓ y 06:50 y store pie; 07:12 «👕 Vestido» → vestido y «He salido» pasa a principal; sobrevive a normalize; otro toque en En pie lo desmarca',
+      R.a0.pie.p && !R.a0.vestido.p && R.a0.sali.txt === '🚪 He salido' && R.a0.pie.alto >= 44 && R.a0.vestido.alto >= 44 && R.a0.sali.alto >= 44 && /Un toque cada uno\. Ducha y café van dentro\./.test(R.a0.mini) &&
+      R.a1.pie.txt === '🧍 En pie ✓06:50' && R.a1.pie.on === 'true' && R.a1.man === '{"pie":"06:50"}' && R.a2.vestido.p && !R.a2.sali.p &&
+      R.a3.vestido.txt === '👕 Vestido ✓07:12' && R.a3.sali.p && R.a3.man === '{"pie":"06:50","vestido":"07:12"}' && R.a4 === '{"pie":"06:50","vestido":"07:12"}' &&
+      R.a5.pie.on === 'false' && R.a5.man === '{"vestido":"07:12"}', JSON.stringify([R.a0, R.a1, R.a2, R.a3, R.a4, R.a5]));
+  }
+  // 402) LAS MAÑANAS · LM2: «He salido» abre «¿Móvil esta mañana?»; guardar, «Ahora no», la copia sin etiquetas, deshacer y las medias a 90 días.
+  {
+    const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia40 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia40));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+    const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
+    const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
+      const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
+      return { pie: f(q('pie')), vestido: f(q('vestido')), sali: f(sa), mini: n && n.querySelector('.mini') ? n.querySelector('.mini').textContent : '', man: JSON.stringify(window.PG.store.manana['2026-10-30'] || null) }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia [role="dialog"]'); if (!h) return null;
+      const b = (t) => [...h.querySelectorAll('button')].filter((x) => x.textContent.trim() === t)[0];
+      return { txt: h.textContent.replace(/\s+/g, ' ').trim(), guardarOff: !!(b('Guardar') && b('Guardar').disabled), altoMin: Math.round(h.querySelector('[data-a="mm-min"]').getBoundingClientRect().height),
+        on: [...h.querySelectorAll('[aria-pressed="true"]')].map((x) => x.textContent.trim()), tags: [...h.querySelectorAll('[data-a="mm-con"]')].map((x) => x.textContent.trim()) }; });
+    const R = {};
+    // 402
+    await siembra(); await pon(7, 33, 30); await page.evaluate(() => window.PG.render()); await page.waitForTimeout(200);
+    await page.click('#main .noche [data-a="manana-sali"]'); await page.waitForTimeout(250);
+    R.b1 = await hoja();
+    await page.click('#hojaDia [data-a="mm-min"][data-v="15"]'); await page.click('#hojaDia [data-a="mm-con"]:has-text("Noticias")');
+    await page.click('#hojaDia [data-a="mm-otra"]'); await page.fill('#mmOtra', 'Pódcast'); await page.click('#hojaDia [data-a="mm-anadir"]');
+    await page.click('#hojaDia [data-a="mm-con"]:has-text("Mensajes")');
+    await page.click('#hojaDia [data-a="mm-otra"]'); await page.fill('#mmOtra', 'Cuarta'); await page.click('#hojaDia [data-a="mm-anadir"]');
+    R.b2 = await hoja();
+    await page.click('#hojaDia [data-a="mm-con"]:has-text("Mensajes")');
+    await page.click('#hojaDia [data-a="mm-guardar"]'); await page.waitForTimeout(250);
+    R.b3 = await page.evaluate(() => { const P = window.PG; return { x: JSON.stringify(P.store.manana['2026-10-30']), hoja: !!document.querySelector('#hojaDia [role="dialog"]'), copia: JSON.stringify(P.storeParaCopia()) }; });
+    R.b4 = await page.evaluate(() => { const P = window.PG; P.ui.nocheAbierta = true; P.render(); return !!document.querySelector('#main [data-a="manana-deshacer"]'); });
+    await page.click('#main [data-a="manana-deshacer"]'); await page.waitForTimeout(150);
+    R.b5 = await page.evaluate(() => JSON.stringify(window.PG.store.manana['2026-10-30'] || null));
+    // «Ahora no» no guarda el móvil; deshacer conserva En pie
+    await siembra(); await pon(7, 33, 30);
+    await page.evaluate(() => { window.PG.store.manana['2026-10-30'] = { pie: '06:50' }; window.PG.render(); });
+    await page.click('#main .noche [data-a="manana-sali"]'); await page.waitForTimeout(200);
+    await page.click('#hojaDia button:has-text("Ahora no")'); await page.waitForTimeout(150);
+    R.c1 = await page.evaluate(() => ({ x: JSON.stringify(window.PG.store.manana['2026-10-30']), hoja: !!document.querySelector('#hojaDia [role="dialog"]') }));
+    R.c2 = await page.evaluate(() => { const P = window.PG; P.store.manana['2026-07-01'] = { pie: '06:50', vestido: '07:10', salio: '07:30', movil: 15, con: ['Noticias'] }; P.store.manana['2026-06-30'] = { pie: '06:50', movil: 5 };
+      P.store = JSON.parse(JSON.stringify(P.store)); return JSON.stringify([P.store.manana['2026-07-01'], P.store.manana['2026-06-30'] || null, P.store.mananaMedias['2026-07']]); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
+    await page.setViewportSize(vp40);
+    check('402 «🚪 He salido» abre «¿Móvil esta mañana?» con Guardar apagado y minutos de ≥56 px; con 15, Noticias, Pódcast y Mensajes elegidos la 4.ª etiqueta no entra',
+      R.b1 && /Saliste a las 07:33/.test(R.b1.txt) && /¿Móvil esta mañana\?/.test(R.b1.txt) && R.b1.guardarOff && R.b1.altoMin >= 56 &&
+      R.b2.on.join('|') === '15|Noticias|Mensajes|Pódcast' && R.b2.tags.indexOf('Pódcast') >= 0 && R.b2.tags.indexOf('Cuarta') < 0, JSON.stringify([R.b1, R.b2]));
+    check('402c Guardar (tras quitar Mensajes) escribe movil:15 y con [Noticias, Pódcast] y cierra la hoja; la copia no lleva con ni «Pódcast» pero sí el número; deshacer quita la salida y el móvil',
+      R.b3.x === '{"salio":"07:33","movil":15,"con":["Noticias","Pódcast"]}' && !R.b3.hoja && !/"con"|Pódcast/.test(R.b3.copia) && /"movil":15/.test(R.b3.copia) && R.b4 && R.b5 === 'null', JSON.stringify([R.b3.x, R.b3.hoja, R.b4, R.b5]));
+    check('402d «Ahora no» cierra sin guardar movil; deshacer conserva pie; lo de hace 120 días queda en la media del mes y sin detalle',
+      R.c1.x === '{"pie":"06:50","salio":"07:33"}' && !R.c1.hoja && R.c2 === JSON.stringify([{ salio: '07:30' }, null, { n: 1, mov: 15, movN: 1, pv: 20, pvN: 1, vs: 20, vsN: 1 }]), JSON.stringify([R.c1, R.c2]));
+  }
+  // 403) LAS MAÑANAS · LM2: la regleta de la mañana a 412 px, sin «Vestirse» y «Salir de casa» montadas.
+  {
+    const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia40 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia40));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+    const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
+    const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
+      const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
+      return { pie: f(q('pie')), vestido: f(q('vestido')), sali: f(sa), mini: n && n.querySelector('.mini') ? n.querySelector('.mini').textContent : '', man: JSON.stringify(window.PG.store.manana['2026-10-30'] || null) }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia [role="dialog"]'); if (!h) return null;
+      const b = (t) => [...h.querySelectorAll('button')].filter((x) => x.textContent.trim() === t)[0];
+      return { txt: h.textContent.replace(/\s+/g, ' ').trim(), guardarOff: !!(b('Guardar') && b('Guardar').disabled), altoMin: Math.round(h.querySelector('[data-a="mm-min"]').getBoundingClientRect().height),
+        on: [...h.querySelectorAll('[aria-pressed="true"]')].map((x) => x.textContent.trim()), tags: [...h.querySelectorAll('[data-a="mm-con"]')].map((x) => x.textContent.trim()) }; });
+    const R = {};
+    // 403
+    await siembra(); await pon(7, 10, 30);
+    await page.evaluate(() => { window.PG.ui.nocheAbierta = true; window.PG.render(); }); await page.waitForTimeout(250);
+    R.d = await page.evaluate(() => { const r = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, txt: e.textContent.trim() }; };
+      const L = [...document.querySelectorAll('#main .manana .mnh b, #main .manana .mnh small')].map(r).filter((x) => x.r > x.l);
+      const ves = L.filter((x) => /^Vestirse/.test(x.txt))[0], pta = L.filter((x) => /^Salir de casa/.test(x.txt))[0];
+      const cruza = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      return { hay: !!(ves && pta), cruzan: ves && pta ? cruza(ves, pta) : null, otros: pta ? L.filter((x) => x !== pta && cruza(x, pta)).map((x) => x.txt) : [], fuera: L.filter((x) => x.l < 0 || x.r > window.innerWidth).map((x) => x.txt), ancho: document.documentElement.scrollWidth }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
+    await page.setViewportSize(vp40);
+    check('403 regleta de la mañana a 412 px: «Vestirse» y «Salir de casa» no se montan, nada pisa a la puerta y nada se sale de la pantalla',
+      R.d.hay && R.d.cruzan === false && R.d.otros.length === 0 && R.d.fuera.length === 0 && R.d.ancho <= 412, JSON.stringify(R.d));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

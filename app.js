@@ -655,8 +655,27 @@ function normalize(o){
   if(!o.calcol||typeof o.calcol!=='object')o.calcol={};
   if(!o.manana||typeof o.manana!=='object')o.manana={};   /* a qué hora saliste de casa cada día: {'2026-10-15':{salio:'07:29'}} */
   /* {salio, bus (fuiste en bus), real (hora real), eur (lo que costó el taxi ese día), llego (a qué hora llegaste al trabajo)}: vale con hora de salida, de llegada o con precio */
-  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];const okS=v&&/^\d{2}:\d{2}$/.test(v.salio||''),okE=v&&v.eur!=null&&isFinite(+v.eur),okL=v&&/^\d{2}:\d{2}$/.test(v.llego||'');
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!(okS||okE||okL)){delete o.manana[k];return;}if(!okS)delete v.salio;if(!okL)delete v.llego;if(v.real&&!/^\d{1,2}:\d{2}$/.test(v.real))delete v.real;});
+  /* LM2: pie y vestido (HH:MM), movil (minutos: 0, 5, 15, 30 o 45) y con (hasta 3 etiquetas). Pasados 90 días el detalle se borra y queda la media del mes en mananaMedias */
+  if(!o.mananaMedias||typeof o.mananaMedias!=='object'||Array.isArray(o.mananaMedias))o.mananaMedias={};
+  Object.keys(o.mananaMedias).forEach(function(k){const v=o.mananaMedias[k];
+    if(!/^\d{4}-\d{2}$/.test(k)||!v||typeof v!=='object'){delete o.mananaMedias[k];return;}
+    const r={};['n','mov','movN','pv','pvN','vs','vsN'].forEach(function(f){r[f]=typeof v[f]==='number'&&isFinite(v[f])&&v[f]>=0?v[f]:0;});o.mananaMedias[k]=r;});
+  const limMan=iso(addDays(new Date(),-90)),hmMin=function(t){return +t.slice(0,2)*60+ +t.slice(3);};
+  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=='object'||Array.isArray(v)){delete o.manana[k];return;}
+    const okS=/^\d{2}:\d{2}$/.test(v.salio||''),okE=v.eur!=null&&isFinite(+v.eur),okL=/^\d{2}:\d{2}$/.test(v.llego||'');
+    const okP=/^\d{2}:\d{2}$/.test(v.pie||''),okV=/^\d{2}:\d{2}$/.test(v.vestido||'');
+    let okM=v.movil!=null&&v.movil!==''&&typeof v.movil!=='boolean'&&isFinite(+v.movil)&&+v.movil>=0&&+v.movil<=45;
+    if(okM)v.movil=[0,5,15,30,45].reduce(function(b,x){return Math.abs(x-v.movil)<Math.abs(b-v.movil)?x:b;},0);else delete v.movil;
+    if(!okS)delete v.salio;if(!okL)delete v.llego;if(!okP)delete v.pie;if(!okV)delete v.vestido;
+    if(v.real&&!/^\d{1,2}:\d{2}$/.test(v.real))delete v.real;
+    if(!Array.isArray(v.con)||v.con.length>3||!v.con.every(function(t){return typeof t==='string'&&/^[\p{L}\p{N} ]{1,20}$/u.test(t);}))delete v.con;
+    if(k<limMan&&(okP||okV||okM)){const mk=k.slice(0,7),r=o.mananaMedias[mk]||(o.mananaMedias[mk]={n:0,mov:0,movN:0,pv:0,pvN:0,vs:0,vsN:0});
+      r.n++;if(okM){r.mov+=v.movil;r.movN++;}
+      if(okP&&okV){const d=hmMin(v.vestido)-hmMin(v.pie);if(d>0&&d<240){r.pv+=d;r.pvN++;}}
+      if(okV&&okS){const d=hmMin(v.salio)-hmMin(v.vestido);if(d>0&&d<240){r.vs+=d;r.vsN++;}}}
+    if(k<limMan){delete v.pie;delete v.vestido;delete v.movil;delete v.con;}
+    if(!(okS||okE||okL||(k>=limMan&&(okP||okV||okM))))delete o.manana[k];});
   /* La noche: a qué hora volviste del Lloret cada noche, {'2026-10-29':'21:52'} (lo demás de lloret se deja como está) */
   if(o.lloret&&typeof o.lloret==='object'){const vv=o.lloret.vuelta,nv={};
     if(vv&&typeof vv==='object'&&!Array.isArray(vv))Object.keys(vv).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&/^\d{2}:\d{2}$/.test(String(vv[k]||'')))nv[k]=vv[k];});
@@ -5557,8 +5576,16 @@ function nocheHTML(key,esHoy){
     '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div></div>';
   const m=mananaDe(key),h=hoyNow(true)/60;
   /* ya en el trabajo («He llegado» guardado) no se ofrece «He salido» */
-  const sali=m&&m.salio==null&&!C.llego&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)?
-    '<button class="btn p nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 He salido</button>':'';
+  let sali='';
+  if(m&&m.salio==null&&!C.llego&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)){
+    const dm=(store.manana||{})[key]||{},vs=m.regleta.filter(function(x){return x.e==='vestir';})[0];
+    /* el principal es el siguiente paso: En pie, luego Vestido, luego He salido */
+    const pr=!dm.pie&&vs&&h<vs.h?'pie':!dm.vestido&&h<m.plan?'vestido':'sali';
+    const ficha=function(k,txt){const on=dm[k];
+      return '<button class="btn '+(on?'hecho':pr===k?'p':'s')+'" data-a="manana-marca" data-k="'+k+'" data-key="'+esc(key)+'" aria-pressed="'+(on?'true':'false')+'"><span>'+txt+(on?' ✓':'')+'</span>'+(on?'<small>'+esc(on)+'</small>':'')+'</button>';};
+    sali='<div class="nmarcas">'+ficha('pie','🧍 En pie')+ficha('vestido','👕 Vestido')+
+      '<button class="btn '+(pr==='sali'?'p':'s')+' nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 He salido</button></div>'+
+      '<p class="mini">Un toque cada uno. Ducha y café van dentro.</p>';}
   /* el botón vivo: «He vuelto» cerca de la hora de irte del Lloret, «He llegado» cerca de la de llegar al trabajo */
   const hv=C.hitos.filter(function(x){return x.id==='vete';})[0],hl=C.hitos.filter(function(x){return x.id==='llegar';})[0];
   const viv=hv&&!C.vuelta&&C.now>=hv.hora-20&&C.now<hv.hora+120?['vuelta','🏠 He vuelto']:
@@ -5579,6 +5606,21 @@ function nocheSugHTML(key){
   return '<div class="nsug" role="group" aria-label="Sugerencia de hora de cama">💡 Llevas 3 noches cerca de las '+hm(s.de)+'. ¿Probamos a la cama a las <b>'+hm(s.a)+'</b> desde hoy?'+
     '<div class="row"><button class="btn s p" data-a="noche-sug-si">Vale, '+hm(s.a)+'</button><button class="btn s" data-a="noche-sug-no">Aún no</button></div></div>';}
 /* La hoja de «He vuelto» / «He llegado»: la hora de ahora ya puesta, −5 / +5 y Guardar. No se guarda nada hasta Guardar. */
+function mananaMovilHTML(){
+  const h=ui.mananaMovil;if(!h)return '';
+  const dm=(store.manana||{})[h.key]||{},lim=iso(addDays(new Date(),-90)),base=['Noticias','Mensajes','Vídeos'],tags=base.slice();
+  Object.keys(store.manana||{}).forEach(function(k){if(k>=lim&&Array.isArray(store.manana[k].con))store.manana[k].con.forEach(function(t){if(tags.indexOf(t)<0)tags.push(t);});});
+  h.con.forEach(function(t){if(tags.indexOf(t)<0)tags.push(t);});
+  const mins=[[0,'0'],[5,'5'],[15,'15'],[30,'30'],[45,'45+']];
+  return hojaMarco('mm-cerrar','mmhoja','¿Móvil esta mañana?',
+    '<p class="mmok">✓ Saliste a las '+esc(dm.salio||'')+'</p><h3 class="sh">📱 ¿Móvil esta mañana?</h3><p class="mini">Más o menos. Un toque y listo.</p>'+
+    '<div class="cap">MINUTOS</div><div class="mmmin">'+mins.map(function(x){return '<button class="chip'+(h.min===x[0]?' on':'')+'" data-a="mm-min" data-v="'+x[0]+'" aria-pressed="'+(h.min===x[0])+'">'+x[1]+'</button>';}).join('')+'</div>'+
+    '<div class="cap">¿CON QUÉ? (SI QUIERES)</div><div class="chips">'+tags.map(function(t){const on=h.con.indexOf(t)>=0;return '<button class="chip'+(on?' on':'')+'" data-a="mm-con" data-v="'+esc(t)+'" aria-pressed="'+on+'">'+esc(t)+'</button>';}).join('')+
+    (h.otra?'':'<button class="chip" data-a="mm-otra">+ otra</button>')+'</div>'+
+    (h.otra?'<div class="mmotra"><input type="text" id="mmOtra" maxlength="20" aria-label="Otra etiqueta" autocomplete="off"><button class="btn s" data-a="mm-anadir">Añadir</button></div>':'')+
+    '<button class="btn p nancho" data-a="mm-guardar"'+(h.min==null?' disabled':'')+'>Guardar</button>'+
+    '<button class="btn s nancho mmno" data-a="mm-cerrar">Ahora no</button>'+
+    '<p class="mini" style="text-align:center">Se queda en tu móvil. Solo el número y la etiqueta.</p>');}
 function nocheHojaHTML(){
   const h=ui.nocheHoja;if(!h)return '';const vuelta=h.k==='vuelta',tit=vuelta?'🏠 He vuelto del Lloret':'🏢 He llegado al trabajo';
   return hojaMarco('noche-cerrar','nhoja',tit,'<h3 class="sh">'+tit+'</h3><p class="mini">La hora ya está puesta. Si no es, muévela.</p>'+
@@ -5851,7 +5893,9 @@ function mananaHTML(key,esHoy){
   /* el bus y el último van pegados a la puerta: su hora va abajo, con el nombre, para no pisarse arriba */
   const marcas=hitos.map(function(x,i){const u=x.e==='ultimo',hh=hCortaHM(hm(Math.round(x.h*60))),abajo=u||x.e==='bus'||x.e==='taxi';
     const fila=u?2:(x.e==='bus'||x.e==='taxi')?1:x.e==='parada'?0:(i%2),arriba=x.e==='cama'||x.e==='parada';   /* la hora arriba solo en levantarse y en la puerta: lo demás se lee abajo */
-    return '<i class="mnh f'+fila+(u?' ult':x.e==='parada'?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(arriba?'<b>'+esc(hh)+'</b>':'')+'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small></i>';}).join('');
+    /* la puerta lleva su nombre arriba de la línea (abajo se montaba con «Vestirse») */
+    const pta=x.e==='parada';
+    return '<i class="mnh f'+fila+(u?' ult':pta?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(pta?'<b>'+esc(x.txt+' '+hh)+'</b>':arriba?'<b>'+esc(hh)+'</b>':'')+(pta?'':'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small>')+'</i>';}).join('');
   const tramo='<span class="mntr ok" style="left:'+pct(m.wake)+'%;width:'+(pct(plan)-pct(m.wake))+'%"></span><span class="mntr mal" style="left:'+pct(m.ultimo)+'%;width:'+(100-pct(m.ultimo))+'%"></span>';
   let linea,boton='',pasos='';
   const HH=function(x){return hCortaHM(hm(Math.round(x*60)));},enBus='<button class="btn s" data-a="manana-sali" data-key="'+esc(key)+'" data-bus="1" data-hhmm="'+esc(hm(Math.round(plan*60)))+'">🚌 fui en bus</button>';
@@ -5886,7 +5930,8 @@ function mananaHTML(key,esHoy){
 function mananaSali(key,hhmm){
   if(!store.manana)store.manana={};
   if(hhmm)store.manana[key]=Object.assign({},store.manana[key]||{},{salio:hhmm});
-  else{const x=store.manana[key];if(x&&x.llego)store.manana[key]={llego:x.llego};else delete store.manana[key];}   /* deshacer la salida no borra la llegada */
+  else{const x=store.manana[key]||{},r={};['llego','pie','vestido'].forEach(function(f){if(x[f])r[f]=x[f];});   /* deshacer la salida no borra la llegada ni En pie / Vestido */
+    if(Object.keys(r).length)store.manana[key]=r;else delete store.manana[key];}
   /* los hábitos «salir a tiempo» y «taxi», si los tienes, se marcan solos (son automáticos); nada que hacer aquí */
   save();render();}
 function estadoDe(key,h){
@@ -8413,6 +8458,7 @@ const HOJAS={
        Comer (Hoy, el calendario), que es cuando el día lo puso el atajo y no tú */
     cerrar:function(){const h=ui.cjeHoja;if(h&&/^(mom|dia|acc)$/.test(h.v||'')){if(h.fuera)ui.foodDate='';ui.frPos='';ui.frase=null;ui.frTxt=null;}ui.cjeHoja=null;}},
   semp:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='semp'&&ui.semPHoja;},html:function(){return semPHojaHTML();},cerrar:function(){ui.semPHoja=null;}},
+  mmovil:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&!!ui.mananaMovil;},html:function(){return mananaMovilHTML();},cerrar:function(){ui.mananaMovil=null;}},
   noche:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&!!ui.nocheHoja;},html:function(){return nocheHojaHTML();},cerrar:function(){ui.nocheHoja=null;}},
   hoy:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&ui.hoyIt;},html:function(){return hoyHojaHTML();},cerrar:function(){ui.hoyIt=null;}},
   hab:{abierta:function(){return ui.tab==='habitos'&&ui.habEd;},html:function(){return habHojaHTML();},cerrar:function(){ui.habEd=null;}},
@@ -26133,7 +26179,22 @@ function act(a,el){
       break;}
     case 'manana-sali':{const hh=el.dataset.hhmm||horaLocal(new Date());
       if(el.dataset.bus){if(!store.manana)store.manana={};store.manana[el.dataset.key]=Object.assign({},store.manana[el.dataset.key]||{},{bus:1});}
-      mananaSali(el.dataset.key,hh);flash(el.dataset.bus?'Apuntado: fuiste en bus (pon la hora real si quieres)':'Apuntado: saliste a las '+hCortaHM(hh));break;}
+      mananaSali(el.dataset.key,hh);flash(el.dataset.bus?'Apuntado: fuiste en bus (pon la hora real si quieres)':'Apuntado: saliste a las '+hCortaHM(hh));
+      if(!el.dataset.bus){ui.mananaMovil={key:el.dataset.key,min:null,con:[],otra:false};render();}break;}
+    case 'manana-marca':{const k=el.dataset.k==='vestido'?'vestido':'pie',key=el.dataset.key;if(!store.manana)store.manana={};
+      const x=Object.assign({},store.manana[key]||{});if(x[k])delete x[k];else x[k]=horaLocal(new Date());
+      if(Object.keys(x).length)store.manana[key]=x;else delete store.manana[key];save();render();break;}
+    case 'mm-min':if(ui.mananaMovil){ui.mananaMovil.min=+el.dataset.v;render();}break;
+    case 'mm-con':{const h=ui.mananaMovil;if(!h)break;const t=el.dataset.v,i=h.con.indexOf(t);
+      if(i>=0)h.con.splice(i,1);else if(h.con.length>=3){flash('Como mucho 3 etiquetas');break;}else h.con.push(t);render();break;}
+    case 'mm-otra':if(ui.mananaMovil){ui.mananaMovil.otra=true;render();}break;
+    case 'mm-anadir':{const h=ui.mananaMovil,inp=document.getElementById('mmOtra');if(!h||!inp)break;const t=inp.value.trim();
+      if(!/^[\p{L}\p{N} ]{1,20}$/u.test(t)){flash('Una palabra o dos, hasta 20 letras');break;}
+      if(h.con.indexOf(t)<0){if(h.con.length>=3){flash('Como mucho 3 etiquetas');break;}h.con.push(t);}h.otra=false;render();break;}
+    case 'mm-guardar':{const h=ui.mananaMovil;if(!h||h.min==null)break;if(!store.manana)store.manana={};
+      const x=Object.assign({},store.manana[h.key]||{},{movil:h.min});if(h.con.length)x.con=h.con.slice();else delete x.con;store.manana[h.key]=x;
+      ui.mananaMovil=null;save();render();flash('Apuntado');break;}
+    case 'mm-cerrar':ui.mananaMovil=null;render();break;
     case 'cafe-mas':{cafeMas(el.dataset.k||fechaHoy());break;}
     case 'cafe-menos':{cafeMenos(el.dataset.k||fechaHoy());break;}
     case 'manana-deshacer':{mananaSali(el.dataset.key,'');break;}
@@ -26812,8 +26873,11 @@ function copiaNombre(){return 'planning-guardias-'+iso(new Date())+'.json';}
 function copiaJSON(){return JSON.stringify(storeParaCopia(),null,1);}
 function storeParaCopia(){
   /* lo que sale del móvil: con «dejar 4:20 fuera de la copia», sin store.consumo */
-  if(store.consumo&&store.consumo.priv&&store.consumo.priv.fueraCopia){const o=Object.assign({},store);delete o.consumo;return o;}
-  return store;}
+  const o=Object.assign({},store);
+  if(store.consumo&&store.consumo.priv&&store.consumo.priv.fueraCopia)delete o.consumo;
+  /* las etiquetas del móvil de la mañana se quedan en el móvil: la copia lleva solo el número */
+  if(store.manana&&typeof store.manana==='object'){o.manana={};Object.keys(store.manana).forEach(function(k){const v=store.manana[k];if(v&&typeof v==='object'&&'con' in v){const c=Object.assign({},v);delete c.con;o.manana[k]=c;}else o.manana[k]=v;});}
+  return o;}
 function dl(){
   const name=copiaNombre();
   try{

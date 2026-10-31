@@ -2332,3 +2332,21 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - **Supuestos**
   - «Bus» y «Último» van en una sola etiqueta de la regleta (a esa escala se pisaban).
   - Alarmas «Quedan 30 min» 07:01 y «Quedan 10 min» 07:21 con salida a las 07:31; horas y etiquetas son de ejemplo.
+
+## Las Mañanas · LM2 · En pie, Vestido, móvil y regleta (2026-10-31)
+- **Elegido**
+  - La noche (y Hoy a primera hora) lleva tres fichas de un toque: «🧍 En pie», «👕 Vestido» y «🚪 He salido». Marcada, la
+    ficha enseña ✓ y la hora; otro toque la desmarca. La principal es el siguiente paso (En pie, Vestido, He salido).
+  - «He salido» (no «fui en bus») abre la hoja «📱 ¿Móvil esta mañana?»: minutos 0 · 5 · 15 · 30 · 45+, hasta 3 etiquetas
+    (Noticias, Mensajes, Vídeos, las usadas en 90 días y «+ otra»), Guardar o «Ahora no».
+  - La regleta pone «Salir de casa HH:MM» arriba de la línea: ya no se monta con «Vestirse».
+  - `normalize` acepta `pie`, `vestido`, `movil`, `con`. Pasados 90 días el detalle se borra y queda la media del mes en
+    `mananaMedias`. La copia de seguridad lleva el número pero no las etiquetas (`con`).
+  - Deshacer la salida borra solo lo de la salida (`salio`, `bus`, `real`, `eur`, `movil`, `con`); conserva `llego`, `pie`, `vestido`.
+- **Descartado**
+  - Pedir el móvil al marcar «fui en bus» (no hay hora de salida real).
+  - Etiquetas en avisos, notificaciones o `.ics`: nada de esto sale de la pantalla ni de la copia.
+- **Supuestos**
+  - Los minutos se redondean al valor más cercano de 0/5/15/30/45; «45+» se guarda como 45.
+  - Las medias mensuales solo guardan sumas y recuentos (n, mov, pv, vs); no hay etiquetas ahí.
+  - Una copia restaurada pierde las etiquetas (no estaban en la copia); el número se conserva.
