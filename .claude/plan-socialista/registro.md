@@ -237,3 +237,4 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-2026-10-30-b] Contado: R2 «Tu mes» en main 7942d02 (run 40983394688 success, sellado); R2 sin fila en gastos.md (sin medir); supuestos R2 (margen 10 %, línea de Hoy no ocultable, franja de casillas a mirar en el móvil) abiertos; ahora va R3 Gasto grande + Bosque y Ahorro (~1,8 M).
 - [parte-2026-10-30-c] Contado: R3 en main ed50e3a (run 41024716095 success, sellado); R3 medida 2,2 M; siguiente R4 Fintonic en pequeño (~0,8 M sonnet) elegida; 0 issues.
 - [parte-2026-10-30-f] Contado: G1 en main 29374b9 (success, sellado); siguiente G2 maqueta de Comer; rama con docs médicos sin pasar a main.
+- [run-41184892045] main be90510 desplegado y sellado (2026-10-31); CH1 y CH2 de El Chef y arreglo de pruebas del día 31 ya en main
