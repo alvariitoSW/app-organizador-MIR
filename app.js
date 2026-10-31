@@ -5725,6 +5725,40 @@ function nocheTramosHTML(n){
   return h;}
 function renderNochePant(){$('#main').innerHTML=ui.hoyVista==='alarmas'?nocheAlarmasHTML():ui.hoyVista==='android'?nocheAndroidHTML():nocheSemanaHTML();}
 /* LM4: la pausa antes de abrir una app (ui.pausa={etq,fin,res}) y la guía de MacroDroid. Nada se guarda hasta «Sí, apúntala». */
+let pausaTimer=0;
+function pausaEnlace(e){return location.origin+location.pathname+'?pausa='+e;}
+function pausaHTML(){
+  const p=ui.pausa,P=mananaPlan(),n=Math.max(0,Math.ceil((p.fin-Date.now())/1000));
+  return '<div class="grid pz">'+
+    '<p class="mini pzhora">'+esc(horaLocal(new Date()))+(P?' · sales a las '+hm(Math.round(P.plan*60)):'')+'</p>'+
+    '<div class="pzcir"><div role="timer" aria-label="Segundos que faltan">'+n+'</div></div>'+
+    '<p class="pzq">Respira. ¿Seguro que ahora?</p>'+
+    (p.res?'<div class="card pzcard"><div class="cap">AL CERRAR</div><div class="pzt">¿Apuntamos esta pausa? · '+esc(PAUSA_ETQ[p.etq])+'</div>'+
+      '<div class="pz2"><button class="btn p" data-a="pausa-si">Sí, apúntala</button><button class="btn" data-a="pausa-no">No</button></div></div>'+
+      '<p class="mini pzhora">No se guarda nada hasta que tú lo digas.</p>':
+      '<button class="btn p nancho pzcerrar" data-a="pausa-cerrar">Cerrar</button>'+
+      (n>0?'<button class="btn nancho pzseguir" data-a="pausa-seguir" disabled>Abrir igualmente (en '+n+' s)</button>':
+        '<button class="btn nancho pzseguir" data-a="pausa-seguir">Abrir igualmente</button>'))+
+    '</div>';}
+function renderPausa(){
+  if(!ui.pausa){ui.hoyVista='';return render();}
+  $('#main').innerHTML=pausaHTML();
+  clearTimeout(pausaTimer);pausaTimer=0;
+  if(!ui.pausa.res&&ui.pausa.fin>Date.now())pausaTimer=setTimeout(function(){pausaTimer=0;if(ui.hoyVista==='pausa'&&ui.pausa&&!ui.pausa.res)render();},1000);}
+function macroGuiaHTML(){
+  const e=PAUSA_ETQ[ui.macroEtq]?ui.macroEtq:'videos',paso=function(n,t){return '<div class="pzp"><b>'+n+'</b><span>'+t+'</span></div>';};
+  return '<div class="grid pz"><div class="subcab"><button class="btn s volver" data-a="macro-volver">‹ Hoy</button></div>'+
+    '<h2 class="subtit">⏸ Una pausa antes de abrir</h2><p class="mini">De prueba 2 semanas. Lo hace MacroDroid (gratis); la app solo enseña la pausa.</p>'+
+    '<div class="card">'+paso(1,'Instala MacroDroid desde Google Play.')+
+    paso(2,'Nueva macro → Disparador: «Aplicación abierta» → elige las apps (por ejemplo, vídeos y redes).')+
+    paso(3,'Restricción: «Hora del día», lunes a viernes, de 06:50 a 07:35.')+
+    paso(4,'Acción: «Abrir dirección web» y pega este enlace:')+
+    '<div class="chips pzchips">'+Object.keys(PAUSA_ETQ).map(function(k){return '<button class="chip'+(k===e?' on':'')+'" data-a="macro-etq" data-v="'+k+'" aria-pressed="'+(k===e)+'">'+esc(PAUSA_ETQ[k])+'</button>';}).join('')+'</div>'+
+    '<div class="pzenl"><code>'+esc(pausaEnlace(e))+'</code><button class="btn" data-a="macro-copiar">Copiar</button></div>'+
+    paso(5,'Guárdala y pruébala abriendo una de esas apps.')+'</div>'+
+    '<div class="card">Funciona también en Chrome: los datos son los mismos que en la app instalada.</div>'+
+    '<p class="mini">Solo cuenta cuántas pausas y si cerraste: no guarda la hora ni qué apps.</p>'+
+    '<button class="btn nancho" data-a="macro-volver">Ahora no</button></div>';}
 function renderMacroGuia(){$('#main').innerHTML=macroGuiaHTML();}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
