@@ -169,11 +169,11 @@ Se guarda solo números y etiquetas suyas; nada de imágenes. Pendiente del usua
 | LM1 ✅ | Maqueta sin concurso (7 pantallas a 412×915, `maquetas/las-mananas.html`, aprobada por el Consejo) | maqueta | opus dirige, sonnet; `verificador` | ~0,9 M |
 | LM2 | Marcas + hoja del móvil + `normalize` + solape «Vestirse»/«Salir de casa» | construir | sonnet con ficha | ~0,9 M |
 | LM3 | «Tu semana» con tramos y frase + 2 alarmas + guía de Android | construir | sonnet con ficha; haiku textos | ~0,9 M |
-| LM4 | Pausa `?pausa=` + recuento + guía MacroDroid (según pregunta 2) | construir | sonnet con ficha | ~0,9 M |
+| LM4 ✅ | Pausa `?pausa=` + recuento + guía MacroDroid (según pregunta 2) · hecha 31/10 en la rama (075d319 + 896f28d), 1,0 M | construir | sonnet con ficha | ~0,9 M |
 | LM5 | Cierre: verificador, `/revisa-seguridad`, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 | LM6 | (Condicional) «Subir captura» con el OCR local | construir | sonnet con ficha | ~0,9 M |
 
-Total ~4,2 M (LM1-LM5). Orden: LM1 ✅ → LM2 ✅ → LM3 ✅ → LM4 → LM5 (→ LM6) → El Chef CH4.
+Total ~4,2 M (LM1-LM5). Orden: LM1 ✅ → LM2 ✅ → LM3 ✅ → LM4 ✅ → LM5 (→ LM6) → El Chef CH4.
 
 ### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · siguiente: **CH4**
 
