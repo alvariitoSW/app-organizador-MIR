@@ -15776,6 +15776,105 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       R.d.hay && R.d.cruzan === false && R.d.otros.length === 0 && R.d.fuera.length === 0 && R.d.ancho <= 412, JSON.stringify(R.d));
   }
 
+  // 440) LAS MAÑANAS · LM4-a: ?pausa=videos abre la pausa, limpia la barra, no guarda al entrar; «Cerrar» → «Sí, apúntala» cuenta c:1; con «No» no cuenta.
+  {
+    const abre = async (q) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+      await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); });   // las pruebas comparten localStorage: se parte de cero
+      await p.goto(base + 'index.html' + q); await p.waitForFunction(() => window.PG); await p.waitForTimeout(350); return p; };
+    const estado = (p) => p.evaluate(() => { const m = document.querySelector('#main'), b = (t) => [...m.querySelectorAll('button')].filter((x) => x.textContent.trim().indexOf(t) === 0)[0];
+      return { txt: m.textContent.replace(/\s+/g, ' ').trim(), vista: window.PG.ui.hoyVista, query: location.search, seguirOff: !!(b('Abrir igualmente') && b('Abrir igualmente').disabled),
+        altoCerrar: Math.round((b('Cerrar') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height), timer: !!m.querySelector('[role="timer"]'),
+        pausas: JSON.stringify(window.PG.store.pausas || null) }; });
+    const R = {};
+    const p = await abre('?pausa=videos');
+    const hoy = await p.evaluate(() => window.PG.iso(new Date()));
+    R.a1 = await estado(p);
+    await p.click('#main [data-a="pausa-cerrar"]'); await p.waitForTimeout(150);
+    R.a2 = await estado(p);
+    await p.click('#main [data-a="pausa-si"]'); await p.waitForTimeout(250);
+    R.a3 = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, pausa: window.PG.ui.pausa, pausas: JSON.stringify(window.PG.store.pausas) }));
+    await p.evaluate(() => { const P = window.PG; P.ui.pausa = { etq: 'juegos', fin: Date.now() + 5000, res: '' }; P.ui.hoyVista = 'pausa'; P.render(); });
+    await p.click('#main [data-a="pausa-cerrar"]'); await p.click('#main [data-a="pausa-no"]'); await p.waitForTimeout(200);
+    R.a4 = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, pausas: JSON.stringify(window.PG.store.pausas) }));
+    await p.close();
+    check('LM4-a) ?pausa=videos abre la pausa a 412 px (Vídeos, cuenta atrás con role=timer, «Cerrar» ≥68 px, «Abrir igualmente» apagado), vacía la barra y no guarda nada al entrar',
+      R.a1.vista === 'pausa' && R.a1.timer && R.a1.query === '' && R.a1.seguirOff && R.a1.altoCerrar >= 68 && /Respira\. ¿Seguro que ahora\?/.test(R.a1.txt) && /Abrir igualmente \(en [1-5] s\)/.test(R.a1.txt) && R.a1.pausas === '{}', JSON.stringify(R.a1));
+    check('LM4-a) «Cerrar» pregunta «¿Apuntamos esta pausa? · Vídeos» y, con «Sí, apúntala», cuenta c:1 de hoy y vuelve a Hoy; con «No» sigue en 1',
+      /¿Apuntamos esta pausa\? · Vídeos/.test(R.a2.txt) && /No se guarda nada hasta que tú lo digas/.test(R.a2.txt) && R.a2.pausas === '{}' &&
+      R.a3.vista === '' && R.a3.pausa === null && R.a3.pausas === JSON.stringify({ [hoy]: { videos: { c: 1, s: 0 } } }) && R.a4.vista === '' && R.a4.pausas === R.a3.pausas, JSON.stringify([R.a2, R.a3, R.a4]));
+  }
+
+  // 441) LAS MAÑANAS · LM4-b: pasados los 5 s, «Abrir igualmente» se activa y «Sí» cuenta s:1.
+  {
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); });
+    await p.goto(base + 'index.html?pausa=redes'); await p.waitForFunction(() => window.PG); await p.waitForTimeout(350);
+    const seg = () => p.evaluate(() => { const b = document.querySelector('#main [data-a="pausa-seguir"]'); return { off: !!(b && b.disabled), txt: b ? b.textContent.trim() : '' }; });
+    const R = { antes: await seg() };
+    await p.evaluate(() => { const P = window.PG; P.ui.pausa.fin = Date.now() - 1; P.render(); });
+    R.despues = await seg();
+    await p.click('#main [data-a="pausa-seguir"]'); await p.waitForTimeout(150);
+    R.tarjeta = await p.evaluate(() => document.querySelector('#main').textContent.replace(/\s+/g, ' '));
+    await p.click('#main [data-a="pausa-si"]'); await p.waitForTimeout(250);
+    R.fin = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, pausas: JSON.stringify(Object.values(window.PG.store.pausas)) }));
+    await p.close();
+    check('LM4-b) con la cuenta atrás a medias «Abrir igualmente» está apagado; a 0 se activa y, con «Sí», cuenta s:1 en Redes',
+      R.antes.off && /en \d s/.test(R.antes.txt) && !R.despues.off && R.despues.txt === 'Abrir igualmente' && /Redes/.test(R.tarjeta) && R.fin.vista === '' && R.fin.pausas === '[{"redes":{"c":0,"s":1}}]', JSON.stringify(R));
+  }
+
+  // 442) LAS MAÑANAS · LM4-c: una URL maliciosa o fuera de la lista no abre nada, no guarda nada y deja la barra limpia.
+  {
+    const R = [];
+    { const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG); await p0.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); }); await p0.close(); }
+    const malas = ['<img src=x onerror="window.__xss=1">', 'videos"><b>', 'VIDEOS', 'toString', '__proto__', 'hasOwnProperty', ''];
+    for (const m of malas) {
+      const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+      await p.goto(base + 'index.html?pausa=' + encodeURIComponent(m)); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+      R.push(await p.evaluate((m) => ({ m, vista: window.PG.ui.hoyVista, pausa: !!window.PG.ui.pausa, xss: window.__xss, query: location.search, rollo: !!document.querySelector('#main [role="timer"]'), pausas: JSON.stringify(window.PG.store.pausas || {}), img: !!document.querySelector('#main img[src="x"], #main b') && /videos"/.test(document.querySelector('#main').innerHTML) }), m));
+      await p.close();
+    }
+    check('LM4-c) ?pausa= con HTML, comillas, mayúsculas, toString, __proto__ o vacío: no hay pantalla de pausa, no hay XSS, store.pausas sigue vacío y la barra queda limpia',
+      R.length === malas.length && R.every((r) => r.vista !== 'pausa' && !r.pausa && r.xss === undefined && r.query === '' && !r.rollo && r.pausas === '{}' && !r.img), JSON.stringify(R));
+  }
+
+  // 443) LAS MAÑANAS · LM4-d: la guía de MacroDroid desde «¿Móvil esta mañana?»: 5 pasos, el enlace sigue la etiqueta y «‹ Hoy» vuelve.
+  {
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.waitForTimeout(350);
+    await p.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); });
+    await p.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.mananaMovil = { key: P.iso(new Date()), min: null, con: [], otra: false }; P.render(); });
+    await p.waitForTimeout(200);
+    const R = { hoja: await p.evaluate(() => !!document.querySelector('#hojaDia [data-a="pausa-guia"]')) };
+    await p.click('#hojaDia [data-a="pausa-guia"]'); await p.waitForTimeout(250);
+    const g = () => p.evaluate(() => { const m = document.querySelector('#main'); return { vista: window.PG.ui.hoyVista, hoja: !!document.querySelector('#hojaDia [role="dialog"]'), pasos: m.querySelectorAll('.pzp').length, code: (m.querySelector('code') || {}).textContent || '',
+      on: [...m.querySelectorAll('[data-a="macro-etq"][aria-pressed="true"]')].map((x) => x.textContent.trim()), txt: m.textContent.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth,
+      bajos: [...m.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 44).length }; });
+    R.g1 = await g();
+    await p.click('#main [data-a="macro-etq"][data-v="redes"]'); await p.waitForTimeout(150);
+    R.g2 = await g();
+    await p.click('#main [data-a="macro-volver"]:has-text("‹ Hoy")'); await p.waitForTimeout(200);
+    R.v = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, hoy: /☀️ Hoy/.test(document.querySelector('#main').textContent), pausas: JSON.stringify(window.PG.store.pausas || {}) }));
+    await p.close();
+    check('LM4-d) la hoja «¿Móvil esta mañana?» ofrece «⏸ Una pausa…»; la guía tiene 5 pasos, el enlace acaba en ?pausa=videos y al elegir Redes en ?pausa=redes; botones ≥44 px, sin scroll lateral',
+      R.hoja && R.g1.vista === 'macrodroid' && !R.g1.hoja && R.g1.pasos === 5 && /\?pausa=videos$/.test(R.g1.code) && R.g1.on.join() === 'Vídeos' &&
+      /Solo cuenta cuántas pausas/.test(R.g1.txt) && R.g1.bajos === 0 && R.g1.ancho <= 412 && /\?pausa=redes$/.test(R.g2.code) && R.g2.on.join() === 'Redes', JSON.stringify([R.hoja, R.g1, R.g2]));
+    check('LM4-d) «‹ Hoy» vuelve a Hoy sin guardar nada', R.v.vista === '' && R.v.hoy && R.v.pausas === '{}', JSON.stringify(R.v));
+  }
+
+  // 444) LAS MAÑANAS · LM4-e: normalize de store.pausas: fuera lo de hace 100 días, la etiqueta inventada, el número que no vale y la clave sin fecha.
+  {
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+    await p.evaluate(() => { const P = window.PG, d = (n) => P.iso(P.addDays(new Date(), n));
+      P.store.pausas = { [d(-100)]: { videos: { c: 3, s: 1 } }, [d(-2)]: { videos: { c: 'x', s: 2 }, hack: { c: 5, s: 5 }, redes: { c: 0, s: 0 }, juegos: { c: -1, s: 1.9 }, toString: { c: 1, s: 1 } }, 'no-fecha': { videos: { c: 1, s: 1 } }, [d(-1)]: { hack: { c: 1, s: 0 } } };
+      P.save(); });
+    await p.reload(); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+    const R = await p.evaluate(() => { const P = window.PG, d = P.iso(P.addDays(new Date(), -2)); return { pausas: JSON.stringify(P.store.pausas), esperado: JSON.stringify({ [d]: { videos: { c: 0, s: 2 }, juegos: { c: 0, s: 1 } } }) }; });
+    await p.close();
+    check('LM4-e) al recargar, store.pausas conserva solo lo válido: sin el día de hace 100 días, sin «hack», sin «no-fecha», c:\'x\' → 0, y los días y etiquetas vacíos se borran',
+      R.pausas === R.esperado, JSON.stringify(R));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

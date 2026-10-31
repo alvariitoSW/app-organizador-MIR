@@ -2350,3 +2350,21 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - Los minutos se redondean al valor más cercano de 0/5/15/30/45; «45+» se guarda como 45.
   - Las medias mensuales solo guardan sumas y recuentos (n, mov, pv, vs); no hay etiquetas ahí.
   - Una copia restaurada pierde las etiquetas (no estaban en la copia); el número se conserva.
+
+## Las Mañanas · LM4 · La pausa antes de abrir (2026-10-31)
+- **Elegido**
+  - `?pausa=videos` (MacroDroid lo abre al detectar una app) enseña la pantalla de pausa: la hora, «sales a las…» si hay plan,
+    cuenta atrás de 5 s, «Cerrar» enorme y «Abrir igualmente (en N s)» apagado hasta llegar a 0.
+  - Tras pulsar cualquiera de los dos pregunta «¿Apuntamos esta pausa? · Vídeos»: «Sí, apúntala» o «No». No se guarda nada hasta el «Sí».
+  - Dato nuevo: `store.pausas = {'2026-11-12': {videos: {c: 2, s: 1}}}` (cerradas y abiertas igualmente por día y etiqueta), 90 días,
+    normalizado. La etiqueta es de una lista cerrada (`PAUSA_ETQ`): Vídeos, Redes, Noticias, Mensajes, Juegos, Compras.
+  - La barra de direcciones se vacía siempre que venga `pausa`, sea válida o no. Una etiqueta que no está en la lista no abre ni guarda nada.
+  - Guía de MacroDroid (5 pasos, chips de etiqueta, enlace con «Copiar») desde la hoja «¿Móvil esta mañana?».
+- **Descartado**
+  - Un número (0–1440) en la URL: la pausa no lleva número; lo único que entra es la etiqueta de una lista cerrada.
+  - Cerrar la app sola: `window.close` no funciona en una PWA abierta por otra app; «Cerrar» devuelve a Hoy.
+  - Guardar la hora de cada apertura o qué apps: solo se cuenta cuántas pausas y si se cerró.
+- **Supuestos**
+  - El día de la cuenta es el de `fechaHoy()` (el de la pantalla), no el de la hora del sistema.
+  - La guía solo cuelga de la hoja del móvil; no hay botón en Ajustes.
+  - `store.pausas` entra en la copia de seguridad como cualquier otro dato (no lleva nada personal más allá de los recuentos).

@@ -535,6 +535,8 @@ function ponerTema(id){
   ponTemaObj(pre,pre.id,null);
   return 'tema «'+pre.nombre+'» puesto, con sus colores de la franja';}
 function idDe(L,v){return L.some(function(x){return x[0]===v;})?v:'';}   /* v si es uno de los ids de una lista [[id,…],…] */
+/* LM4: las etiquetas de la pausa antes de abrir una app (lista cerrada: es lo único que entra por la URL) */
+const PAUSA_ETQ={videos:'Vídeos',redes:'Redes',noticias:'Noticias',mensajes:'Mensajes',juegos:'Juegos',compras:'Compras'};
 function normalize(o){
   const d=DEFAULTS();
   if(!o.meta||typeof o.meta!=='object')o.meta={};
@@ -660,6 +662,16 @@ function normalize(o){
   Object.keys(o.mananaMedias).forEach(function(k){const v=o.mananaMedias[k];
     if(!/^\d{4}-\d{2}$/.test(k)||!v||typeof v!=='object'){delete o.mananaMedias[k];return;}
     const r={};['n','mov','movN','pv','pvN','vs','vsN'].forEach(function(f){r[f]=typeof v[f]==='number'&&isFinite(v[f])&&v[f]>=0?v[f]:0;});o.mananaMedias[k]=r;});
+  /* LM4: {'2026-11-12':{videos:{c:2,s:1}}}: pausas cerradas (c) y abiertas igualmente (s) por día y etiqueta. Sin horas ni apps. 90 días. */
+  if(!o.pausas||typeof o.pausas!=='object'||Array.isArray(o.pausas))o.pausas={};
+  {const limP=iso(addDays(new Date(),-90));
+  Object.keys(o.pausas).forEach(function(k){const v=o.pausas[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||k<limP||!v||typeof v!=='object'||Array.isArray(v)){delete o.pausas[k];return;}
+    Object.keys(v).forEach(function(e){const t=v[e];
+      if(!Object.prototype.hasOwnProperty.call(PAUSA_ETQ,e)||!t||typeof t!=='object'){delete v[e];return;}
+      const ent=function(x){return typeof x==='number'&&isFinite(x)&&x>=0?Math.floor(x):0;};
+      const r={c:ent(t.c),s:ent(t.s)};if(r.c+r.s===0)delete v[e];else v[e]=r;});
+    if(!Object.keys(v).length)delete o.pausas[k];});}
   const limMan=iso(addDays(new Date(),-90)),hmMin=function(t){return +t.slice(0,2)*60+ +t.slice(3);};
   Object.keys(o.manana).forEach(function(k){const v=o.manana[k];
     if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=='object'||Array.isArray(v)){delete o.manana[k];return;}
@@ -5620,6 +5632,7 @@ function mananaMovilHTML(){
     (h.otra?'<div class="mmotra"><input type="text" id="mmOtra" maxlength="20" aria-label="Otra etiqueta" autocomplete="off"><button class="btn s" data-a="mm-anadir">Añadir</button></div>':'')+
     '<button class="btn p nancho" data-a="mm-guardar"'+(h.min==null?' disabled':'')+'>Guardar</button>'+
     '<button class="btn s nancho mmno" data-a="mm-cerrar">Ahora no</button>'+
+    '<button class="btn s nancho" data-a="pausa-guia">⏸ Una pausa antes de abrir las apps</button>'+
     '<p class="mini" style="text-align:center">Se queda en tu móvil. Solo el número y la etiqueta.</p>');}
 function nocheHojaHTML(){
   const h=ui.nocheHoja;if(!h)return '';const vuelta=h.k==='vuelta',tit=vuelta?'🏠 He vuelto del Lloret':'🏢 He llegado al trabajo';
@@ -5668,6 +5681,42 @@ function nocheSemanaHTML(){
     D.filas.map(function(f){return '<div class="nsem"><span>'+f.ico+' '+esc(f.nom)+'</span>'+(f.act!=null?'<b>'+n(f.act)+' min</b>':'<b class="sd">sin datos</b>')+
       (f.act!=null&&f.ant!=null?'<small>la semana pasada '+n(f.ant)+'</small>':'<small>'+(f.act==null?'apunta unas noches en Sueño':'la semana pasada: sin datos')+'</small>')+'</div>';}).join('')+
     '<p class="nnota">'+(D.hay?'Un cambio para esta semana: <b>'+esc(D.prop)+'</b>.':esc(D.prop)+'.')+'</p></div>';}
+/* LM4: la pausa antes de abrir una app (ui.pausa={etq,fin,res}) y la guía de MacroDroid. Nada se guarda hasta «Sí, apúntala». */
+let pausaTimer=0;
+function pausaEnlace(e){return location.origin+location.pathname+'?pausa='+e;}
+function pausaHTML(){
+  const p=ui.pausa,P=mananaPlan(),n=Math.max(0,Math.ceil((p.fin-Date.now())/1000));
+  return '<div class="grid pz">'+
+    '<p class="mini pzhora">'+esc(horaLocal(new Date()))+(P?' · sales a las '+hm(Math.round(P.plan*60)):'')+'</p>'+
+    '<div class="pzcir"><div role="timer" aria-label="Segundos que faltan">'+n+'</div></div>'+
+    '<p class="pzq">Respira. ¿Seguro que ahora?</p>'+
+    (p.res?'<div class="card pzcard"><div class="cap">AL CERRAR</div><div class="pzt">¿Apuntamos esta pausa? · '+esc(PAUSA_ETQ[p.etq])+'</div>'+
+      '<div class="pz2"><button class="btn p" data-a="pausa-si">Sí, apúntala</button><button class="btn" data-a="pausa-no">No</button></div></div>'+
+      '<p class="mini pzhora">No se guarda nada hasta que tú lo digas.</p>':
+      '<button class="btn p nancho pzcerrar" data-a="pausa-cerrar">Cerrar</button>'+
+      (n>0?'<button class="btn nancho pzseguir" data-a="pausa-seguir" disabled>Abrir igualmente (en '+n+' s)</button>':
+        '<button class="btn nancho pzseguir" data-a="pausa-seguir">Abrir igualmente</button>'))+
+    '</div>';}
+function renderPausa(){
+  if(!ui.pausa){ui.hoyVista='';return render();}
+  $('#main').innerHTML=pausaHTML();
+  clearTimeout(pausaTimer);pausaTimer=0;
+  if(!ui.pausa.res&&ui.pausa.fin>Date.now())pausaTimer=setTimeout(function(){pausaTimer=0;if(ui.hoyVista==='pausa'&&ui.pausa&&!ui.pausa.res)render();},1000);}
+function macroGuiaHTML(){
+  const e=PAUSA_ETQ[ui.macroEtq]?ui.macroEtq:'videos',paso=function(n,t){return '<div class="pzp"><b>'+n+'</b><span>'+t+'</span></div>';};
+  return '<div class="grid pz"><div class="subcab"><button class="btn s volver" data-a="macro-volver">‹ Hoy</button></div>'+
+    '<h2 class="subtit">⏸ Una pausa antes de abrir</h2><p class="mini">De prueba 2 semanas. Lo hace MacroDroid (gratis); la app solo enseña la pausa.</p>'+
+    '<div class="card">'+paso(1,'Instala MacroDroid desde Google Play.')+
+    paso(2,'Nueva macro → Disparador: «Aplicación abierta» → elige las apps (por ejemplo, vídeos y redes).')+
+    paso(3,'Restricción: «Hora del día», lunes a viernes, de 06:50 a 07:35.')+
+    paso(4,'Acción: «Abrir dirección web» y pega este enlace:')+
+    '<div class="chips pzchips">'+Object.keys(PAUSA_ETQ).map(function(k){return '<button class="chip'+(k===e?' on':'')+'" data-a="macro-etq" data-v="'+k+'" aria-pressed="'+(k===e)+'">'+esc(PAUSA_ETQ[k])+'</button>';}).join('')+'</div>'+
+    '<div class="pzenl"><code>'+esc(pausaEnlace(e))+'</code><button class="btn" data-a="macro-copiar">Copiar</button></div>'+
+    paso(5,'Guárdala y pruébala abriendo una de esas apps.')+'</div>'+
+    '<div class="card">Funciona también en Chrome: los datos son los mismos que en la app instalada.</div>'+
+    '<p class="mini">Solo cuenta cuántas pausas y si cerraste: no guarda la hora ni qué apps.</p>'+
+    '<button class="btn nancho" data-a="macro-volver">Ahora no</button></div>';}
+function renderMacroGuia(){$('#main').innerHTML=macroGuiaHTML();}
 function renderNochePant(){$('#main').innerHTML=ui.hoyVista==='alarmas'?nocheAlarmasHTML():nocheSemanaHTML();}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
@@ -7944,6 +7993,8 @@ function lloretPoner(key){
     (p.bed?(' · a la cama a las '+p.bed+' para tus '+fmt(suenoCfg().min)+' h'):'')+
     (p.ajustado?' · adelantado para llegar a dormir':'')+(p.pronto?' · ⚠ sale muy pronto: ese día no te da':'')+cena;}
 function renderHoy(){
+  if(ui.hoyVista==='pausa')return renderPausa();
+  if(ui.hoyVista==='macrodroid')return renderMacroGuia();
   if(ui.hoyVista==='informe')return renderInforme();
   if(ui.hoyVista==='sueno')return renderSueno();
   if(ui.hoyVista==='alarmas'||ui.hoyVista==='semana')return renderNochePant();
@@ -26195,6 +26246,17 @@ function act(a,el){
       const x=Object.assign({},store.manana[h.key]||{},{movil:h.min});if(h.con.length)x.con=h.con.slice();else delete x.con;store.manana[h.key]=x;
       ui.mananaMovil=null;save();render();flash('Apuntado');break;}
     case 'mm-cerrar':ui.mananaMovil=null;render();break;
+    case 'pausa-cerrar':if(!ui.pausa)break;ui.pausa.res='c';render();break;
+    case 'pausa-seguir':if(!ui.pausa||ui.pausa.fin>Date.now())break;ui.pausa.res='s';render();break;
+    case 'pausa-si':{const p=ui.pausa;if(!p||!p.res||!PAUSA_ETQ[p.etq])break;if(!store.pausas)store.pausas={};
+      let d=fechaHoy();if(!/^\d{4}-\d{2}-\d{2}$/.test(d))d=iso(new Date());
+      const x=store.pausas[d]=store.pausas[d]||{},e=x[p.etq]=x[p.etq]||{c:0,s:0};e[p.res]++;
+      ui.pausa=null;ui.hoyVista='';save();render();flash('Pausa apuntada');break;}
+    case 'pausa-no':ui.pausa=null;ui.hoyVista='';render();break;
+    case 'pausa-guia':ui.tab='hoy';ui.mananaMovil=null;ui.hoyVista='macrodroid';ui.macroEtq=ui.macroEtq||'videos';render();break;
+    case 'macro-etq':if(Object.prototype.hasOwnProperty.call(PAUSA_ETQ,el.dataset.v)){ui.macroEtq=el.dataset.v;render();}break;
+    case 'macro-copiar':copy(pausaEnlace(ui.macroEtq||'videos'));break;
+    case 'macro-volver':ui.hoyVista='';render();break;
     case 'cafe-mas':{cafeMas(el.dataset.k||fechaHoy());break;}
     case 'cafe-menos':{cafeMenos(el.dataset.k||fechaHoy());break;}
     case 'manana-deshacer':{mananaSali(el.dataset.key,'');break;}
@@ -28631,6 +28693,15 @@ try{window.addEventListener('online',function(){try{calSyncAhoraSiToca();}catch(
 
 /* ===================== arranque ===================== */
 /* expone el modelo para depurar / testear desde la consola */
+/* LM4: MacroDroid abre «?pausa=videos»: se vacía la barra SIEMPRE y solo se abre la pantalla si la etiqueta está en la lista cerrada. No guarda nada. */
+function pausaEntrante(){
+  try{
+    const q=new URLSearchParams(location.search||'');if(!q.has('pausa'))return;
+    const v=q.get('pausa')||'';q.delete('pausa');
+    history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''));
+    if(!/^[a-z]{1,12}$/.test(v)||!Object.prototype.hasOwnProperty.call(PAUSA_ETQ,v))return;
+    ui.tab='hoy';ui.hoyVista='pausa';ui.pausa={etq:v,fin:Date.now()+5000,res:''};
+  }catch(e){}}
 function compartidoEntrante(){
   /* el share_target del manifest entrega title/text/url en la query de index.html (método GET).
      Se vacía la barra de direcciones para que al recargar no vuelva a abrirse la importación. */
@@ -28849,6 +28920,7 @@ window.addEventListener('resize',anchoMovil);
 
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
+pausaEntrante();   /* LM4 */
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
 /* Si has entrado compartiendo una receta, vienes con una intención concreta: el asistente del
