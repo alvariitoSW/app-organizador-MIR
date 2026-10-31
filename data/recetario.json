@@ -32,20 +32,51 @@
     {
       "n": "Fabada asturiana",
       "e": "🫘",
-      "alias": ["fabada", "fabes con compango", "fabada de olla"],
+      "alias": [
+        "fabada",
+        "fabes con compango",
+        "fabada de olla"
+      ],
       "m": "cn",
       "min": 170,
       "rac": 4,
       "ing": [
-        ["Alubia blanca", 90],
-        ["Chorizo", 30],
-        ["Morcilla", 25],
-        ["Panceta", 20],
-        ["Cebolla", 30],
-        ["Ajo", 3],
-        ["Azafrán", 0.05],
-        ["Pimentón", 1],
-        ["Sal", 1.5]
+        [
+          "Alubia blanca",
+          90
+        ],
+        [
+          "Chorizo",
+          30
+        ],
+        [
+          "Morcilla",
+          25
+        ],
+        [
+          "Panceta",
+          20
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Azafrán",
+          0.05
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Sal",
+          1.5
+        ]
       ],
       "pasos": [
         "La víspera, pon las fabes en remojo en el doble de su volumen de agua fría, unas 12 h. Tira las que floten.",
@@ -56,18 +87,45 @@
         "Prueba una faba: tiene que estar mantecosa. Sala ahora, saca la cebolla y deja reposar 15 min fuera del fuego. Trocea el compango y sírvelo aparte o encima."
       ],
       "tmp": [
-        { "p": 0, "min": 720, "t": "Remojo de las fabes" },
-        { "p": 2, "min": 15, "t": "Que rompa a hervir" },
-        { "p": 4, "min": 150, "t": "Cocción a fuego mínimo" },
-        { "p": 4, "min": 30, "t": "Asustar con agua fría" },
-        { "p": 5, "min": 15, "t": "Reposo" }
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo de las fabes"
+        },
+        {
+          "p": 2,
+          "min": 15,
+          "t": "Que rompa a hervir"
+        },
+        {
+          "p": 4,
+          "min": 150,
+          "t": "Cocción a fuego mínimo"
+        },
+        {
+          "p": 4,
+          "min": 30,
+          "t": "Asustar con agua fría"
+        },
+        {
+          "p": 5,
+          "min": 15,
+          "t": "Reposo"
+        }
       ],
       "kcal": 654,
       "prot": 34,
       "region": "AST",
       "cocina": "es",
       "tipo": "cu",
-      "equipo": { "fuegos": 1, "olla": 5, "micro": false, "horno": false, "freidora": false, "expres": 35 },
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 35
+      },
       "dif": 2,
       "dias": 4,
       "congela": true,
@@ -82,9 +140,1702 @@
         "Con olla exprés: tras el remojo, 35 min desde que sube la válvula, a fuego medio (4-5)."
       ],
       "error": "Hervirla a borbotones o removerla con cuchara: se rompen las fabes. Mueve la olla por las asas y mantén el fuego al 2-3.",
-      "etiqueta": ["Chorizo", "Morcilla"],
+      "etiqueta": [
+        "Chorizo",
+        "Morcilla"
+      ],
       "aviso": "El chorizo y la morcilla a veces llevan harina, pan o pimentón con trazas: que el envase diga «sin gluten» o lleve la espiga barrada.",
       "gluten": "depende"
+    },
+    {
+      "n": "Lentejas con arroz",
+      "e": "🥣",
+      "alias": [
+        "lentejas con arroz",
+        "lentejas y arroz",
+        "potaje de lentejas con arroz"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Lenteja",
+          75
+        ],
+        [
+          "Arroz blanco",
+          30
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Zanahoria",
+          30
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Comino",
+          0.5
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "Pica la cebolla y la zanahoria en cuadraditos y el ajo fino. Lava las lentejas en un colador y quita las piedrecitas.",
+        "En la olla de 4 L, calienta el aceite al 5 y sofríe la cebolla y la zanahoria 6 min, hasta que la cebolla esté transparente. Añade el ajo, el pimentón y el comino, remueve 20 segundos y echa enseguida el tomate para que el pimentón no se queme.",
+        "Echa las lentejas y cúbrelas con agua fría (tres dedos por encima). Sube al 8 hasta que rompa a hervir y baja al 3: tiene que temblar, no borbotear. Cuece con la tapa medio puesta 20 min.",
+        "Añade el arroz, mezcla una vez y, si ha bajado el líquido, completa con agua caliente hasta cubrir. Sube al 4 y cuece 15 min más.",
+        "Prueba una lenteja y un grano de arroz: los dos blandos pero enteros. Sala, apaga y deja reposar 5 min tapado; espesará solo."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 20,
+          "t": "Lentejas solas"
+        },
+        {
+          "p": 3,
+          "min": 15,
+          "t": "Con el arroz"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 507,
+      "prot": 22,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 4,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 12
+      },
+      "dif": 1,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Las lentejas no necesitan remojo: ganas tiempo y no pierden sabor.",
+        "El arroz va tarde para que no se pase: si cuece 40 min se deshace y el guiso queda pastoso.",
+        "Si hace falta agua, que sea caliente: el agua fría corta la cocción y la lenteja se endurece.",
+        "La sal al final y probando: el caldo concentra y es fácil pasarse.",
+        "Al día siguiente espesa más: al recalentar añade un chorrito de agua."
+      ],
+      "error": "Cocerlo todo junto desde el principio: el arroz se deshace. Añádelo en los últimos 15 min.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Alubias rojas con arroz",
+      "e": "🫘",
+      "alias": [
+        "alubias rojas y arroz",
+        "alubias con arroz",
+        "frijoles con arroz"
+      ],
+      "m": "cn",
+      "min": 90,
+      "rac": 4,
+      "ing": [
+        [
+          "Alubia roja",
+          80
+        ],
+        [
+          "Arroz blanco",
+          30
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Pimiento verde",
+          30
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, pon las alubias en remojo con el doble de agua fría, unas 10-12 h. Escúrrelas y tira el agua.",
+        "En la olla de 5 L calienta el aceite al 5 y sofríe la cebolla y el pimiento picados 8 min. Añade el ajo, el pimentón y el tomate y remueve 1 min.",
+        "Echa las alubias y cúbrelas con agua fría dos dedos por encima. Sube al 8 hasta que rompa a hervir; quita la espuma y baja al 2-3.",
+        "Cuece con la tapa medio puesta 55 min. Si baja mucho el agua, añade un vaso de agua caliente: nunca fría de golpe.",
+        "Echa el arroz, sube al 4 y cuece 15-18 min más, hasta que el grano esté tierno.",
+        "Sala, apaga y deja 5 min tapado. Debe quedar meloso, ni sopa ni seco."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo de las alubias"
+        },
+        {
+          "p": 3,
+          "min": 55,
+          "t": "Alubias solas"
+        },
+        {
+          "p": 4,
+          "min": 16,
+          "t": "Con el arroz"
+        },
+        {
+          "p": 5,
+          "min": 5,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 501,
+      "prot": 22,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 25
+      },
+      "dif": 2,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El remojo acorta la cocción y las alubias se cuecen por igual.",
+        "A fuego suave la piel no se rompe; el hervor fuerte las parte.",
+        "Con agua caliente la cocción no se corta y la piel no se endurece.",
+        "La sal al final evita que la piel se ponga dura.",
+        "El pimentón se echa con el tomate, nunca al aceite solo: se quema y amarga."
+      ],
+      "error": "Subir el fuego para ir más rápido: las alubias se abren y el caldo queda turbio. Mantén el 2-3.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "Con olla exprés: tras el remojo, 25 min desde que sube la válvula; luego abre, echa el arroz y cuece 15 min al 4."
+    },
+    {
+      "n": "Garbanzos con bacalao",
+      "e": "🐟",
+      "alias": [
+        "garbanzos y bacalao",
+        "potaje de garbanzos con bacalao",
+        "garbanzos con bacalao y espinacas"
+      ],
+      "m": "cn",
+      "min": 40,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          80
+        ],
+        [
+          "Bacalao desalado",
+          70
+        ],
+        [
+          "Espinaca",
+          50
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "La víspera, pon los garbanzos en remojo con agua tibia y un pellizco de sal, 12 h. Comprueba que el bacalao está bien desalado (si no lo está, desálalo 24-48 h en la nevera cambiando el agua).",
+        "Escurre los garbanzos, ponlos en la olla de 5 L con agua fría a dos dedos por encima y la cebolla entera. Sube al 8 hasta el hervor, quita la espuma y baja al 3.",
+        "Cuece 1 h 15 min con tapa medio puesta hasta que estén tiernos. Si hace falta agua, caliente.",
+        "En una sartén pequeña, aceite al 4: dora el ajo laminado 30 segundos, apaga y añade el pimentón; vuélcalo a la olla.",
+        "Añade el bacalao en lascas sin piel ni espinas y la espinaca. Cuece al 3 durante 6 min. Prueba antes de salar: el bacalao ya aporta sal."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo de los garbanzos"
+        },
+        {
+          "p": 2,
+          "min": 75,
+          "t": "Garbanzos solos"
+        },
+        {
+          "p": 4,
+          "min": 6,
+          "t": "Bacalao y espinaca"
+        }
+      ],
+      "kcal": 467,
+      "prot": 30,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El bacalao entra al final: si cuece mucho se hace estopa.",
+        "Remojar los garbanzos con agua tibia los ablanda y evita que queden duros.",
+        "El pimentón se echa con el fuego apagado: se quema con facilidad y amarga.",
+        "Quitar las espinas antes de añadirlo evita sustos al comer.",
+        "No harinear el bacalao: el caldo se espesa con los propios garbanzos."
+      ],
+      "error": "Salar el guiso antes de probar: el bacalao desalado aún lleva sal. Prueba siempre al final.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Garbanzos con langostinos",
+      "e": "🦐",
+      "alias": [
+        "garbanzos y langostinos",
+        "potaje de garbanzos con gambas",
+        "garbanzos con marisco"
+      ],
+      "m": "cn",
+      "min": 30,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          70
+        ],
+        [
+          "Langostino",
+          60
+        ],
+        [
+          "Caldo de pescado",
+          100
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Azafrán",
+          0.05
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja los garbanzos 12 h. Pela los langostinos y guarda cabezas y cáscaras en una taza.",
+        "Cuece los garbanzos en la olla de 5 L, cubiertos con agua, al 3 durante 1 h 15 min (en olla exprés, 30 min). Escúrrelos conservando un vaso del caldo.",
+        "Mientras tanto, en otra olla pequeña, al 5 con 1 cucharada de aceite, sofríe 3 min las cáscaras y las cabezas, aplástalas, añade el caldo de pescado y hierve 10 min al 4. Cuela y reserva.",
+        "En la olla grande, aceite al 5: sofríe la cebolla picada 6 min, el ajo, el pimentón y el tomate 2 min. Añade los garbanzos y el caldo colado con el azafrán. Cuece al 3 durante 8 min.",
+        "Añade los langostinos y cuece 2 min más. Rectifica de sal y deja reposar 3 min fuera del fuego."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo de los garbanzos"
+        },
+        {
+          "p": 1,
+          "min": 75,
+          "t": "Garbanzos"
+        },
+        {
+          "p": 3,
+          "min": 8,
+          "t": "Garbanzos en el caldo"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Langostinos"
+        }
+      ],
+      "kcal": 441,
+      "prot": 28,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Las cáscaras y cabezas dan mucho sabor al caldo: tirarlas es perder la mitad del plato.",
+        "Los langostinos van al final: con 2 min bastan; más y quedan duros.",
+        "El azafrán se tuesta unos segundos y se disuelve en caldo caliente para soltar color.",
+        "Si usas fumet de bote, ya lleva sal: sala al final.",
+        "Congelado sale bien, pero conviene añadir los langostinos al recalentar."
+      ],
+      "error": "Cocer los langostinos con los garbanzos desde el principio: se quedan como goma.",
+      "etiqueta": [
+        "Caldo de pescado"
+      ],
+      "aviso": "El caldo o fumet de bote a veces lleva trigo o aditivos con gluten: que diga «sin gluten» o tenga la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Potaje de vigilia",
+      "e": "✝️",
+      "alias": [
+        "potaje de cuaresma",
+        "potaje con bacalao y espinacas",
+        "potaje andaluz de vigilia"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          70
+        ],
+        [
+          "Bacalao desalado",
+          50
+        ],
+        [
+          "Espinaca",
+          60
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Tomate",
+          40
+        ],
+        [
+          "Almendra",
+          10
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Pimentón",
+          1.5
+        ],
+        [
+          "Comino",
+          0.5
+        ],
+        [
+          "Azafrán",
+          0.05
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "La víspera, pon los garbanzos en remojo con agua tibia, 12 h. Desala el bacalao si no lo está.",
+        "Cuece los garbanzos en la olla de 5 L con agua fría y la cebolla entera: al 8 hasta hervir, espuma fuera, y al 3 durante 1 h 15 min con tapa medio puesta.",
+        "Haz el majado sin pan frito: en una sartén, aceite al 4, dora la almendra y el ajo 1 min. Tritúralos en el vaso con el pimentón, el comino, el azafrán y un cacito del caldo.",
+        "Ralla el tomate, sofríelo en la misma sartén 4 min y échalo a la olla con el majado. Añade la espinaca.",
+        "Cuece 5 min al 3; echa el bacalao en lascas y cuece 5 min más. Sala si hace falta y deja reposar 10 min fuera del fuego."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 1,
+          "min": 75,
+          "t": "Garbanzos solos"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Espinaca"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Con el bacalao"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 504,
+      "prot": 27,
+      "region": "AND",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La almendra y el ajo dan cuerpo al caldo sin pan frito ni harina: así no hay gluten.",
+        "El comino y el pimentón se echan con el caldo, no al aceite: se queman y amargan.",
+        "El bacalao no se enharina: cuece tal cual y no espesa de más.",
+        "El reposo deja que el caldo se asiente y los sabores se junten.",
+        "Un chorrito de vinagre en la mesa, si te gusta, realza el potaje."
+      ],
+      "error": "Tostar el pan en el majado por costumbre: aquí no entra. Si lo ves en otra receta, sustitúyelo por almendra molida.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Pochas a la navarra",
+      "e": "🫘",
+      "alias": [
+        "pochas navarras",
+        "pochas con verduras",
+        "alubias pochas"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Alubia blanca",
+          90
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Pimiento verde",
+          30
+        ],
+        [
+          "Zanahoria",
+          25
+        ],
+        [
+          "Tomate",
+          40
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja las alubias 10-12 h. Pica la cebolla, el pimiento y la zanahoria.",
+        "En la olla de 5 L, aceite al 4: sofríe cebolla, pimiento y zanahoria 8 min con la tapa puesta para que suden sin dorarse.",
+        "Añade el ajo, el pimentón y el tomate rallado y cuece 3 min. Echa las alubias escurridas y cubre con agua fría dos dedos por encima.",
+        "Sube al 8 hasta el hervor, espuma fuera y baja al 2. Cuece con tapa medio puesta 50 min «asustando» una vez con medio vaso de agua fría a mitad.",
+        "Prueba una alubia: cremosa por dentro. Sala, apaga y reposa 10 min. Si sobra caldo, aplasta unas pocas con el tenedor para espesar."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 2,
+          "min": 3,
+          "t": "Sofrito con tomate"
+        },
+        {
+          "p": 3,
+          "min": 50,
+          "t": "Cocción suave"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 431,
+      "prot": 22,
+      "region": "NAV",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 25
+      },
+      "dif": 1,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Sudar las verduras con tapa las deja dulces, sin quemarlas.",
+        "Con la piel fina de las pochas, el fuego mínimo evita que se rompan.",
+        "Aplastar unas pocas espesa el caldo sin harina.",
+        "La sal al final: antes, la piel se endurece.",
+        "El pimiento verde y la zanahoria dan dulzor y quitan acidez al tomate."
+      ],
+      "error": "Hervirlas a borbotones: se pelan y el caldo queda turbio. Mantén el 2.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "Con pochas frescas de temporada no hay remojo y bastan 35 min; con las secas de este plato, el remojo es obligatorio."
+    },
+    {
+      "n": "Judías del Barco",
+      "e": "🫘",
+      "alias": [
+        "judías del barco de ávila",
+        "alubias del barco",
+        "judías con chorizo y costilla"
+      ],
+      "m": "cn",
+      "min": 120,
+      "rac": 4,
+      "ing": [
+        [
+          "Alubia blanca",
+          70
+        ],
+        [
+          "Chorizo",
+          25
+        ],
+        [
+          "Costilla de cerdo",
+          40
+        ],
+        [
+          "Panceta",
+          15
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1.5
+        ],
+        [
+          "Aceite de oliva",
+          5
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja las judías 12 h. Pica la cebolla.",
+        "En la olla de 5 L, aceite al 5: dora la costilla troceada y la panceta 5 min. Añade la cebolla y el ajo, 4 min más.",
+        "Añade el pimentón, remueve 10 segundos y echa las judías escurridas y el chorizo entero. Cubre con agua fría dos dedos por encima.",
+        "Sube al 8 hasta el hervor, espuma fuera y baja al 2-3. Cuece con tapa medio puesta 1 h 40 min; si baja el agua, añade caliente.",
+        "Prueba una judía: mantecosa. Retira el chorizo, trocéalo y devuélvelo. Sala al final y deja 10 min de reposo."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 1,
+          "min": 9,
+          "t": "Dorar costilla y verdura"
+        },
+        {
+          "p": 3,
+          "min": 100,
+          "t": "Cocción suave"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 600,
+      "prot": 31,
+      "region": "CYL",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 40
+      },
+      "dif": 2,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Dorar la costilla antes da sabor profundo al caldo.",
+        "Las judías del Barco tienen piel fina: fuego suave y sin remover con cuchara.",
+        "El chorizo se retira antes de trocearlo para que no suelte toda la grasa en el plato.",
+        "La grasa que sale de la costilla sustituye casi todo el aceite: por eso hay tan poco.",
+        "Mejor de un día para otro: el caldo espesa."
+      ],
+      "error": "Remover con cuchara: las judías se parten. Mueve la olla por las asas.",
+      "etiqueta": [
+        "Chorizo"
+      ],
+      "aviso": "El chorizo a veces lleva harina o trazas: que el envase diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende",
+      "duda": "Compra la costilla fresca sin adobar: el adobo puede llevar especias con gluten."
+    },
+    {
+      "n": "Potaje canario",
+      "e": "🎃",
+      "alias": [
+        "potaje canario de garbanzos",
+        "potaje de calabaza y garbanzos",
+        "potaje con millo"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          70
+        ],
+        [
+          "Calabaza",
+          70
+        ],
+        [
+          "Patata",
+          60
+        ],
+        [
+          "Judía verde",
+          30
+        ],
+        [
+          "Maíz dulce",
+          30
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Tomate",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Comino",
+          0.5
+        ],
+        [
+          "Azafrán",
+          0.05
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja los garbanzos 12 h. Corta la calabaza y la patata en dados de 2 cm y las judías en trozos.",
+        "Cuece los garbanzos en la olla de 5 L, cubiertos de agua, al 3 durante 1 h 15 min (tras hervir al 8 y quitar la espuma).",
+        "En una sartén, aceite al 4: sofríe la cebolla picada 5 min; añade ajo, tomate rallado, pimentón, comino y azafrán 3 min.",
+        "Echa el sofrito a la olla con la calabaza, la patata y las judías. Cuece al 3 durante 20 min.",
+        "Añade el maíz dulce y cuece 5 min más. Sala, apaga y deja reposar 10 min."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 1,
+          "min": 75,
+          "t": "Garbanzos"
+        },
+        {
+          "p": 3,
+          "min": 20,
+          "t": "Con verduras"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Con el maíz"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 469,
+      "prot": 18,
+      "region": "CAN",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 1,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La calabaza se deshace un poco y espesa el caldo sin harina.",
+        "El comino y el pimentón, con el tomate: así no se queman.",
+        "La patata entra con la calabaza y no antes: ambas deben quedar enteras pero tiernas.",
+        "El azafrán y el comino son la nota canaria: no los sustituyas por pastilla de caldo.",
+        "Para tanda: al recalentar, añade un chorro de agua."
+      ],
+      "error": "Cortar la patata muy pequeña: se deshace y el potaje queda como puré. Dados de 2 cm.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "El potaje canario de verdad lleva berros y bubango; aquí van calabaza, judía verde y maíz para que sea fácil de encontrar."
+    },
+    {
+      "n": "Olla gitana",
+      "e": "🍐",
+      "alias": [
+        "olla gitana murciana",
+        "puchero gitano",
+        "olla gitana de verduras"
+      ],
+      "m": "cn",
+      "min": 90,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          60
+        ],
+        [
+          "Judía verde",
+          40
+        ],
+        [
+          "Calabaza",
+          50
+        ],
+        [
+          "Patata",
+          60
+        ],
+        [
+          "Pera",
+          30
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Tomate",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Comino",
+          0.5
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja los garbanzos 12 h. Pela y trocea la pera, la calabaza y la patata; corta las judías.",
+        "Cuece los garbanzos en la olla de 5 L, cubiertos de agua fría, al 3 durante 1 h (tras el hervor al 8 y la espuma).",
+        "Sofríe en una sartén con el aceite al 4: cebolla 5 min; luego ajo, tomate rallado, pimentón y comino 3 min. Échalo a la olla.",
+        "Añade las judías, la calabaza y la patata. Cuece al 3 durante 15 min.",
+        "Echa la pera y cuece 8-10 min más: debe estar tierna sin deshacerse. Sala, apaga y reposa 10 min."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 1,
+          "min": 60,
+          "t": "Garbanzos solos"
+        },
+        {
+          "p": 3,
+          "min": 15,
+          "t": "Con las verduras"
+        },
+        {
+          "p": 4,
+          "min": 9,
+          "t": "Con la pera"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 422,
+      "prot": 15,
+      "region": "MUR",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 2,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La pera da un toque dulce que equilibra el pimentón: es la seña de este plato.",
+        "La pera va tarde: si cuece mucho se hace puré.",
+        "Sofreír las especias con el tomate evita que amarguen.",
+        "Reposar el guiso integra los sabores: de un día para otro mejora.",
+        "Si lo quieres más contundente, añade más garbanzo, no más patata."
+      ],
+      "error": "Echar la pera al principio: se deshace y queda un caldo dulzón. Añádela los últimos 10 min.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Alubias de Tolosa",
+      "e": "🫘",
+      "alias": [
+        "alubias negras de tolosa",
+        "alubias de tolosa con sacramentos",
+        "alubiada tolosana"
+      ],
+      "m": "cn",
+      "min": 150,
+      "rac": 4,
+      "ing": [
+        [
+          "Alubia roja",
+          70
+        ],
+        [
+          "Chorizo",
+          20
+        ],
+        [
+          "Morcilla",
+          25
+        ],
+        [
+          "Panceta",
+          15
+        ],
+        [
+          "Col",
+          50
+        ],
+        [
+          "Pimiento verde",
+          30
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Aceite de oliva",
+          8
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja las alubias 12 h. Escúrrelas. Pica la cebolla y corta la col en tiras.",
+        "En la olla de 5 L, aceite al 4: sofríe la cebolla y el ajo 6 min. Añade las alubias y cubre con agua fría; sube al 8 hasta el hervor y quita la espuma.",
+        "Baja al 2. Añade la panceta y cuece tapa medio puesta 1 h 30 min «asustando» dos veces con medio vaso de agua fría.",
+        "En otra olla, hierve el chorizo y la morcilla enteros al 3 durante 20 min con la col y el pimiento verde; así no ensucian el caldo de las alubias.",
+        "Sirve las alubias con la col, el pimiento y los embutidos troceados aparte: la costumbre vasca es acompañar con los «sacramentos». Sala las alubias al final."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 2,
+          "min": 90,
+          "t": "Alubias"
+        },
+        {
+          "p": 3,
+          "min": 20,
+          "t": "Embutido y col aparte"
+        }
+      ],
+      "kcal": 602,
+      "prot": 27,
+      "region": "PV",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 40
+      },
+      "dif": 3,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Los embutidos aparte dan un caldo limpio y alubias más finas.",
+        "Las alubias oscuras (de Tolosa) son de piel fina: fuego mínimo, sin cuchara.",
+        "La col y el pimiento cortan la grasa del embutido.",
+        "Asustar las alubias las deja cremosas.",
+        "Mejor al día siguiente."
+      ],
+      "error": "Hervir las alubias con el chorizo y la morcilla en la misma olla: el caldo queda graso y turbio.",
+      "etiqueta": [
+        "Chorizo",
+        "Morcilla"
+      ],
+      "aviso": "El chorizo y la morcilla a veces llevan harina o pan: que el envase diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende",
+      "duda": "Con alubia negra de Tolosa el tiempo es el mismo; si no la encuentras, vale la roja."
+    },
+    {
+      "n": "Caldo gallego",
+      "e": "🥬",
+      "alias": [
+        "caldo gallego con grelos",
+        "caldo con unto y berza",
+        "pote gallego"
+      ],
+      "m": "cn",
+      "min": 90,
+      "rac": 4,
+      "ing": [
+        [
+          "Alubia blanca",
+          45
+        ],
+        [
+          "Patata",
+          100
+        ],
+        [
+          "Col",
+          100
+        ],
+        [
+          "Panceta",
+          15
+        ],
+        [
+          "Jamón serrano",
+          25
+        ],
+        [
+          "Chorizo",
+          20
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja las alubias 12 h. Corta la col en tiras finas y la patata en trozos grandes (se cascan, no se cortan del todo).",
+        "En la olla de 5 L pon las alubias escurridas, la panceta y el jamón con agua fría hasta cubrir. Sube al 8 hasta el hervor y quita la espuma.",
+        "Baja al 3 y cuece con tapa medio puesta 1 h 10 min. Añade el chorizo a media cocción.",
+        "Añade la patata y la col. Cuece 20 min al 3 hasta que la patata esté tierna.",
+        "Saca la carne, trocéala y devuélvela. Rectifica de sal (el jamón ya salará) y deja reposar 10 min."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 2,
+          "min": 70,
+          "t": "Alubias y carne"
+        },
+        {
+          "p": 3,
+          "min": 20,
+          "t": "Patata y col"
+        },
+        {
+          "p": 4,
+          "min": 10,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 481,
+      "prot": 28,
+      "region": "GAL",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 35
+      },
+      "dif": 2,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Cascar la patata con el cuchillo suelta almidón y espesa el caldo.",
+        "La col entra al final: cocida de más amarga.",
+        "El jamón y el chorizo dan sal: prueba antes de salar.",
+        "Un chorro de aceite crudo al servir, si quieres más cuerpo.",
+        "De un día para otro, el caldo coge más cuerpo."
+      ],
+      "error": "Echar la col al principio: se pasa y amarga. Va en los últimos 20 min.",
+      "etiqueta": [
+        "Chorizo"
+      ],
+      "aviso": "El chorizo a veces lleva harina o trazas: que el envase diga «sin gluten» o lleve la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Cocido madrileño",
+      "e": "🍲",
+      "alias": [
+        "cocido",
+        "cocido completo madrileño",
+        "olla de cocido"
+      ],
+      "m": "c",
+      "min": 180,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          55
+        ],
+        [
+          "Contramuslo de pollo",
+          50
+        ],
+        [
+          "Ternera magra",
+          40
+        ],
+        [
+          "Chorizo",
+          15
+        ],
+        [
+          "Morcilla",
+          15
+        ],
+        [
+          "Panceta",
+          10
+        ],
+        [
+          "Zanahoria",
+          40
+        ],
+        [
+          "Patata",
+          70
+        ],
+        [
+          "Col",
+          60
+        ],
+        [
+          "Fideos sin gluten",
+          20
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja los garbanzos 12 h con agua tibia. Mételos en una malla o red de cocido para sacarlos de una vez.",
+        "En la olla de 6 L pon la ternera, el pollo, la panceta y la zanahoria en agua fría hasta cubrir. Sube al 8 hasta el hervor y quita la espuma.",
+        "Baja al 3 y añade los garbanzos, el chorizo y la morcilla. Cuece con tapa medio puesta 1 h 30 min.",
+        "Aparte, en una cazuela con agua salada, cuece la patata y la col al 5 durante 20 min.",
+        "Cuela el caldo de la olla, hiérvelo al 6 y cuece los fideos sin gluten 6-8 min como sopa.",
+        "Sirve en tres vuelcos: sopa, garbanzos con las verduras y carnes troceadas. Sala al gusto."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 2,
+          "min": 90,
+          "t": "Cocido"
+        },
+        {
+          "p": 3,
+          "min": 20,
+          "t": "Patata y col"
+        },
+        {
+          "p": 4,
+          "min": 7,
+          "t": "Fideos"
+        }
+      ],
+      "kcal": 679,
+      "prot": 38,
+      "region": "MAD",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 6,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 45
+      },
+      "dif": 3,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Poner la carne en agua fría suelta sabor al caldo.",
+        "Los garbanzos en red se sacan de una vez y no se pierde ninguno.",
+        "La patata y la col aparte mantienen el caldo claro.",
+        "La sopa con fideos sin gluten se cuece al final para que no se pase.",
+        "El caldo sobrante da para otra comida."
+      ],
+      "error": "Cocer la verdura y los embutidos en la misma olla: el caldo queda graso y turbio.",
+      "etiqueta": [
+        "Chorizo",
+        "Morcilla",
+        "Fideos sin gluten"
+      ],
+      "aviso": "Mira que el chorizo y la morcilla digan «sin gluten»; los fideos deben ser sin gluten, con la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Pasta e ceci",
+      "e": "🍝",
+      "alias": [
+        "pasta con garbanzos",
+        "pasta y garbanzos",
+        "pasta e ceci romana"
+      ],
+      "m": "cn",
+      "min": 35,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo de bote",
+          130
+        ],
+        [
+          "Pasta de lentejas sin gluten",
+          30
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Cebolla",
+          25
+        ],
+        [
+          "Apio",
+          20
+        ],
+        [
+          "Zanahoria",
+          20
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Pica muy fino la cebolla, el apio y la zanahoria, y el ajo. Escurre y aclara los garbanzos de bote.",
+        "En la olla de 4 L, aceite al 5: sofríe la verdura 7 min hasta que esté blanda. Añade el ajo 30 segundos.",
+        "Añade el tomate y cuece 3 min. Echa los garbanzos y 800 ml de agua; sube al 8 hasta el hervor y baja al 4 durante 10 min. Aplasta un puñado de garbanzos con un tenedor para espesar.",
+        "Echa la pasta sin gluten, sube al 6 y cuece el tiempo del paquete menos 1 min, removiendo a menudo para que no se pegue.",
+        "Apaga, sala si hace falta, añade perejil picado y un chorrito de aceite crudo. Reposa 3 min."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 10,
+          "t": "Garbanzos en el caldo"
+        },
+        {
+          "p": 3,
+          "min": 8,
+          "t": "Pasta (mira el paquete)"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 428,
+      "prot": 18,
+      "region": "IT",
+      "cocina": "it",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 4,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "Aplastar unos garbanzos espesa la sopa sin harina ni nata.",
+        "La pasta sin gluten suelta mucho almidón: añade agua caliente si se espesa de más.",
+        "La pasta de legumbre aguanta más tiempo al dente.",
+        "Puedes congelar el guiso sin la pasta: la pasta cocida se pasa al descongelar.",
+        "El perejil y el aceite crudo se echan al final: se pierden con el calor."
+      ],
+      "error": "Pasarse con la pasta: se deshace y la sopa queda pastosa. Sácala 1 min antes del paquete.",
+      "etiqueta": [
+        "Garbanzo de bote",
+        "Pasta de lentejas sin gluten"
+      ],
+      "aviso": "El líquido del bote puede llevar aditivos con gluten, y la pasta debe poner «sin gluten» con la espiga barrada.",
+      "gluten": "depende",
+      "duda": "Se hace con garbanzo de bote para llegar a 35 min; con garbanzo seco, añade remojo y 1 h 15 min de cocción."
+    },
+    {
+      "n": "Fakes (sopa de lentejas)",
+      "e": "🥣",
+      "alias": [
+        "fakes",
+        "fakes griegas",
+        "sopa griega de lentejas"
+      ],
+      "m": "cn",
+      "min": 45,
+      "rac": 4,
+      "ing": [
+        [
+          "Lenteja",
+          75
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Zanahoria",
+          30
+        ],
+        [
+          "Tomate triturado",
+          40
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Vinagre",
+          5
+        ],
+        [
+          "Orégano",
+          0.3
+        ],
+        [
+          "Queso feta",
+          20
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "Lava las lentejas. Pica la cebolla y la zanahoria; machaca el ajo.",
+        "En la olla de 4 L, aceite al 5: sofríe cebolla y zanahoria 6 min. Añade el ajo 30 segundos.",
+        "Echa las lentejas, el tomate, el orégano y 1,2 L de agua fría. Sube al 8 hasta el hervor, espuma fuera, y baja al 3.",
+        "Cuece con tapa medio puesta 30 min hasta que las lentejas estén tiernas y el caldo algo espeso.",
+        "Apaga, añade el vinagre y la sal. Sirve con el feta desmenuzado por encima y un hilo de aceite."
+      ],
+      "tmp": [
+        {
+          "p": 3,
+          "min": 30,
+          "t": "Lentejas"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 498,
+      "prot": 23,
+      "region": "GR",
+      "cocina": "gr",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 4,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 12
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El vinagre al final da un toque ácido típico: antes, se evapora.",
+        "Sin remojo: las lentejas pequeñas se cuecen enseguida.",
+        "La sal al final: antes, las endurece.",
+        "El feta aporta sal: prueba antes de sazonar.",
+        "Un hilo de aceite crudo al servir es parte del plato."
+      ],
+      "error": "Echar el vinagre al principio: pierde fuerza y puede endurecer la lenteja. Va al final.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Revithia (garbanzos al limón)",
+      "e": "🍋",
+      "alias": [
+        "revithia",
+        "garbanzos griegos al limón",
+        "revithia griega"
+      ],
+      "m": "cn",
+      "min": 60,
+      "rac": 4,
+      "ing": [
+        [
+          "Garbanzo",
+          75
+        ],
+        [
+          "Limón",
+          30
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Espinaca",
+          50
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Perejil",
+          3
+        ],
+        [
+          "Orégano",
+          0.5
+        ],
+        [
+          "Aceite de oliva",
+          15
+        ],
+        [
+          "Sal",
+          1.5
+        ]
+      ],
+      "pasos": [
+        "La víspera, remoja los garbanzos 12 h con agua tibia. Pica la cebolla y el ajo. Exprime el limón.",
+        "En la olla de 5 L, aceite al 5: sofríe cebolla y ajo 5 min. Añade los garbanzos escurridos y cubre con agua fría dos dedos por encima.",
+        "Sube al 8 hasta el hervor, espuma fuera, y baja al 3. Cuece con tapa medio puesta 1 h 10 min, hasta que estén tiernos.",
+        "Añade la espinaca y el orégano y cuece 3 min.",
+        "Apaga, añade el zumo de limón, el perejil picado y la sal. Reposa 5 min: el caldo debe quedar algo espeso."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 720,
+          "t": "Remojo"
+        },
+        {
+          "p": 2,
+          "min": 70,
+          "t": "Garbanzos"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Espinaca"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 449,
+      "prot": 17,
+      "region": "GR",
+      "cocina": "gr",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 5,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 30
+      },
+      "dif": 1,
+      "dias": 4,
+      "congela": true,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "El limón va fuera del fuego: cocinado pierde aroma y amarga.",
+        "El aceite de oliva al final da cremosidad.",
+        "La espinaca solo necesita un golpe de calor.",
+        "Los garbanzos remojados con agua tibia quedan más tiernos.",
+        "Mejor al día siguiente: absorben el limón."
+      ],
+      "error": "Echar el limón al principio: la acidez impide que el garbanzo se ablande. Va al final.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no",
+      "duda": "La revithia clásica se hace en horno en cazuela de barro; aquí va en olla en la vitro, con el mismo resultado cremoso."
     }
   ]
 }
