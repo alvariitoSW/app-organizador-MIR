@@ -150,6 +150,14 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
+### Tanda «Las Mañanas» · el móvil y la hora de salir (pedida el 31/10, **antes** que la CH4 de El Chef) · espera al Consejo
+
+[v3-movil-mananas] «Conectarla con Bienestar digital para que vea el uso del móvil y me ayude; últimamente necesito 1 h
+para salir de casa y en parte es por el móvil.» Ya hay «minutos de móvil» a mano (L3). Una web no puede leer el uso sola.
+Caminos: (1) medir las mañanas desde la regleta + modo concentración de Android (recomendado); (2) captura de Bienestar
+digital leída en el móvil; (3) app de automatización que pase el uso con «compartir»; (4) app nativa (regla 3, del
+usuario). Orden: El Chef CH3 (maqueta, en marcha) → **Consejo de Las Mañanas y sus tareas** → El Chef CH4 en adelante.
+
 ### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · siguiente: **CH4**
 
 Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
@@ -183,7 +191,6 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
-- [v3-movil-mananas] (2026-10-31) Conectar con Bienestar digital para ver el uso del móvil con detalle y ayudarle a gestionarlo; ejemplo: necesita 1 h para salir de casa y en parte es por el móvil. Ya hay «minutos de móvil» a mano (L3) y una web no puede leer el uso sola. Caminos: (1) mañanas medidas desde la regleta (despertador → salir) + modo concentración del propio Android, sin código nuevo de lectura; (2) captura de Bienestar digital leída en el móvil (OCR local); (3) una app de automatización de Android que pase el uso por app a la web con «compartir»; (4) app nativa de Android, que rompe «sin build» (regla 3, del usuario). Pendiente de Consejo.
 - [v3-mapa-comidas] (2026-10-30) Un mapamundi tipo Google Maps que vea dónde estoy ahora, poder decir «en este sitio he comido aquí» y guardar una foto de lo que he comido (de vacaciones o al salir de trabajar). A futuro. Ojo, regla 3: la ubicación y las fotos se quedan en el móvil (IndexedDB, no localStorage); los mosaicos del mapa (OpenStreetMap) se piden por red y dejan ver por dónde andas, así que decide el usuario.
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - ~~(→ El Cierre C3) [v3-horas-guardia]~~ ✅ hecho 30/10 · Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
