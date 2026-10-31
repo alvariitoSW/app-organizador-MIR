@@ -3988,6 +3988,29 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .npant .nsem b{font-size:26px;font-variant-numeric:tabular-nums}
 .npant .nsem b.sd{font-size:15px;font-weight:600;color:var(--ink2);align-self:center}
 .npant .nsem small{grid-column:1/-1;color:var(--ink2);font-size:12.5px}
+.npant .ntramos{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:8px}
+.npant .ntramos .cap{font-size:12.5px;font-weight:800;color:var(--ink2);margin-bottom:6px}
+.npant .ntramos .row{display:flex;justify-content:space-between;margin-top:6px}
+.npant .ntr{display:flex;align-items:flex-end;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.npant .ntrb{flex:1;min-width:0}
+.npant .ntn{font-size:14px;font-weight:800;margin-bottom:4px}
+.npant .ntn .mini{font-weight:600}
+.npant .ntr i{display:block;height:10px;border-radius:5px;margin-bottom:3px}
+.npant .ntr i.pv{border:1.5px solid var(--ink2)}
+.npant .ntr i.re{background:var(--brand)}
+.npant .ntr b{color:var(--brand);font-weight:900;min-width:34px;text-align:right}
+.npant .ndest{border-left:4px solid var(--brand);padding:6px 10px;font-size:17px;font-weight:800;margin:10px 0 2px}
+.npant .nmov span{font-weight:700}
+.npant .nmitad{margin-top:10px;border:1px solid var(--brand);border-radius:14px;padding:6px 10px}
+.npant .nmitad .row{display:flex;align-items:center;padding:6px 0}
+.npant .nmitad .cap{font-size:12.5px;font-weight:800;color:var(--ink2)}
+.npant .nnuevo{font-size:13px;font-weight:900;color:var(--sobre-marca);background:var(--brand);border-radius:8px;padding:1px 7px;margin-left:auto}
+.npant .nics{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:44px;margin-top:8px}
+.npant .nics small{flex-basis:100%;color:var(--ink2);font-size:12.5px}
+.npant .nguia{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:8px}
+.npaso{display:flex;gap:10px;font-size:16px;line-height:1.45;margin-bottom:8px}
+.npaso:last-child{margin-bottom:0}
+.npaso b{color:var(--brand);font-size:18px;min-width:14px}
 .npant .nnota{color:var(--ink2);font-size:13px;background:var(--card2,var(--card));border-radius:12px;padding:10px 12px;margin:10px 0 0}
 .npant .nancho{width:100%;min-height:48px;margin-top:14px}
 /* ===== Dinero · Tu mes (El Vaso) ===== */

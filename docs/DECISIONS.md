@@ -2368,3 +2368,22 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - El día de la cuenta es el de `fechaHoy()` (el de la pantalla), no el de la hora del sistema.
   - La guía solo cuelga de la hoja del móvil; no hay botón en Ajustes.
   - `store.pausas` entra en la copia de seguridad como cualquier otro dato (no lleva nada personal más allá de los recuentos).
+
+## Las Mañanas · LM3 · Tu semana por tramos, alarmas de mitad de mañana y guía de Android (2026-10-31)
+- **Elegido**
+  - «📊 Tu semana» se amplía (no hay pantalla nueva): debajo de las tres cifras, «Tu mañana por tramos» (Cama → En pie,
+    En pie → Vestido, Vestido → Puerta) con la media real frente a la prevista de los últimos 7 días, en barras de la
+    marca. Con 4 mañanas o más, una frase: «Lo que más se estira: de vestido a la puerta, +12 min.» (o «Vas a tu hora»).
+    Con menos, «Con N mañanas apuntadas. Hace falta un mínimo de 4.». Y la media del móvil de la mañana. Sin rojo.
+  - Lo previsto sale de la regleta: «En pie» = el despertador; «Vestido» = el inicio del tramo «vestir» (tras ducha y
+    café); «Puerta» = la hora de salir del plan.
+  - «⏰ Alarmas del móvil»: «Quedan 30 min» y «Quedan 10 min» (salida −30 y −10, lunes a viernes) y una casilla para
+    añadirlas al `.ics`, apagada de serie (`sueno.avisoMitad`).
+  - Guía «🌙 Que el móvil no te llame por la mañana» (Pixel / Samsung, 5 pasos con el horario de tu despertador a tu bus),
+    a la que se llega desde Alarmas. Es un extra: no guarda nada.
+- **Descartado**
+  - Tomar como «Vestido» previsto el final del tramo «vestir»: coincide con la salida y dejaba Vestido → Puerta en 0 min.
+  - La tarjeta «Samsung ▸ ver» de la maqueta: dos pestañas Pixel/Samsung ocupan menos y se leen igual.
+- **Supuestos**
+  - Un tramo cuenta si dura entre 0 y 4 h; «Cama → En pie» tiene previsto 0.
+  - Las alarmas de mitad de mañana van al `.ics` sin ningún dato del móvil ni de las marcas.
