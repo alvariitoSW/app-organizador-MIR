@@ -15521,10 +15521,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return c ? { txt: c.innerText.replace(/\s+/g, ' '), enl: [...c.querySelectorAll('a')].map((a) => ({ h: a.getAttribute('href'), t: a.target, r: a.rel })), ancho: document.documentElement.scrollWidth } : null; });
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397c')); localStorage.removeItem('__copia397c'); P.ui.mvMedio = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
+    /* de noche la salida cae el día de antes y la app le pone el día («23:15 (30 oct)»): vale con o sin él */
+    const calcOk = (t, h) => t === 'Sal de casa a las ' + h || new RegExp('^Sal de casa a las ' + h + ' \\(\\d+ \\w+\\)$').test(t);
     const maps = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent('Aeropuerto <b>Valencia</b> & Co');
     check('397c Vuelo en el modo viaje · al elegir Avión sale «El vuelo»; día, hora, aeropuerto (con HTML escapado) y trayecto rellenan la salida (2 h → 3 h la adelanta 1 h) y en Hoy sale «Sal de casa» con Maps y DGT en pestaña aparte',
-      r.sinTarjeta === 0 && r.conTarjeta === 1 && r.a.salida && r.a.salida.hora === sal(2, 45) && r.a.negrita === 0 && r.a.vuelo.aero === 'Aeropuerto <b>Valencia</b> & Co' && r.a.calc === 'Sal de casa a las ' + sal(2, 45) &&
-      r.b.salida.hora === sal(3, 45) && r.b.calc === 'Sal de casa a las ' + sal(3, 45) &&
+      r.sinTarjeta === 0 && r.conTarjeta === 1 && r.a.salida && r.a.salida.hora === sal(2, 45) && r.a.negrita === 0 && r.a.vuelo.aero === 'Aeropuerto <b>Valencia</b> & Co' && calcOk(r.a.calc, sal(2, 45)) &&
+      r.b.salida.hora === sal(3, 45) && calcOk(r.b.calc, sal(3, 45)) &&
       r.enl.length === 2 && r.enl[0].h === maps && r.enl[1].h === 'https://infocar.dgt.es/etraffic/' && r.enl.every((e) => e.t === '_blank' && /noopener/.test(e.r)) &&
       r.hoy && r.hoy.txt.indexOf('Sal de casa a las ' + sal(3, 45).replace(/^0/, '')) >= 0 && r.hoy.enl.length === 2 && r.hoy.enl.every((e) => e.t === '_blank') && r.hoy.ancho <= 412, JSON.stringify(r));
   }
