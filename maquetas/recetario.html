@@ -51,6 +51,32 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-a
 .cat .tw{overflow-x:auto}
 .cat td,.cat th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .cat th{color:var(--ink2);font-weight:800}
+/* completar · modo cocina y ajustes */
+.t2{margin-top:14px}
+.btn.g{min-height:56px;font-size:17px}
+.tm{display:flex;align-items:center;gap:6px;min-height:56px;padding:4px 4px 4px 12px;border-radius:13px;border:1px solid var(--line);background:var(--card);margin-bottom:6px;font-size:14px}
+.tm .t{flex:1;line-height:1.25}.tm .t b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.alarma{border:2px solid var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card));border-radius:14px;padding:10px 12px;margin:2px 0 8px}
+.alarma .n{font-size:18px;font-weight:900}
+.aviso.fuerte{border-width:2px;font-size:16px;padding:12px}
+.grande{font-size:22px;line-height:1.35;font-weight:700}.grande b{color:var(--brand)}
+.det{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:6px}
+.det summary{min-height:44px;display:flex;align-items:center;padding:0 12px;font-weight:800;font-size:15px}
+.det p{margin:0;padding:0 12px 12px;font-size:15px;line-height:1.4}
+.ing .box.v{background:var(--ok);border-color:var(--ok)}
+.ing .box.v::after{content:"✓";display:block;text-align:center;line-height:18px;font-size:14px;font-weight:900;color:var(--sobre)}
+.rep{border:1px solid var(--line);background:var(--bg2);border-radius:12px;padding:8px 6px;font-size:14px;font-weight:700;text-align:center;line-height:1.3}
+.rep b{display:block;font-size:22px;color:var(--ok)}
+.fila{display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0;border-bottom:1px solid var(--line);font-size:15px;font-weight:700}
+.fila:last-child{border-bottom:0}
+.sw{width:48px;height:28px;border-radius:14px;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ink2)}
+.sw.on{background:var(--ok)}.sw.on::after{left:23px;background:var(--sobre)}
+.chips.w{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none}
+.velo{position:absolute;inset:0;background:rgba(2,4,10,.62);z-index:2}
+.hoja{box-shadow:0 -10px 30px rgba(2,4,10,.35)}
+.hoja{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--bg2);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:14px 12px 18px;box-shadow:0 -10px 30px color-mix(in srgb,var(--page) 60%,transparent)}
+.hoja .pl{min-height:64px}.hoja .pl .btn{flex:none}
 </style>
 <div class=intro>
 <h1>Recetario español · sin gluten</h1>
@@ -154,6 +180,220 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-a
 </div>
 </div>
 <div class=pie><div class=two><span class="btn p">Guardar sin gluten</span><span class=btn>Revisar ingredientes</span></div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+</div>
+
+<div class=intro>
+<h1>Completar · El Chef CH3</h1>
+<p>Las pantallas que faltan: modo cocina (antes, paso, sin vuelta atrás, temporizadores), conservación, «Tu cocina», filtro por cocina, «Estoy reventado», TikTok cambiado, marcas seguras y el aviso al encender el horno. Misma piel que las cinco de arriba.</p>
+</div>
+
+<div class=mundo>
+
+<!-- 6 · modo cocina: antes -->
+<div class=ab><span class=lbl>6 · COCINA · ANTES</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>Tenlo todo a mano</h1></div>
+<div class=hero style="margin-bottom:8px"><span class=e>🫘</span><div><h2>Fabada asturiana</h2><div class=mini>4 raciones · antes del paso 1</div></div></div>
+<div class=card>
+<div class=cap>INGREDIENTES · MARCA LO QUE YA TIENES</div>
+<div class=ing><span class="box v"></span>Fabes (en remojo desde anoche)<span class=g>400 g</span></div>
+<div class=ing><span class="box v"></span>Chorizo asturiano<span class=g>2 (200 g)</span></div>
+<div class=ing><span class="box v"></span>Morcilla asturiana<span class=g>2 (200 g)</span></div>
+<div class=ing><span class=box></span>Panceta curada<span class=g>150 g</span></div>
+<div class=ing><span class=box></span>Lacón<span class=g>150 g</span></div>
+<div class=ing><span class=box></span>Cebolla y 2 dientes de ajo<span class=g>1 + 2</span></div>
+<div class=ing><span class=box></span>Azafrán<span class=g>unas hebras</span></div>
+</div>
+<div class=card>
+<div class=cap>UTENSILIOS</div>
+<div class=ing><span class="box v"></span>Olla de 5 L<span class=g>cabe de sobra</span></div>
+<div class=ing><span class="box v"></span>Vitrocerámica<span class=g>fuego 1-9</span></div>
+<div class=ing><span class=box></span>Cuchillo y tabla</div>
+<div class=ing><span class=box></span>Espumadera</div>
+</div>
+<span class="chip on">💡 Pantalla encendida mientras cocinas</span>
+</div>
+<div class=pie><span class="btn p g">Empezar · paso 1</span></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 7 · modo cocina: paso -->
+<div class=ab><span class=lbl>7 · COCINA · PASO</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>Fabada · paso 3 de 7</h1></div>
+<div class=tm><div class=t>Fabada<b>1:42:10</b><span class=mini>acaba a las 15:20</span></div><span class=ic>⏸</span><span class=ic>×</span></div>
+<div class=tm><div class=t>Arroz<b>06:30</b><span class=mini>acaba a las 13:44</span></div><span class=ic>⏸</span><span class=ic>×</span></div>
+<div class=card>
+<div class=cap>PASO 3 · 💡 ENCENDIDA</div>
+<p class=grande style="margin:0 0 10px">Asusta las fabes con un chorro de agua fría y baja a <b>fuego 3 de 9</b>, que apenas tiemble.</p>
+<span class="btn p g">⏱ 2 h · empezar temporizador</span>
+</div>
+<details class=det open><summary>¿Por qué?</summary><p>El golpe de agua fría «asusta» la legumbre y así la piel no se abre: quedan enteras y cremosas.</p></details>
+<details class=det open><summary>Error típico</summary><p>Removerla con cuchara: se rompe. Mejor mueve la olla por las asas.</p></details>
+<p class=mini style="margin:4px 4px 0">Al acabar vibra y avisa aquí; la notificación del móvil, si le das permiso.</p>
+</div>
+<div class=pie><div class=two><span class="btn g">‹ anterior</span><span class="btn p g">siguiente ›</span></div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 8 · sin vuelta atrás + temporizador acabado -->
+<div class=ab><span class=lbl>8 · SIN VUELTA</span><div class=cuerpo>
+<div class="alarma"><div class=n>⏰ Arroz listo · 13:44</div><div class=two style="margin-top:8px"><span class="btn p">Hecho</span><span class=btn>+2 min</span></div></div>
+<div class=top><span class=back>‹</span><h1>Fabada · paso 6 de 7</h1></div>
+<div class=tm><div class=t>Fabada<b>0:21:40</b><span class=mini>acaba a las 14:06</span></div><span class=ic>⏸</span><span class=ic>×</span></div>
+<div class="aviso fuerte">⚠️ <b>Ojo: esto no tiene vuelta atrás</b> — una vez echas la sal no se quita; prueba antes.</div>
+<div class=card>
+<div class=cap>PASO 6 · 💡 ENCENDIDA</div>
+<p class=grande style="margin:0">Prueba el caldo. Si hace falta, echa <b>una pizca de sal</b>, remueve moviendo la olla y vuelve a probar.</p>
+</div>
+<details class=det open><summary>¿Por qué?</summary><p>El chorizo, la panceta y el lacón ya sueltan sal mientras cuecen. Si echas antes, te pasas.</p></details>
+</div>
+<div class=pie><div class=two><span class="btn g">‹ anterior</span><span class="btn p g">siguiente ›</span></div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 9 · al terminar -->
+<div class=ab><span class=lbl>9 · AL TERMINAR</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>¡Hecho! 4 raciones</h1></div>
+<div class=hero style="margin-bottom:8px"><span class=e>🎉</span><div><h2>Fabada asturiana</h2><div class=mini>Ahora toca guardarla bien</div></div></div>
+<div class=card>
+<div class=cap>CONSERVACIÓN</div>
+<div class=ing><span>❄️</span><span>Enfría en <b>menos de 2 h</b>: repártela en tápers.</span></div>
+<div class=ing><span>🥘</span><span>Guiso: <b>3-4 días</b> en la nevera.</span></div>
+<div class=ing><span>🐟</span><span>Pescado: <b>2 días</b>.</span></div>
+<div class=ing><span>🍚</span><span>Arroz: <b>1 día</b>.</span></div>
+<div class=ing><span>🧊</span><span>Congelado: hasta <b>3 meses</b>.</span></div>
+<div class=ing><span>🔥</span><span>Recalienta <b>una sola vez</b> y bien caliente.</span></div>
+</div>
+<div class=cap style="margin:0 2px 6px">REPARTO SUGERIDO</div>
+<div class=three>
+<div class=rep>🍽️<b>1</b>hoy</div>
+<div class=rep>🧊<b>2</b>a la nevera, hasta el lunes</div>
+<div class=rep>🏥<b>1</b>al congelador, táper de guardia</div>
+</div>
+</div>
+<div class=pie><div class=two><span class="btn p">Guardar en la nevera</span><span class=btn>Cerrar</span></div></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 10 · tu cocina -->
+<div class=ab><span class=lbl>10 · TU COCINA</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>Cómo cocinas</h1></div>
+<div class=card><div class=fila><span class=sp>🌾 Sin gluten (celíaco)</span><span class="sw on"></span></div></div>
+<div class=card>
+<div class=cap>TU COCINA</div>
+<div class=fila><span class=sp>📡 Microondas</span><span class="sw on"></span></div>
+<div class=fila><span class=sp>🔥 Vitrocerámica</span><span class="sw on"></span></div>
+<div class=fila><span class=sp>Fuegos<br><span class=mini>tu vitro es pequeña</span></span><span class=chip>1</span><span class="chip on">2</span><span class=chip>4</span></div>
+<div class=fila><span class=sp>🍲 Olla</span><span class=chip>3 L</span><span class="chip on">5 L</span><span class=chip>6 L</span></div>
+<div class=fila><span class=sp>⏲️ Olla exprés</span><span class=sw></span></div>
+<div class=fila><span class=sp>♨️ Horno</span><span class=sw></span></div>
+<div class=fila><span class=sp>💨 Freidora de aire</span><span class=sw></span></div>
+</div>
+<div class=sg>🍽️ <span>Con tu cocina puedes hacer <b id=n10></b> de <b id=m10></b> platos; los demás salen adaptados o esperan.</span></div>
+<p class=mini style="margin:0 4px">Hoy: micro y vitro pequeña. Si te mudas, cámbialo aquí y la app se ajusta sola, sin perder nada.</p>
+</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 11 · portada con filtro cocina -->
+<div class=ab><span class=lbl>11 · PORTADA</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>Recetario</h1></div>
+<span class="btn p g" style="margin-bottom:8px">😮‍💨 Estoy reventado</span>
+<div class=cap style="margin:0 2px 4px">COCINA</div>
+<div class="chips w"><span class="chip on">🇪🇸 España</span><span class=chip>🇮🇹 Italia</span><span class=chip>🇬🇷 Grecia</span><span class=chip>🌊 Mediterráneo</span></div>
+<div class="chips w"><span class="chip on">Asturias</span><span class=chip>Galicia</span><span class=chip>Andalucía</span><span class=chip>Canarias</span><span class=chip>Más…</span></div>
+<div class=card style="padding:4px 10px">
+<div class=pl><span class=e>🫘</span><div><div class=n>Fabada asturiana</div><div class=mini>Asturias · 2 h 30 · <span class=duda>chorizo y morcilla: etiqueta</span></div></div></div>
+<div class=pl><span class=e>🐟</span><div><div class=n>Marmitako</div><div class=mini>País Vasco · 45 min · <span class=ok>sin gluten</span></div></div></div>
+<div class=pl><span class=e>🍲</span><div><div class=n>Caldo gallego</div><div class=mini>Galicia · 1 h 30 · <span class=ok>sin gluten</span></div></div></div>
+<div class=pl><span class=e>🍗</span><div><div class=n>Pollo al limón</div><div class=mini>Toda España · 40 min · <span class=ok>sin gluten</span></div></div></div>
+<div class=pl><span class=e>🥘</span><div><div class=n>Arroz con verduras</div><div class=mini>Toda España · 40 min · <span class=duda>caldo: etiqueta</span></div></div></div>
+</div>
+<span class=chip>ver también los que piden horno 🔒</span>
+<p class=mini style="margin:6px 4px 0"><span id=x11></span> platos esperan horno o freidora.</p>
+</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 12 · estoy reventado -->
+<div class=ab><span class=lbl>12 · REVENTADO</span><div class=cuerpo style="opacity:.35">
+<div class="top t2"><span class=back>‹</span><h1>Recetario</h1></div>
+<span class="btn p g" style="margin-bottom:8px">😮‍💨 Estoy reventado</span>
+<div class="chips w"><span class="chip on">🇪🇸 España</span><span class=chip>🇮🇹 Italia</span><span class=chip>🇬🇷 Grecia</span></div>
+<div class=card style="padding:4px 10px">
+<div class=pl><span class=e>🫘</span><div><div class=n>Fabada asturiana</div><div class=mini>Asturias · 2 h 30</div></div></div>
+<div class=pl><span class=e>🐟</span><div><div class=n>Marmitako</div><div class=mini>País Vasco · 45 min</div></div></div>
+</div>
+</div>
+<div class=velo></div>
+<div class=hoja>
+<div class=cap>😮‍💨 ESTOY REVENTADO</div>
+<h2 style="margin:0 0 8px;font-size:19px">Para hoy, ≤20 min y con lo que sueles tener</h2>
+<div class=pl><span class=e>🍳</span><div class=sp><div class=n>Tortilla francesa con atún</div><div class=mini>8 min · 📡 micro · <span style="white-space:nowrap">310 kcal · 32 g prot</span></div></div><span class=btn>Cocinar</span></div>
+<div class=pl><span class=e>🫘</span><div class=sp><div class=n>Garbanzos de bote salteados con espinacas</div><div class=mini>12 min · 🔥 vitro · <span style="white-space:nowrap">380 kcal · 18 g prot</span></div></div><span class=btn>Cocinar</span></div>
+<div class=pl><span class=e>🐟</span><div class=sp><div class=n>Salmón en papillote al micro</div><div class=mini>10 min · 📡 micro · <span style="white-space:nowrap">420 kcal · 34 g prot</span></div></div><span class=btn>Cocinar</span></div>
+<p class=mini style="margin:6px 2px 8px">Solo platos sin horno y con despensa básica sin gluten.</p>
+<span class=btn>Otros tres</span>
+</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 13 · TikTok cambiado -->
+<div class=ab><span class=lbl>13 · TIKTOK</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>Receta de TikTok</h1></div>
+<div class=sg>✅ <span><b>Cambiado para que sea sin gluten</b></span></div>
+<div class=card><div class=hero><span class=e>🍗</span><div><h2 style="font-size:18px">Pollo crujiente al horno</h2><div class=mini>de @cocina · 4 raciones</div></div></div></div>
+<div class=card>
+<div class=cap>LO QUE HE CAMBIADO</div>
+<div class=cambio><span class=sp><s>harina de trigo</s> → <b>harina de arroz</b></span><span class=btn>Deshacer</span></div>
+<div class=cambio><span class=sp><s>salsa de soja</s> → <b>tamari sin gluten</b></span><span class=btn>Deshacer</span></div>
+<div class=cambio><span class=sp><s>pan rallado</s> → <b>pan rallado sin gluten</b></span><span class=btn>Deshacer</span></div>
+</div>
+<div class=aviso>🌾 <b>Caldo de pollo: mira la etiqueta</b>
+<span class=btn style="margin-top:8px">Es de mis marcas seguras ✓</span></div>
+</div>
+<div class=pie><span class="btn p g">Guardar</span></div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 14 · mis marcas seguras -->
+<div class=ab><span class=lbl>14 · MIS MARCAS</span><div class=cuerpo>
+<div class="top t2"><span class=back>‹</span><h1>Mis marcas seguras</h1></div>
+<p class=mini style="margin:0 2px 8px">Las marcas que has comprobado una vez. Lo que marcas aquí deja de salir en ámbar.</p>
+<div class=card style="padding:4px 12px">
+<div class=fila><span class=sp>Tu chorizo (marca del súper)<br><span class=mini>marcado el 12 oct</span></span><span class=btn>Quitar</span></div>
+<div class=fila><span class=sp>Tu caldo de pollo en brik<br><span class=mini>marcado el 3 oct</span></span><span class=btn>Quitar</span></div>
+<div class=fila><span class=sp>Tu tomate frito<br><span class=mini>marcado el 28 sep</span></span><span class=btn>Quitar</span></div>
+<div class=fila><span class=sp>Tu morcilla (la de siempre)<br><span class=mini>marcado el 15 sep</span></span><span class=btn>Quitar</span></div>
+<div class=fila><span class=sp>Tu chocolate a la taza<br><span class=mini>marcado el 2 sep</span></span><span class=btn>Quitar</span></div>
+</div>
+<div class=aviso>🌾 Revisa la etiqueta de vez en cuando: las recetas de las marcas cambian. La app no sustituye tu criterio.</div>
+<p class=mini style="margin:0 4px">Lo que marcas aquí deja de salir en ámbar.</p>
+</div>
+<div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
+</div>
+
+<!-- 15 · ahora puedes hacer N platos más -->
+<div class=ab><span class=lbl>15 · CON HORNO</span><div class=cuerpo style="opacity:.35">
+<div class="top t2"><span class=back>‹</span><h1>Cómo cocinas</h1></div>
+<div class=card>
+<div class=cap>TU COCINA</div>
+<div class=fila><span class=sp>📡 Microondas</span><span class="sw on"></span></div>
+<div class=fila><span class=sp>🔥 Vitrocerámica</span><span class="sw on"></span></div>
+<div class=fila><span class=sp>♨️ Horno</span><span class="sw on"></span></div>
+<div class=fila><span class=sp>💨 Freidora de aire</span><span class=sw></span></div>
+</div>
+</div>
+<div class=velo></div>
+<div class=hoja>
+<div class=cap>♨️ HORNO ENCENDIDO</div>
+<h2 style="margin:0 0 6px;font-size:20px">🔥 Con horno, <b id=n15 style="color:var(--ok)"></b> platos más</h2>
+<div class=card style="padding:2px 10px;margin-bottom:8px" id=l15></div>
+<p class=mini style="margin:0 2px 10px">Y <b id=m15></b> que hacías adaptados vuelven a su receta de siempre (puedes seguir con la adaptada).</p>
+<div class=two><span class="btn p">Verlos</span><span class=btn>Luego</span></div>
+</div>
 <div class=nav><div><span>🏠</span>Hoy</div><div><span>🗓️</span>Mes</div><div class=on><span>🍽️</span>Comer</div><div><span>🏋️</span>Entreno</div><div><span>☰</span>Más</div></div>
 </div>
 
@@ -329,4 +569,19 @@ document.getElementById('cat').innerHTML=Object.keys(TIPO).map(function(t){
       (p[5]?(/etiqueta/.test(p[5])?'<span class=duda>':'<span class=ok>')+p[5]+'</span>':'<span class=ok>de siempre</span>')+'</td><td>'+
       (p[6]?p[6].split('').map(function(c){return EQ[c];}).join(''):'—')+'</td><td>'+
       (hoyVale(p)?'<span class=ok>✓</span>':p[8]?'<span class=ok>↪ '+p[8]+'</span>':'<span class=duda>— horno</span>')+'</td></tr>';}).join('')+'</table></div>';}).join('');
+</script>
+<script>
+/* números de las pantallas nuevas, sacados de P */
+(function(){
+const pideH=function(p){return p[6].indexOf('h')>-1;};
+const nTotal=P.length,nPuede=nHoy+nAd,esperan=P.filter(function(p){return !hoyVale(p)&&!p[8];}).length;
+const h=P.filter(pideH),hAd=h.filter(function(p){return p[8];}).length;
+const set=function(i,v){document.getElementById(i).textContent=v;};
+set('n10',nPuede);set('m10',nTotal);set('x11',esperan);set('n15',h.length-hAd);set('m15',hAd);
+const fm=function(m){return m>=60?Math.floor(m/60)+' h'+(m%60?' '+m%60:''):m+' min';};
+const nombres=h.filter(function(p){return !p[8];}).slice(0,5).map(function(p){return p[0];});
+document.getElementById('l15').innerHTML=nombres.map(function(n){const p=P.filter(function(q){return q[0]===n;})[0];
+  return '<div class=pl style="min-height:48px"><div class=sp><span class=n>'+p[0]+'</span></div><span class=mini>'+fm(p[3])+'</span></div>';}).join('');
+window.__cuentas={nTotal:nTotal,nPuede:nPuede,esperan:esperan,hornoTotal:h.length,hornoAdaptados:hAd,nHoy:nHoy,nAd:nAd};
+})();
 </script>

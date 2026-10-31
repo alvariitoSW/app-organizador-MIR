@@ -150,7 +150,7 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
-### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · siguiente: **CH3**
+### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · siguiente: **CH4**
 
 Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
 la app que sigue a su cocina («la continuidad»: hoy micro + vitro pequeña, sin horno ni freidora de aire). Maqueta

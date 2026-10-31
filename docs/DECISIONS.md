@@ -2302,3 +2302,19 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   La 397c acepta la hora de salida con el día puesto cuando el vuelo cae de noche.
 - **Descartado:** tocar `setMonth` en la app: el mes lo elige el usuario en un selector, no se calcula así.
 - **Supuestos:** ninguno nuevo.
+
+## El Chef · CH3 · Maqueta corta del recetario (2026-10-31, Consejo por delegación)
+- **Elegido**
+  - Diez pantallas nuevas (6-15) en `maquetas/recetario.html`, con su misma piel y en claro y oscuro: modo cocina (antes,
+    paso con temporizadores, sin vuelta atrás, conservación), «Tu cocina», portada con filtro Cocina, «Estoy reventado»,
+    TikTok «Cambiado», «Mis marcas seguras» y la hoja «Con horno, N platos más». Aprobadas en el acta
+    `consejo/2026-10-30-chef.md` («CH3»).
+  - Las cifras salen del catálogo `P`: 327 de 344 hoy, 17 esperan horno, y al ganarlo 17 nuevos + 34 que vuelven a la
+    receta de siempre.
+- **Descartado**
+  - Concurso de maquetas (Hacienda: la CH3 completa la ya aprobada).
+  - «51 platos más» al ganar horno: 34 ya se hacían adaptados; contarlos inflaba la cifra.
+  - Notificación del sistema obligatoria: va solo si da permiso; lo fijo es el aviso dentro de la app y la vibración.
+- **Supuestos**
+  - Olla en 3/5/6 L y fuegos 1/2/4 como opciones; hoy 2 fuegos y 5 L.
+  - Las kcal, horas y fechas de las pantallas son de ejemplo; los platos de «Estoy reventado» también.

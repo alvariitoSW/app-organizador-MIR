@@ -34,7 +34,7 @@ Acta `consejo/2026-10-30-chef.md` · maqueta `maquetas/recetario.html` · delega
 - [x] CH1 Ficha, esquema + fabada, `tests/recetario.test.js`, `tools/recetario-faltan.js` + 11 alimentos, catálogo
       corregido (Sanidad) y ampliado (Italia 46, Grecia 28, Mediterráneo 21) con equipo · yo · ~0,7 M
 - [ ] CH2 «A la compra» desde la receta → compra de la semana · app.js `rec-compra` → `compraDatos0` · sonnet · ~0,9 M
-- [ ] CH3 Maqueta corta (modo cocina, «Tu cocina», filtro Cocina, «Estoy reventado», «Cambiado») · opus + sonnet · ~0,6 M
+- [x] CH3 Maqueta corta (modo cocina, «Tu cocina», filtro Cocina, «Estoy reventado», «Cambiado») · opus + sonnet · ~0,6 M
 - [ ] CH4 ~60 platos enteros para micro + vitro (tanda y táper, legumbre, pescado, cenas de saliente), cada lote con
       `node tests/recetario.test.js` en verde y `node tools/recetario-faltan.js` vacío · sonnet (+ haiku) · ~0,6 M
 - [ ] CH5 Recetario navegable: JSON perezoso en `sw.js`, filtros, «Tu cocina» ampliando `cocinaPref` · sonnet · ~0,9 M
