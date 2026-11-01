@@ -970,6 +970,7 @@ function normalize(o){
   if(o.food&&o.food.pref&&typeof o.food.pref==='object'){const P=o.food.pref;
     o.food.pref={horno:!!P.horno,micro:P.micro!==false,vitro:P.vitro!==false,fuegos:[1,2,4].indexOf(+P.fuegos)>=0?+P.fuegos:2,olla:[3,5,6].indexOf(+P.olla)>=0?+P.olla:5,expres:!!P.expres,freidora:!!P.freidora,noCocinar:Array.isArray(P.noCocinar)?P.noCocinar.filter(function(x){return typeof x==='string';}).slice(0,6):['guardia','entreno'],
       taper:Math.max(1,Math.min(6,Math.round(+P.taper||3))),desayunos:Array.isArray(P.desayunos)?P.desayunos.filter(function(x){return typeof x==='string';}).slice(0,3):[],
+      tec:(function(){const t={};if(P.tec&&typeof P.tec==='object')Object.keys(P.tec).filter(function(k){return /^[a-z]{3,12}$/.test(k)&&typeof P.tec[k]==='string'&&esFecha(P.tec[k]);}).slice(0,8).forEach(function(k){t[k]=P.tec[k];});return t;})(),
       marcas:(Array.isArray(P.marcas)?P.marcas:[]).filter(function(m){return m&&typeof m.k==='string'&&m.k.trim();}).slice(0,60).map(function(m){return {k:m.k.slice(0,60),n:String(m.n||m.k).slice(0,60),f:esFecha(m.f||'')?m.f:''};})};}
   if(o.food&&o.food.tandasHechas&&typeof o.food.tandasHechas!=='object')delete o.food.tandasHechas;
   /* el sueño de verdad y los libros: sin registrarlos aquí se perderían al recargar */
@@ -15192,7 +15193,7 @@ function recetarioTodo(){
   (RECETARIO||[]).forEach(function(r){
     [r.n].concat(r.alias||[]).forEach(function(x){vistos[tpNorm(x)]=1;});
     out.push({id:'rc:'+r.n,n:r.n,e:r.e||'🍽',alias:r.alias||[],m:r.m||'',min:+r.min||0,rac:+r.rac||1,ing:r.ing||[],pasos:r.pasos||[],
-      kcal:+r.kcal||0,prot:+r.prot||0,region:r.region||'',cocina:r.cocina||'es',tipo:r.tipo||'ve',tanda:!!r.tanda,fiesta:!!r.fiesta,equipo:r.equipo||null,aviso:r.aviso||'',de:'json',
+      kcal:+r.kcal||0,prot:+r.prot||0,region:r.region||'',cocina:r.cocina||'es',tipo:r.tipo||'ve',tanda:!!r.tanda,fiesta:!!r.fiesta,equipo:r.equipo||null,aviso:r.aviso||'',duda:r.duda||'',de:'json',
       tmp:r.tmp,porque:r.porque,error:r.error,dias:r.dias,congela:r.congela});});
   TP_RECETAS.forEach(function(r){
     if([r[0]].concat(r[2]||[]).some(function(x){return vistos[tpNorm(x)];}))return;
@@ -15265,6 +15266,7 @@ function cjeHojaRecetario(h){
   return '<div class="row"><div class="cjst">Recetario</div></div>'+
     '<div class="mini">🌾 Todo sin gluten · '+R.total+' platos · '+R.puede+' con tu cocina'+(RECETARIO_EST==='cargando'?' · cargando…':'')+(RECETARIO_EST==='falla'?' · sin conexión: las 43 de siempre':'')+'</div>'+
     '<button class="btn p" data-a="rev-abre" style="width:100%;min-height:48px;margin-top:10px;justify-content:center">😮‍💨 Estoy reventado</button>'+
+    '<button class="btn" data-a="tec-abre" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">🧑‍🍳 Ruta de 8 técnicas · '+TECNICAS.filter(function(t){return tecHechas()[t[0]];}).length+'/8</button>'+
     '<div class="frase" style="margin-top:8px"><span aria-hidden="true">🔎</span><input id="recQ" value="'+esc(ui.recQ||'')+'" data-a="rec-q" placeholder="busca un plato o un ingrediente…" aria-label="buscar en el recetario" autocomplete="off"></div>'+
     '<div class="cap" style="margin-top:10px">COCINA</div><div class="chips">'+REC_COCINAS.map(function(x){return chip('coc',x[0],x[1],h.coc===x[0]);}).join('')+'</div>'+
     (regs.length?'<div class="chips" style="margin-top:6px">'+regs.map(function(x){return chip('reg',x,esc(REC_REGION[x]||x),h.reg===x);}).join('')+'</div>':'')+
@@ -15279,6 +15281,68 @@ function cjeHojaRecetario(h){
     (R.l.length>60&&!h.mas?'<div class="chips" style="margin-top:10px">'+chip('mas','1','ver los '+(R.l.length-60)+' que faltan',false)+'</div>':'')+
     (R.esperan||h.todos?'<div class="chips" style="margin-top:10px">'+chip('todos','1','ver también los que piden horno 🔒',h.todos)+'</div>':'')+
     (R.esperan&&!h.todos?'<p class="mini">'+R.esperan+(R.esperan===1?' plato espera':' platos esperan')+' horno o freidora.</p>':'');}
+/* ===== CH10 · ruta de 8 técnicas y «Con horno, N platos más» ===== */
+const TECNICAS=[
+  ['sofrito','🧅','Sofrito','La base de media cocina: cebolla (y ajo, pimiento o tomate) pochada despacio en aceite, sin que se queme, hasta que queda blanda y dulce.',
+    'Huele dulce, la cebolla está transparente y se deshace al apretarla con la cuchara. El tomate suelta el aceite por los bordes.','Fuego fuerte para ir deprisa: la cebolla se tuesta por fuera y queda cruda por dentro, y amarga. Mejor fuego bajo, tapa medio puesta y paciencia.',
+    ['Pisto con huevo y atún','Pollo con tomate','Marmitako']],
+  ['legumbre','🫘','Legumbre en olla','Cocer garbanzos, lentejas o alubias hasta que queden cremosas: rompe a hervir, baja el fuego y que apenas tiemble.',
+    'La legumbre se aplasta sin esfuerzo con la lengua, tiene la piel entera y el caldo está ligeramente espeso.','Hervir fuerte (se rompe la piel y queda dura por dentro) o salar al principio en las alubias. Baja el fuego y sala al final.',
+    ['Lentejas con arroz','Potaje canario','Fakes (sopa de lentejas)']],
+  ['arroz','🍚','Arroz en su punto','Medir el arroz y el caldo (1 de arroz por 2-3 de caldo según el plato), no removerlo y dejarlo reposar al acabar.',
+    'El grano está entero, firme al morder pero sin centro duro, y el caldo o el sofrito se ha absorbido.','Remover sin parar (se pone pastoso) o destapar demasiado. Fuego medio, tiempo según el paquete y 5 minutos de reposo fuera del fuego.',
+    ['Arroz con verduras','Arroz a la cubana','Risotto de setas']],
+  ['plancha','🐟','Pescado a la plancha','Sartén o plancha muy caliente, poco aceite, pescado seco y sin moverlo: se hace casi todo por el lado de la piel.',
+    'Se despega solo de la plancha, la carne pasa de translúcida a opaca y se separa en lascas con el tenedor.','Pescado mojado o sartén tibia: se pega y se deshace. Sécalo con papel y no lo muevas hasta que se suelte.',
+    ['Sardinas a la plancha','Pez espada a la plancha','Sepia a la plancha']],
+  ['huevo','🥚','Huevo (cuajado y escalfado)','Controlar el punto del huevo: tortilla jugosa, revuelto cremoso o huevo escalfado en agua que apenas burbujea.',
+    'La clara está cuajada y la yema todavía se mueve al tocarla; la tortilla se ve jugosa por dentro, no seca.','Fuego alto y sartén muy caliente: queda gomoso por fuera y crudo dentro. Fuego medio y retira un poco antes: sigue cuajando con el calor que lleva.',
+    ['Tortilla de espinacas','Shakshuka','Stracciatella (sopa de huevo)']],
+  ['vapor','🥦','Verdura al vapor en micro','Verdura con un chorrito de agua, tapada con un plato o film apto, al micro: queda al dente y sin ensuciar una olla.',
+    'Se pincha con un tenedor con algo de resistencia y conserva el color vivo (verde intenso en el brócoli o las judías).','Pasarte de tiempo: queda gris y blanda. Empieza con 3 minutos, comprueba y suma de minuto en minuto.',
+    ['Horta (verdura hervida con limón)','Espinacas a la catalana','Lubina en papillote al micro']],
+  ['tanda','🥘','Guiso de tanda','Cocinar una olla para varios días: guiso con salsa que mejora al reposar, se enfría rápido y se reparte en táperes.',
+    'La carne se deshace con el tenedor, la salsa liga sola y al día siguiente sabe mejor. Enfriado en menos de 2 horas.','Dejar la olla enfriando en la encimera horas: se echa a perder. Reparte en táperes bajos y a la nevera (o al congelador) enseguida.',
+    ['Albóndigas de pollo en salsa','Rancho canario','Carne con tomate']],
+  ['salsa','🥄','Salsa sin harina','Ligar una salsa sin gluten ni harina: con la emulsión del aceite, con frutos secos picados o con el propio tomate reducido.',
+    'La salsa cubre la cuchara y al pasar el dedo queda una raya limpia; no se ve agua suelta ni aceite cortado.','Calentar demasiado una emulsión (se corta) o añadir líquido de golpe. Mueve la cazuela en círculos y suma el líquido poco a poco.',
+    ['Bacalao al pil-pil','Rape en salsa de almendras','Pasta al pesto genovés']]
+];
+function tecHechas(){const P=cocinaPref();if(!P.tec||typeof P.tec!=='object'||Array.isArray(P.tec))P.tec={};return P.tec;}
+function recPorNombre(n){return recetarioTodo().filter(function(r){return r.n===n;})[0]||null;}
+function cjeHojaTecnicas(){
+  const H=tecHechas(),n=TECNICAS.filter(function(t){return H[t[0]];}).length;
+  return '<div class="row"><div class="cjst">Ruta de 8 técnicas</div></div><div class="mini">'+n+' de '+TECNICAS.length+' hechas · con ellas cocinas casi todo el recetario</div>'+
+    TECNICAS.map(function(t,i){
+      return '<button class="cjpl" data-a="tec-ver" data-i="'+i+'"><span class="e" aria-hidden="true">'+esc(t[1])+'</span><span class="n"><b>'+(H[t[0]]?'✓ ':'')+esc(t[2])+'</b><span>'+esc(H[t[0]]?'la hiciste el '+H[t[0]]:'sin hacer')+'</span></span></button>';}).join('')+
+    '<div class="chips" style="margin-top:10px"><button class="chipx" data-a="tec-vuelve" style="min-height:44px">‹ Recetario</button></div>';}
+function cjeHojaTecnica(h){
+  const t=TECNICAS[h.i];if(!t)return cjeHojaTecnicas();
+  const H=tecHechas(),hecha=!!H[t[0]];
+  return '<div class="row"><div class="cjst">'+esc(t[1]+' '+t[2])+'</div></div><p style="margin:6px 0">'+esc(t[3])+'</p>'+
+    '<div class="cap" style="margin-top:8px">CÓMO SÉ QUE ESTÁ BIEN</div><p style="margin:4px 0">'+esc(t[4])+'</p>'+
+    '<div class="cap" style="margin-top:8px">ERROR TÍPICO</div><p style="margin:4px 0">'+esc(t[5])+'</p>'+
+    '<div class="cap" style="margin-top:8px">PRACTÍCALA CON</div>'+
+    t[6].map(function(nm){const r=recPorNombre(nm);
+      return r?'<button class="cjpl" data-a="rec-ver" data-id="'+esc(r.id)+'"><span class="e" aria-hidden="true">'+esc(r.e)+'</span><span class="n"><b>'+(recPuede(r)?'':'🔒 ')+esc(r.n)+'</b><span>'+esc([r.min?r.min+' min':'',r.prot?Math.round(r.prot)+' g prot':''].filter(Boolean).join(' · '))+'</span></span></button>'
+        :'<div class="mini">'+esc(nm)+' (cargando…)</div>';}).join('')+
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn'+(hecha?'':' p')+'" data-a="tec-hecha" data-i="'+h.i+'" aria-pressed="'+(hecha?'true':'false')+'" style="min-height:48px;flex:1;justify-content:center">'+(hecha?'✓ La he hecho (quitar)':'La he hecho')+'</button>'+
+    '<button class="btn" data-a="tec-lista" style="min-height:48px;justify-content:center">‹ Ruta</button></div>';}
+function recAdaptado(r){
+  /* ¿es un plato que el clásico hace al horno y aquí está adaptado sin horno? No hay marca en el JSON: se lee del aviso y de los pasos */
+  return !!r.equipo&&!r.equipo.horno&&!r.equipo.freidora&&/adaptad|sin horno|el cl[aá]sico[^.]*horno/i.test([r.aviso,r.duda,r.pasos.join(' ')].join(' '));}
+function recNuevosCon(antes){
+  /* los que ahora salen y antes no: solo los nuevos de verdad */
+  return recetarioTodo().filter(function(r){return !antes[r.id]&&recPuede(r);});}
+function cjeHojaHorno(h){
+  const todo=recetarioTodo(),ids={};(h.ids||[]).forEach(function(x){ids[x]=1;});
+  const l=todo.filter(function(r){return ids[r.id];}),m=h.k==='horno'?todo.filter(recAdaptado).length:0;
+  return '<div class="cap">'+(h.k==='freidora'?'💨 FREIDORA ENCENDIDA':'♨️ HORNO ENCENDIDO')+'</div><h2 style="margin:0 0 6px;font-size:20px">🔥 '+(h.k==='freidora'?'Con freidora':'Con horno')+', <b data-tec="n" style="color:var(--ok)">'+l.length+'</b> '+(l.length===1?'plato más':'platos más')+'</h2>'+
+    l.slice(0,5).map(function(r){
+      return '<button class="cjpl" data-a="rec-ver" data-id="'+esc(r.id)+'"><span class="e" aria-hidden="true">'+esc(r.e)+'</span><span class="n"><b>'+esc(r.n)+'</b><span>'+esc([r.min?r.min+' min':'',recEquipoTxt(r.equipo)].filter(Boolean).join(' · '))+'</span></span></button>';}).join('')+
+    (l.length>5?'<p class="mini" style="margin:6px 2px">y '+(l.length-5)+' más: ya salen en el recetario.</p>':'')+
+    (m?'<p class="mini" style="margin:8px 2px 10px">Y <b data-tec="m">'+m+'</b> que hacías adaptados vuelven a su receta de siempre (puedes seguir con la adaptada).</p>':'')+
+    '<button class="btn p" data-a="cje-cerrar" data-tec="listo" style="min-height:48px;width:100%;justify-content:center;margin-top:8px">Listo</button>';}
 function tpAlim(txt){
   /* un ingrediente escrito a mano → alimento de la biblioteca, o null si no lo conoce */
   const t=tpNorm(txt).replace(/^(un|una|unos|unas|el|la|los|las|de|del|con)\s+/,'');if(!t)return null;
@@ -16009,6 +16073,9 @@ function cjeHojaHTML(){
   else if(v==='receta')body=cjeHojaReceta(h);
   else if(v==='recetario')body=cjeHojaRecetario(h);
   else if(v==='reventado')body=cjeHojaReventado(h);
+  else if(v==='tecnicas')body=cjeHojaTecnicas();
+  else if(v==='tecnica')body=cjeHojaTecnica(h);
+  else if(v==='horno')body=cjeHojaHorno(h);
   else if(v==='micro')body=microHTML(h);
   if(!body)return '';
   return hojaMarco('cje-cerrar','cjh','Comer',body);}
@@ -26309,7 +26376,11 @@ function act(a,el){
     case 'cje-comprado':flash(hacerCompra(ui.marks.size>0));break;
     case 'cje-pref':{const k=el.dataset.k,P=cocinaPref();
       if(k==='celiaco'){store.perfil=Object.assign({},store.perfil,{celiaco:!esCeliaco()});}
-      else if(['horno','micro','vitro','expres','freidora'].indexOf(k)>=0)P[k]=!P[k];
+      else if(['horno','micro','vitro','expres','freidora'].indexOf(k)>=0){
+        const antes={};if(RECETARIO_EST==='ok')recetarioTodo().forEach(function(r){if(recPuede(r))antes[r.id]=1;});
+        P[k]=!P[k];
+        if(P[k]&&(k==='horno'||k==='freidora')&&RECETARIO_EST==='ok'){const nuevos=recNuevosCon(antes);
+          if(nuevos.length){save();ui.cjeHoja={v:'horno',k:k,ids:nuevos.map(function(r){return r.id;})};render();break;}}}
       save();render();break;}
     case 'cje-noc':{const P=cocinaPref(),v=el.dataset.v,i=P.noCocinar.indexOf(v);if(i>=0)P.noCocinar.splice(i,1);else P.noCocinar.push(v);save();render();break;}
     case 'cje-taper':cocinaPref().taper=+el.dataset.v||3;save();render();break;
@@ -26323,8 +26394,12 @@ function act(a,el){
       else if(k==='tipo')h.tipo=h.tipo===v?'':v;
       else if(['tanda','rap','prot','todos','mas'].indexOf(k)>=0)h[k]=!h[k];
       render();break;}
-    case 'rec-ver':{const h=ui.cjeHoja;if(!h||h.v!=='recetario'||!recetarioTodo().some(function(r){return r.id===el.dataset.id;}))break;
+    case 'rec-ver':{const h=ui.cjeHoja;if(!h||['recetario','tecnica','horno'].indexOf(h.v)<0||!recetarioTodo().some(function(r){return r.id===el.dataset.id;}))break;
       ui.cjeHoja={v:'receta',rid:el.dataset.id,vuelve:h,tach:{}};render();window.scrollTo(0,0);break;}
+    case 'tec-abre':ui.cjeHoja={v:'tecnicas',vuelve:ui.cjeHoja};recetarioCarga();render();break;
+    case 'tec-vuelve':case 'tec-lista':{const h=ui.cjeHoja;if(h&&h.vuelve){ui.cjeHoja=h.vuelve;render();}break;}
+    case 'tec-ver':{const h=ui.cjeHoja,i=+el.dataset.i;if(!h||!TECNICAS[i])break;ui.cjeHoja={v:'tecnica',i:i,vuelve:h};render();window.scrollTo(0,0);break;}
+    case 'tec-hecha':{const t=TECNICAS[+el.dataset.i],H=tecHechas();if(!t)break;if(H[t[0]])delete H[t[0]];else H[t[0]]=iso(new Date());save();render();break;}
     case 'rev-abre':ui.cjeHoja={v:'reventado',o:0};recetarioCarga();render();break;
     case 'rev-otros':{const h=ui.cjeHoja;if(!h||h.v!=='reventado')break;h.o=(h.o||0)+3;if(h.o>=recReventados().length)h.o=0;render();break;}
     case 'rec-vuelve':{const h=ui.cjeHoja;if(h&&h.vuelve){ui.cjeHoja=h.vuelve;render();}break;}

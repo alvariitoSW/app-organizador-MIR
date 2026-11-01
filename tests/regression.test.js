@@ -16310,6 +16310,68 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       dialogos410.length === 0 && !R.f2.xss && R.f2.imgs === 0 && R.f3.imgs === 0 && /&lt;img|<img/.test(R.f1.banda + R.f1.ambar.join('')) && /<img src=x onerror=alert\(1\)>/.test(R.f3.texto), JSON.stringify([dialogos410, R.f1, R.f2, R.f3]));
   }
 
+  // 411) EL CHEF · CH10: Recetario › «Ruta de 8 técnicas» → una técnica → un plato enlazado → volver → «La he hecho» (sobrevive a normalize);
+  //      y en Tu cocina, al encender el horno sale «Con horno, N platos más» con N = los que antes no salían y ahora sí; apagar y volver a encender no duplica nada.
+  {
+    const vp411 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const copia411 = await page.evaluate(() => JSON.parse(JSON.stringify(window.PG.store)));
+    await page.evaluate(() => { const P = window.PG; const c = P.cocinaPref(); c.horno = false; c.freidora = false; c.tec = {}; P.save(); });
+    await page.reload(); await page.waitForTimeout(400);
+    const R = {};
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.render(); });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+    if (await page.$('#main [data-a="cje-platos"]')) await page.click('#main [data-a="cje-platos"]');
+    else await page.evaluate(() => { window.PG.ui.cjeHoja = { v: 'platos', f: '' }; window.PG.render(); });
+    await page.waitForTimeout(120);
+    await page.click('#hojaDia [data-a="cje-recetario"]'); await page.waitForTimeout(500);
+    // a) la ruta: 8 técnicas, botones >= 44 px
+    await page.click('#hojaDia [data-a="tec-abre"]'); await page.waitForTimeout(120);
+    R.a = await page.evaluate(() => { const f = [...document.querySelectorAll('#hojaDia [data-a="tec-ver"]')];
+      return { n: f.length, alto: Math.min(...f.map((x) => Math.round(x.getBoundingClientRect().height))), cab: (document.querySelector('#hojaDia .mini') || {}).textContent || '', ancho: document.documentElement.scrollWidth }; });
+    // b) una técnica: qué es, cómo sé que está bien, error típico y 3 platos del recetario
+    await page.click('#hojaDia [data-a="tec-ver"][data-i="0"]'); await page.waitForTimeout(120);
+    R.b = await page.evaluate(() => { const h = document.querySelector('#hojaDia'), pl = [...h.querySelectorAll('[data-a="rec-ver"]')];
+      return { txt: h.textContent, platos: pl.length, primero: pl[0] ? pl[0].querySelector('b').textContent.replace('🔒 ', '') : '' }; });
+    // c) ir a un plato enlazado y volver: se está otra vez en la técnica
+    await page.click('#hojaDia [data-a="rec-ver"]'); await page.waitForTimeout(150);
+    R.c1 = await page.evaluate(() => ({ v: window.PG.ui.cjeHoja.v, nombre: (document.querySelector('#hojaDia').textContent || '') }));
+    await page.click('#hojaDia [data-a="rec-vuelve"]'); await page.waitForTimeout(120);
+    R.c2 = await page.evaluate(() => ({ v: window.PG.ui.cjeHoja.v, i: window.PG.ui.cjeHoja.i }));
+    // d) marcar «La he hecho»: queda en la ruta y sobrevive a normalize
+    await page.click('#hojaDia [data-a="tec-hecha"]'); await page.waitForTimeout(100);
+    R.d = await page.evaluate(() => { const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))), t = n.food.pref.tec;
+      return { tec: JSON.stringify(Object.keys(t)), fecha: /^\d{4}-\d{2}-\d{2}$/.test(t.sofrito || ''), btn: document.querySelector('#hojaDia [data-a="tec-hecha"]').getAttribute('aria-pressed') }; });
+    await page.click('#hojaDia [data-a="tec-lista"]'); await page.waitForTimeout(100);
+    R.d2 = await page.evaluate(() => (document.querySelector('#hojaDia .mini') || {}).textContent || '');
+    // e) Tu cocina: encender el horno → «Con horno, N platos más»
+    R.e0 = await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'pref' }; P.render();
+      const antes = {}; P.recetarioTodo().forEach((r) => { if (P.recPuede(r)) antes[r.id] = 1; });
+      const c = P.cocinaPref(); c.horno = true; const nuevos = P.recetarioTodo().filter((r) => !antes[r.id] && P.recPuede(r)).length;
+      const adapt = P.recetarioTodo().filter((r) => r.equipo && !r.equipo.horno && !r.equipo.freidora && /adaptad|sin horno|el cl[aá]sico[^.]*horno/i.test([r.aviso, r.duda, r.pasos.join(' ')].join(' '))).length;
+      c.horno = false; P.save(); P.render(); return { nuevos, adapt, total: P.recetarioTodo().length, puede: P.recetarioTodo().filter(P.recPuede).length }; });
+    await page.click('#hojaDia [data-a="cje-pref"][data-k="horno"]'); await page.waitForTimeout(150);
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia'), n = h.querySelector('[data-tec="n"]'), m = h.querySelector('[data-tec="m"]');
+      return { n: n ? +n.textContent : -1, m: m ? +m.textContent : -1, filas: h.querySelectorAll('[data-a="rec-ver"]').length, ancho: document.documentElement.scrollWidth,
+        ids: JSON.stringify(window.PG.ui.cjeHoja.ids || []), horno: window.PG.cocinaPref().horno }; });
+    R.e1 = await hoja();
+    // f) apagar y encender otra vez: la misma hoja, los mismos números, nada duplicado
+    await page.click('#hojaDia [data-tec="listo"]'); await page.waitForTimeout(100);
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'pref' }; P.render(); });
+    await page.click('#hojaDia [data-a="cje-pref"][data-k="horno"]'); await page.waitForTimeout(120);
+    R.f0 = await page.evaluate(() => ({ horno: window.PG.cocinaPref().horno, hoja: window.PG.ui.cjeHoja.v }));
+    await page.click('#hojaDia [data-a="cje-pref"][data-k="horno"]'); await page.waitForTimeout(150);
+    R.f1 = await hoja();
+    R.f2 = await page.evaluate(() => ({ tec: JSON.stringify(Object.keys(window.PG.cocinaPref().tec)), unicos: new Set(window.PG.ui.cjeHoja.ids).size === window.PG.ui.cjeHoja.ids.length }));
+    await page.evaluate((c) => { const P = window.PG; P.store = c; P.ui.cjeHoja = null; P.save(); P.render(); }, copia411);
+    await page.setViewportSize(vp411);
+    check('CH10-a 411 la ruta tiene las 8 técnicas con botones de 44 px o más y dice «0 de 8 hechas»', R.a.n === 8 && R.a.alto >= 44 && /0 de 8 hechas/.test(R.a.cab) && R.a.ancho <= 412, JSON.stringify(R.a));
+    check('CH10-b 411 una técnica enseña qué es, cómo sé que está bien, el error típico y 3 platos del recetario', /CÓMO SÉ QUE ESTÁ BIEN/.test(R.b.txt) && /ERROR TÍPICO/.test(R.b.txt) && /Sofrito/.test(R.b.txt) && R.b.platos === 3 && R.b.primero === 'Pisto con huevo y atún', JSON.stringify(R.b));
+    check('CH10-c 411 un plato enlazado abre su receta y «‹ Recetario» vuelve a la misma técnica', R.c1.v === 'receta' && /Pisto con huevo y atún/.test(R.c1.nombre) && R.c2.v === 'tecnica' && R.c2.i === 0, JSON.stringify([R.c1, R.c2]));
+    check('CH10-d 411 «La he hecho» marca la técnica con fecha, sobrevive a normalize y la ruta dice «1 de 8 hechas»', R.d.tec === '["sofrito"]' && R.d.fecha && R.d.btn === 'true' && /1 de 8 hechas/.test(R.d2), JSON.stringify([R.d, R.d2]));
+    check('CH10-e 411 al encender el horno sale «Con horno, N platos más» con N = los que antes no salían y ahora sí (N>0) y «y M adaptados» desde el recetario', R.e0.nuevos > 0 && R.e1.horno && R.e1.n === R.e0.nuevos && R.e1.filas === Math.min(5, R.e0.nuevos) && R.e1.m === R.e0.adapt && R.e1.ancho <= 412, JSON.stringify([R.e0, R.e1]));
+    check('CH10-f 411 apagar y volver a encender da la misma hoja con los mismos números, sin duplicados ni perder la técnica hecha', R.f0.horno === false && R.f1.horno && R.f1.n === R.e1.n && R.f1.m === R.e1.m && R.f1.ids === R.e1.ids && R.f2.unicos && R.f2.tec === '["sofrito"]', JSON.stringify([R.f0, R.f1, R.f2]));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
