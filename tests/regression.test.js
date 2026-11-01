@@ -15984,7 +15984,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('CH5-a 407 recetario: se abre desde Mis platos con los 61 + las de siempre, 🇮🇹 Italia deja solo las italianas (≥44 px), la receta enseña el equipo y «Sin gluten según los ingredientes», y «‹ Recetario» vuelve con el filtro',
       R.a0.n > 0 && /Todo sin gluten · \d+ platos · \d+ con tu cocina/.test(R.a0.cab) && !/sin conexión/.test(R.a0.cab) &&
       R.a1.n > 0 && R.a1.n === Math.min(60, R.a1.italia) && R.a1.n < R.a0.n && R.a1.on === 'true' && R.a1.alto >= 44 &&
-      /Sin gluten según los ingredientes/.test(R.a2.t) && /🔥|📡|🍲/.test(R.a2.t) && R.a2.volver && R.a2.altoV >= 44 && !R.a2.compra &&
+      /Sin gluten según los ingredientes/.test(R.a2.t) && /🔥|📡|🍲/.test(R.a2.t) && R.a2.volver && R.a2.altoV >= 44 && R.a2.compra &&
       R.a3.n === R.a1.n && R.a3.on === 'true', JSON.stringify(R));
     pgX = await sinSw(null);
     await abreRecetario();
@@ -16025,6 +16025,121 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vpCh);
     check('CH5-d 410 copia de seguridad: fuegos 4, olla 3 L, freidora y micro apagado se conservan al importar (normalize); vitro y exprés mantienen su valor',
       R.d.fuegos === 4 && R.d.olla === 3 && R.d.freidora === true && R.d.micro === false && R.d.vitro === true && R.d.expres === false && R.d.on === 2, JSON.stringify(R.d));
+  }
+
+
+  // 408) EL CHEF · CH6: modo cocina con una receta del recetario: «tenlo todo a mano» → pasos con fuego en número → temporizadores con hora de fin
+  //      (varios a la vez, pausa y quitar, sin repintar la pantalla cada segundo) → aviso «Hecho / +2 min» → conservación y reparto.
+  //      Fija también que «Añadir a la compra» funciona con las del recetario (antes estaba oculto) y que la pantalla se queda encendida y se suelta al salir.
+  {
+    const vpCh = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => {
+      const P = window.PG; delete P.store.food.pref; delete P.store.food.compraRec; P.ui.cocinaTmp = []; P.save();
+      window.__wl = { req: 0, rel: 0, cb: null }; window.__vib = 0; window.__np = 0;
+      Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: { request: async () => { window.__wl.req++; return { release() { window.__wl.rel++; }, addEventListener(_t, f) { window.__wl.cb = f; } }; } } });
+      Object.defineProperty(navigator, 'vibrate', { configurable: true, value: () => { window.__vib++; return true; } });
+      window.Notification = { permission: 'default', requestPermission: async () => { window.__np++; window.Notification.permission = 'denied'; return 'denied'; } };
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = { v: 'platos', f: '' }; P.render();
+    });
+    await page.waitForTimeout(150);
+    await page.click('#hojaDia [data-a="cje-recetario"]'); await page.waitForTimeout(500);
+    await page.fill('#recQ', 'fabada asturiana'); await page.waitForTimeout(400);
+    await page.click('#hojaDia .cjpl'); await page.waitForTimeout(150);
+    const R = {};
+    R.a = await page.evaluate(() => { const c = document.querySelector('#hojaDia [data-a="rec-cocina"]'), k = document.querySelector('#hojaDia [data-a="rec-compra"]');
+      return { cocinar: !!c, altoC: c ? Math.round(c.getBoundingClientRect().height) : 0, compra: !!k, altoK: k ? Math.round(k.getBoundingClientRect().height) : 0 }; });
+    await page.click('#hojaDia [data-a="rec-compra"]'); await page.waitForTimeout(100);
+    R.a.cr = await page.evaluate(() => (window.PG.store.food.compraRec || []).map((e) => e.id + '|' + e.rac).join(','));
+    await page.click('#hojaDia [data-a="rec-cocina"]'); await page.waitForTimeout(250);
+    // 1) tenlo todo a mano: ingredientes medidos (90 g × 4 raciones), marcables; utensilios
+    R.b = await page.evaluate(() => { const m = document.querySelector('#main'); const f = [...m.querySelectorAll('.reci')];
+      return { t: m.innerText, n: f.length, bajo44: f.filter((x) => Math.round(x.getBoundingClientRect().height) < 44).length + [...m.querySelectorAll(".racchip")].filter((x) => Math.round(x.getBoundingClientRect().height) < 44).length, luz: window.__wl.req }; });
+    await page.click('#main [data-a="cc-mano"][data-k="i0"]'); await page.waitForTimeout(80);
+    R.b.marca = await page.$eval('#main [data-k="i0"]', (e) => e.getAttribute('aria-pressed'));
+    await page.click('#main [data-a="cocina-rac"][data-n="2"]'); await page.waitForTimeout(80);
+    R.b.dos = await page.evaluate(() => document.querySelector('#main [data-k="i0"]').innerText.replace(/\s+/g, ' '));
+    R.b.marca2 = await page.$eval('#main [data-k="i0"]', (e) => e.getAttribute('aria-pressed'));
+    await page.click('#main [data-a="cocina-rac"][data-n="4"]'); await page.waitForTimeout(80);
+    if (process.env.CH6_SHOTS) await page.screenshot({ path: process.env.CH6_SHOTS + '/a-tenlo-a-mano.png' });
+    check('CH6-a 408 modo cocina: «Añadir a la compra» va con las del recetario; «Tenlo todo a mano» enseña los ingredientes medidos a las raciones (360 g con 4, 180 g con 2), se marcan y siguen marcados, utensilios, y la pantalla se queda encendida',
+      R.a.cocinar && R.a.altoC >= 44 && R.a.compra && R.a.altoK >= 44 && /^rc:Fabada asturiana\|4$/.test(R.a.cr) &&
+      /Tenlo todo a mano/.test(R.b.t) && /360 g/.test(R.b.t) && /Olla de 5 L/.test(R.b.t) && /Cuchillo y tabla/.test(R.b.t) && R.b.n >= 8 && R.b.bajo44 === 0 && R.b.luz >= 1 &&
+      R.b.marca === 'true' && /180 g/.test(R.b.dos) && R.b.marca2 === 'true', JSON.stringify(R));
+    // 2) paso 3 con temporizador (15 min) y el fuego dicho en número; luego el paso 5 con otros dos
+    await page.click('#main [data-a="cocina-paso"][data-n="0"]'); await page.waitForTimeout(80);
+    await page.click('#main button:has-text("siguiente")'); await page.waitForTimeout(60);
+    await page.click('#main button:has-text("siguiente")'); await page.waitForTimeout(80);
+    R.c = await page.evaluate(() => ({ t: document.querySelector('#main').innerText, fuego: (document.querySelector('#main .cc-fuego') || {}).textContent || '', tmp: [...document.querySelectorAll('#main [data-a="cc-tmp"]')].map((e) => e.textContent.trim()) }));
+    const t0 = Date.now();
+    await page.click('#main [data-a="cc-tmp"]'); await page.waitForTimeout(150);
+    R.c.np = await page.evaluate(() => window.__np);
+    R.c.tira = await page.evaluate(() => [...document.querySelectorAll('#ccTira .cc-tm')].map((e) => e.innerText.replace(/\s+/g, ' ')));
+    R.c.fin = await page.evaluate(() => { const m = /acaba a las (\d\d):(\d\d)/.exec(document.querySelector('#ccTira').innerText); return m ? (+m[1]) * 60 + (+m[2]) : -1; });
+    R.c.esp = await page.evaluate((t0) => { const d = new Date(t0 + 15 * 60000); return d.getHours() * 60 + d.getMinutes(); }, t0);
+    await page.click('#main button:has-text("siguiente")'); await page.waitForTimeout(80);
+    R.d = await page.evaluate(() => ({ fuego: (document.querySelector('#main .cc-fuego') || {}).textContent || '' }));
+    await page.click('#main button:has-text("siguiente")'); await page.waitForTimeout(80);
+    R.d.det = await page.evaluate(() => [...document.querySelectorAll('#main details.cc-det')].map((e) => e.querySelector('summary').textContent.trim() + ':' + e.open));
+    await page.click('#main details.cc-det summary'); await page.waitForTimeout(60);
+    R.d.abierto = await page.evaluate(() => document.querySelector('#main details.cc-det').open && /remojo|piel/i.test(document.querySelector('#main details.cc-det').innerText));
+    const bt = await page.$$('#main [data-a="cc-tmp"]'); R.d.nbt = bt.length;
+    for (let k = 0; k < bt.length; k++) { await page.click('#main [data-a="cc-tmp"][data-j="' + (await page.evaluate((k) => document.querySelectorAll('#main [data-a="cc-tmp"]')[k].dataset.j, k)) + '"]'); await page.waitForTimeout(80); }
+    R.d.tira = await page.evaluate(() => document.querySelectorAll('#ccTira .cc-tm').length);
+    R.d.np = await page.evaluate(() => window.__np);
+    check('CH6-b 408 modo cocina: el paso dice el fuego en número («fuego 8 de 9», «2-3 de 9»), el temporizador de 15 min muestra su hora de fin, se pueden tener tres a la vez, «¿Por qué?» y «Error típico» van plegados y la notificación se pide una sola vez',
+      /fuego 8 de 9/.test(R.c.fuego) && R.c.tmp.length === 1 && /15 min/.test(R.c.tmp[0]) && R.c.tira.length === 1 && /14:|\d\d:\d\d/.test(R.c.tira[0]) &&
+      Math.abs(R.c.fin - R.c.esp) <= 1 && R.c.np === 1 &&
+      /fuego 2-3 de 9/.test(R.d.fuego) && R.d.det.join() === '¿Por qué?:false,Error típico:false' && R.d.abierto && R.d.nbt === 2 && R.d.tira === 3 && R.d.np === 1, JSON.stringify(R));
+    // 3) el contador corre sin repintar (el nodo marcado sobrevive), se pausa, sobrevive al cambio de paso y se quita
+    R.e = await page.evaluate(async () => { const id = window.PG.ui.cocinaTmp[0].id, n = document.getElementById('cct-' + id); n.dataset.marca = 'x'; const a = n.textContent;
+      await new Promise((r) => setTimeout(r, 2300)); const n2 = document.getElementById('cct-' + id); return { a, b: n2.textContent, marca: n2.dataset.marca || '' }; });
+    await page.click('#ccTira [data-a="cc-pausa"]'); await page.waitForTimeout(100);
+    R.e.pausa = await page.evaluate(() => ({ t: document.querySelector('#ccTira .cc-tm').innerText.replace(/\s+/g, ' '), c: document.querySelector('#ccTira .cc-tm b').textContent }));
+    await page.waitForTimeout(1300);
+    R.e.pausa.c2 = await page.$eval('#ccTira .cc-tm b', (e) => e.textContent);
+    await page.click('#ccTira [data-a="cc-pausa"]'); await page.waitForTimeout(100);
+    R.e.sigue = await page.$eval('#ccTira .cc-tm', (e) => /acaba a las/.test(e.innerText));
+    await page.click('#main [data-a="cocina-paso"][data-n="0"]'); await page.waitForTimeout(100);
+    R.e.trasPaso = await page.evaluate(() => document.querySelectorAll('#ccTira .cc-tm').length);
+    if (process.env.CH6_SHOTS) await page.screenshot({ path: process.env.CH6_SHOTS + '/b-paso-con-temporizadores.png' });
+    await page.click('#ccTira [data-a="cc-quita"]'); await page.waitForTimeout(100);
+    R.e.tras = await page.evaluate(() => document.querySelectorAll('#ccTira .cc-tm').length);
+    R.e.altos = await page.evaluate(() => [...document.querySelectorAll('#ccTira .cc-ic')].filter((e) => e.getBoundingClientRect().height < 44 || e.getBoundingClientRect().width < 44).length);
+    check('CH6-c 408 modo cocina: el contador baja cada segundo SIN repintar la pantalla, se pausa (y no baja), sigue, sobrevive a cambiar de paso y «×» lo quita (botones ≥44 px)',
+      R.e.a !== R.e.b && R.e.marca === 'x' && /en pausa/.test(R.e.pausa.t) && R.e.pausa.c === R.e.pausa.c2 && R.e.sigue && R.e.trasPaso === 3 && R.e.tras === 2 && R.e.altos === 0, JSON.stringify(R));
+    // 4) un temporizador acaba: aviso con «Hecho» y «+2 min», vibra; «+2 min» lo reinicia; «Hecho» lo quita
+    await page.evaluate(() => { window.PG.ui.cocinaTmp[0].fin = Date.now() + 1200; });
+    await page.waitForTimeout(2600);
+    R.f = await page.evaluate(() => { const a = document.getElementById('ccAlarma'); const bs = a ? [...a.querySelectorAll('button')] : [];
+      return { t: a ? a.innerText.replace(/\s+/g, ' ') : '', bts: bs.map((b) => b.textContent.trim() + ':' + Math.round(b.getBoundingClientRect().height)), vib: window.__vib, tira: document.querySelectorAll('#ccTira .cc-tm').length }; });
+    if (process.env.CH6_SHOTS) await page.screenshot({ path: process.env.CH6_SHOTS + '/c-aviso-acabado.png' });
+    await page.click('#ccAlarma [data-a="cc-mas"]'); await page.waitForTimeout(150);
+    R.g = await page.evaluate(() => ({ alarma: !!document.getElementById('ccAlarma'), tira: document.querySelectorAll('#ccTira .cc-tm').length, c: (document.querySelector('#ccTira .cc-tm b') || {}).textContent }));
+    await page.evaluate(() => { window.PG.ui.cocinaTmp[0].fin = Date.now() + 1000; });
+    await page.waitForTimeout(2400);
+    await page.click('#ccAlarma [data-a="cc-quita"]'); await page.waitForTimeout(100);
+    R.g.fin = await page.evaluate(() => ({ alarma: !!document.getElementById('ccAlarma'), n: window.PG.ui.cocinaTmp.length }));
+    check('CH6-d 408 modo cocina: al acabar un temporizador sale el aviso dentro de la app con «Hecho» y «+2 min» (≥44 px) y vibra; «+2 min» lo vuelve a poner en marcha (~2:00) y «Hecho» lo quita',
+      /listo/.test(R.f.t) && R.f.bts.length >= 2 && R.f.bts.every((b) => +b.split(':')[1] >= 44) && /Hecho/.test(R.f.t) && /\+2 min/.test(R.f.t) && R.f.vib >= 1 &&
+      !R.g.alarma && /^0[12]:\d\d$/.test(R.g.c) && !R.g.fin.alarma && R.g.fin.n === 1, JSON.stringify(R));
+    // 5) al terminar: conservación y reparto; al cerrar se suelta la pantalla; al volver a la app se vuelve a pedir
+    R.h = await page.evaluate(() => { window.PG.ui.cocinaTmp = []; return window.__wl.req; });
+    await page.evaluate(() => { const f = window.__wl.cb; if (f) f(); Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); document.dispatchEvent(new Event('visibilitychange')); });
+    await page.waitForTimeout(150);
+    R.h2 = await page.evaluate(() => window.__wl.req);
+    for (let k = 0; k < 8; k++) { const b = await page.$('#main button:has-text("siguiente")'); if (!b) break; await b.click(); await page.waitForTimeout(40); }
+    await page.click('#main button:has-text("Terminé")'); await page.waitForTimeout(150);
+    R.i = await page.evaluate(() => ({ t: document.querySelector('#main').innerText.replace(/\s+/g, ' '), dia: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'][new Date(Date.now() + 4 * 864e5).getDay()] }));
+    if (process.env.CH6_SHOTS) await page.screenshot({ path: process.env.CH6_SHOTS + '/d-conservacion.png' });
+    const rel0 = await page.evaluate(() => window.__wl.rel);
+    await page.click('#main [data-a="cocina-cierra"]'); await page.waitForTimeout(150);
+    R.j = await page.evaluate((rel0) => ({ vista: window.PG.ui.foodVista, rid: window.PG.ui.cocinaRid, soltada: window.__wl.rel > rel0 }), rel0);
+    check('CH6-e 408 modo cocina: el último paso lleva a «¡Hecho!» con la conservación (enfriar <2 h, 4 días de la fabada, hasta el día que toca) y el reparto; al cerrar se suelta la pantalla y al volver a la app se vuelve a pedir',
+      /¡Hecho! 4 raciones/.test(R.i.t) && /Enfría en menos de 2 h/.test(R.i.t) && /Este plato: 4 días/.test(R.i.t) && /Recalienta una sola vez/.test(R.i.t) &&
+      /REPARTO SUGERIDO/i.test(R.i.t) && R.i.t.indexOf('hasta el ' + R.i.dia) >= 0 && /táper de guardia/.test(R.i.t) &&
+      R.h2 > R.h && R.j.vista === '' && R.j.rid === '' && R.j.soltada, JSON.stringify(R));
+    await page.evaluate(() => { delete document.hidden; window.PG.ui.cocinaTmp = []; delete window.PG.store.food.compraRec; window.PG.ui.cjeHoja = null; window.PG.save(); window.PG.render(); });
+    await page.setViewportSize(vpCh);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

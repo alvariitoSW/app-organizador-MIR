@@ -322,7 +322,7 @@ let store, ui={tab:'month',calMode:'month',   /* se abre en el MES: es lo que qu
   evVista:'',evForm:null,ajuVista:'',datosVista:'',estVista:'',estPrev:null,arranque:null,
   gymFiltroRegion:'',gymFiltroTipo:'gimnasio',scanSoloMercadona:true,
   evNuevo:{dow:[],modo:'semanal',fecha:''},habEd:null,cardioAbierto:'',listaPlatos:'',gymPanel:'',typesVista:'',dishQ:'',foodVista:'',
-  cbEd:false,repHoja:null,cocinaPlato:'',cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
+  cbEd:false,repHoja:null,cocinaPlato:'',cocinaRid:'',cocinaTmp:[],cocinaMano:{},cocinaPaso:0,cocinaRac:0,foodBusca:'',foodSel:'',lectorGuia:false,diaEditor:false,usdaGuia:false,
   alimQ:'',alimGrupo:'',alimSel:'',alimG:100,
   plato:null,platoQ:'',ideasCache:null,alimNuevo:null,sitioNuevo:false,
   notaSel:'',notaFiltro:'',notaNueva:'',
@@ -4328,9 +4328,9 @@ function recetaACompra(d,tach){
   if(!n)return 'lo tienes todo: no hay nada que comprar';
   const f=food();if(!Array.isArray(f.compraRec))f.compraRec=[];
   const antes=f.compraRec.length;
-  f.compraRec=f.compraRec.filter(function(e){return e.id!==d.id;});
+  f.compraRec=f.compraRec.filter(function(e){return e.id!==(d.id||d.rid);});
   const estaba=f.compraRec.length<antes;
-  f.compraRec.push({id:d.id,rac:+d.portions||1,sin:sin});
+  f.compraRec.push({id:d.id||d.rid,rac:+d.portions||1,sin:sin});
   save();render();
   return estaba?'ya estaba en la compra: actualizada'
     :n+' ingrediente'+(n===1?'':'s')+' a la compra de la semana, por pasillos';}
@@ -4339,7 +4339,7 @@ function recetasCompra(){
      (si tachaste algo de un plato con líneas escritas, se suman esas líneas y no sus alimentos) */
   const out=[];
   (food().compraRec||[]).forEach(function(e){
-    const d=dishById(e.id);if(!d)return;
+    const d=/^(rc|tp):/.test(e.id)?recDe({rid:e.id}):dishById(e.id);if(!d)return;
     const sin=e.sin||[],ok=function(_,j){return sin.indexOf(j)<0;};
     const sombra=Object.assign({},d,(d.ingredients||[]).length
       ?{ingredients:d.ingredients.filter(ok),alimsV:sin.length?false:d.alimsV}:{alims:(d.alims||[]).filter(ok)});
@@ -11744,7 +11744,8 @@ function cjeHojaReceta(h){
     (d.deRecetario?(recEquipoTxt(d.equipo)?'<div class="mini" style="font-size:14px">'+esc(recEquipoTxt(d.equipo))+'</div>':'')+
       '<div class="aviso card gluaviso"><span>🌾 Sin gluten según los ingredientes. Revisa siempre la etiqueta.'+(d.aviso?'<br>'+esc(d.aviso):'')+'</span></div>':'')+
     (h.vuelve?'<div><button class="btn s" data-a="rec-vuelve" style="min-height:44px">‹ Recetario</button></div>':'')+
-    '<div class="recb">'+(ing.length&&!d.deRecetario?'<button class="btn p" data-a="rec-compra">Añadir a la compra</button>':'')+
+    '<div class="recb">'+(d.deRecetario&&d.steps.length?'<button class="btn p" data-a="rec-cocina">Cocinar</button>':'')+
+    (ing.length?'<button class="btn'+(d.deRecetario?'':' p')+'" data-a="rec-compra">Añadir a la compra</button>':'')+
     (url?'<a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+(/tiktok\.com/i.test(url)?'Ver en TikTok':'Ver el vídeo')+'</a>':'')+
     '<button class="btn" data-a="rec-comparte">Compartir</button></div>'+
     (ing.length?'<div class="cap">INGREDIENTES · toca los que ya tienes</div>'+ing.map(function(x,j){
@@ -13811,9 +13812,140 @@ function escalaIng(linea,factor){
   const n=continua?(bruto<10?Math.round(bruto*10)/10:Math.round(bruto))
                   :Math.max(0.5,Math.round(bruto*2)/2);
   return {q:(fmt(n)+(p.unit?' '+p.unit:'')).trim(),item:p.item};}
+/* ===================== MODO COCINA (El Chef · CH6) =====================
+   Temporizadores con hora de fin (varios a la vez, en ui.cocinaTmp), pantalla encendida, «tenlo todo a mano»,
+   «¿por qué?» y la ficha de conservación. El contador se repinta por getElementById cada segundo, SIN render(). */
+function cocinaDe(){return ui.cocinaRid?recDe({rid:ui.cocinaRid}):dishById(ui.cocinaPlato);}
+function cocinaTmpS(){if(!Array.isArray(ui.cocinaTmp))ui.cocinaTmp=[];return ui.cocinaTmp;}
+function cocinaHora(ms){const d=new Date(ms);return hm(d.getHours()*60+d.getMinutes());}
+function cocinaCuenta(ms){const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),p=function(n){return String(n).padStart(2,'0');};
+  return (h?h+':':'')+p(Math.floor(s%3600/60))+':'+p(s%60);}
+function cocinaMin(m){m=Math.round(m);return m>=60?(Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':'')):m+' min';}
+let _cocIv=null,_cocLock=null,_cocLuzPide=false;
+function cocinaTmpNuevo(nom,min,plato){
+  const t={id:'t'+Date.now().toString(36)+Math.floor(Math.random()*1e4),n:nom,plato:plato||'',resta:min*60000,fin:Date.now()+min*60000,pausa:false,hecho:false};
+  cocinaTmpS().push(t);cocinaPulso();return t;}
+function cocinaPulso(){
+  /* el reloj de un segundo solo corre mientras haya algún temporizador en marcha */
+  const hay=cocinaTmpS().some(function(t){return !t.pausa&&!t.hecho;});
+  if(hay&&!_cocIv)_cocIv=setInterval(cocinaTick,1000);
+  if(!hay&&_cocIv){clearInterval(_cocIv);_cocIv=null;}}
+function cocinaTick(){
+  const ahora=Date.now();let acabo=false;
+  cocinaTmpS().forEach(function(t){
+    if(t.pausa||t.hecho)return;
+    const r=t.fin-ahora;
+    if(r<=0){t.hecho=true;t.resta=0;t.finHora=cocinaHora(t.fin);acabo=true;cocinaAviso(t);}
+    else{const e=document.getElementById('cct-'+t.id);if(e)e.textContent=cocinaCuenta(r);}});
+  if(acabo){const tr=document.getElementById('ccTira');if(tr)tr.innerHTML=cocinaTiraHTML();}
+  cocinaAlarmaPinta();cocinaPulso();}
+function cocinaAviso(t){
+  /* vibración siempre; la notificación del sistema solo si ya hay permiso */
+  try{if(navigator.vibrate)navigator.vibrate([250,120,250,120,250]);}catch(e){}
+  try{if(typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    const o={body:t.plato||'Cocina',tag:t.id};
+    if('serviceWorker' in navigator&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(r){r.showNotification('⏰ '+t.n,o);}).catch(function(){try{new Notification('⏰ '+t.n,o);}catch(e2){}});
+    else new Notification('⏰ '+t.n,o);}}catch(e){}}
+function cocinaAvisoPermiso(){
+  /* la primera vez que se arranca un temporizador; si lo niega, nada más */
+  try{if(typeof Notification!=='undefined'&&Notification.permission==='default')Promise.resolve(Notification.requestPermission()).catch(function(){});}catch(e){}}
+function cocinaAlarmaPinta(){
+  /* el aviso va FUERA de #main, en el cuerpo: sobrevive a render() y se ve en cualquier pestaña */
+  const ac=cocinaTmpS().filter(function(t){return t.hecho;});let c=document.getElementById('ccAlarma');
+  if(!ac.length){if(c)c.remove();return;}
+  if(!c){c=document.createElement('div');c.id='ccAlarma';c.setAttribute('role','alert');document.body.appendChild(c);}
+  const h=ac.map(function(t){return '<div class="cc-alarma"><div class="n">⏰ '+esc(t.n)+' · listo '+esc(t.finHora||'')+'</div>'+
+    (t.plato?'<div class="mini">'+esc(t.plato)+'</div>':'')+
+    '<div class="two" style="margin-top:8px"><button class="btn p" data-a="cc-quita" data-id="'+esc(t.id)+'">Hecho</button>'+
+    '<button class="btn" data-a="cc-mas" data-id="'+esc(t.id)+'">+2 min</button></div></div>';}).join('');
+  if(c.dataset.h!==h){c.innerHTML=h;c.dataset.h=h;}}
+function cocinaTiraHTML(){
+  return cocinaTmpS().filter(function(t){return !t.hecho;}).map(function(t){
+    const r=t.pausa?t.resta:t.fin-Date.now();
+    return '<div class="cc-tm"><div class="t">'+esc(t.n)+'<b id="cct-'+esc(t.id)+'">'+cocinaCuenta(r)+'</b>'+
+      '<span class="mini">'+(t.pausa?'en pausa':'acaba a las '+cocinaHora(t.fin))+(t.plato?' · '+esc(t.plato):'')+'</span></div>'+
+      '<button class="cc-ic" data-a="cc-pausa" data-id="'+esc(t.id)+'" aria-label="'+(t.pausa?'seguir':'pausar')+' '+esc(t.n)+'">'+(t.pausa?'▶':'⏸')+'</button>'+
+      '<button class="cc-ic" data-a="cc-quita" data-id="'+esc(t.id)+'" aria-label="quitar '+esc(t.n)+'">×</button></div>';}).join('');}
+function cocinaLuz(){
+  /* pantalla encendida mientras estás en el modo cocina; se suelta al salir (mismo patrón que el modo noche) */
+  const on=ui.tab==='food'&&ui.foodVista==='cocina';
+  if(on&&!_cocLock&&!_cocLuzPide&&!document.hidden){
+    try{if(navigator.wakeLock){_cocLuzPide=true;
+      navigator.wakeLock.request('screen').then(function(l){_cocLuzPide=false;
+        if(!(ui.tab==='food'&&ui.foodVista==='cocina')){try{l.release();}catch(e){}return;}
+        _cocLock=l;try{l.addEventListener('release',function(){if(_cocLock===l)_cocLock=null;});}catch(e){}}).catch(function(){_cocLuzPide=false;});}}catch(e){_cocLuzPide=false;}}
+  if(!on&&_cocLock){try{_cocLock.release();}catch(e){}_cocLock=null;}}
+document.addEventListener('visibilitychange',function(){if(!document.hidden){cocinaLuz();if(_cocIv)cocinaTick();}});
+function cocinaFuego(txt){
+  /* «baja al 2-3» → «2-3»: el número de la vitro (1-9), solo si el paso lo dice */
+  const m=/\b(?:al|del)\s+(\d)(?:\s*[-–]\s*(\d))?(?!\d)(?!\s*(?:min|h\b|g\b|dientes|l\b|cm|por))/i.exec(String(txt||''));
+  return m&&+m[1]>=1?(m[2]?m[1]+'-'+m[2]:m[1]):'';}
+function cocinaUtensilios(e){
+  const u=[];if(e){if(+e.olla)u.push(['Olla de '+e.olla+' L','']);if(+e.fuegos)u.push(['Vitrocerámica',e.fuegos+(+e.fuegos===1?' fuego':' fuegos')]);
+    if(e.micro)u.push(['Microondas','']);if(e.horno)u.push(['Horno','']);if(e.freidora)u.push(['Freidora de aire','']);}
+  u.push(['Cuchillo y tabla','']);return u;}
+function cocinaGramos(g){return g<1?'una pizca':fmt(g<10?Math.round(g*10)/10:Math.round(g))+' g';}
+function cocinaDiaSemana(dias){return ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][new Date(Date.now()+dias*864e5).getDay()];}
+function renderCocinaRec(d){
+  const base=Math.max(1,+d.portions||1),objetivo=Math.max(1,+ui.cocinaRac||base),pasos=(d.steps||[]).filter(Boolean),n=pasos.length;
+  const i=Math.min(Math.max(-1,Number.isFinite(+ui.cocinaPaso)?+ui.cocinaPaso:-1),n);
+  const opciones=[];[base,2,4,6,8].forEach(function(x){if(opciones.indexOf(x)<0)opciones.push(x);});opciones.sort(function(a,b){return a-b;});
+  const luz='wakeLock' in navigator?'💡 ENCENDIDA':'💡 NO DISPONIBLE AQUÍ';
+  const racs='<div class="row" style="justify-content:space-between;margin-bottom:9px"><span class="mini">raciones</span><span class="row" style="gap:6px">'+
+    opciones.map(function(x){return '<button class="racchip'+(x===objetivo?' on':'')+'" data-a="cocina-rac" data-n="'+x+'">'+x+'</button>';}).join('')+'</span></div>';
+  const nav=function(a,b){return '<div class="row" style="gap:8px">'+a+b+'</div>';};
+  const ant='<button class="btn s" style="min-height:56px;flex:0 0 118px;justify-content:center;font-size:16px" data-a="cocina-paso" data-n="'+(i-1)+'"'+(i<0?' disabled':'')+'>‹ anterior</button>';
+  let cuerpo='';
+  if(i<0){
+    const m=ui.cocinaMano||{};
+    cuerpo='<div class="card"><div class="cap">INGREDIENTES · MARCA LO QUE YA TIENES</div>'+racs+
+      (d.ingRec||[]).map(function(x,j){const k='i'+j,t=m[k];
+        return '<button class="reci'+(t?' hecho':'')+'" data-a="cc-mano" data-k="'+k+'" aria-pressed="'+(t?'true':'false')+'"><span class="rk" aria-hidden="true">'+(t?'✓':'')+'</span>'+
+          '<span style="flex:1">'+esc(x[0])+'</span><b>'+esc(cocinaGramos((+x[1]||0)*objetivo))+'</b></button>';}).join('')+'</div>'+
+      '<div class="card"><div class="cap">UTENSILIOS</div>'+cocinaUtensilios(d.equipo).map(function(x,j){const k='u'+j,t=m[k];
+        return '<button class="reci'+(t?' hecho':'')+'" data-a="cc-mano" data-k="'+k+'" aria-pressed="'+(t?'true':'false')+'"><span class="rk" aria-hidden="true">'+(t?'✓':'')+'</span>'+
+          '<span style="flex:1">'+esc(x[0])+'</span>'+(x[1]?'<span class="mini">'+esc(x[1])+'</span>':'')+'</button>';}).join('')+'</div>'+
+      '<span class="chip on" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--ok);font-weight:700;font-size:14px">💡 Pantalla encendida mientras cocinas</span>'+
+      '<button class="btn p" style="min-height:56px;font-size:17px;width:100%;margin-top:10px" data-a="cocina-paso" data-n="0">Empezar · paso 1</button>';
+  }else if(i<n){
+    const fu=cocinaFuego(pasos[i]),tms=(Array.isArray(d.tmp)?d.tmp:[]).map(function(x,j){return {x:x,j:j};}).filter(function(o){return o.x&&+o.x.p===i&&+o.x.min>0;}),
+      porque=Array.isArray(d.porque)?d.porque.filter(Boolean):[];
+    cuerpo='<div class="card"><div class="pasonum">'+pasos.map(function(_,j){return '<span class="pasopunto'+(j<=i?' on':'')+'" data-a="cocina-paso" data-n="'+j+'"></span>';}).join('')+
+        '<span class="sp"></span><span class="tag b2">paso '+(i+1)+' de '+n+'</span></div>'+
+      '<div class="cap" style="margin-top:10px">PASO '+(i+1)+' · '+luz+'</div>'+
+      '<p class="cc-grande">'+esc(pasos[i])+'</p>'+
+      (fu?'<div class="cc-fuego">🔥 fuego '+esc(fu)+' de 9</div>':'')+
+      tms.map(function(o){return '<button class="btn p" style="min-height:56px;font-size:16px;width:100%;margin-top:8px" data-a="cc-tmp" data-j="'+o.j+'">⏱ '+esc(cocinaMin(o.x.min))+' · '+esc(o.x.t||'empezar temporizador')+'</button>';}).join('')+'</div>'+
+      (porque.length?'<details class="cc-det"><summary>¿Por qué?</summary>'+porque.map(function(x){return '<p>'+esc(x)+'</p>';}).join('')+'</details>':'')+
+      (d.error?'<details class="cc-det"><summary>Error típico</summary><p>'+esc(d.error)+'</p></details>':'')+
+      (tms.length?'<p class="mini" style="margin:4px 4px 8px">Al acabar vibra y avisa aquí; la notificación del móvil, si le das permiso.</p>':'')+
+      nav(ant,i<n-1?'<button class="btn p" style="min-height:56px;flex:1;font-size:16px" data-a="cocina-paso" data-n="'+(i+1)+'">siguiente ›</button>':
+        '<button class="btn p" style="min-height:56px;flex:1;font-size:16px" data-a="cocina-paso" data-n="'+n+'">✓ Terminé</button>');
+  }else{
+    const dias=Math.max(1,Math.round(+d.dias||3)),tap=(d.tanda||d.congela)&&objetivo>=3?1:0,hoy=objetivo>=2?1:0,nev=Math.max(0,objetivo-hoy-tap);
+    cuerpo='<div style="display:flex;gap:12px;align-items:center;margin-bottom:8px"><span style="font-size:46px">🎉</span><div><h2 style="margin:0;font-size:21px">¡Hecho! '+esc(rac(objetivo))+'</h2><div class="mini">Ahora toca guardarla bien</div></div></div>'+
+      '<div class="card"><div class="cap">CONSERVACIÓN</div>'+
+      '<div class="cc-fila"><span>🍽️</span><span>Este plato: <b>'+dias+(dias===1?' día':' días')+'</b> en la nevera'+(d.congela?'; se congela bien, hasta <b>3 meses</b>':'; mejor no congelarlo')+'.</span></div>'+
+      '<div class="cc-fila"><span>❄️</span><span>Enfría en <b>menos de 2 h</b>: repártela en tápers.</span></div>'+
+      '<div class="cc-fila"><span>🥘</span><span>Guiso: <b>3-4 días</b> en la nevera.</span></div>'+
+      '<div class="cc-fila"><span>🐟</span><span>Pescado: <b>2 días</b>.</span></div>'+
+      '<div class="cc-fila"><span>🍚</span><span>Arroz: <b>1 día</b>.</span></div>'+
+      '<div class="cc-fila"><span>🧊</span><span>Congelado: hasta <b>3 meses</b>.</span></div>'+
+      '<div class="cc-fila"><span>🔥</span><span>Recalienta <b>una sola vez</b> y bien caliente.</span></div></div>'+
+      '<div class="cap" style="margin:0 2px 6px">REPARTO SUGERIDO</div><div class="cc-tres">'+
+      '<div class="cc-rep">🍽️<b>'+hoy+'</b>hoy</div>'+
+      '<div class="cc-rep">🧊<b>'+nev+'</b>a la nevera, hasta el '+cocinaDiaSemana(dias)+'</div>'+
+      '<div class="cc-rep">🏥<b>'+tap+'</b>'+(tap?'al congelador, táper de guardia':'táper de guardia: no en este plato')+'</div></div>'+
+      '<div class="row" style="gap:8px;margin-top:10px">'+ant+'<button class="btn p" style="min-height:56px;flex:1;font-size:16px" data-a="cocina-cierra">Cerrar</button></div>';
+  }
+  $('#main').innerHTML='<div class="grid"><div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="cocina-panel" title="Cocina" aria-label="volver a Cocina">'+gymIco('atras','gico sm')+'</button>'+
+    '<h2 class="subtit">'+esc(d.icon||'')+' '+esc(d.name)+'</h2></div>'+
+    (i<0?'<p class="mini" style="margin:0">Tenlo todo a mano · '+esc(rac(objetivo))+' · antes del paso 1</p>':'')+
+    '<div id="ccTira">'+cocinaTiraHTML()+'</div>'+cuerpo+'</div>';}
 function renderFoodCocina(){
-  const d=dishById(ui.cocinaPlato);
+  const d=cocinaDe();
   if(!d){ui.foodVista='cocina-panel';return renderCocinaPanel();}
+  if(d.deRecetario)return renderCocinaRec(d);
   const base=Math.max(1,+d.portions||1);
   const objetivo=Math.max(1,+ui.cocinaRac||base);
   const factor=objetivo/base;
@@ -13831,6 +13963,7 @@ function renderFoodCocina(){
       '<button class="btn s volver" data-a="food-vista" data-v="cocina-panel" title="Cocina" aria-label="volver a Cocina">'+
         gymIco('atras','gico sm')+'</button>'+
       '<h2 class="subtit">'+esc(d.icon||'')+' '+esc(d.name)+'</h2></div>'+
+    '<div id="ccTira">'+cocinaTiraHTML()+'</div>'+
     '<div class="card">'+
       '<div class="row" style="justify-content:space-between;margin-bottom:9px">'+
         '<span class="mini">raciones</span>'+
@@ -15006,7 +15139,8 @@ function recetarioTodo(){
   (RECETARIO||[]).forEach(function(r){
     [r.n].concat(r.alias||[]).forEach(function(x){vistos[tpNorm(x)]=1;});
     out.push({id:'rc:'+r.n,n:r.n,e:r.e||'🍽',alias:r.alias||[],m:r.m||'',min:+r.min||0,rac:+r.rac||1,ing:r.ing||[],pasos:r.pasos||[],
-      kcal:+r.kcal||0,prot:+r.prot||0,region:r.region||'',cocina:r.cocina||'es',tipo:r.tipo||'ve',tanda:!!r.tanda,equipo:r.equipo||null,aviso:r.aviso||'',de:'json'});});
+      kcal:+r.kcal||0,prot:+r.prot||0,region:r.region||'',cocina:r.cocina||'es',tipo:r.tipo||'ve',tanda:!!r.tanda,equipo:r.equipo||null,aviso:r.aviso||'',de:'json',
+      tmp:r.tmp,porque:r.porque,error:r.error,dias:r.dias,congela:r.congela});});
   TP_RECETAS.forEach(function(r){
     if([r[0]].concat(r[2]||[]).some(function(x){return vistos[tpNorm(x)];}))return;
     const mc=macros(r[5],1);
@@ -15025,7 +15159,8 @@ function recDe(h){
   if(!h.rid)return dishById(h.id);
   const r=recetarioTodo().filter(function(x){return x.id===h.rid;})[0];if(!r)return null;
   const alims=[];r.ing.forEach(function(x){const a=alimPorNombre(x[0]);if(a)alims.push({id:a.id,g:Math.round((+x[1]||0)*r.rac*10)/10});});
-  return {id:'',name:r.n,icon:r.e,portions:r.rac,alims:alims,steps:r.pasos,kcal:r.kcal,prot:r.prot,equipo:r.equipo,aviso:r.aviso,deRecetario:true};}
+  return {id:'',name:r.n,icon:r.e,portions:r.rac,alims:alims,steps:r.pasos,kcal:r.kcal,prot:r.prot,equipo:r.equipo,aviso:r.aviso,deRecetario:true,
+    rid:r.id,ingRec:r.ing,tmp:r.tmp,porque:r.porque,error:r.error,dias:r.dias,congela:r.congela,tanda:r.tanda};}
 function recEquipoTxt(e){
   if(!e)return '';
   const t=[];if(e.micro)t.push('📡 micro');if(+e.fuegos)t.push('🔥 '+e.fuegos+(+e.fuegos===1?' fuego':' fuegos'));
@@ -24615,7 +24750,7 @@ function render(){
   /* cualquier repintado (también salir de Entreno) para el recorrido de 45 s de la lámina: ningún temporizador sobrevive */
   if(_lamT)lamParar();
   _pintando=true;
-  try{renderNow();_pintando=false;trasPintar();try{navTras();}catch(e5){}}catch(e){_pintando=false;
+  try{renderNow();_pintando=false;trasPintar();try{navTras();}catch(e5){}try{cocinaLuz();}catch(e6){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
     const m=$('#main');
     if(m)m.innerHTML='<div class="card"><h2>Se ha roto esta vista</h2><p class="note">Tus datos siguen guardados: '+
@@ -26167,10 +26302,23 @@ function act(a,el){
       flash(pl.length>1?pl.length+' platos apuntados':(m||'nada que apuntar'));render();break;}
     case 'food-jump':{const k=foodKey(el.dataset.key);if(k)ui.foodDate=k;render();break;}
     case 'food-panel':ui.foodPanel=el.dataset.k||'scan';ui.foodSel='';render();window.scrollTo(0,0);break;
-    case 'food-cocina':{ui.cocinaPlato=el.dataset.id||'';ui.cocinaPaso=0;ui.cocinaRac=0;
+    case 'food-cocina':{ui.cocinaPlato=el.dataset.id||'';ui.cocinaRid='';ui.cocinaPaso=0;ui.cocinaRac=0;
       ui.foodVista='cocina';ui.tab='food';render();window.scrollTo(0,0);break;}
-    case 'cocina-paso':{const d=dishById(ui.cocinaPlato),n=(d&&(d.steps||[]).filter(Boolean).length)||0;
-      ui.cocinaPaso=Math.min(Math.max(0,+el.dataset.n||0),Math.max(0,n-1));render();break;}
+    case 'cocina-paso':{const d=cocinaDe(),n=(d&&(d.steps||[]).filter(Boolean).length)||0,rc=!!(d&&d.deRecetario);
+      ui.cocinaPaso=Math.min(Math.max(rc?-1:0,+el.dataset.n||0),rc?n:Math.max(0,n-1));render();window.scrollTo(0,0);break;}
+    case 'rec-cocina':{const h=ui.cjeHoja;if(!h||!h.rid||!recDe(h))break;
+      ui.cocinaRid=h.rid;ui.cocinaPlato='';ui.cocinaPaso=-1;ui.cocinaRac=0;ui.cocinaMano={};ui.cjeHoja=null;
+      ui.foodVista='cocina';ui.tab='food';render();window.scrollTo(0,0);break;}
+    case 'cocina-cierra':ui.foodVista='';ui.cocinaRid='';ui.cocinaPaso=0;render();window.scrollTo(0,0);break;
+    case 'cc-mano':{ui.cocinaMano=ui.cocinaMano||{};ui.cocinaMano[el.dataset.k]=!ui.cocinaMano[el.dataset.k];render();break;}
+    case 'cc-tmp':{const d=cocinaDe(),x=d&&Array.isArray(d.tmp)&&d.tmp[+el.dataset.j];if(!x||!(+x.min>0))break;
+      cocinaTmpNuevo(String(x.t||'Temporizador'),+x.min,d.name);cocinaAvisoPermiso();render();break;}
+    case 'cc-pausa':{const t=cocinaTmpS().filter(function(y){return y.id===el.dataset.id;})[0];if(!t||t.hecho)break;
+      if(t.pausa){t.fin=Date.now()+t.resta;t.pausa=false;}else{t.resta=Math.max(0,t.fin-Date.now());t.pausa=true;}
+      cocinaPulso();render();break;}
+    case 'cc-quita':ui.cocinaTmp=cocinaTmpS().filter(function(y){return y.id!==el.dataset.id;});cocinaPulso();cocinaAlarmaPinta();render();break;
+    case 'cc-mas':{const t=cocinaTmpS().filter(function(y){return y.id===el.dataset.id;})[0];if(!t)break;
+      t.hecho=false;t.pausa=false;t.resta=120000;t.fin=Date.now()+120000;cocinaPulso();cocinaAlarmaPinta();render();break;}
     case 'cocina-rac':ui.cocinaRac=Math.max(1,+el.dataset.n||1);render();break;
     case 'cocina-hecho':{const dd=dishById(el.dataset.id),idc=el.dataset.id,fin=function(){
         flash(addFoodEntry(iso(new Date()),{dishId:idc,rac:1,pos:momentoAhora()}));
@@ -26571,7 +26719,7 @@ function act(a,el){
     case 'food-vista':{ui.foodVista=el.dataset.v||'eje';if(ui.foodVista==='eje')ui.cjeTab='';
       if(el.dataset.p)ui.foodPanel=el.dataset.p;
       if(ui.foodVista!=='add')ui.foodSel='';
-      if(ui.foodVista!=='cocina'){ui.cocinaPlato='';ui.cocinaPaso=0;ui.cocinaRac=0;}
+      if(ui.foodVista!=='cocina'){ui.cocinaPlato='';ui.cocinaRid='';ui.cocinaPaso=0;ui.cocinaRac=0;}
       if(ui.tab!=='food'){ui.tab='food';}
       render();window.scrollTo(0,0);break;}
     case 'gym-panel':{ui.gymPanel=el.dataset.p||'';
