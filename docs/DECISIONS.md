@@ -2426,3 +2426,24 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - Maicena, pan sin gluten, especias y tortilla de maíz van en `etiqueta` aunque la tabla no las marque como «depende».
   - Sardinas en escabeche aguantan 3 días; la piperrada se hace en tanda y el huevo se pone al comer.
   - Gasto ~1,7 M frente a ~0,6 M previstos: cada lote con sonnet costó ~0,23 M (no ~0,15 M), el lote 4 parado se perdió (~0,09 M) y la sesión principal se llevó ~0,7 M. Para la CH9: un ayudante por lote que escribe con script de una vez y sin releer el JSON entero.
+
+## El Chef · CH5 · recetario navegable + «Tu cocina» (2026-11-01)
+- **Elegido**
+  - «Tu cocina» amplía `cocinaPref()` (no es un ajuste nuevo): micro, vitro, fuegos (1/2/4), olla (3/5/6 L), exprés, horno y
+    freidora; sustituye al interruptor «Tengo horno» en la hoja «Cómo cocinas». La copia de seguridad los guarda (`normalize`).
+  - `data/recetario.json` se pide solo al abrir el recetario (`recetarioCarga`) y entra en `sw.js` (`guardias-v7`). Sin red salen
+    las 43 de siempre (`TP_RECETAS`) y la cabecera dice «sin conexión». Las 43 que ya están en el JSON no se repiten.
+  - `recPuede(r)`: si la receta trae `equipo` manda él (horno, freidora, micro, fuegos y olla); si no (las 43) se sigue adivinando
+    con `platoConHorno`. `platoConHorno` y `platoVale` no cambian (platos tuyos y TikTok).
+  - Hoja nueva `recetario` (desde «Mis platos», solo sin destino) con buscador, filtros (cocina, región, tipo, tanda, ≤20 min,
+    +30 g prot) y «ver también los que piden horno 🔒». La receta se abre con `recDe(h)` y vuelve con «‹ Recetario».
+- **Descartado**
+  - «Añadir a la compra» para las recetas del recetario: `compraRec` guarda el `id` de un plato tuyo y las del recetario no
+    tienen; queda oculto (compartir y tachar sí funcionan). Se puede añadir si se guarda como plato tuyo (tarea aparte).
+  - Contar el exprés como límite: es opcional, solo se muestra en la línea de equipo.
+- **Supuestos**
+  - Valores de serie: micro y vitro sí, 2 fuegos, olla de 5 L, sin exprés, horno ni freidora.
+  - Regiones nuevas en el nombre: IT Italia, GR Grecia, MED Mediterráneo (no estaban en la lista dada).
+  - kcal/prot de las 43: sumadas con `platoMacrosDe` sobre los alimentos que `alimPorNombre` reconoce (los que no, se saltan).
+  - Corregido de paso «raciónes» → «raciones» en la receta y en el texto que se comparte.
+  - Prueba 407 de `regression.test.js` (cuatro comprobaciones a-d; b y c en un contexto sin service worker porque este salta `page.route`).

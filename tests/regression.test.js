@@ -15937,6 +15937,91 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       R.g0.pasos === 5 && R.g0.sel.join() === 'Pixel' && /Establecer horario/.test(R.g0.p4) && R.g1.sel.join() === 'Samsung' && /Modos y rutinas/.test(R.g1.p2) && R.g2.alarmas, JSON.stringify([R.g0, R.g1, R.g2]));
   }
 
+  // 407) EL CHEF · CH5: Comer › Recetas › Recetario sin gluten: Italia filtra, se abre una receta con su equipo y el aviso del gluten.
+  //      · sin conexión (recetario.json caído) salen las 43 de siempre y lo dice.
+  //      · «Tu cocina»: un plato que pide horno no sale hasta encender el horno; el buscador filtra sin perder el foco.
+  //      · «Tu cocina» (fuegos, olla, freidora) sobrevive a la copia de seguridad (normalize).
+  {
+    const vpCh = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    // el service worker de la app se salta page.route: las pruebas con red simulada van en un contexto que lo bloquea
+    const sinSw = async (json) => {
+      const ls = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
+      const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 412, height: 915 } });
+      await ctx.addInitScript((s) => { try { const o = JSON.parse(s); for (const k in o) localStorage.setItem(k, o[k]); localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} }, ls);
+      if (json) await ctx.route('**/data/recetario.json', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(json) }));
+      else await ctx.route('**/data/recetario.json', (r) => r.abort());
+      const pg = await ctx.newPage(); await pg.goto(base + 'index.html'); await pg.waitForTimeout(500);
+      return { ctx, pg };
+    };
+    const abreRecetario = async (page = pgX.pg) => {
+      await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.render(); });
+      await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(120);
+      if (await page.$('#main [data-a="cje-platos"]')) await page.click('#main [data-a="cje-platos"]');
+      else await page.evaluate(() => { window.PG.ui.cjeHoja = { v: 'platos', f: '' }; window.PG.render(); });
+      await page.waitForTimeout(120);
+      await page.click('#hojaDia [data-a="cje-recetario"]'); await page.waitForTimeout(500);
+    };
+    const filas = (page = pgX.pg) => page.$$eval('#hojaDia .cjpl b', (e) => e.map((x) => x.textContent.trim()));
+    const cab = (page = pgX.pg) => page.evaluate(() => (document.querySelector('#hojaDia .mini') || {}).textContent || '');
+    const R = {}; let pgX = { pg: page };
+    await page.evaluate(() => { const P = window.PG; delete P.store.food.pref; P.save(); });
+    await page.reload(); await page.waitForTimeout(400);
+    await abreRecetario();
+    R.a0 = { n: (await filas()).length, cab: await cab() };
+    await page.click('#hojaDia [data-a="rec-f"][data-k="coc"][data-v="it"]'); await page.waitForTimeout(100);
+    R.a1 = { n: (await filas()).length, on: await page.$eval('#hojaDia [data-v="it"]', (e) => e.getAttribute('aria-pressed')), alto: await page.$eval('#hojaDia [data-v="it"]', (e) => Math.round(e.getBoundingClientRect().height)),
+      regs: await page.evaluate(() => { const rc = window.PG.ui.cjeHoja; return rc.coc; }) };
+    R.a1.italia = await page.evaluate(() => window.PG.recetarioTodo().filter((r) => r.cocina === 'it' && window.PG.recPuede(r)).length);
+    await page.click('#hojaDia .cjpl'); await page.waitForTimeout(150);
+    R.a2 = await page.evaluate(() => ({ t: document.querySelector('#hojaDia').innerText, volver: !!document.querySelector('#hojaDia [data-a="rec-vuelve"]'), compra: !!document.querySelector('#hojaDia [data-a="rec-compra"]') }));
+    await page.click('#hojaDia [data-a="rec-vuelve"]'); await page.waitForTimeout(100);
+    R.a3 = { n: (await filas()).length, on: await page.$eval('#hojaDia [data-v="it"]', (e) => e.getAttribute('aria-pressed')) };
+    check('CH5-a 407 recetario: se abre desde Mis platos con los 61 + las de siempre, 🇮🇹 Italia deja solo las italianas (≥44 px), la receta enseña el equipo y «Sin gluten según los ingredientes», y «‹ Recetario» vuelve con el filtro',
+      R.a0.n > 0 && /Todo sin gluten · \d+ platos · \d+ con tu cocina/.test(R.a0.cab) && !/sin conexión/.test(R.a0.cab) &&
+      R.a1.n > 0 && R.a1.n === Math.min(60, R.a1.italia) && R.a1.n < R.a0.n && R.a1.on === 'true' && R.a1.alto >= 44 &&
+      /Sin gluten según los ingredientes/.test(R.a2.t) && /🔥|📡|🍲/.test(R.a2.t) && R.a2.volver && !R.a2.compra &&
+      R.a3.n === R.a1.n && R.a3.on === 'true', JSON.stringify(R));
+    pgX = await sinSw(null);
+    await abreRecetario();
+    R.b = { n: (await filas()).length, cab: await cab(), tp: await pgX.pg.evaluate(() => window.PG.recetarioTodo().length) };
+    await pgX.ctx.close(); pgX = { pg: page };
+    check('CH5-b 408 sin conexión: con recetario.json caído el recetario enseña las recetas de siempre (43, las que caben) y avisa «sin conexión»',
+      R.b.tp === 43 && R.b.n > 0 && R.b.n <= 43 && /sin conexión: las 43 de siempre/.test(R.b.cab), JSON.stringify(R.b));
+    const falso = { version: 1, esquema: 1, recetas: [
+      { n: 'Pavo asado de prueba', e: '🦃', alias: [], m: 'c', min: 60, rac: 2, ing: [['Pollo', 150]], pasos: ['Al horno.'], tmp: 60, kcal: 300, prot: 35, region: 'ESP', cocina: 'es', tipo: 'ca', equipo: { fuegos: 0, olla: 0, micro: false, horno: true, freidora: false, expres: 0 }, tanda: false },
+      { n: 'Ensalada de prueba', e: '🥗', alias: [], m: 'c', min: 10, rac: 1, ing: [['Tomate', 200]], pasos: ['Trocea.'], tmp: 10, kcal: 90, prot: 3, region: 'ESP', cocina: 'es', tipo: 've', equipo: { fuegos: 0, olla: 0, micro: false, horno: false, freidora: false, expres: 0 }, tanda: false }] };
+    await page.evaluate(() => { const P = window.PG; delete P.store.food.pref; P.save(); });
+    pgX = await sinSw(falso); const page409 = pgX.pg;
+    await abreRecetario();
+    R.c0 = (await filas()).join('|');
+    await page409.fill('#recQ', 'prue'); await page409.waitForTimeout(400);
+    R.c1 = { f: (await filas()).join('|'), foco: await page409.evaluate(() => document.activeElement && document.activeElement.id) };
+    await page409.type('#recQ', 'ba'); await page409.waitForTimeout(400);
+    R.c1.foco2 = await page409.evaluate(() => document.activeElement && document.activeElement.id); R.c1.v = await page409.$eval('#recQ', (e) => e.value);
+    await page409.fill('#recQ', ''); await page409.waitForTimeout(300);
+    await page409.evaluate(() => { window.PG.ui.cjeHoja = { v: 'pref' }; window.PG.render(); }); await page409.waitForTimeout(120);
+    R.c2 = await page409.evaluate(() => ({ t: document.querySelector('#hojaDia').innerText, alto: Math.round(document.querySelector('#hojaDia [data-a="cje-pref"][data-k="horno"]').getBoundingClientRect().height) }));
+    await page409.click('#hojaDia [data-a="cje-pref"][data-k="horno"]'); await page409.waitForTimeout(100);
+    await page409.evaluate(() => { window.PG.ui.cjeHoja = { v: 'platos', f: '' }; window.PG.render(); }); await page409.waitForTimeout(100);
+    await page409.click('#hojaDia [data-a="cje-recetario"]'); await page409.waitForTimeout(300);
+    R.c3 = (await filas()).join('|');
+    await pgX.ctx.close(); pgX = { pg: page };
+    check('CH5-c 409 «Tu cocina»: el plato de horno no sale hasta encender ♨️ Horno (y la línea «puedes hacer N de M» cambia); el buscador filtra mientras escribes y el foco sigue en el campo',
+      !/Pavo asado de prueba/.test(R.c0) && /Ensalada de prueba/.test(R.c0) && R.c1.f === 'Ensalada de prueba' && R.c1.foco === 'recQ' && R.c1.foco2 === 'recQ' && R.c1.v === 'prueba' &&
+      /TU COCINA/i.test(R.c2.t) && /puedes hacer \d+ de \d+ platos del recetario/.test(R.c2.t) && R.c2.alto >= 44 && /Pavo asado de prueba/.test(R.c3), JSON.stringify(R));
+    await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = { v: 'pref' }; P.render(); });
+    await page.click('#hojaDia [data-a="cje-pnum"][data-k="fuegos"][data-v="4"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-pnum"][data-k="olla"][data-v="3"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-pref"][data-k="freidora"]'); await page.waitForTimeout(80);
+    await page.click('#hojaDia [data-a="cje-pref"][data-k="micro"]'); await page.waitForTimeout(80);
+    R.d = await page.evaluate(() => { const P = window.PG, copia = JSON.parse(JSON.stringify(P.store)); const n = P.normalize(copia).food.pref;
+      return { fuegos: n.fuegos, olla: n.olla, freidora: n.freidora, micro: n.micro, vitro: n.vitro, expres: n.expres, on: document.querySelectorAll('#hojaDia [aria-pressed="true"][data-a="cje-pnum"]').length }; });
+    await page.evaluate(() => { const P = window.PG; delete P.store.food.pref; P.ui.cjeHoja = null; P.save(); P.render(); });
+    await page.setViewportSize(vpCh);
+    check('CH5-d 410 copia de seguridad: fuegos 4, olla 3 L, freidora y micro apagado se conservan al importar (normalize); vitro y exprés mantienen su valor',
+      R.d.fuegos === 4 && R.d.olla === 3 && R.d.freidora === true && R.d.micro === false && R.d.vitro === true && R.d.expres === false && R.d.on === 2, JSON.stringify(R.d));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

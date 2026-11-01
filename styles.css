@@ -4229,3 +4229,6 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 .pzenl{display:flex;gap:8px;align-items:center;margin:8px 0 10px 34px}
 .pzenl code{flex:1;font-size:14px;word-break:break-all;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 #main .pzenl .btn{min-height:44px}
+
+/* CH5: los chips del recetario y de «Tu cocina» se tocan con el pulgar */
+.chipx[data-a="rec-f"],.chipx[data-a="cje-pnum"]{min-height:44px;justify-content:center}

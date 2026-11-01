@@ -3,13 +3,13 @@
    2. de paso da modo sin conexión.
    Estrategia: red primero y caché de reserva. Al revés (caché primero) se quedaría servida una versión
    vieja de app.js después de cada despliegue. */
-const CACHE='guardias-v6';
+const CACHE='guardias-v7';
 /* Absolutas y contra el ámbito del registro. En GitHub Pages la app no cuelga de la raíz sino de
    /app-organizador-MIR/, y una ruta relativa suelta no siempre cae donde uno cree. */
 const RAIZ=new URL('./',self.registration?self.registration.scope:self.location.href);
 const INDEX=new URL('index.html',RAIZ).href;
 /* las dos figuras del sueño (claro y oscuro) también: se abren dentro de la app y tienen que ir sin red */
-const BASE=['index.html','app.js','styles.css','icon.svg','manifest.json','version.json','fig/sueno.html','fig/sueno-light.html','fig/conductor.html','fig/conductor.js','fig/estacion.js','fig/calendario.js','fig/carretera.js','fig/carretera.html','fig/iconos.js','fig/ejercicios.js']
+const BASE=['index.html','app.js','styles.css','icon.svg','manifest.json','version.json','fig/sueno.html','fig/sueno-light.html','fig/conductor.html','fig/conductor.js','fig/estacion.js','fig/calendario.js','fig/carretera.js','fig/carretera.html','fig/iconos.js','fig/ejercicios.js','data/recetario.json']
   .map(function(f){return new URL(f,RAIZ).href;});
 
 self.addEventListener('install',function(e){
