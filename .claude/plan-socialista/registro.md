@@ -239,3 +239,5 @@ Arreglo e informe hechos y desplegados el 2026-10-27 (main a5bec28 · `docs/info
 - [parte-2026-10-30-c] Contado: R3 en main ed50e3a (run 41024716095 success, sellado); R3 medida 2,2 M; siguiente R4 Fintonic en pequeño (~0,8 M sonnet) elegida; 0 issues.
 - [parte-2026-10-30-f] Contado: G1 en main 29374b9 (success, sellado); siguiente G2 maqueta de Comer; rama con docs médicos sin pasar a main.
 - [run-41184892045] main be90510 desplegado y sellado (2026-10-31); CH1 y CH2 de El Chef y arreglo de pruebas del día 31 ya en main
+- [run-41238097248] 2026-11-01 · despliegue de main (cfc43b6, Las Mañanas LM5, sellado) · success
+- [rama-q4sp1t-sin-main] 2026-11-01 · la rama claude/plan-socialista-q4sp1t va 6 detrás de lo nuevo de main (22 commits) y trae 6 propios (El Lanzador); juntar antes de K1 · abierto
