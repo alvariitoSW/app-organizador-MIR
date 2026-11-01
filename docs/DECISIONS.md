@@ -2527,3 +2527,23 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - El nombre en el móvil es «Lanzador» (no «Guardias», para no confundirse con la app instalada desde Brave).
 - Si a Android le falta la pausa de una app, el tramo se cierra en el siguiente apagado, bloqueo o desbloqueo.
 - Lo que no se ha podido probar aquí (no hay SDK de Android en el contenedor): la pantalla en el móvil, el salto a «Acceso de uso» en HyperOS y que Brave reciba el `#`. Eso es la K3, con el usuario delante.
+
+## Comer · pedido desde una captura de Glovo, Uber Eats o Just Eat (01/11/2026)
+
+**Elegido**
+- En «Comer fuera», una tarjeta «📷 Desde una captura del pedido» y, en la portada de Comer, un 📷 junto a la frase. Se eligen hasta 6 capturas.
+- Se leen **en el móvil** con el Tesseract del ticket (`vendor/ocr`): la foto no sale del teléfono. Medido con tres capturas reales de Glovo: nombre, precio, descripción, «Añadir 2 por…» y las opciones de la cesta salen limpias; la foto del plato sale como basura, siempre antes del precio, y se descarta.
+- `pedParse` distingue la **ficha** (nombre = línea antes del precio, descripción = lo de después hasta «Personalízalo») y la **cesta** («productos de X», «nombre … 1 +», opciones, precio). Varias capturas se juntan por nombre.
+- Kcal y macros, como pidió («la 1 y la 2»): con descripción, **por ingredientes** (`PED_ING`, raciones de restaurante, también en inglés; los gramos del texto mandan); sin ella, **plato tipo** (`PED_TIPO`, se cambia con un desplegable). Los extras de la cesta (patatas, refresco, zero, salsa…) suman aparte; «Pan Gluten Free» o ser celíaco marca el pan sin gluten.
+- Si el pedido trae más de uno, pregunta cuántos te has comido (1 por defecto). Tocar un ingrediente o un extra lo deja de contar. Momento: desayuno, comida, merienda o cena.
+- Se apunta como «comer fuera» (`fuera:pedido:…` con `k1`), así sale en «Lo último que pediste fuera» y se repite de un toque. Lo apuntado se recuerda por restaurante y plato en `food.pedMemo` (normalize: máx. 200, solo números y un nombre corto); «calcular de nuevo» lo olvida.
+- Prueba encadenada 449 con el texto real de las tres capturas (sin las imágenes); cae si no se guarda lo corregido.
+
+**Descartado**
+- Pasar la descripción por el lector de frases: con la carta de un restaurante fallaba (papas → pasas, 200 g de cebolla, «salsa hoisin» y el inglés sin leer).
+- Una IA por internet (API de Anthropic): rompe «los datos no salen del móvil» y cuesta. El usuario propuso lo de DeepSeek de `fiebres-neutropenias`: es `dsh-superagent`, un bot para repositorios de GitHub que necesita un servidor; no lee fotos ni sirve para esto.
+- Pasar la imagen a blanco y negro como el ticket: las capturas ya son nítidas.
+
+**Supuestos**
+- Las raciones de `PED_ING`/`PED_TIPO` son estimaciones de restaurante (p. ej. hamburguesa con bacon 850 kcal, patatas 320, batido grande 650); se afinan con lo que el usuario corrija.
+- Solo se ha probado con capturas de Glovo; Uber Eats y Just Eat siguen el mismo patrón (nombre, cantidad, precio), pero no se han visto.

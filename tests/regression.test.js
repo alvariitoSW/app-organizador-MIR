@@ -16552,6 +16552,54 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('412-d con «reducir movimiento» ninguna transición ni animación dura más de ~0 (ni ::before ni ::after)', R.red.media && R.red.max <= 0.001, JSON.stringify(R.red));
   }
 
+  // 449) PEDIDO DESDE UNA CAPTURA (Glovo): el texto que el lector del móvil sacó de tres capturas reales (ficha de
+  //      The Black Native, la cesta de Rockabilly y la ficha del poke 2x1) → «Tu pedido» con 4 platos; en cadena: el poke
+  //      trae 2 y se apunta 1 (+ y −), quitar la Fanta resta 140, el batido pasa a «Postre», Cena, Apuntar → 4 tomas en la
+  //      cena con el total de la pantalla; tras recargar (normalize) ONLYFAN sale «como la última vez» y «calcular de nuevo» lo olvida.
+  {
+    const vp449 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const copia449 = await page.evaluate(() => JSON.parse(JSON.stringify(window.PG.store)));
+    const T449 = ["22:39 e -- Q 3 Nu E\nDS | 5 .\n- : Na = el 3 : e: y \"E. ELE a...\naa _—_ > E N - o + Ns\n4 o? Maa PE > EA — Ta\nCy , e de A ss ._ > “ — 2 : —— o\nE y : A x »; A A\nAN / N » E LA ad p\nARE \"E <a » :\nE... 1\n- —_— \" d y E\" \"\nSoo MAS —— E E\nLe a\nAE us — - sd ¿E\nETA na - TENE A\n” r , \"a > a a \"e > a .\nThe Black Native\n14,90 €\nBrioche bun, 170g of Canarian Black Pig meat,\nHoisin sauce, pico de gallo and crispy bacon\nLa a Ca\nPersonalizalo rápido\nPuedes hacer cambios después de seleccionar una\nopción\nPedido por 10+ personas O\nPapas fritas naturales, Coca-Cola\nZero\nAñadir 1 por 14,90 €\n", "22:40 e -- Q $ ul EZ »\n< Cesta\nTu cesta tn\n2 productos de ROCKABILLY\nBatido Snikers Dad w1+\n490€\nONLYFAN tm 1 +\n-— E y Papas fritas naturales, Fanta Limón, Pan\n—— Gluten Free\n990€\nAñadir más artículos\nTambién te puede interesar\n7 o —\ns ; y ” P_\n'\nBatido Kinder To Mozzarella Sticks\nBueno 9,90 €\n14,80 € Iralpago >\nz O q\n", "22:40 € -- Q $ Nil ED +\nEs y 7 es\nx a AAA.\n- A L y o de\nAID LY 5 7\n\"a TE 55\nEL e E.\na N La e e á ., - A\nE“. T n ml\nA“ e A\n7 É <A\nALT POR\nRA\nA]\nHealthy Salmon Bowl\n13,95 €\nBase de Arroz de Sushi, Dados de Salmón,\nCebolla Roja, Aguacate, Wakame, Semillas de\nSésamo y Salsa Spicy Mayo (un toque picante)\nPersonaliízalo rápido\nPuedes hacer cambios después de seleccionar una\nopción\nLo pediste hace 2 meses O Pedido por 10\ncaán Madiana sañiembésdiano\nAñadir 2 por 13,95 €\n"];
+    const R = {};
+    await page.evaluate(() => { const P = window.PG; P.store.food.pedMemo = {}; P.ui.tab = 'food'; P.ui.foodVista = 'fuera'; P.ui.foodDate = null; P.render(); });
+    R.entra = await page.evaluate(() => ({ boton: !!document.querySelector('#main .pedin input[type=file][data-a="ped-ocr"]'), accept: (document.querySelector('#main .pedin input') || {}).accept }));
+    await page.evaluate((t) => { const P = window.PG; P.pedLeeTextos(t); P.render(); }, T449);
+    R.lee = await page.evaluate(() => window.PG.ui.ped.items.map((i) => ({ n: i.n, q: i.q, modo: i.modo, sg: i.sg, ops: i.ops.length, e: window.PG.pedCalc(i).e })));
+    const kc = () => page.evaluate(() => window.PG.pedTotal(window.PG.ui.ped).kcal);
+    R.k0 = await kc();
+    const iBowl = R.lee.findIndex((x) => /Salmon Bowl/.test(x.n)), iOnly = R.lee.findIndex((x) => x.n === 'ONLYFAN'), iBat = R.lee.findIndex((x) => /Batido/.test(x.n));
+    await page.click(`#main [data-a="ped-c"][data-i="${iBowl}"][data-d="1"]`); await page.waitForTimeout(80);
+    R.dos = await page.evaluate((i) => window.PG.ui.ped.items[i].comido, iBowl);
+    await page.click(`#main [data-a="ped-c"][data-i="${iBowl}"][data-d="-1"]`); await page.waitForTimeout(80);
+    R.uno = await page.evaluate((i) => window.PG.ui.ped.items[i].comido, iBowl);
+    const fanta = await page.$$eval(`#main [data-a="ped-quita"][data-i="${iOnly}"]`, (bs) => bs.findIndex((b) => /Fanta/.test(b.textContent)));
+    await page.click(`#main [data-a="ped-quita"][data-i="${iOnly}"][data-k="x${fanta}"]`); await page.waitForTimeout(80);
+    R.k1 = await kc();
+    await page.selectOption(`#main select[data-a="ped-tipo"][data-i="${iBat}"]`, 'postre'); await page.waitForTimeout(80);
+    R.k2 = await kc();
+    await page.click('#main [data-a="ped-pos"][data-p="cena"]'); await page.waitForTimeout(80);
+    R.boton = await page.textContent('#main [data-a="ped-ok"]');
+    const kFin = await kc();
+    await page.click('#main [data-a="ped-ok"]'); await page.waitForTimeout(150);
+    R.log = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())).filter((x) => /^fuera:pedido:/.test(x.fuera || ''));
+      return { n: l.length, cena: l.every((x) => x.p === 'cena'), kcal: l.reduce((s, x) => s + x.kcal, 0), bowl: (l.find((x) => /Bowl/.test(x.nombre)) || {}).rac, vista: P.ui.foodVista || '' }; });
+    R.ult = await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'fuera'; P.render(); return document.querySelector('#main').textContent.includes('ONLYFAN'); });
+    await page.reload(); await page.waitForTimeout(400);
+    await page.evaluate((t) => { const P = window.PG; P.pedLeeTextos(t); P.render(); }, T449);
+    R.memo = await page.evaluate((i) => { const it = window.PG.ui.ped.items[i]; return { modo: it.modo, kcal: window.PG.pedCalc(it).kcal, tag: document.querySelector('#main').textContent.includes('COMO LA ÚLTIMA VEZ') }; }, iOnly);
+    if (await page.$(`#main [data-a="ped-olvida"][data-i="${iOnly}"]`)) { await page.click(`#main [data-a="ped-olvida"][data-i="${iOnly}"]`); await page.waitForTimeout(80); }
+    R.olvida = await page.evaluate((i) => ({ modo: window.PG.ui.ped.items[i].modo, memo: Object.keys(window.PG.store.food.pedMemo).filter((k) => /onlyfan/.test(k)).length }), iOnly);
+    await page.evaluate((c) => { const P = window.PG; Object.keys(P.store).forEach((k) => delete P.store[k]); Object.assign(P.store, c); P.ui.ped = null; P.ui.foodVista = ''; P.save(); }, copia449);
+    await page.setViewportSize(vp449);
+    check('449-a «Comer fuera» trae «Desde una captura del pedido» con un selector de imágenes', R.entra.boton && R.entra.accept === 'image/*', JSON.stringify(R.entra));
+    check('449-b de tres capturas reales salen 4 platos: The Black Native por ingredientes (🍔), ONLYFAN con 3 extras y pan sin gluten, el batido y el poke ×2', R.lee.length === 4 &&
+      R.lee.some((x) => x.n === 'The Black Native' && x.modo === 'ing' && x.e === '🍔') && R.lee.some((x) => x.n === 'ONLYFAN' && x.ops === 3 && x.sg === 1) && R.lee[iBowl].q === 2, JSON.stringify(R.lee));
+    check('449-c el poke trae 2 pero se apunta 1 (+ lo sube a 2, − lo deja en 1)', R.dos === 2 && R.uno === 1, JSON.stringify([R.dos, R.uno]));
+    check('449-d quitar la Fanta resta 140 kcal y el batido como «Postre» pasa de 650 a 450', R.k0 - R.k1 === 140 && R.k1 - R.k2 === 200, JSON.stringify([R.k0, R.k1, R.k2]));
+    check('449-e «Apuntar en la cena» guarda 4 tomas en la cena con el mismo total que la pantalla, el poke ×1, y vuelve a Comer', /la cena/.test(R.boton) && R.log.n === 4 && R.log.cena && Math.abs(R.log.kcal - kFin) <= 2 && R.log.bowl === 1 && R.log.vista === '' && R.ult, JSON.stringify([R.boton, R.log, kFin, R.ult]));
+    check('449-f tras recargar, ONLYFAN sale «como la última vez» (sin la Fanta) y «calcular de nuevo» lo olvida', R.memo.modo === 'memo' && R.memo.kcal === 1070 && R.memo.tag && R.olvida.modo === 'tipo' && R.olvida.memo === 0, JSON.stringify([R.memo, R.olvida]));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

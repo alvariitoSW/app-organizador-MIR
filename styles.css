@@ -4282,3 +4282,38 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color])
 .usoapps{list-style:none;margin:0 0 6px;padding:0}
 .usoapps li{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
 .usoapps li span{overflow-wrap:anywhere}
+/* ===== pedido desde una captura (Comer fuera → «Desde una captura del pedido») ===== */
+.pedin{border-color:color-mix(in srgb,var(--brand) 55%,var(--line))}
+.pedin-t{font-size:15px}
+.pedbig{width:100%;justify-content:center;min-height:48px;font-size:15px;display:flex;align-items:center;cursor:pointer}
+.frase .frcap{min-width:40px;min-height:40px;display:inline-grid;place-items:center;cursor:pointer;font-size:17px;padding:0}
+.pedit{border-top:1px dashed var(--line);padding:10px 0}
+.pedit:first-child{border-top:0;padding-top:2px}
+.pedit.off .pedh,.pedit.off .pedchips{opacity:.45}
+.pedh{display:flex;gap:8px;align-items:flex-start}
+.pedh .em{font-size:20px;width:28px;text-align:center;flex:none}
+.pedh .nm{flex:1;min-width:0}.pedh .nm b{display:block;font-size:14px;overflow-wrap:anywhere}
+.pedh .kc{text-align:right;font-variant-numeric:tabular-nums;flex:none}.pedh .kc b{display:block;font-size:15px}.pedh .kc span{font-size:11px;color:var(--ink2)}
+.pedtag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:.04em;margin-top:3px}
+.pedtag.o{background:color-mix(in srgb,var(--ok) 18%,var(--card));color:var(--ok)}
+.pedtag.w{background:color-mix(in srgb,var(--warn) 18%,var(--card));color:var(--warn)}
+.pedchips{margin:6px 0 0 36px;display:flex;flex-wrap:wrap;gap:5px}
+.pedchip{font:inherit;font-size:12px;color:var(--ink);border:1px solid var(--line);border-radius:99px;padding:5px 9px;background:var(--bg2);min-height:30px}
+.pedchip.q{border-color:color-mix(in srgb,var(--warn) 60%,var(--line));color:var(--warn)}
+.pedchip.gf{border-color:color-mix(in srgb,var(--ok) 60%,var(--line));color:var(--ok)}
+.pedchip.off{text-decoration:line-through;opacity:.5}
+.pedchip.lnk{background:transparent;border-style:dashed;color:var(--ink2)}
+.pedsel{font:inherit;font-size:16px;color:var(--warn);background:var(--bg2);border:1px solid color-mix(in srgb,var(--warn) 60%,var(--line));border-radius:12px;padding:6px 8px;max-width:100%;min-height:34px}
+.pedcnt{margin:8px 0 0 36px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2)}
+.pedcnt>span:first-child{flex:1}
+.pedcnt.ojo{color:var(--ink);background:color-mix(in srgb,var(--warn) 10%,var(--card));border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:12px;padding:6px 8px}
+.pedstep{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.pedstep button{font:inherit;font-weight:900;color:var(--ink);background:var(--bg2);border:0;min-width:36px;min-height:34px}
+.pedstep b{padding:0 10px;font-size:14px;min-width:30px;text-align:center}
+.pedtot{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin:4px 0 10px}
+.pedtot div{background:var(--bg2);border-radius:12px;padding:7px 2px}.pedtot b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.pedtot span{font-size:10.5px;color:var(--ink2)}
+.pedseg{display:flex;gap:6px;margin-bottom:10px}
+.pedseg button{flex:1;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:10px;min-height:38px}
+.pedseg button.on{background:color-mix(in srgb,var(--brand) 20%,var(--card));border-color:var(--brand);color:var(--brand)}
+.pedfoot{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);z-index:2}
+.pedok{width:100%;min-height:48px;font-size:15px}

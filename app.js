@@ -788,6 +788,11 @@ function normalize(o){
     if(+x.g>0&&+x.g<=3000)fm[kk].g=Math.round(+x.g);
     if(typeof x.n==='string'&&x.n)fm[kk].n=x.n.slice(0,40);});o.food.frMemo=fm;}
   else delete o.food.frMemo;
+  /* lo que corregiste de un pedido a domicilio: por restaurante y plato, solo números y un nombre corto */
+  if(o.food.pedMemo&&typeof o.food.pedMemo==='object'&&!Array.isArray(o.food.pedMemo)){const pm={};Object.keys(o.food.pedMemo).slice(-200).forEach(function(k){const x=o.food.pedMemo[k]||{};
+    if(typeof x.n!=='string'||!(+x.kcal>=0))return;const c=function(v){return Math.max(0,Math.min(5000,Math.round((+v||0)*10)/10));};
+    pm[String(k).slice(0,60)]={n:x.n.slice(0,60),e:typeof x.e==='string'?x.e.slice(0,4):'🍽',kcal:Math.round(c(x.kcal)),prot:c(x.prot),carb:c(x.carb),gresa:c(x.gresa)};});o.food.pedMemo=pm;}
+  else delete o.food.pedMemo;
   /* EL PASILLO QUE LE HAS PUESTO TÚ A UN PRODUCTO. Sin esta línea se pierde al recargar:
      normalize() tira todo lo que no reconoce. Solo se guardan claves de pasillo que existen. */
   /* el orden en que recorres el súper: sin registrarlo aquí se pierde al recargar. Solo claves de
@@ -3712,6 +3717,9 @@ function renderFuera(){
   $('#main').innerHTML='<div class="grid">'+
     '<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="buscar">'+gymIco('atras','gico sm')+' Añadir</button>'+
       '<h2 class="subtit">Comer fuera</h2></div>'+
+    '<div class="card pedin"><b class="pedin-t">📷 Desde una captura del pedido</b>'+
+      '<p class="mini" style="margin:4px 0 10px">Glovo, Uber Eats, Just Eat… La <b>cesta</b> con todo el pedido y, para afinar, la <b>ficha</b> de cada plato (trae los ingredientes). Se leen en el móvil: la foto no sale del teléfono.</p>'+
+      pedInputHTML('btn p pedbig','Elegir capturas (hasta 6)')+'</div>'+
     (ult.length?('<div class="card"><div class="sec">'+(fueraGuard().length?'TUS MENÚS Y LO ÚLTIMO FUERA':'LO ÚLTIMO QUE PEDISTE FUERA')+'</div>'+
       ult.map(function(t,i){
         return '<div class="hit"><span class="hitnom" style="cursor:default"><span class="em">'+esc(t.emoji||'🍽')+'</span>'+
@@ -3809,6 +3817,263 @@ function fueraApuntar(key,v,rac,pos,macro){
     else{const r=fueraMenuCalc(m[1],m[2]);if(!r)return 'eso ya no está';
       base={nombre:r.nombre,marca:r.c.n,emoji:r.m[2],kcal:r.t.kcal,prot:r.t.prot,carb:r.t.carb,gresa:r.t.gresa};}}
   return addFoodEntry(key,{fuera:v,rac:rac,pos:pos,when:pos,macro:base});}
+/* ===================== PEDIDO DESDE UNA CAPTURA (Glovo, Uber Eats, Just Eat) =====================
+   «Que yo pida por Glovo o en alguna app y pueda mandar una captura de lo que he pedido para que se
+   guarden las comidas y se calculen las kcal y macros.» Se lee EN EL MÓVIL con el mismo Tesseract que el
+   ticket (vendor/ocr): la foto no sale del teléfono. Medido con tres capturas reales de Glovo: la cesta
+   y la ficha de un plato se leen limpias (nombre, precio, descripción, «Añadir 2 por…», «1 +»); la foto
+   del plato sale como basura, pero va SIEMPRE antes del precio y se tira.
+   El lector de frases no sirve tal cual para la carta de un restaurante («papas fritas» → pasas, «salsa
+   hoisin», «dados de salmón» y el inglés se le escapan): por eso una tabla propia, con la ración que pone
+   un restaurante. Con descripción → POR INGREDIENTES; sin ella (solo la cesta) → PLATO TIPO, que eliges.
+   Nada se apunta sin pasar por la pantalla de revisar, y lo que corriges se recuerda (food().pedMemo). */
+/* [qué lo reconoce, nombre, g de ración, kcal, prot, hidr, grasa por 100 g, pan?] */
+const PED_ING=[
+  [/brioche|\bbun\b|pan de (hamburguesa|burger)|\bpan\b|bread/,'pan de hamburguesa',80,300,9,50,7,1],
+  [/smash|ternera|vacuno|\bvaca\b|buey|beef|angus|wagyu|carne picada/,'carne de vaca',150,250,26,0,16],
+  [/cerdo|\bpig\b|pork|ib[eé]rico|cochinita|pulled/,'carne de cerdo',150,260,25,0,18],
+  [/pollo crujiente|crispy chicken|pollo frito|fried chicken|pollo rebozado|tiras de pollo|tenders/,'pollo crujiente',130,260,20,14,14],
+  [/pollo|chicken/,'pollo',130,165,31,0,4],
+  [/bacon|beicon|panceta/,'bacon',30,540,37,1,42],
+  [/queso|cheese|cheddar|emmental|gouda|mozzarella|provolone|parmesano|brie|cabra/,'queso',30,380,25,1,31],
+  [/mayo|alioli|ali oli|ajo ?aceite|salsa (de la casa|secreta|burger|especial)|tartara/,'salsa con mayonesa',25,600,1,3,65],
+  [/hoisin|barbacoa|bbq|teriyaki|ketchup|kimchi|sriracha|salsa (agridulce|de soja|soja)|\bsoja\b/,'salsa dulce',25,200,2,42,2],
+  [/salsa|sauce|dressing|aliño/,'salsa',25,300,1,15,26],
+  [/cebolla (caramelizada|crujiente|frita)|crispy onion|onion rings|aros de cebolla/,'cebolla frita',30,330,4,35,19],
+  [/pico de gallo|tomate|tomato|lechuga|lettuce|cebolla|onion|pepinillo|pickle|jalape|r[uú]cula|cherry|pepino|zanahoria|col lombarda|lombarda|ch[ií]a?les|pimiento|brotes|canonigos|espinaca|verdura|cilantro|cebollino|rabanito|r[aá]bano|apio/,'verdura',35,25,1,5,0],
+  [/huevo|\begg\b/,'huevo',50,155,13,1,11],
+  [/aguacate|avocado|guacamole/,'aguacate',50,160,2,9,15],
+  [/arroz|rice|sushi/,'arroz',180,145,2.5,32,0.4],
+  [/quinoa/,'quinoa',150,120,4,21,2],
+  [/fideos|noodles|ramen|udon|tallarines/,'fideos',200,140,4.5,27,2],
+  [/pasta|espagueti|macarr|penne|tagliatelle|lasa[ñn]a/,'pasta',230,155,5.5,30,1.5],
+  [/salm[oó]n|salmon/,'salmón',100,200,20,0,13],
+  [/at[uú]n|tuna/,'atún',100,130,26,0,2],
+  [/gamba|langostino|shrimp|prawn/,'gambas',80,100,20,0,1.5],
+  [/tofu/,'tofu',100,120,12,2,7],
+  [/edamame/,'edamame',50,120,11,9,5],
+  [/wakame|alga|seaweed|nori/,'algas',30,45,3,9,0.6],
+  [/s[eé]samo|sesame|semillas|pipas|ch[ií]a\b|cacahuete|man[ií]|nueces|almendra|crujiente de/,'semillas',8,570,18,20,50],
+  [/mango|pi[ñn]a|fresa|fruta|manzana/,'fruta',50,60,0.7,15,0.3],
+  [/ma[ií]z|corn/,'maíz',40,90,3,19,1.5],
+  [/garbanzo|alubia|frijol|jud[ií]a/,'legumbre',60,130,8,20,2],
+  [/patata|papas|fries|potato/,'patatas fritas',150,310,3.5,41,15],
+  [/tortilla de trigo|wrap|tortilla/,'tortilla de trigo',70,310,8,52,8,1],
+  [/nata|cream|crema/,'nata',30,340,2,3,35],
+  [/chocolate|nutella|kinder|snickers|snikers|oreo|lotus|caramelo|dulce de leche/,'chocolate',30,530,6,58,30],
+  [/helado|ice cream/,'helado',100,210,4,25,11],
+  [/leche|milk/,'leche',250,64,3.3,4.8,3.6]];
+/* platos tipo de restaurante: una ración pedida a domicilio, por unidad del pedido.
+   [id, nombre, emoji, qué lo reconoce, kcal, prot, hidr, grasa] */
+const PED_TIPO=[
+  ['burger-bacon','Hamburguesa con bacon','🍔',/burger|hamburguesa/,850,44,50,52],
+  ['burger','Hamburguesa de restaurante','🍔',/burger|hamburguesa|onlyfan|smash/,750,38,50,42],
+  ['burger-pollo','Hamburguesa de pollo crujiente','🍔',/chicken burger|burger de pollo|hamburguesa de pollo/,720,35,62,36],
+  ['pizza','Pizza mediana entera','🍕',/pizza/,1500,65,180,55],
+  ['poke','Poke bowl mediano','🥗',/poke|bowl/,650,32,75,22],
+  ['ensalada','Ensalada completa','🥗',/ensalada|salad|c[eé]sar/,480,25,20,32],
+  ['sushi','Sushi (12 piezas)','🍣',/sushi|maki|uramaki|nigiri|california/,550,22,90,10],
+  ['burrito','Burrito','🌯',/burrito/,900,40,100,35],
+  ['kebab','Kebab o durum','🌯',/kebab|d[uü]r[uü]m|shawarma|gyros/,850,40,80,40],
+  ['tacos','Tacos (3)','🌮',/taco/,600,30,50,28],
+  ['wok','Wok de fideos o arroz','🍜',/wok|pad thai|ramen|noodles|yakisoba|arroz frito|fried rice/,700,25,100,20],
+  ['pasta','Plato de pasta','🍝',/pasta|carbonara|bolo[ñn]esa|lasa[ñn]a|espagueti|penne|ravioli|gnocchi/,800,28,100,30],
+  ['tiras','Tiras o nuggets de pollo (8)','🍗',/nugget|tiras|tenders|fingers|alitas|wings|pollo frito|fried chicken/,560,32,32,32],
+  ['bocadillo','Bocadillo o sándwich','🥪',/bocad|bocata|s[aá]ndwich|sandwich|mollete|pepito|baguette|panini|club/,600,30,60,24],
+  ['entrante','Entrante para picar (6 uds)','🧀',/sticks|croqueta|nachos|aros|rings|jalape|teque|alitas|patatas bravas|bravas/,450,16,40,26],
+  ['batido','Batido grande','🥤',/batido|shake|milkshake|frapp/,650,14,85,27],
+  ['postre','Postre o tarta','🍰',/tarta|cake|cheesecake|brownie|cookie|gofre|waffle|crepe|coulant|tiramis|donut|helado|ice cream/,450,6,52,24],
+  ['plato','Plato de restaurante','🍽',/./,700,30,70,30]];
+/* lo que se añade al plato en la cesta («Papas fritas naturales, Fanta Limón, Pan Gluten Free») */
+const PED_EXTRA=[
+  [/zero|light|sin az[uú]car|\bagua\b|water/,'bebida sin azúcar','🥤',1,0,0,0],
+  [/coca|cola|fanta|sprite|7 ?up|aquarius|nestea|refresco|t[oó]nica|pepsi|soda/,'refresco','🥤',140,0,35,0],
+  [/cerveza|beer|mahou|estrella|alhambra|heineken|corona/,'cerveza','🍺',140,1,11,0],
+  [/zumo|juice|limonada/,'zumo','🧃',120,1,28,0],
+  [/boniato|sweet potato/,'boniato frito','🍠',360,3,48,16],
+  [/patata|papas|fries/,'patatas fritas','🍟',320,4,42,16],
+  [/ensalada|salad/,'ensalada de acompañar','🥗',120,2,6,10],
+  [/salsa|sauce|mayo|alioli|ketchup|bbq|barbacoa/,'salsa extra','🥫',100,0,5,9],
+  [/queso extra|extra de queso|extra cheese|\bqueso\b|cheese/,'queso extra','🧀',110,7,0,9],
+  [/bacon|beicon/,'bacon extra','🥓',160,11,0,13],
+  [/huevo|egg/,'huevo extra','🍳',90,7,0,7],
+  [/doble carne|extra de carne|carne extra|double/,'carne extra','🥩',375,39,0,24]];
+const PED_SIN=/sin gluten|gluten.?free|\bsg\b|celiac|cel[ií]ac/;
+function pedPartes(t){
+  /* «Brioche bun, 170g of Black Pig meat, Hoisin sauce and crispy bacon» → trozos */
+  return String(t||'').replace(/\([^)]*\)/g,' ').split(/,|;|\s\+\s|\by\b|\band\b|\bcon\b|\bwith\b|\be\b/i)
+    .map(function(s){return s.replace(/\s+/g,' ').trim();}).filter(function(s){return /[a-záéíóúñ]{3}/i.test(s);});}
+function pedIng(t){const x=alimTxt(t);for(let i=0;i<PED_ING.length;i++)if(PED_ING[i][0].test(x))return PED_ING[i];return null;}
+function pedIngs(desc,sinGluten){
+  /* cada trozo de la descripción → un ingrediente con sus gramos (los que diga el texto mandan) */
+  const out=[];
+  pedPartes(desc).forEach(function(p){const r=pedIng(p),gm=/(\d{2,4})\s*(g|gr|gramos)\b/i.exec(p);
+    if(!r){out.push({n:p.slice(0,40),g:0,kcal:0,prot:0,carb:0,gresa:0,duda:1});return;}
+    const g=gm?Math.min(1000,+gm[1]):r[2],f=g/100;
+    out.push({n:r[7]&&sinGluten?r[1]+' sin gluten':r[1],g:g,kcal:Math.round(r[3]*f),prot:r[4]*f,carb:r[5]*f,gresa:r[6]*f,gf:r[7]&&sinGluten?1:0});});
+  return out;}
+function pedTipo(id){return PED_TIPO.filter(function(t){return t[0]===id;})[0]||PED_TIPO[PED_TIPO.length-1];}
+function pedTipoDe(nombre,desc){
+  let x=alimTxt(nombre+' '+(desc||''));
+  /* «Brioche bun, 170 g of… meat»: el nombre no dice hamburguesa, pero el pan sí */
+  if(/\bbun\b|brioche|pan de (hamburguesa|burger)/.test(x)&&/carne|meat|beef|pork|\bpig\b|cerdo|ternera|vaca|smash/.test(x))x+=' burger';
+  if(/burger|hamburguesa|smash/.test(x)&&/bacon|beicon/.test(x))return 'burger-bacon';
+  if(/pollo|chicken/.test(x)&&/burger|hamburguesa/.test(x))return 'burger-pollo';
+  for(let i=0;i<PED_TIPO.length;i++)if(PED_TIPO[i][3].test(x))return PED_TIPO[i][0];
+  return 'plato';}
+function pedExtras(ops){
+  /* las opciones de la cesta: lo que suma (patatas, bebida, salsa) y si el pan es sin gluten */
+  const out=[];
+  (ops||[]).forEach(function(o){const x=alimTxt(o);if(PED_SIN.test(x)||/mediano|grande|peque|tama|normal|xl\b/.test(x))return;
+    for(let i=0;i<PED_EXTRA.length;i++){const e=PED_EXTRA[i];if(e[0].test(x)){out.push({n:o.slice(0,40),que:e[1],e:e[2],kcal:e[3],prot:e[4],carb:e[5],gresa:e[6]});return;}}});
+  return out;}
+function pedLimpia(l){
+  /* delante del nombre el lector deja basura de los iconos («-— E y Papas…»): empieza en la primera
+     palabra de verdad (mayúscula + minúsculas, o una palabra en mayúsculas de 3 letras o más) */
+  const ws=String(l||'').trim().split(/\s+/);let i=0;
+  while(i<ws.length&&!/^[A-ZÁÉÍÓÚÑ][a-záéíóúñü]{2,}|^[A-ZÁÉÍÓÚÑ]{3,}/.test(ws[i]))i++;
+  return ws.slice(i).join(' ').replace(/[|_<>«»"“”]/g,'').trim();}
+const PED_PRECIO=/^\s*\d{1,3}(?:[.,]\d{2})?\s*€\s*$/;
+function pedParse(texto){
+  /* el texto de UNA captura → {rest, items:[{n, desc, ops, q, src}]}. La ficha: la línea antes del precio
+     es el nombre y lo de después, la descripción. La cesta: «nombre … 1 +», sus opciones y su precio. */
+  const lin=String(texto||'').split(/\n+/).map(function(l){return l.trim();}).filter(Boolean);
+  const out={rest:'',items:[]};
+  const iR=lin.findIndex(function(l){return /productos? de\s+\S/i.test(l);});
+  if(iR>=0)out.rest=pedLimpia(lin[iR].replace(/^.*productos? de\s+/i,'')).slice(0,40);
+  const esCesta=iR>=0||lin.some(function(l){return /^\W*(tu )?cesta\b|ir al pago|tu pedido\b|ver pedido|finalizar pedido/i.test(l);});
+  if(esCesta){
+    const ini=iR>=0?iR+1:Math.max(0,lin.findIndex(function(l){return /cesta|tu pedido/i.test(l);})+1);
+    let cur=null;
+    for(let i=ini;i<lin.length;i++){const l=lin[i];
+      if(/a[ñn]adir m[aá]s|tambi[ée]n te puede|ir al pago|subtotal|gastos de env[ií]o|c[oó]digo promo/i.test(l))break;
+      if(PED_PRECIO.test(l)||/^\s*\d{3,4}\s*€\s*$/.test(l)){if(cur)cur.cerrado=1;continue;}
+      let m=/^(.*?)\s*(?:\S{0,3}\s*)?(\d{1,2})\s*\+\s*$/.exec(l)||/^(.*?)\s*[x×]\s*(\d{1,2})\s*$/.exec(l);
+      let mi=!m&&/^(\d{1,2})\s*[x×]\s+(.+)$/.exec(l);
+      if(m||mi||!cur||cur.cerrado){
+        const n=pedLimpia(mi?mi[2]:(m?m[1]:l)).replace(/\s+\d{1,3}[.,]\d{2}\s*€.*$/,'');
+        if(!/[a-záéíóúñ]{3}/i.test(n)){continue;}
+        cur={n:n.slice(0,60),desc:'',ops:[],q:Math.max(1,Math.min(20,+(mi?mi[1]:(m?m[2]:1))||1)),src:'cesta'};out.items.push(cur);continue;}
+      cur.ops.push(pedLimpia(l));}
+    out.items.forEach(function(it){it.ops=it.ops.join(' ').split(/,/).map(function(s){return s.trim();}).filter(function(s){return /[a-záéíóúñ]{3}/i.test(s);});delete it.cerrado;});
+    return out;}
+  const iP=lin.findIndex(function(l){return PED_PRECIO.test(l);});
+  if(iP<1)return out;
+  const n=pedLimpia(lin[iP-1]);if(!/[a-záéíóúñ]{3}/i.test(n))return out;
+  const d=[];for(let i=iP+1;i<lin.length;i++){if(/personal[ií]+zalo|puedes hacer|a[ñn]adir \d|^elige|obligatorio|lo pediste|pedido por|al[eé]rgenos|^opciones/i.test(lin[i]))break;d.push(lin[i]);}
+  const q=(lin.map(function(l){return /a[ñn]adir\s+(\d{1,2})\s+por/i.exec(l);}).filter(Boolean)[0]||[0,1])[1];
+  out.items.push({n:n.slice(0,60),desc:d.join(' ').slice(0,300),ops:[],q:Math.max(1,Math.min(20,+q||1)),src:'ficha'});
+  return out;}
+function pedMemoS(){const f=food();if(!f.pedMemo||typeof f.pedMemo!=='object'||Array.isArray(f.pedMemo))f.pedMemo={};return f.pedMemo;}
+function pedClave(it){return alimTxt((it.rest||'')+'|'+it.n).replace(/[^a-z0-9|]+/g,' ').trim().slice(0,60);}
+function pedJunta(textos){
+  /* varias capturas → un pedido: la ficha pone la descripción y la cesta, las opciones y la cantidad */
+  const ped={rest:'',items:[]};
+  textos.map(pedParse).forEach(function(p){if(p.rest&&!ped.rest)ped.rest=p.rest;
+    p.items.forEach(function(it){it.rest=p.rest||'';
+      const ya=ped.items.filter(function(x){return alimTxt(x.n)===alimTxt(it.n);})[0];
+      if(!ya){ped.items.push(it);return;}
+      if(it.desc&&!ya.desc)ya.desc=it.desc;if(it.ops.length&&!ya.ops.length)ya.ops=it.ops;
+      if(it.src==='cesta'){ya.q=it.q;ya.rest=it.rest||ya.rest;}});});
+  const mm=pedMemoS();
+  ped.items.forEach(function(it){
+    it.sg=PED_SIN.test(alimTxt(it.ops.join(' ')+' '+it.desc))||(esCeliaco()&&/pan|bun|brioche|burger|hamburguesa|bocad|s[aá]ndwich/i.test(it.n+' '+it.desc))?1:0;
+    it.comido=1;it.quita=[];
+    const m=mm[pedClave(it)];
+    if(m){it.modo='memo';it.memo=m;return;}
+    const ings=it.desc?pedIngs(it.desc,it.sg):[];
+    it.modo=ings.filter(function(x){return !x.duda;}).length>=2?'ing':'tipo';
+    it.ings=ings;it.tipo=pedTipoDe(it.n,it.desc);});
+  return ped;}
+function pedCalc(it){
+  /* lo de UNA unidad del plato: {kcal, prot, carb, gresa, e} */
+  const t={kcal:0,prot:0,carb:0,gresa:0};
+  const suma=function(x){t.kcal+=+x.kcal||0;t.prot+=+x.prot||0;t.carb+=+x.carb||0;t.gresa+=+x.gresa||0;};
+  let e='🍽';
+  if(it.modo==='memo'){suma(it.memo);e=it.memo.e||e;}
+  else{
+    if(it.modo==='ing')(it.ings||[]).forEach(function(x,i){if(it.quita.indexOf('i'+i)<0)suma(x);});
+    else{const tp=pedTipo(it.tipo);suma({kcal:tp[4],prot:tp[5],carb:tp[6],gresa:tp[7]});}
+    e=pedTipo(it.tipo)[2];
+    pedExtras(it.ops).forEach(function(x,i){if(it.quita.indexOf('x'+i)<0)suma(x);});}
+  t.kcal=Math.round(t.kcal);['prot','carb','gresa'].forEach(function(k){t[k]=Math.round(t[k]*10)/10;});t.e=e;
+  return t;}
+function pedTotal(ped){const t={kcal:0,prot:0,carb:0,gresa:0};
+  ped.items.forEach(function(it){if(!it.comido)return;const u=pedCalc(it);Object.keys(t).forEach(function(k){t[k]+=u[k]*it.comido;});});
+  Object.keys(t).forEach(function(k){t[k]=Math.round(t[k]);});return t;}
+function pedLeeTextos(textos){
+  const ped=pedJunta(textos||[]);
+  ped.pos=cjeGrupo(momentoEscribir());if(['comida','cena','merienda'].indexOf(ped.pos)<0)ped.pos=ped.pos==='desayuno'?'desayuno':'comida';
+  ui.ped=ped;ui.tab='food';ui.foodVista='pedido';return ped;}
+function pedOcr(files){
+  /* las capturas, leídas EN EL MÓVIL (sin internet tras la primera vez) y de ahí a revisar */
+  const fs=Array.prototype.slice.call(files||[]).filter(function(f){return /^image\//.test(f.type||'image/');}).slice(0,6);
+  if(!fs.length){flash('elige una captura del pedido');return Promise.resolve();}
+  ui.ped={estado:'leyendo',hechas:0,total:fs.length,items:[]};ui.tab='food';ui.foodVista='pedido';render();window.scrollTo(0,0);
+  const base=new URL('vendor/ocr/',location.href).href;let worker=null;const txt=[];
+  return ocrListo().then(function(T){return T.createWorker('spa',1,{workerPath:base+'worker.min.js',corePath:base+'tesseract-core-lstm.wasm.js',langPath:base.replace(/\/$/,''),gzip:true});})
+    .then(function(w){worker=w;return fs.reduce(function(p,f){return p.then(function(){
+      return worker.recognize(f).then(function(r){txt.push(r.data.text||'');ui.ped.hechas++;if(ui.foodVista==='pedido')render();});});},Promise.resolve());})
+    .then(function(){if(worker)worker.terminate();pedLeeTextos(txt);
+      if(!ui.ped.items.length)ui.ped.msg='No he encontrado ningún plato. Manda la cesta («Tu cesta») o la ficha del plato, con el nombre y el precio a la vista.';
+      render();window.scrollTo(0,0);})
+    .catch(function(e){if(worker)try{worker.terminate();}catch(_){}
+      ui.ped={estado:'error',items:[],msg:'No he podido leer las capturas'+(navigator.onLine?'':' (la primera vez hace falta internet para bajar el lector)')+'.'};render();});}
+function pedApuntar(){
+  const ped=ui.ped;if(!ped||!ped.items)return 'no hay pedido';
+  const key=foodCtx().sel,mm=pedMemoS();let n=0,k=0;
+  ped.items.forEach(function(it){if(!it.comido)return;const u=pedCalc(it),cl=pedClave(it);
+    addFoodEntry(key,{fuera:'fuera:pedido:'+cl,rac:it.comido,pos:ped.pos,when:ped.pos,
+      macro:{nombre:it.n,marca:it.rest||'a domicilio',emoji:u.e,kcal:u.kcal,prot:u.prot,carb:u.carb,gresa:u.gresa}});
+    mm[cl]={n:it.n.slice(0,60),e:u.e,kcal:u.kcal,prot:u.prot,carb:u.carb,gresa:u.gresa};n++;k+=u.kcal*it.comido;});
+  const ks=Object.keys(mm);if(ks.length>200)ks.slice(0,ks.length-200).forEach(function(q){delete mm[q];});
+  save();ui.ped=null;ui.foodVista='';
+  return n?('apuntado: '+n+(n===1?' plato':' platos')+' · '+fmtMil(Math.round(k))+' kcal'):'no había nada marcado';}
+function pedInputHTML(cls,txt,aria){
+  return '<label class="'+cls+'"'+(aria?' aria-label="'+esc(aria)+'"':'')+'>'+txt+
+    '<input type="file" accept="image/*" multiple data-a="ped-ocr" hidden></label>';}
+function renderPedido(){
+  const ped=ui.ped;
+  const cab='<div class="subcab"><button class="btn s volver" data-a="food-vista" data-v="fuera">'+gymIco('atras','gico sm')+' Comer fuera</button>'+
+    '<h2 class="subtit">Tu pedido</h2></div>';
+  if(!ped||ped.estado==='leyendo'||!ped.items.length){
+    const h=!ped?'<p class="mini">Elige la captura de la cesta o de la ficha del plato.</p>':
+      (ped.estado==='leyendo'?('<p style="margin:0"><b>Leyendo '+Math.min(ped.total,ped.hechas+1)+' de '+ped.total+'…</b></p>'+
+        '<p class="mini" style="margin:6px 0 0">Se lee en el móvil. La primera vez baja el lector (unos 6 MB); luego va sin internet.</p>'):
+      ('<p style="margin:0 0 10px">'+esc(ped.msg||'No he encontrado ningún plato.')+'</p>'+pedInputHTML('btn p','📷 Probar con otras capturas')));
+    $('#main').innerHTML='<div class="grid">'+cab+'<div class="card" id="pedEstado" aria-live="polite">'+h+'</div></div>';return;}
+  const rests=ped.items.map(function(i){return i.rest;}).filter(function(r,i,a){return r&&a.indexOf(r)===i;});
+  const items=ped.items.map(function(it,i){const u=pedCalc(it);
+    const tag=it.modo==='memo'?'<span class="pedtag o">COMO LA ÚLTIMA VEZ</span>':(it.modo==='ing'?'<span class="pedtag o">POR INGREDIENTES</span>':
+      '<span class="pedtag w">PLATO TIPO'+(it.desc?'':' · sin ingredientes')+'</span>');
+    let det='';
+    if(it.modo==='ing')det+='<div class="pedchips">'+(it.ings||[]).map(function(x,j){const q=it.quita.indexOf('i'+j)>=0;
+      return '<button class="pedchip'+(x.duda?' q':'')+(x.gf?' gf':'')+(q?' off':'')+'" data-a="ped-quita" data-i="'+i+'" data-k="i'+j+'" aria-pressed="'+(!q)+'" aria-label="'+(q?'volver a contar ':'no contar ')+esc(x.n)+'">'+
+        esc(x.n)+(x.duda?' · no lo conozco':(' '+x.g+' g'))+'</button>';}).join('')+'</div>';
+    if(it.modo==='tipo')det+='<div class="pedchips"><select class="pedsel" data-a="ped-tipo" data-i="'+i+'" aria-label="plato tipo de '+esc(it.n)+'">'+
+      PED_TIPO.map(function(t){return '<option value="'+t[0]+'"'+(t[0]===it.tipo?' selected':'')+'>'+esc(t[1])+' · '+t[4]+' kcal</option>';}).join('')+
+      ((it.ings||[]).length?'<option value="@ing">Contar por ingredientes</option>':'')+'</select>'+(it.sg?'<span class="pedchip gf">pan sin gluten</span>':'')+'</div>';
+    if(it.modo==='ing'&&it.sg&&!(it.ings||[]).some(function(x){return x.gf;}))det+='<div class="pedchips"><span class="pedchip gf">sin gluten</span></div>';
+    if(it.modo!=='memo'){const ex=pedExtras(it.ops);
+      if(ex.length)det+='<div class="pedchips">'+ex.map(function(x,j){const q=it.quita.indexOf('x'+j)>=0;
+        return '<button class="pedchip'+(q?' off':'')+'" data-a="ped-quita" data-i="'+i+'" data-k="x'+j+'" aria-pressed="'+(!q)+'">+ '+esc(x.n)+' · '+x.kcal+' kcal</button>';}).join('')+'</div>';
+      if(it.modo==='ing')det+='<div class="pedchips"><button class="pedchip lnk" data-a="ped-tipo-ir" data-i="'+i+'">usar un plato tipo</button></div>';}
+    else det+='<div class="pedchips"><button class="pedchip lnk" data-a="ped-olvida" data-i="'+i+'">calcular de nuevo</button></div>';
+    const cnt='<div class="pedcnt'+(it.q>1?' ojo':'')+'">'+(it.q>1?'<span>El pedido trae <b>'+it.q+'</b>. ¿Cuántos te has comido?</span>':'<span>Te lo has comido</span>')+
+      '<span class="pedstep"><button data-a="ped-c" data-i="'+i+'" data-d="-1" aria-label="uno menos de '+esc(it.n)+'">−</button><b>'+fmt(it.comido)+'</b>'+
+      '<button data-a="ped-c" data-i="'+i+'" data-d="1" aria-label="uno más de '+esc(it.n)+'">+</button></span></div>';
+    return '<div class="pedit'+(it.comido?'':' off')+'"><div class="pedh"><span class="em">'+u.e+'</span><span class="nm"><b>'+esc(it.n)+'</b>'+tag+'</span>'+
+      '<span class="kc"><b>'+fmtMil(u.kcal)+'</b><span>'+Math.round(u.prot)+' P · '+Math.round(u.carb)+' H · '+Math.round(u.gresa)+' G</span></span></div>'+det+cnt+'</div>';}).join('');
+  const t=pedTotal(ped),POS=[['desayuno','Desayuno'],['comida','Comida'],['merienda','Merienda'],['cena','Cena']];
+  $('#main').innerHTML='<div class="grid">'+cab+
+    '<p class="mini" style="margin:-4px 4px 0">'+(rests.length?esc(rests.join(' y '))+' · ':'')+'Toca un ingrediente o un extra para no contarlo.</p>'+
+    '<div class="card">'+items+'<p class="mini" style="margin:8px 0 0">Lo demás de las capturas (precios, botones, sugerencias) no se apunta.</p></div>'+
+    '<div class="card"><div class="sec">TOTAL QUE TE APUNTAS</div>'+
+      '<div class="pedtot"><div><b>'+fmtMil(t.kcal)+'</b><span>kcal</span></div><div><b>'+t.prot+'</b><span>prot g</span></div><div><b>'+t.carb+'</b><span>hidr g</span></div><div><b>'+t.gresa+'</b><span>grasa g</span></div></div>'+
+      '<div class="pedseg" role="group" aria-label="en qué comida">'+POS.map(function(p){return '<button data-a="ped-pos" data-p="'+p[0]+'" aria-pressed="'+(ped.pos===p[0])+'"'+(ped.pos===p[0]?' class="on"':'')+'>'+p[1]+'</button>';}).join('')+'</div>'+
+      '<p class="mini" style="margin:0">La próxima vez que pidas lo mismo irá directo con lo que corrijas aquí.</p></div>'+
+    '<div class="pedfoot"><button class="btn p pedok" data-a="ped-ok"'+(t.kcal||ped.items.some(function(i){return i.comido;})?'':' disabled')+'>Apuntar en '+(ped.pos==='cena'?'la cena':ped.pos==='comida'?'la comida':ped.pos==='merienda'?'la merienda':'el desayuno')+' · '+fmtMil(t.kcal)+' kcal</button></div>'+
+  '</div>';}
 /* ===================== comida: productos, escáner y cuenta de calorías ===================== */
 const CB_DEF=[{nom:'Pollo',q:1,uni:'kg'},{nom:'Lomo',q:600,uni:'g'},{nom:'Pescado congelado',q:1,uni:'kg'},{nom:'Arroz',q:1,uni:'kg'},{nom:'Huevos',q:12,uni:''},{nom:'Atún',q:3,uni:'latas'}];
 function food(){
@@ -11183,6 +11448,7 @@ function fraseCardHTML(slim,buscar){
   const fr=ui.frase;
   let h='<div class="frase"><span aria-hidden="true">✍️</span><input id="frIn" data-a="fr-in" placeholder="bocata de pavo con queso y mayo" value="'+esc(ui.frTxt!=null?ui.frTxt:(fr?fr.txt:''))+'" aria-label="qué has comido, en una frase" autocomplete="off" enterkeyhint="done">'+
     (buscar?'<button class="btn s frbus" data-a="cje-busca" aria-label="Buscar alimento">'+gymIco('lupa','gico sm')+'</button>':'')+
+    pedInputHTML('btn s frcap','📷','Apuntar desde una captura del pedido')+
     '<button class="btn p s" data-a="fr-leer">Apuntar</button></div>'+
     '<div id="frLectura" class="frlect" aria-live="polite">'+(fr?fraseLecturaHTML(fr):'')+'</div>';
   /* lo que sueles escribir (a esta hora otros días, y lo último), a un toque */
@@ -16342,6 +16608,7 @@ function renderFood(){
   if(v==='hoycocino')return renderHoyCocino();
   if(v==='buscar')return renderFoodBuscar();
   if(v==='fuera')return renderFuera();
+  if(v==='pedido')return renderPedido();
   if(v==='fueracad')return renderFueraCad();
   if(v==='fueramenu')return renderFueraMenu();
   if(v==='cantidad')return renderFoodCantidad();
@@ -27099,6 +27366,16 @@ function act(a,el){
       g.unshift({nombre:r.nombre,marca:r.c.n,emoji:r.m[2],fuera:'fuera:'+st.cid+':'+st.mid,rac:r.n,
         k1:{kcal:r.t.kcal,prot:r.t.prot,carb:r.t.carb,gresa:r.t.gresa},ts:Date.now()});
       food().fueraGuard=g.slice(0,12);save();flash('guardado: lo tienes arriba del todo en «Comer fuera»');render();break;}
+    case 'ped-c':{const it=ui.ped&&ui.ped.items[+el.dataset.i];if(!it)break;
+      it.comido=Math.max(0,Math.min(20,it.comido+(+el.dataset.d||0)));render();break;}
+    case 'ped-quita':{const it=ui.ped&&ui.ped.items[+el.dataset.i],k=el.dataset.k||'';if(!it||!k)break;
+      const j=it.quita.indexOf(k);if(j>=0)it.quita.splice(j,1);else it.quita.push(k);render();break;}
+    case 'ped-tipo-ir':{const it=ui.ped&&ui.ped.items[+el.dataset.i];if(!it)break;it.modo='tipo';render();break;}
+    case 'ped-olvida':{const it=ui.ped&&ui.ped.items[+el.dataset.i];if(!it)break;
+      delete pedMemoS()[pedClave(it)];save();delete it.memo;it.ings=it.desc?pedIngs(it.desc,it.sg):[];
+      it.modo=it.ings.filter(function(x){return !x.duda;}).length>=2?'ing':'tipo';it.tipo=pedTipoDe(it.n,it.desc);render();break;}
+    case 'ped-pos':{if(ui.ped&&['desayuno','comida','merienda','cena'].indexOf(el.dataset.p)>=0)ui.ped.pos=el.dataset.p;render();break;}
+    case 'ped-ok':{flash(pedApuntar());render();window.scrollTo(0,0);break;}
     case 'fuera-repetir':{const t=fueraUltimos(4)[+el.dataset.i];if(!t){flash('eso ya no está');break;}
       flash(fueraApuntar(el.dataset.key,t.fuera,t.rac||1,ui.foodPos||momentoAhora(),
         {nombre:t.nombre,marca:t.marca,emoji:t.emoji,kcal:t.k1.kcal,prot:t.k1.prot,carb:t.k1.carb,gresa:t.k1.gresa}));
@@ -28958,6 +29235,9 @@ document.addEventListener('change',e=>{
       if(!isFinite(v)||v<1||v>mx){flash('escribe un número de meses entre 1 y '+mx);break;}
       const A=dinero3S().ahorro;A[k]=Math.round(v);if(k==='plazoMeses')A.desde=iso(new Date());save();render();break;}
     case 'tk-ocr':{const fs=el.files;if(fs&&fs.length)tkOcr(fs);break;}
+    case 'ped-ocr':{const fs=el.files;if(fs&&fs.length)pedOcr(fs);el.value='';break;}
+    case 'ped-tipo':{const it=ui.ped&&ui.ped.items[+el.dataset.i];if(!it)break;
+      if(el.value==='@ing'&&(it.ings||[]).length)it.modo='ing';else if(PED_TIPO.some(function(t){return t[0]===el.value;}))it.tipo=el.value;render();break;}
     case 'fin-fecha':{if(ui.fin&&esFecha(el.value||''))ui.fin.fecha=el.value;render();break;}
     case 'fin-mes':{if(ui.fin&&ui.fin.res&&/^\d{4}-\d{2}$/.test(el.value||''))ui.fin.res.mes=el.value;render();break;}
     case 'fin-n':{const c=ui.fin&&ui.fin.res&&ui.fin.res.cats[+String(el.dataset.k).slice(4)],n=String(el.value).trim().slice(0,40);
@@ -29483,7 +29763,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
