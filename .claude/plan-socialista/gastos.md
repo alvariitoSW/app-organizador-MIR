@@ -22,7 +22,7 @@ traspaso explica por qué.
 | Tipo | Modelo | Última medida | Presupuesto siguiente | De qué tarea |
 |---|---|---|---|---|
 | herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
-| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte | ~0,9 M uno pequeño con ficha y captura · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
+| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte · pruebas de fecha + paso a main 0,62 M (opus, 46 pasos) | ~0,9 M uno pequeño con ficha y captura · ~0,55 M arreglar pruebas y pasar a main · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
 | maqueta | opus + sonnet (+ haiku jurado) | R1 3,0 M con concurso · R5 1,0 M sin concurso (92 pasos, parte y salud incluidos) · chef-ch3 0,7 M completando otra (10 pantallas) · mananas-lm1 0,46 M sin concurso (7 pantallas, 26 pasos) | ~2,7 M con concurso · ~0,5 M sin él si el acta ya fija las pantallas · ~0,7 M si solo completa otra (encargo entero al sonnet de una vez; el verificador, una pasada + un repaso corto) | mananas-lm1 (2026-10-31) |
 | construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
 | construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
@@ -79,6 +79,7 @@ traspaso explica por qué.
 | 2026-11-01 | chef-ch5 | construir | opus-5-5 + sonnet-5-5 | 2 | 83 | **1,3 M** | sesión principal (48 %) | recetario navegable + Tu cocina; 1 constructor sonnet + verificador; previsto 0,9 M |
 | 2026-11-01 | consejo-lanzador | estudio | opus-5-5 + sonnet-5-5 | 2 | 23 | **495 k** | sesión principal (58 %) | Consejo app Android acceso al uso: mapa por grep + 2 dictámenes (opus, sonnet); recomienda C |
 | 2026-11-01 | lanzador-k1 | construir | opus-5-5 + sonnet-5-5 | 4 | 102 | **1,7 M** | Construir K1 Lanzador web (48 %) | maqueta a mano + un constructor sonnet con la especificación cerrada + una pasada del verificador; la suite completa la corrió el constructor una vez |
+| 2026-11-01 | suite-fecha-fija-y-k1-a-main | arreglo | opus-5-5 + sonnet-5-5 | 1 | 46 | **621 k** | sesión principal (91 %) | 8 pruebas dependían de la fecha (6 ocultas tras el corte del trozo 4) · ahorro: fijaHoy/FECHA_FIJA para las que miren el día de la semana o el mes |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
@@ -111,6 +112,7 @@ Una línea por cosa aprendida, con la tarea donde se vio. Se aplican en las sigu
 - Pruebas solo las tuyas mientras trabajas (`tools/pruebas-corto.sh --solo …`); la completa, una vez al final.
 - Ayudantes de trabajo mecánico en sonnet o haiku; opus solo para decidir o diseñar algo nuevo.
 - Un arreglo de una línea con el sitio ya localizado: sin ayudantes (lanzar uno cuesta más que hacerlo).
+- Prueba que cae un día «raro» (domingo, día 1, festivo): fijarle la fecha con `fijaHoy` antes de buscar el fallo en la app; y pasar la suite entera, que un corte esconde los fallos de detrás.
 - Un banco de frases que escribe haiku sale barato (0,4 M las 300), pero sus kcal y nombres esperados fallan mucho: se
   ajustan por script a lo que lee la app, revisando a mano solo las lecturas raras (v3-lector).
 - Pasar las frases con `--vuelca` y agrupar los fallos por tipo antes de tocar nada: 5 tandas de arreglos en vez de 200.

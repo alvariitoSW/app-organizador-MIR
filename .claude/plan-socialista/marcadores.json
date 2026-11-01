@@ -1,9 +1,9 @@
 {
   "nota": "Hasta dónde se leyó cada fuente. Vacío = primera vez: se lee todo y se cuentan como mucho los últimos 7 días.",
-  "main": "cfc43b6",
-  "rama": "dc80e7f",
-  "actionsRun": 41238097248,
-  "decisionsLinea": 2425,
+  "main": "09c5151",
+  "rama": "eff59bc",
+  "actionsRun": 41337590763,
+  "decisionsLinea": 2438,
   "issues": "0 abiertos",
   "ultimaSesion": "2026-11-01",
   "gastosFila": 53

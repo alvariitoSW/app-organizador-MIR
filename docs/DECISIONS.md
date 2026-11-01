@@ -2507,3 +2507,23 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 
 **Supuestos**
 - Las pruebas que siguen usando la fecha real pueden caer otros días raros (fin de mes, festivos); se arreglan igual cuando salgan.
+
+## El Lanzador · K2: la lanzadora de Android (01/11/2026, Consejo por delegación)
+
+**Elegido**
+- `android/` con una sola pantalla en Java a pelo (sin AndroidX ni dependencias): si falta «Acceso al uso», lo explica y lleva a Ajustes (con «Abrir la app sin datos»); si lo tiene, lee `queryEvents` de 14 días **solo al abrir**, abre `…/index.html#uso=…` en `com.brave.browser` y se cierra. Si no está Brave, avisa de que en otro navegador saldrá vacía.
+- La cuenta en `Uso.java`, sin nada de Android, con sus pruebas JUnit (se corren en el workflow y aquí con el JUnit de Gradle). Minutos = tiempo con una app delante (de «abierta» a «pausada», pantalla apagada, bloqueo o desbloqueo), sin contar esta app, la pantalla de inicio ni la barra del sistema; desbloqueos = `KEYGUARD_HIDDEN`; `q` por cuartos de hora; las 5 apps con más minutos con su nombre visible.
+- El día del primer evento que guarda Android se descarta (puede estar a medias) y los anteriores no se mandan: un 0 pisaría lo que la web ya tiene. Si el `#` pasa de 11 900 caracteres, se quitan días por el más antiguo.
+- Sin permiso de INTERNET; `minSdk 28` (hace falta para los desbloqueos), `targetSdk 35`; `<queries>` para ver Brave, el inicio y el nombre de las apps (sin `QUERY_ALL_PACKAGES`). Icono adaptativo en XML: el reloj de `icon.svg` con un «play».
+- `.github/workflows/android.yml`: solo con cambios en `android/**` o a mano; pruebas + `assembleRelease`, falla si la APK pide INTERNET, firma con los Secrets `LANZADOR_*` (la clave se borra del disco al acabar) y en `main` o a mano publica la Release `lanzador-v<n>`; en otras ramas deja la APK como artefacto.
+- Comprobado de punta a punta: el `#uso=` que sale de `Uso.java` lo acepta la web real (8 días recibidos, `#` borrado).
+
+**Descartado**
+- Layout en XML y AndroidX: una pantalla de texto y dos botones no lo necesita.
+- Contar el tiempo de pantalla encendida en vez del de apps: la pantalla de bloqueo y el inicio inflarían la cifra frente a «Horas de pantalla».
+- El navegador predeterminado: abriría la app vacía (la decisión del usuario fue Brave).
+
+**Supuestos**
+- El nombre en el móvil es «Lanzador» (no «Guardias», para no confundirse con la app instalada desde Brave).
+- Si a Android le falta la pausa de una app, el tramo se cierra en el siguiente apagado, bloqueo o desbloqueo.
+- Lo que no se ha podido probar aquí (no hay SDK de Android en el contenedor): la pantalla en el móvil, el salto a «Acceso de uso» en HyperOS y que Brave reciba el `#`. Eso es la K3, con el usuario delante.

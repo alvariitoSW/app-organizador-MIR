@@ -1,0 +1,88 @@
+# El Lanzador (K2): compila la lanzadora de android/, comprueba que no pide internet, la firma con la clave
+# guardada en Secrets y, en main o a mano, la publica como Release (el artefacto de Actions caduca a 90 días).
+# Solo corre con cambios en android/ o en este archivo: no toca el despliegue de Pages.
+name: Lanzador (Android)
+
+on:
+  push:
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lanzador-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Clave de firma (de Secrets)
+        env:
+          LANZADOR_KEYSTORE: ${{ secrets.LANZADOR_KEYSTORE }}
+        run: |
+          if [ -n "$LANZADOR_KEYSTORE" ]; then
+            printf '%s' "$LANZADOR_KEYSTORE" | base64 -d > "$RUNNER_TEMP/lanzador.p12"
+            echo "LANZADOR_KEYSTORE_FILE=$RUNNER_TEMP/lanzador.p12" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Sin LANZADOR_KEYSTORE: la APK sale sin firmar y no se publica"
+          fi
+
+      - name: Pruebas y compilación
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          LANZADOR_PASSWORD: ${{ secrets.LANZADOR_PASSWORD }}
+          LANZADOR_ALIAS: ${{ secrets.LANZADOR_ALIAS }}
+        run: gradle -p android --no-daemon test assembleRelease
+
+      - name: Sin permiso de INTERNET y firma válida
+        run: |
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          APK=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          echo "APK: $APK"
+          "$BT/aapt2" dump permissions "$APK" | tee permisos.txt
+          if grep -q 'android.permission.INTERNET' permisos.txt; then
+            echo "::error::La APK pide INTERNET: los datos podrían salir del móvil"; exit 1
+          fi
+          grep -q 'android.permission.PACKAGE_USAGE_STATS' permisos.txt || { echo "::error::Falta PACKAGE_USAGE_STATS"; exit 1; }
+          if [ -n "${LANZADOR_KEYSTORE_FILE:-}" ]; then
+            "$BT/apksigner" verify --print-certs "$APK" | grep -v 'SHA-1'
+            cp "$APK" "lanzador-v${{ github.run_number }}.apk"
+            echo "FIRMADA=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Borrar la clave del disco
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lanzador.p12"
+
+      - uses: actions/upload-artifact@v4
+        if: env.FIRMADA == '1'
+        with:
+          name: lanzador-v${{ github.run_number }}
+          path: lanzador-v${{ github.run_number }}.apk
+
+      - name: Publicar como Release
+        if: env.FIRMADA == '1' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "lanzador-v${{ github.run_number }}" "lanzador-v${{ github.run_number }}.apk" \
+            --target "$GITHUB_SHA" --latest \
+            --title "Lanzador v${{ github.run_number }}" \
+            --notes "La lanzadora de Android (El Lanzador). Descárgala en el móvil e instálala; al abrirla pide «Acceso al uso», lee el uso del móvil y abre la app en Brave. Sin permiso de internet."
