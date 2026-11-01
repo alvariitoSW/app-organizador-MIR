@@ -29,7 +29,7 @@ traspaso explica por qué.
 | construir (Reforma, ficha + 1 constructor) | opus + sonnet | 3,6 M (178 pasos; obra 1,7 M, principal 1,6 M, verificador 0,18 M, parte 0,07 M) | ~3,2 M (90 %); sin el lío de main a mitad, ~2,5 M | reforma-r6-compra-congelador (2026-10-30) |
 | construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
 | construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
-| datos (recetario, El Chef) | opus sin ayudantes | CH1 1,3 M (53 pasos; previsto 0,7 M) | ~0,6 M por lote **con sonnet** y la ficha `fichas/chef.md` delante (el opus de la CH1 leyó de más) | chef-ch1 (2026-10-30) |
+| datos (recetario, El Chef) | sonnet escribe, opus dirige | CH4 1,8 M por 60 platos (~0,23 M cada lote de 15 + ~0,7 M el principal; previsto 0,6 M) | CH9 (~280 platos): ~0,2 M por lote de 15 con script de una vez; el principal solo lanza y sube (medir tras cada lote) | chef-ch4 (2026-11-01) |
 | estudio | — | sin medir | — | — |
 | parte (/plan-socialista) | — | sin medir | — | — |
 
@@ -75,6 +75,7 @@ traspaso explica por qué.
 | 2026-10-31 | mananas-lm3 | construir | opus-5-5 + sonnet-5-5 + haiku-5-5 | 3 | 70 | **1,2 M** | sesión principal (64 %) | LM3: Tu semana por tramos, alarmas de mitad de mañana, guía Android; sonnet construye, haiku textos, verificador |
 | 2026-10-31 | mananas-lm4 | construir | opus-5-5 + sonnet-5-5 | 2 | 72 | **1,0 M** | Constructor LM4 pausa MacroDroid (53 %) | Construir LM4 Las Mañanas: pausa ?pausa=, recuento y guía MacroDroid |
 | 2026-10-31 | mananas-lm5 | arreglo | opus-5-5 + sonnet-5-5 | 1 | 36 | **432 k** | sesión principal (73 %) | cierre LM5: verificador, seguridad, suite, sella, main |
+| 2026-11-01 | chef-ch4 | datos | opus-5-5 + sonnet-5-5 | 5 | 76 | **1,8 M** | sesión principal (44 %) | 4 lotes sonnet ~0,23 M c/u (no ~0,15); lote 4 parado y repetido; principal opus ~0,7 M. CH9: script de una vez por lote, sin releer el JSON |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |
