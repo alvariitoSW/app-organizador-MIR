@@ -190,7 +190,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 - ~~[v3-gmail]~~ fuera del plan (parte aprobado 30/10)
 - [aparc-comida-entreno] Los días de entreno a las 18:30, ¿la comida después del entreno?
 - [aparc-sueno-vistas] / [aparc-sueno-sitio] Apuntar el sueño en Estación, Reloj y Línea; dónde vive el sueño en Hoy
-- [enc-bienestar-digital] Uso real de pantalla y un hábito «sin pantallas» fijo
+- [enc-bienestar-digital] Uso real de pantalla y un hábito «sin pantallas» fijo · (01/11) **Sin capturas.** El usuario quiere que la app lea sola el «Acceso al uso» de Android (minutos por app, desbloqueos, por horas). Una web no puede: hace falta envolverla en una app Android. Propuesta a estudiar en Consejo: **TWA** (Bubblewrap) con un poco de código nativo que lea `UsageStatsManager` al abrir y lo pase en el enlace; sigue cargando la web de Pages (se actualiza sola) y **comparte el localStorage de Chrome**. Capacitor: más fácil de programar, pero estrena almacenamiento (hay que mudar los datos). Dudas: APK instalada a mano y su firma (¿en Actions?), `assetlinks.json` en la raíz del dominio (sin él sale la barra de la dirección), la batería. Tipo `estudio` y luego `construir`, ~2 M+.
 - [aparc-parte-diario] El parte cada mañana solo (falta la hora)
 - [aparc-suite-2min] La suite en ~2 minutos
 - [aparc-regleta-pisa] En la regleta de la mañana de Hoy, «Vestirse» y «Salir de casa» se pisan un poco (visto en El Cierre, 30/10)
