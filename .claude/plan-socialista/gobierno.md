@@ -96,3 +96,9 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
 ## El acta
 
 En `.claude/plan-socialista/consejo/AAAA-MM-DD.md` (formato en su `LEEME.md`). El traspaso de la sesión la enlaza.
+- **Delegación del 01/11/2026 · «El Lanzador» (K1-K3).** El usuario aprobó ~2,6 M «y que elija el Consejo». Para esta
+  tanda el Consejo decide también la maqueta que se construye (lo que cambia lo que ve) y **pasar a `main`**. La
+  arquitectura ya la decidió el usuario (lanzadora Android en `android/`, web sin build, Brave). No cambia el cómo:
+  suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas que caen al revertir, privacidad
+  (sin INTERNET en la APK, `#` y no `?`), `/revisa-seguridad` y Actions en `success`. Sesiones tituladas
+  **«El Lanzador · K<n> · <qué>»**. En el acta, «(Consejo por delegación)». Se acaba al cerrar la K3.

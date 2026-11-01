@@ -4,7 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
-- [aparc-lanzador-espera] Consejo «El Lanzador» (01/11, acta `consejo/2026-11-01.md`): recomienda una mini-app Android lanzadora (C) que lee el uso al abrir y abre la web con `#uso=…`. **Espera 3 respuestas del usuario** (navegador Brave/Chrome, pieza A/C/nada, qué se rellena solo) y el presupuesto ~2,6 M (K1-K3 en `plan-v3.md`). Nada construido.
+- [aparc-lanzador] Tanda «El Lanzador» aprobada (01/11, acta `consejo/2026-11-01.md`): Brave, lanzadora (C), todo plegado, ~2,6 M con delegación al Consejo. Siguiente: **K1** (la parte web, con maqueta). Nada construido.
 - [hecho 31/10, main] [aparc-pruebas-dia-31] Eran fallos de las pruebas, no de la app: la 315 dejaba una guardia en el último día del mes (el 31 era hoy) y la de Compras sumaba 6 meses al 31 y saltaba a mayo · tests/regression.test.js
 - [aparc-compra-linea-escrita] En la compra, una línea escrita a mano de una receta («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la semana («300 g Tomate triturado»): salen dos líneas. Ya era así; visto en la CH2 de El Chef (30/10) · docs/DECISIONS.md «El Chef · CH2»
 - [hecho 31/10, rama] [aparc-vuelo-medianoche] La prueba 397c (vuelo en el modo viaje) cae si la suite corre de noche: pone el vuelo a «ahora + 4 h» y a las 21:40 UTC cae pasada la medianoche (visto en la suite de la CH1 de El Chef, 30/10; lo demás, 879/880 en verde). Arreglar la prueba (hora fija) antes del `main` de la CH8 · tests/regression.test.js:15501
