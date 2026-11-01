@@ -1,0 +1,41 @@
+plugins { id 'com.android.application' }
+
+/* El workflow (.github/workflows/android.yml) pasa el número de versión y la clave de firma por variables
+   de entorno; sin ellas sale una APK sin firmar (solo para comprobar que compila). */
+def codigo = (System.getenv('VERSION_CODE') ?: '1') as int
+def almacen = System.getenv('LANZADOR_KEYSTORE_FILE')
+
+android {
+  namespace 'es.guardias.lanzador'
+  compileSdk 35
+  defaultConfig {
+    applicationId 'es.guardias.lanzador'
+    minSdk 28
+    targetSdk 35
+    versionCode codigo
+    versionName "1.${codigo}"
+  }
+  signingConfigs {
+    release {
+      if (almacen) {
+        storeFile file(almacen)
+        storeType 'pkcs12'
+        storePassword System.getenv('LANZADOR_PASSWORD')
+        keyAlias System.getenv('LANZADOR_ALIAS')
+        keyPassword System.getenv('LANZADOR_PASSWORD')
+      }
+    }
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      if (almacen) signingConfig signingConfigs.release
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+dependencies { testImplementation 'junit:junit:4.13.2' }

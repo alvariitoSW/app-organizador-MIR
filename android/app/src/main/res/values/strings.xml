@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">Lanzador</string>
+  <string name="leyendo">Leyendo el uso del móvil…</string>
+  <string name="pide_acceso">Para rellenar sola la noche (minutos de móvil, desbloqueos y el «sin pantallas»), esta app necesita «Acceso al uso».\n\nLo lee aquí, en el móvil, y se lo pasa a tu app en Brave. No tiene permiso de internet: nada sale del móvil.\n\nEn la pantalla que se abre, busca «Lanzador» y actívalo. Luego vuelve atrás.</string>
+  <string name="dar_acceso">Dar acceso al uso</string>
+  <string name="sin_datos">Abrir la app sin datos</string>
+  <string name="sin_brave">No encuentro Brave. Tu app y sus datos viven en Brave: instálalo o ábrelo una vez.\n\nSi la abres en otro navegador saldrá vacía (los datos no se pierden, siguen en Brave).</string>
+  <string name="abrir_otro">Abrir en otro navegador igualmente</string>
+</resources>
