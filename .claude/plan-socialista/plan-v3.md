@@ -175,7 +175,7 @@ Se guarda solo números y etiquetas suyas; nada de imágenes. Pendiente del usua
 
 Total ~4,2 M (LM1-LM5). Orden: LM1 ✅ → LM2 ✅ → LM3 ✅ → LM4 ✅ → LM5 ✅ (→ LM6 si la pide) → El Chef CH4.
 
-### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · CH4 ✅ (01/11, rama: 60 platos, 61/61) · CH5 ✅ (01/11, rama `de794f7`: recetario navegable + «Tu cocina») · CH6 ✅ (01/11, rama `4f2fdcc`: modo cocina, prueba 408) · CH8 ✅ (01/11, rama: TikTok sin gluten + marcas seguras, prueba 410) · en marcha: **CH7** y **CH9** (280 platos en 8 lotes)
+### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · CH4 ✅ (01/11, rama: 60 platos, 61/61) · CH5 ✅ (01/11, rama `de794f7`: recetario navegable + «Tu cocina») · CH6 ✅ (01/11, rama `4f2fdcc`: modo cocina, prueba 408) · CH7 ✅ · CH8 ✅ · CH9 ✅ (341 platos) · CH10 ✅ · CH10b ✅ · CH11 ✅ (01/11, `main`) · **tanda cerrada**
 
 Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
 la app que sigue a su cocina («la continuidad»: hoy micro + vitro pequeña, sin horno ni freidora de aire). Maqueta

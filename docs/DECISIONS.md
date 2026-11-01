@@ -2447,3 +2447,33 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - kcal/prot de las 43: sumadas con `platoMacrosDe` sobre los alimentos que `alimPorNombre` reconoce (los que no, se saltan).
   - Corregido de paso «raciónes» → «raciones» en la receta y en el texto que se comparte.
   - Prueba 407 de `regression.test.js` (cuatro comprobaciones a-d; b y c en un contexto sin service worker porque este salta `page.route`).
+
+## El Chef · CH6-CH11 · modo cocina, semana, TikTok sin gluten, catálogo entero, técnicas y pulido (2026-11-01)
+- **Elegido**
+  - CH6 modo cocina (`renderCocinaRec`): «tenlo todo a mano» escalado, paso en letra grande con «fuego N» sacado del texto,
+    tira de temporizadores (`ui.cocinaTmp`, varios, hora de fin, pausa y quitar, repintado por `getElementById`), aviso al acabar
+    con «Hecho» y «+2 min» + vibración (notificación del sistema solo con permiso), Wake Lock siempre, conservación y reparto.
+    «Añadir a la compra» ya funciona en las recetas del recetario. Prueba 408.
+  - CH7 semana: `plmCands` suma los platos de tanda del recetario que tu cocina permite; reglas (legumbre ≥3 raciones, pescado
+    2-3 con uno azul, carne roja ≤2, embutido ≤1 plato, arroz ≤1 día), una olla por día y ≤6 raciones (4 con olla de 3 L), táper
+    reservado para cada guardia (respuesta 3a); fiesta y postres fuera. «Estoy reventado»: 3 de ≤20 min sin horno con despensa
+    básica y «Otros tres». Prueba 409.
+  - CH8 TikTok: cambio sin gluten automático y visible con «Deshacer» (respuesta 2a), ámbar con «Es de mis marcas seguras ✓»,
+    «Mis marcas seguras» en Comer › Tú › Gluten (con fecha, quitar y aviso), todo por `esc()`. Prueba 410 (con `<img onerror>`).
+  - CH9 catálogo entero (respuesta del usuario: entera): 280 platos en 8 lotes en paralelo (sonnet), cada lote probado con
+    `RECETARIO_LOTE=…` antes de juntarlo; 341 en total. 41 alimentos nuevos en `ALIMENTOS_MAS` para no cambiar platos por
+    sustitutos (albahaca, piñones, guanciale, pecorino, perdiz, cardo…); «Callos crudos» para no robar la frase «callos» al lector.
+  - CH10 ruta de 8 técnicas (`TECNICAS`, «La he hecho» en `cocinaPref().tec`) y hoja «Con horno, N platos más» (N=19, M=30
+    adaptados que vuelven, contados del recetario cargado). Prueba 411.
+  - CH10b pulido con 3 skills de emilkowalski (MIT, en `.claude/skills/`): `:hover` solo con ratón, campos a 16 px, ease-out,
+    `:active` a .97, `dvh`, reduced-motion también en `::before/::after`. Prueba 412.
+  - Pruebas del día 1: `fijaHoy()` congela el reloj de la página el día 15 (o el miércoles) del mes; 8 bloques arreglados sin tocar app.js.
+  - Quitada una línea `=======` suelta en `styles.css` (estaba en `main`) que anulaba la regla `.cjahora`.
+- **Descartado**
+  - Aviso ámbar «sin vuelta atrás» por paso, «por qué»/«error» por paso y fuego estructurado: el esquema no los trae (sería CH9 bis de datos).
+  - Guardar temporizadores al recargar; apuntar ración o nevera desde el reparto final del modo cocina.
+- **Supuestos**
+  - Las 8 técnicas las eligió el constructor (el acta no las fijaba). M (adaptados) se cuenta por el texto de `duda`/pasos.
+  - kcal/proteína de los 41 alimentos nuevos, aproximados de BEDCA/USDA de memoria (menos seguros: pimiento choricero, mató, miel de caña, cuajo, huevas).
+  - Sin corregir: arroz con bogavante (va con langostino), solomillo al whisky (vermut en la lista), pasta alla norma (parmesano).
+  - `font-size:16px!important` en campos para toda la app; la hoja del horno sale cada vez que se enciende.
