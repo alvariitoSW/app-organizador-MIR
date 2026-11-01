@@ -5081,6 +5081,1460 @@
       ],
       "aviso": "Que la mayonesa de bote diga «sin gluten» o lleve la espiga barrada.",
       "gluten": "depende"
+    },
+    {
+      "n": "Revuelto de trigueros y gambas",
+      "e": "🥚",
+      "alias": [
+        "revuelto de ajetes y gambas",
+        "revuelto de espárragos y gambas",
+        "revuelto de gambas",
+        "revuelto de gambas y espárragos",
+        "huevos revueltos con gambas"
+      ],
+      "m": "n",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Huevo",
+          120
+        ],
+        [
+          "Gamba",
+          120
+        ],
+        [
+          "Espárrago",
+          80
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          8
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta los espárragos verdes en trozos de 2 cm (sin la parte dura del tallo) y el ajo en láminas finas. Pela las gambas si no lo están y sécalas con papel.",
+        "Pon una sartén en la vitro al 6 con el aceite. Echa los espárragos y el ajo y saltea 4 min, hasta que estén tiernos pero con un punto crujiente.",
+        "Sube a 8, añade las gambas y saltea 1 min 30 s por cada lado, hasta que se pongan rosas. Sálalas.",
+        "Baja al 3. Bate los huevos con una pizca de sal y viértelos sobre las gambas. Remueve despacio 1-2 min, hasta que cuajen pero sigan húmedos.",
+        "Apaga el fuego antes de que parezcan hechos: con el calor de la sartén terminan solos. Sirve de inmediato."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 4,
+          "t": "Saltear espárragos y ajo"
+        },
+        {
+          "p": 2,
+          "min": 3,
+          "t": "Saltear las gambas"
+        },
+        {
+          "p": 3,
+          "min": 2,
+          "t": "Cuajar el huevo"
+        }
+      ],
+      "duda": "No hay ajetes en la tabla: los he sustituido por espárrago verde con un poco de ajo, que da un sabor parecido.",
+      "kcal": 366,
+      "prot": 41,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Las gambas, a fuego fuerte y poco tiempo: si se pasan, quedan como goma.",
+        "Los huevos a fuego bajo cuajan cremosos; a fuego fuerte se hacen tortilla seca.",
+        "Retirar la sartén cuando aún se ve brillante: sigue cociendo con el calor residual.",
+        "Los espárragos entran antes porque tardan más que la gamba."
+      ],
+      "error": "Dejar los huevos en el fuego hasta que se ven secos: en el plato quedan duros. Apaga cuando todavía estén brillantes.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Tortilla de bacalao",
+      "e": "🥚",
+      "alias": [
+        "tortilla de bacalao desalado",
+        "tortilla con bacalao",
+        "tortilla de bacalao y cebolla"
+      ],
+      "m": "n",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Huevo",
+          130
+        ],
+        [
+          "Bacalao desalado",
+          100
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Patata cocida",
+          80
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Sal",
+          0.5
+        ]
+      ],
+      "pasos": [
+        "Desmiga el bacalao desalado con las manos, quitando piel y espinas. Corta la cebolla en tiras finas y la patata cocida en dados pequeños.",
+        "Pon una sartén antiadherente de 24 cm en la vitro al 5 con el aceite. Rehoga la cebolla 5 min, hasta que esté blanda y transparente.",
+        "Añade el bacalao y la patata y saltea 2 min. Pasa todo a un bol con los huevos batidos y mezcla. Prueba antes de salar: el bacalao ya lleva sal.",
+        "Con la misma sartén al 4, vierte la mezcla y cuaja 3 min. Mueve la sartén para que no se pegue.",
+        "Pon un plato encima, dale la vuelta a la tortilla y devuélvela a la sartén. Cuaja 2 min más por el otro lado. Sírvela jugosa por dentro."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Cuajar la primera cara"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Cuajar la segunda cara"
+        }
+      ],
+      "duda": "Uso bacalao desalado ya cocinado en dados; si lo compras en seco necesita 24-48 h de desalado con cambios de agua.",
+      "kcal": 444,
+      "prot": 36,
+      "region": "PV",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Un bacalao bien desalado evita que la tortilla salga salada.",
+        "Mezclar el relleno caliente con el huevo la cuaja más rápido y por dentro.",
+        "Una sartén pequeña da una tortilla gruesa y jugosa; en una grande sale plana y seca.",
+        "El plato para darle la vuelta, no la espátula: no se rompe."
+      ],
+      "error": "Dejarla demasiado en el fuego: seca y dura. Si al tocarla bota un poco, ya está.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Gambas al ajillo",
+      "e": "🦐",
+      "alias": [
+        "gambas al ajo",
+        "gambas al pil pil",
+        "langostinos al ajillo"
+      ],
+      "m": "n",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Gamba",
+          200
+        ],
+        [
+          "Ajo",
+          8
+        ],
+        [
+          "Aceite de oliva",
+          20
+        ],
+        [
+          "Pimentón",
+          0.5
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Pan sin gluten",
+          50
+        ]
+      ],
+      "pasos": [
+        "Pela las gambas y sécalas muy bien con papel de cocina: si están mojadas, saltan aceite. Corta los ajos en láminas gruesas y pica el perejil.",
+        "Pon el aceite y los ajos en una sartén ancha o cazuela en la vitro al 3. Calienta 3-4 min, hasta que los ajos empiecen a dorarse (no más).",
+        "Sube a 8, echa las gambas y saltea 1 min 30 s. Dales la vuelta y 1 min 30 s más, hasta que estén rosas.",
+        "Aparta del fuego, añade el pimentón y el perejil y remueve 10 segundos con el calor que queda.",
+        "Sirve en la misma cazuela, con el aceite, y moja el pan sin gluten en él."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 3,
+          "t": "Dorar el ajo"
+        },
+        {
+          "p": 2,
+          "min": 3,
+          "t": "Saltear las gambas"
+        }
+      ],
+      "kcal": 488,
+      "prot": 42,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Ajo a fuego suave: a fuego fuerte se quema y amarga.",
+        "Secar las gambas evita salpicaduras y que se cuezan en vez de saltearse.",
+        "El pimentón fuera del fuego, para que no se queme.",
+        "El aceite sobrante es lo mejor: moja el pan en él."
+      ],
+      "error": "Dorar el ajo de más: se vuelve amargo. Si cambia a marrón oscuro, empieza otra vez.",
+      "etiqueta": [
+        "Pan sin gluten"
+      ],
+      "aviso": "El pan debe llevar la espiga barrada o decir «sin gluten» en el envase.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Huevos a la flamenca en cazuela",
+      "e": "🥚",
+      "alias": [
+        "huevos a la flamenca",
+        "huevos flamencos",
+        "huevos al plato con chorizo"
+      ],
+      "m": "n",
+      "min": 25,
+      "rac": 2,
+      "ing": [
+        [
+          "Huevo",
+          120
+        ],
+        [
+          "Tomate frito",
+          80
+        ],
+        [
+          "Chorizo",
+          25
+        ],
+        [
+          "Jamón serrano",
+          20
+        ],
+        [
+          "Guisantes congelados",
+          50
+        ],
+        [
+          "Pimientos del piquillo",
+          30
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Aceite de oliva",
+          5
+        ]
+      ],
+      "pasos": [
+        "Corta la cebolla muy fina, el chorizo en rodajas finas y el jamón y los piquillos en tiras. Descongela los guisantes con agua caliente 1 min.",
+        "En una cazuela baja con tapa, pon el aceite en la vitro al 5. Rehoga la cebolla 5 min, hasta que esté blanda.",
+        "Añade el chorizo y el jamón y saltea 2 min. Echa el tomate frito y los guisantes y cuece 4 min al 4, hasta que espese.",
+        "Reparte los piquillos por encima. Haz 2 huecos en la salsa y casca un huevo en cada uno (cuatro huevos en total para dos raciones).",
+        "Baja al 2, tapa y cuece 5-6 min, hasta que la clara cuaje y la yema siga blanda. Sirve en la misma cazuela."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 2,
+          "min": 4,
+          "t": "Cocer la salsa"
+        },
+        {
+          "p": 4,
+          "min": 6,
+          "t": "Cuajar los huevos tapado"
+        }
+      ],
+      "duda": "El clásico se cuece en horno; aquí se hace en cazuela tapada a fuego suave, con el mismo resultado de clara cuajada y yema blanda.",
+      "kcal": 509,
+      "prot": 32,
+      "region": "AND",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Tapar la cazuela cuaja la clara con el vapor y cubre la yema sin hornear.",
+        "Los huevos en huecos de la salsa no se desparraman.",
+        "Fuego bajo al cuajar: si es fuerte, la base se pega y la yema se pasa.",
+        "Un chorizo bien rehogado suelta su grasa y da el color a la salsa."
+      ],
+      "error": "Destapar mucho: se escapa el vapor y la clara queda cruda arriba. Tapa y espera.",
+      "etiqueta": [
+        "Chorizo",
+        "Tomate frito"
+      ],
+      "aviso": "Chorizo y tomate frito de bote: mira que el envase diga «sin gluten» o traiga la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Sepia a la plancha",
+      "e": "🐟",
+      "alias": [
+        "sepia con ajo y perejil",
+        "choco a la plancha",
+        "sepia a la plancha con limón"
+      ],
+      "m": "n",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Sepia",
+          220
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Limón",
+          15
+        ],
+        [
+          "Patata cocida",
+          120
+        ],
+        [
+          "Ensalada de bolsa",
+          60
+        ],
+        [
+          "Tomate cherry",
+          40
+        ]
+      ],
+      "pasos": [
+        "Seca la sepia con papel y, si viene entera, hazle cortes en rejilla en un lado para que no se encoja. Sálala.",
+        "Pica el ajo y el perejil muy finos y mézclalos con el limón y la mitad del aceite.",
+        "Calienta una sartén en la vitro al 8 durante 2 min, hasta que esté muy caliente. Úntala con un poco de aceite y pon la sepia por el lado de los cortes: 2 min sin moverla.",
+        "Dale la vuelta y 2 min más. Debe quedar blanca y tierna; más tiempo la pone dura.",
+        "Mientras, templa la patata cocida 1 min 30 s en el micro a 800 W y prepara la ensalada con los cherry partidos.",
+        "Sirve la sepia con el aliño por encima, la patata y la ensalada."
+      ],
+      "tmp": [
+        {
+          "p": 2,
+          "min": 2,
+          "t": "Primera cara"
+        },
+        {
+          "p": 3,
+          "min": 2,
+          "t": "Segunda cara"
+        },
+        {
+          "p": 4,
+          "min": 1.5,
+          "t": "Templar la patata"
+        }
+      ],
+      "kcal": 394,
+      "prot": 39,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La sartén muy caliente y poco tiempo: la sepia se hace en 4 min y queda tierna.",
+        "Los cortes en rejilla evitan que se enrolle y deja entrar el aliño.",
+        "Sal justo antes de cocinar: antes suelta agua y se cuece en lugar de dorarse.",
+        "El aliño en crudo y al final conserva el aroma del ajo y el limón."
+      ],
+      "error": "Dejarla en la plancha de más: pasados 6 min se vuelve gomosa. Si dudas, sácala antes.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Mejillones a la marinera",
+      "e": "🦪",
+      "alias": [
+        "mejillones en salsa marinera",
+        "mejillones con tomate",
+        "mejillones al vapor con salsa"
+      ],
+      "m": "n",
+      "min": 20,
+      "rac": 2,
+      "ing": [
+        [
+          "Mejillón",
+          200
+        ],
+        [
+          "Cebolla",
+          40
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Tomate triturado",
+          70
+        ],
+        [
+          "Pimentón",
+          1
+        ],
+        [
+          "Maicena",
+          6
+        ],
+        [
+          "Perejil",
+          2
+        ],
+        [
+          "Pan sin gluten",
+          40
+        ]
+      ],
+      "pasos": [
+        "Lava los mejillones frescos con agua fría y quita las barbas. Tira los que estén abiertos y no cierren al tocarlos. (Si son de bote o congelados, sáltate el paso 3.)",
+        "En una cazuela ancha con tapa, pon el aceite en la vitro al 4. Rehoga la cebolla y el ajo picados 5 min.",
+        "Sube a 8, echa los mejillones, tapa y cocina 3-4 min, agitando la cazuela, hasta que abran. Tira los que no se abran. Sepáralos y guarda el jugo.",
+        "En la cazuela con el jugo, añade el pimentón y el tomate triturado. Baja al 4 y cuece 4 min.",
+        "Disuelve la maicena en 3 cucharadas de agua fría, viértela en la salsa y remueve 1 min hasta que espese. Vuelve a poner los mejillones, espolvorea el perejil y sirve con el pan sin gluten."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Pochar cebolla y ajo"
+        },
+        {
+          "p": 2,
+          "min": 4,
+          "t": "Abrir los mejillones"
+        },
+        {
+          "p": 3,
+          "min": 4,
+          "t": "Cocer el tomate"
+        }
+      ],
+      "duda": "Peso los mejillones ya sin concha. Con concha, compra unos 600 g por persona. Falta el vino blanco del clásico; el jugo de los mejillones lo suple.",
+      "kcal": 433,
+      "prot": 27,
+      "region": "GAL",
+      "cocina": "es",
+      "tipo": "pe",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Los mejillones se abren con el vapor: tapa y agita, no hace falta agua.",
+        "Los que no abren, fuera: estaban muertos.",
+        "El jugo de los mejillones es la base de sabor de la salsa; no lo tires.",
+        "La maicena en agua fría y despacio no hace grumos y espesa sin gluten."
+      ],
+      "error": "Cocinarlos de más: se encogen y quedan duros. En cuanto abren, sácalos.",
+      "etiqueta": [
+        "Maicena",
+        "Pan sin gluten"
+      ],
+      "aviso": "La maicena y el pan deben decir «sin gluten» o llevar la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Espinacas a la catalana",
+      "e": "🥬",
+      "alias": [
+        "espinacas con pasas",
+        "espinacas con pasas y jamón",
+        "espinacas catalanas"
+      ],
+      "m": "n",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Espinaca",
+          250
+        ],
+        [
+          "Pasas",
+          15
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Jamón serrano",
+          20
+        ],
+        [
+          "Huevo cocido",
+          110
+        ],
+        [
+          "Pan sin gluten",
+          40
+        ]
+      ],
+      "pasos": [
+        "Lava las espinacas. Si son de bolsa, ya están listas. Pon las pasas en un vaso con agua caliente 5 min para que se hinchen y escúrrelas.",
+        "Corta el ajo en láminas y el jamón en tiras finas.",
+        "Pon una sartén grande en la vitro al 5 con el aceite. Dora el ajo 1 min y añade el jamón 1 min.",
+        "Echa las espinacas por tandas, removiendo: al principio abultan mucho. Cuando todo haya encogido, añade las pasas y cuece 3 min al 6.",
+        "Escurre el exceso de agua inclinando la sartén. Sirve con el huevo cocido en cuartos y el pan sin gluten tostado."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 5,
+          "t": "Hidratar las pasas"
+        },
+        {
+          "p": 3,
+          "min": 3,
+          "t": "Cocer las espinacas"
+        }
+      ],
+      "duda": "He quitado los piñones del clásico porque no están en la tabla. Para el huevo cocido, usa uno ya hecho o cuécelo 10 min aparte (por eso necesito un segundo fuego).",
+      "kcal": 517,
+      "prot": 29,
+      "region": "CAT",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Las espinacas se cuecen en su agua: no hace falta añadir más.",
+        "Las pasas hidratadas se ablandan y no se queman en la sartén.",
+        "Escurrir al final evita un plato aguado.",
+        "El huevo cocido aporta la proteína que las espinacas no tienen."
+      ],
+      "error": "Cocer de más las espinacas: pierden color y quedan viscosas. 3 min bastan.",
+      "etiqueta": [
+        "Pan sin gluten"
+      ],
+      "aviso": "El pan debe llevar la espiga barrada o decir «sin gluten».",
+      "gluten": "depende"
+    },
+    {
+      "n": "Sopa de ajo con huevo",
+      "e": "🍲",
+      "alias": [
+        "sopa castellana",
+        "sopa de ajo castellana",
+        "sopa de ajo con pan y huevo"
+      ],
+      "m": "n",
+      "min": 25,
+      "rac": 2,
+      "ing": [
+        [
+          "Pan sin gluten",
+          50
+        ],
+        [
+          "Ajo",
+          10
+        ],
+        [
+          "Aceite de oliva",
+          12
+        ],
+        [
+          "Pimentón",
+          2
+        ],
+        [
+          "Caldo de pollo",
+          300
+        ],
+        [
+          "Huevo",
+          100
+        ],
+        [
+          "Jamón serrano",
+          20
+        ]
+      ],
+      "pasos": [
+        "Corta el pan sin gluten en rebanadas finas. Lamina el ajo y corta el jamón en tiras pequeñas.",
+        "En una olla de 2 L, pon el aceite en la vitro al 4. Dora el ajo 1-2 min y sácalo si se oscurece. Añade el jamón 1 min y el pan, y tuesta 2 min.",
+        "Aparta la olla del fuego, echa el pimentón, remueve 10 segundos e incorpora enseguida el caldo caliente.",
+        "Devuélvela al fuego al 6 hasta que hierva, baja al 3 y cuece 10 min, hasta que el pan se deshaga.",
+        "Casca los huevos con cuidado sobre la sopa, tapa y cuece 3 min al 2, hasta que la clara cuaje. Sirve en la olla."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 4,
+          "t": "Dorar ajo y pan"
+        },
+        {
+          "p": 3,
+          "min": 10,
+          "t": "Cocer la sopa"
+        },
+        {
+          "p": 4,
+          "min": 3,
+          "t": "Cuajar los huevos"
+        }
+      ],
+      "kcal": 490,
+      "prot": 25,
+      "region": "CYL",
+      "cocina": "es",
+      "tipo": "cu",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 2,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "El pimentón fuera del fuego: si se quema amarga toda la sopa.",
+        "Pan del día anterior o tostado: se deshace sin quedar pastoso.",
+        "Huevos a fuego muy suave: se cuajan sin romper el caldo.",
+        "El ajo dorado, no quemado, da el sabor de la sopa."
+      ],
+      "error": "Echar el pimentón en el aceite muy caliente: se quema en segundos. Apaga el fuego antes.",
+      "etiqueta": [
+        "Pan sin gluten",
+        "Caldo de pollo"
+      ],
+      "aviso": "El pan sin gluten y el caldo (mejor casero o con espiga barrada) no deben llevar trigo.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Pinchos morunos",
+      "e": "🍢",
+      "alias": [
+        "pinchitos morunos",
+        "brochetas de cerdo",
+        "pinchos de cerdo marinados"
+      ],
+      "m": "n",
+      "min": 20,
+      "rac": 2,
+      "ing": [
+        [
+          "Lomo de cerdo",
+          170
+        ],
+        [
+          "Aceite de oliva",
+          8
+        ],
+        [
+          "Pimentón",
+          2
+        ],
+        [
+          "Comino",
+          1
+        ],
+        [
+          "Orégano",
+          1
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Limón",
+          10
+        ],
+        [
+          "Pimiento rojo",
+          60
+        ],
+        [
+          "Cebolla",
+          50
+        ],
+        [
+          "Arroz para microondas",
+          120
+        ]
+      ],
+      "pasos": [
+        "Corta el lomo en dados de 2-3 cm. Mézclalo con la mitad del aceite, el pimentón, el comino, el orégano, el ajo picado y el limón. Déjalo reposar 10 min (mejor el día antes en la nevera).",
+        "Corta el pimiento y la cebolla en trozos del tamaño de la carne. Ensarta carne y verdura en pinchos de madera, alternándolas.",
+        "Calienta una sartén grande en la vitro al 8 durante 2 min. Con un poco de aceite, pon los pinchos y deja 3 min sin moverlos.",
+        "Dales la vuelta cada 2 min (4 caras en total), unos 8 min en todo, hasta que no quede nada rosa dentro y se doren.",
+        "Mientras, calienta el arroz en el micro 2 min a 800 W. Sirve los pinchos sobre el arroz."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 10,
+          "t": "Marinar la carne"
+        },
+        {
+          "p": 3,
+          "min": 8,
+          "t": "Hacer los pinchos"
+        },
+        {
+          "p": 4,
+          "min": 2,
+          "t": "Calentar el arroz"
+        }
+      ],
+      "duda": "Uso lomo de cerdo en lugar de la paleta tradicional; es más magro y se hace más rápido.",
+      "kcal": 552,
+      "prot": 42,
+      "region": "AND",
+      "cocina": "es",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": true,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 3,
+      "congela": true,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Marinar aunque sean 10 min: la carne se perfuma y no se seca.",
+        "Dados de tamaño parecido para que se hagan a la vez.",
+        "Pocas vueltas pero cada cara bien dorada: si no se pegan.",
+        "El pinchito mejora de un día a otro, pero se aguantan 3 días en la nevera."
+      ],
+      "error": "Poner todos los pinchos a la vez: la sartén se enfría y la carne se cuece sin dorar. Pon la mitad y repite.",
+      "etiqueta": [
+        "Pimentón",
+        "Comino",
+        "Orégano"
+      ],
+      "aviso": "Las especias deben decir «sin gluten» o ser de un solo ingrediente: algunas mezclas llevan trigo.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Alcachofas con jamón",
+      "e": "🥬",
+      "alias": [
+        "alcachofas a la navarra",
+        "alcachofas salteadas con jamón",
+        "alcachofas con jamón y huevo"
+      ],
+      "m": "n",
+      "min": 30,
+      "rac": 2,
+      "ing": [
+        [
+          "Alcachofa",
+          200
+        ],
+        [
+          "Jamón serrano",
+          40
+        ],
+        [
+          "Cebolla",
+          30
+        ],
+        [
+          "Ajo",
+          4
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Caldo de verduras",
+          100
+        ],
+        [
+          "Huevo",
+          120
+        ]
+      ],
+      "pasos": [
+        "Si son frescas, quita las hojas duras y córtalas en cuartos metiéndolas en agua con limón. Si son congeladas o de bote, es más rápido: directas a la sartén.",
+        "Pon el aceite en una cazuela baja en la vitro al 5. Rehoga la cebolla y el ajo picados 4 min.",
+        "Añade el jamón en tiras 1 min y las alcachofas. Saltea 3 min.",
+        "Vierte el caldo, tapa y cuece 12-15 min al 3, hasta que estén tiernas al pincharlas con un cuchillo.",
+        "Haz 2 huecos entre las alcachofas, casca un huevo en cada uno, tapa y cuece 3-4 min más al 2, hasta que cuaje la clara. Sirve en la cazuela."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 4,
+          "t": "Pochar la cebolla"
+        },
+        {
+          "p": 3,
+          "min": 14,
+          "t": "Cocer las alcachofas"
+        },
+        {
+          "p": 4,
+          "min": 4,
+          "t": "Cuajar los huevos"
+        }
+      ],
+      "kcal": 478,
+      "prot": 35,
+      "region": "NAV",
+      "cocina": "es",
+      "tipo": "ve",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Las alcachofas frescas se oscurecen: en agua con limón no cambian de color.",
+        "Tapadas y con caldo se ablandan al vapor sin deshacerse.",
+        "El jamón da la sal: prueba antes de añadir más.",
+        "El huevo al final aporta la proteína sin más trabajo."
+      ],
+      "error": "Cocer las alcachofas destapadas: se secan por fuera y quedan duras por dentro. Mantén la tapa.",
+      "etiqueta": [
+        "Caldo de verduras"
+      ],
+      "aviso": "El caldo de verduras debe decir «sin gluten» o llevar la espiga barrada.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Pasta con atún y tomate",
+      "e": "🍝",
+      "alias": [
+        "pasta con atún",
+        "macarrones sin gluten con atún",
+        "pasta de lentejas con atún"
+      ],
+      "m": "n",
+      "min": 20,
+      "rac": 4,
+      "ing": [
+        [
+          "Pasta de lentejas sin gluten",
+          80
+        ],
+        [
+          "Atún en lata al natural",
+          80
+        ],
+        [
+          "Tomate triturado",
+          100
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Orégano",
+          1
+        ],
+        [
+          "Aceitunas negras",
+          15
+        ]
+      ],
+      "pasos": [
+        "Pon 3 L de agua con sal en una olla de 4 L en la vitro al 9. Cuando hierva, echa 320 g de pasta sin gluten y cuece 1 min menos de lo que diga el paquete (suele ser unos 6-7 min).",
+        "Mientras, en una sartén al 4, pon el aceite y el ajo laminado 1 min. Añade el tomate triturado y el orégano y cuece 8 min al 5, hasta que se reduzca.",
+        "Escurre la pasta guardando medio vaso de agua. Si va a esperar, pásala por agua fría un momento.",
+        "Añade a la salsa el atún escurrido y las aceitunas partidas, calienta 1 min sin hervir.",
+        "Mezcla la pasta con la salsa, con un chorrito del agua guardada para ligar, y sirve."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 7,
+          "t": "Cocer la pasta"
+        },
+        {
+          "p": 1,
+          "min": 8,
+          "t": "Reducir el tomate"
+        }
+      ],
+      "kcal": 510,
+      "prot": 43,
+      "region": "IT",
+      "cocina": "it",
+      "tipo": "pa",
+      "equipo": {
+        "fuegos": 2,
+        "olla": 4,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 3,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La pasta sin gluten se pasa muy fácil: 1 min menos y escurre sin pensarlo.",
+        "El agua de cocción da ligazón a la salsa.",
+        "El atún al final: si hierve, se seca.",
+        "La pasta de legumbre aporta mucha más proteína que la de maíz o arroz."
+      ],
+      "error": "Pasarse con la pasta: sin gluten se deshace. Prueba un minuto antes y escurre.",
+      "etiqueta": [
+        "Pasta de lentejas sin gluten"
+      ],
+      "aviso": "Que el envase diga «sin gluten» o lleve la espiga barrada, y que se cocine en agua limpia, no la de otra pasta con gluten.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Ensalada griega (horiatiki)",
+      "e": "🥗",
+      "alias": [
+        "horiatiki",
+        "ensalada griega con feta",
+        "ensalada griega"
+      ],
+      "m": "n",
+      "min": 10,
+      "rac": 2,
+      "ing": [
+        [
+          "Tomate",
+          200
+        ],
+        [
+          "Pepino",
+          100
+        ],
+        [
+          "Cebolla morada",
+          30
+        ],
+        [
+          "Pimiento verde",
+          30
+        ],
+        [
+          "Aceitunas negras",
+          25
+        ],
+        [
+          "Queso feta",
+          90
+        ],
+        [
+          "Aceite de oliva virgen extra",
+          12
+        ],
+        [
+          "Orégano",
+          1
+        ]
+      ],
+      "pasos": [
+        "Corta el tomate en gajos gruesos y el pepino en medias lunas sin pelar (si es gordo, quítale las semillas).",
+        "Corta la cebolla morada en aros finos y el pimiento verde en tiras. Pon la cebolla en agua fría 5 min si es fuerte y escúrrela.",
+        "Pon las verduras en un bol con las aceitunas y sala poco: la feta ya sala.",
+        "Pon la feta en un trozo grande encima, sin trocear. Aliña con el aceite y el orégano.",
+        "Déjala reposar 5 min antes de comer, para que el tomate suelte jugo."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Quitar fuerza a la cebolla"
+        },
+        {
+          "p": 4,
+          "min": 5,
+          "t": "Reposo"
+        }
+      ],
+      "kcal": 446,
+      "prot": 16,
+      "region": "GR",
+      "cocina": "gr",
+      "tipo": "fr",
+      "equipo": {
+        "fuegos": 0,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 1,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "La feta en un trozo: se conserva mejor y se come con el aliño.",
+        "El tomate de temporada es el 80 % del plato.",
+        "Sal poca: la feta y las aceitunas ya salan.",
+        "Cebolla en agua fría: pierde el picante sin perder el crujiente."
+      ],
+      "error": "Aliñar mucho antes de comer: las verduras sueltan agua y queda en sopa. Hazlo al final.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
+    },
+    {
+      "n": "Souvlaki de pollo",
+      "e": "🍢",
+      "alias": [
+        "souvlaki",
+        "brochetas de pollo griegas",
+        "pinchos de pollo al limón"
+      ],
+      "m": "n",
+      "min": 20,
+      "rac": 2,
+      "ing": [
+        [
+          "Pechuga de pollo",
+          160
+        ],
+        [
+          "Yogur griego",
+          40
+        ],
+        [
+          "Limón",
+          15
+        ],
+        [
+          "Aceite de oliva",
+          10
+        ],
+        [
+          "Ajo",
+          3
+        ],
+        [
+          "Orégano",
+          1.5
+        ],
+        [
+          "Tortilla de maíz",
+          60
+        ],
+        [
+          "Tomate",
+          60
+        ],
+        [
+          "Cebolla morada",
+          30
+        ],
+        [
+          "Pepino",
+          40
+        ]
+      ],
+      "pasos": [
+        "Corta la pechuga en dados de 3 cm. Mézclala con el limón, el aceite, el ajo picado, el orégano y la mitad del yogur. Déjala 10 min.",
+        "Ensarta la carne en pinchos de madera.",
+        "Calienta una sartén grande en la vitro al 7. Con unas gotas de aceite, haz los pinchos 3 min por cada cara (unos 10 min en total) hasta que se doren y no queden rosas.",
+        "Mezcla el resto del yogur con el pepino picado y una pizca de sal: es el tzatziki.",
+        "Calienta las tortillas de maíz 20 segundos en seco en la sartén. Sirve con tomate, cebolla en aros y tzatziki."
+      ],
+      "tmp": [
+        {
+          "p": 0,
+          "min": 10,
+          "t": "Marinar el pollo"
+        },
+        {
+          "p": 2,
+          "min": 10,
+          "t": "Hacer los pinchos"
+        }
+      ],
+      "kcal": 493,
+      "prot": 45,
+      "region": "GR",
+      "cocina": "gr",
+      "tipo": "ca",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 2,
+      "dias": 2,
+      "congela": false,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Marinar con yogur y limón ablanda el pollo y lo mantiene jugoso.",
+        "La pechuga se seca rápido: no pases de 10 min.",
+        "Sartén caliente pero no al máximo: dora por fuera sin quemar.",
+        "El tzatziki fresco compensa la carne."
+      ],
+      "error": "Quitarlos del fuego tarde: la pechuga queda seca. Corta un trozo: sin rosa, y fuera.",
+      "etiqueta": [
+        "Tortilla de maíz",
+        "Orégano"
+      ],
+      "aviso": "La tortilla debe ser solo de maíz, sin trigo, y el orégano de un solo ingrediente.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Tortitas de avena y plátano",
+      "e": "🥞",
+      "alias": [
+        "pancakes de avena y plátano",
+        "tortitas de plátano",
+        "tortitas de avena con huevo"
+      ],
+      "m": "d",
+      "min": 15,
+      "rac": 2,
+      "ing": [
+        [
+          "Copos de avena",
+          45
+        ],
+        [
+          "Plátano",
+          100
+        ],
+        [
+          "Huevo",
+          60
+        ],
+        [
+          "Clara de huevo",
+          60
+        ],
+        [
+          "Yogur griego",
+          100
+        ],
+        [
+          "Miel",
+          8
+        ],
+        [
+          "Aceite de oliva",
+          3
+        ]
+      ],
+      "pasos": [
+        "Chafa el plátano en un bol con un tenedor hasta que sea puré.",
+        "Añade los huevos y las claras y bate. Incorpora los copos de avena (mejor molidos con la batidora) y deja reposar 5 min para que se hidraten.",
+        "Calienta una sartén antiadherente en la vitro al 4 con unas gotas de aceite. Vierte cucharadas de masa (6-8 cm).",
+        "Cuece 2 min por el primer lado, hasta ver burbujas en la superficie. Dales la vuelta con la espátula y 1 min 30 s más.",
+        "Sirve con el yogur griego por encima y la miel."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 5,
+          "t": "Reposo de la masa"
+        },
+        {
+          "p": 3,
+          "min": 2,
+          "t": "Primera cara"
+        }
+      ],
+      "kcal": 526,
+      "prot": 32,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "de",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 0,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": true,
+      "tanda": false,
+      "fiesta": false,
+      "porque": [
+        "Plátano muy maduro: más dulce, y no hace falta azúcar.",
+        "Con claras y yogur, el desayuno pasa de 8 a 30 g de proteína.",
+        "Fuego medio-bajo: se doran sin quedar crudas por dentro.",
+        "Reposar la masa evita que los copos queden duros."
+      ],
+      "error": "Girarlas demasiado pronto: se rompen. Espera a ver burbujas en toda la superficie.",
+      "etiqueta": [
+        "Copos de avena"
+      ],
+      "aviso": "Usa avena certificada sin gluten: la normal suele contaminarse con trigo.",
+      "gluten": "depende"
+    },
+    {
+      "n": "Ensalada campera",
+      "e": "🥗",
+      "alias": [
+        "ensalada de patata y atún",
+        "campera",
+        "ensalada campera de patata"
+      ],
+      "m": "n",
+      "min": 25,
+      "rac": 4,
+      "ing": [
+        [
+          "Patata cocida",
+          150
+        ],
+        [
+          "Huevo cocido",
+          60
+        ],
+        [
+          "Atún en lata al natural",
+          60
+        ],
+        [
+          "Tomate",
+          80
+        ],
+        [
+          "Cebolla",
+          20
+        ],
+        [
+          "Aceitunas negras",
+          15
+        ],
+        [
+          "Pimientos del piquillo",
+          30
+        ],
+        [
+          "Aceite de oliva virgen extra",
+          10
+        ],
+        [
+          "Vinagre",
+          5
+        ],
+        [
+          "Sal",
+          1
+        ]
+      ],
+      "pasos": [
+        "Lava 600 g de patata (cruda) y ponla entera en una olla con agua fría y sal. Añade 4 huevos. Pon la olla en la vitro al 9.",
+        "Cuando hierva, baja al 6. Saca los huevos a los 10 min y ponlos en agua fría. Deja la patata 8-10 min más, hasta que un cuchillo entre sin resistencia.",
+        "Escurre la patata, pélala con cuidado y deja que se temple. Pela los huevos y córtalos en cuartos.",
+        "Corta la patata en rodajas gruesas, el tomate en gajos, la cebolla en aros finos y los piquillos en tiras.",
+        "Monta en una fuente con el atún escurrido, las aceitunas y el huevo. Aliña con el aceite, el vinagre y la sal."
+      ],
+      "tmp": [
+        {
+          "p": 1,
+          "min": 10,
+          "t": "Cocer los huevos"
+        },
+        {
+          "p": 1,
+          "min": 8,
+          "t": "Terminar la patata"
+        }
+      ],
+      "kcal": 430,
+      "prot": 27,
+      "region": "ESP",
+      "cocina": "es",
+      "tipo": "fr",
+      "equipo": {
+        "fuegos": 1,
+        "olla": 3,
+        "micro": false,
+        "horno": false,
+        "freidora": false,
+        "expres": 0
+      },
+      "dif": 1,
+      "dias": 2,
+      "congela": false,
+      "tanda": true,
+      "fiesta": false,
+      "porque": [
+        "La patata entera y con piel no se deshace ni se empapa.",
+        "Huevo en agua fría: no se oscurece la yema.",
+        "Aliñar al servir: si lo haces antes, la patata absorbe y se queda sosa.",
+        "Se cocina en una vez para tener cena de dos o tres días."
+      ],
+      "error": "Aliñar todo para guardar: la patata chupa el aliño y las verduras sueltan agua. Guarda el aliño aparte.",
+      "etiqueta": [],
+      "aviso": "",
+      "gluten": "no"
     }
   ]
 }
