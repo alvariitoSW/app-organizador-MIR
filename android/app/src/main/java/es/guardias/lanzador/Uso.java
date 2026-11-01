@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public final class Uso {
   /* los mismos números que UsageEvents.Event */
-  public static final int RESUMED = 1, PAUSED = 2, SCREEN_NON_INTERACTIVE = 16,
+  public static final int RESUMED = 1, PAUSED = 2, SCREEN_INTERACTIVE = 15, SCREEN_NON_INTERACTIVE = 16,
       KEYGUARD_SHOWN = 17, KEYGUARD_HIDDEN = 18, STOPPED = 23;
   /* usoEntrante() descarta el # entero si pasa de 12000 caracteres */
   public static final int MAX_HASH = 11900;
@@ -58,21 +58,37 @@ public final class Uso {
     }
     if (evs.isEmpty() || dias.isEmpty()) return null;
 
+    /* Dos cuentas a la vez:
+       · la pantalla (m y q): todo el rato encendida y desbloqueada, como «Horas de pantalla» de Xiaomi
+         (cuenta también la pantalla de inicio, las notificaciones y la multitarea);
+       · las apps (a): el rato con cada app delante, sin esta app ni la pantalla de inicio. */
     String cur = null; long curIni = 0;
+    boolean encendida = false, bloqueado = false; long pIni = -1;
     for (Ev e : evs) {
       switch (e.tipo) {
         case RESUMED:
           if (cur != null) suma(dias, cur, curIni, e.t, ahora);
           if (ignorar.contains(e.pkg)) cur = null; else { cur = e.pkg; curIni = e.t; }
+          /* una app delante: la pantalla está encendida y en uso aunque falte su evento */
+          encendida = true; bloqueado = false;
+          if (pIni < 0) pIni = e.t;
           break;
         case PAUSED: case STOPPED:
           if (cur != null && cur.equals(e.pkg)) { suma(dias, cur, curIni, e.t, ahora); cur = null; }
           break;
+        case SCREEN_INTERACTIVE:
+          encendida = true;
+          if (!bloqueado && pIni < 0) pIni = e.t;
+          break;
         case SCREEN_NON_INTERACTIVE: case KEYGUARD_SHOWN:
           if (cur != null) { suma(dias, cur, curIni, e.t, ahora); cur = null; }
+          if (pIni >= 0) { suma(dias, null, pIni, e.t, ahora); pIni = -1; }
+          if (e.tipo == SCREEN_NON_INTERACTIVE) encendida = false; else bloqueado = true;
           break;
         case KEYGUARD_HIDDEN: {  /* si se desbloquea es que estaba bloqueado: lo abierto se cierra (por si faltó su pausa) */
           if (cur != null) { suma(dias, cur, curIni, e.t, ahora); cur = null; }
+          if (pIni >= 0) suma(dias, null, pIni, e.t, ahora);
+          encendida = true; bloqueado = false; pIni = e.t;
           Dia d = dia(dias, e.t); if (d != null) d.u++;
           break;
         }
@@ -80,6 +96,7 @@ public final class Uso {
       }
     }
     if (cur != null) suma(dias, cur, curIni, ahora, ahora);
+    if (pIni >= 0) suma(dias, null, pIni, ahora, ahora);
 
     /* Android borra lo antiguo (~7-10 días): el día del primer evento puede estar a medias y se
        descarta, y los anteriores no tienen datos. Mandar un 0 ahí pisaría lo que la web ya guardó. */
@@ -104,6 +121,7 @@ public final class Uso {
   }
 
   /** Reparte [a, b) entre días y cuartos de hora, recortado a lo pedido y a «ahora». */
+  /** pkg == null: rato de pantalla (cuartos y total); si no, rato de esa app. */
   private static void suma(List<Dia> dias, String pkg, long a, long b, long ahora) {
     a = Math.max(a, dias.get(0).ini);
     b = Math.min(b, Math.min(ahora, dias.get(dias.size() - 1).fin));
@@ -112,7 +130,7 @@ public final class Uso {
       int qi = (int) Math.min(95, (a - d.ini) / CUARTO);
       long qFin = qi == 95 ? d.fin : Math.min(d.fin, d.ini + (qi + 1) * CUARTO);
       long fin = Math.min(b, qFin), ms = fin - a;
-      d.q[qi] += ms; d.total += ms; d.apps.merge(pkg, ms, Long::sum);
+      if (pkg == null) { d.q[qi] += ms; d.total += ms; } else d.apps.merge(pkg, ms, Long::sum);
       a = fin;
     }
   }

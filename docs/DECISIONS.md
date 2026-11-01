@@ -2449,10 +2449,22 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 
 **Descartado**
 - Layout en XML y AndroidX: una pantalla de texto y dos botones no lo necesita.
-- Contar el tiempo de pantalla encendida en vez del de apps: la pantalla de bloqueo y el inicio inflarían la cifra frente a «Horas de pantalla».
 - El navegador predeterminado: abriría la app vacía (la decisión del usuario fue Brave).
 
 **Supuestos**
 - El nombre en el móvil es «Lanzador» (no «Guardias», para no confundirse con la app instalada desde Brave).
 - Si a Android le falta la pausa de una app, el tramo se cierra en el siguiente apagado, bloqueo o desbloqueo.
 - Lo que no se ha podido probar aquí (no hay SDK de Android en el contenedor): la pantalla en el móvil, el salto a «Acceso de uso» en HyperOS y que Brave reciba el `#`. Eso es la K3, con el usuario delante.
+
+## El Lanzador · K3: los minutos como «Horas de pantalla» de Xiaomi (01/11/2026)
+
+**Elegido**
+- En su móvil, el 31/10 la lanzadora trajo 106 min y Xiaomi decía 140. Los minutos (`m`) y los cuartos (`q`) pasan a ser **todo el rato con la pantalla encendida y desbloqueada** (también la pantalla de inicio, notificaciones y multitarea), como Xiaomi; las 3 apps siguen siendo el rato con cada app delante.
+- La Release lleva la APK también dentro de un `.zip`: Brave y Chrome no terminaban de bajar el `.apk` en HyperOS.
+
+**Descartado**
+- Seguir sumando solo el rato con apps: dejaba fuera ~¼ del uso frente a lo que él ve en Xiaomi.
+
+**Supuestos**
+- Una app delante cuenta como pantalla desbloqueada aunque falte el evento (la cámara sobre la pantalla de bloqueo también contaría).
+- Instalarla en HyperOS pidió: extraer el `.zip` con el Gestor de archivos, pausar Play Protect, pasar el aviso de Mi Protect y «Permitir ajustes restringidos» antes de dar «Acceso al uso».

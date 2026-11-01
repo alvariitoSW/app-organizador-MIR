@@ -51,8 +51,8 @@ public class UsoTest {
     evs.add(new Uso.Ev(t(1, 10, 25), Uso.RESUMED, "yt"));
     evs.add(new Uso.Ev(t(1, 10, 35), Uso.SCREEN_NON_INTERACTIVE, null));
     String j = json(evs, t(2, 8, 0));
-    assertTrue(j, j.startsWith("{\"v\":1,\"d\":[{\"f\":\"2026-10-21\",\"m\":30,\"u\":1,\"q\":\""
-        + q(40, 15, 41, 10, 42, 5) + "\",\"a\":[[\"WhatsApp \\\"á\\\"\",20],[\"yt\",10]]}"));
+    assertTrue(j, j.startsWith("{\"v\":1,\"d\":[{\"f\":\"2026-10-21\",\"m\":35,\"u\":1,\"q\":\""
+        + q(40, 15, 41, 15, 42, 5) + "\",\"a\":[[\"WhatsApp \\\"á\\\"\",20],[\"yt\",10]]}"));
     assertTrue(j, j.contains("{\"f\":\"2026-10-22\",\"m\":0,\"u\":0,"));
     assertTrue(j, !j.contains("2026-10-20") && !j.contains("2026-10-23"));
   }
@@ -62,9 +62,26 @@ public class UsoTest {
     evs.add(new Uso.Ev(t(0, 12, 0), Uso.KEYGUARD_SHOWN, null));
     evs.add(new Uso.Ev(t(1, 23, 50), Uso.RESUMED, "wa"));
     evs.add(new Uso.Ev(t(2, 0, 20), Uso.PAUSED, "wa"));
+    evs.add(new Uso.Ev(t(2, 0, 20), Uso.SCREEN_NON_INTERACTIVE, null));
     String j = json(evs, t(2, 9, 0));
     assertTrue(j, j.contains("\"f\":\"2026-10-21\",\"m\":10,\"u\":0,\"q\":\"" + q(95, 10)));
     assertTrue(j, j.contains("\"f\":\"2026-10-22\",\"m\":20,\"u\":0,\"q\":\"" + q(0, 15, 1, 5)));
+  }
+
+  @Test public void cuentaLaPantallaDeInicioComoXiaomiPeroNoEnLasApps() {
+    List<Uso.Ev> evs = new ArrayList<>();
+    evs.add(new Uso.Ev(t(0, 12, 0), Uso.KEYGUARD_SHOWN, null));
+    evs.add(new Uso.Ev(t(1, 9, 0), Uso.SCREEN_INTERACTIVE, null));   // pantalla de bloqueo: no cuenta
+    evs.add(new Uso.Ev(t(1, 9, 5), Uso.KEYGUARD_HIDDEN, null));
+    evs.add(new Uso.Ev(t(1, 9, 5), Uso.RESUMED, "home"));
+    evs.add(new Uso.Ev(t(1, 9, 10), Uso.RESUMED, "wa"));
+    evs.add(new Uso.Ev(t(1, 9, 20), Uso.PAUSED, "wa"));
+    evs.add(new Uso.Ev(t(1, 9, 20), Uso.RESUMED, "home"));
+    evs.add(new Uso.Ev(t(1, 9, 25), Uso.KEYGUARD_SHOWN, null));
+    evs.add(new Uso.Ev(t(1, 9, 25), Uso.SCREEN_NON_INTERACTIVE, null));
+    String j = json(evs, t(2, 8, 0));
+    assertTrue(j, j.contains("{\"f\":\"2026-10-21\",\"m\":20,\"u\":1,\"q\":\"" + q(36, 10, 37, 10)
+        + "\",\"a\":[[\"WhatsApp \\\"á\\\"\",10]]}"));
   }
 
   @Test public void sinEventosNoMandaNada() {
