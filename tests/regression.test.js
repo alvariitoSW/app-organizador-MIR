@@ -16142,6 +16142,115 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vpCh);
   }
 
+  // 409) EL CHEF · CH7: la semana con el recetario (Comer › Semana › «¿Me la propones?»), en cadena y con un recetario de prueba (el de verdad + tres trampas
+  //      que NO deben entrar solas: un plato de horno, uno de fiesta y un postre) servido en un contexto sin service worker:
+  //      (a) cumple las reglas de Sanidad (legumbre ≥3, pescado 2-3 con uno azul, carne roja ≤2, embutido ≤1 plato, arroz ≤1 día, huevo ≤4, un fuego por día)
+  //          y usa platos del recetario; (b) ninguna olla pasa de 6 raciones (de 4 con olla de 3 L) ni con el «＋» y no entran fiesta ni postre;
+  //      (c) el día de guardia lleva siempre una ración de una tanda (🥡) y «Usar» la escribe; con «guardia: táper» apagado, el hospital;
+  //      (d) con el horno apagado no sale nada que lo pida y al encenderlo la trampa de horno ya puede entrar;
+  //      (e) «Estoy reventado» enseña 3 platos de ≤20 min sin horno, con «Otros tres» cambian los tres, y «Cocinar» abre el modo cocina.
+  {
+    const vp409 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const real = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'recetario.json'), 'utf8'));
+    const eq = (o) => Object.assign({ fuegos: 1, olla: 5, micro: false, horno: false, freidora: false, expres: 0 }, o);
+    const plant = { alias: [], m: 'cn', min: 40, rac: 4, kcal: 520, prot: 30, region: 'ESP', cocina: 'es', pasos: ['Prepara.', 'Cuece.', 'Sirve.'], tanda: true, tmp: [] };
+    const trampas = [
+      Object.assign({}, plant, { n: 'Garbanzos al horno de prueba', e: '🫘', tipo: 'cu', equipo: eq({ horno: true }), ing: [['Garbanzo', 70], ['Cebolla', 40], ['Patata', 80]] }),
+      Object.assign({}, plant, { n: 'Bacalao de fiesta de prueba', e: '🐟', tipo: 'pe', fiesta: true, equipo: eq({}), ing: [['Bacalao desalado', 150], ['Patata', 100], ['Cebolla', 40]] }),
+      Object.assign({}, plant, { n: 'Crema dulce de prueba', e: '🍮', tipo: 'po', equipo: eq({}), ing: [['Huevo', 60], ['Patata', 100], ['Cebolla', 40]] }),
+      Object.assign({}, plant, { n: 'Gratinado exprés al horno de prueba', e: '🧀', tipo: 've', tanda: false, min: 10, rac: 1, equipo: eq({ fuegos: 0, olla: 0, horno: true }), ing: [['Huevo', 120], ['Cebolla', 40], ['Patata', 100]] }),
+      Object.assign({}, plant, { n: 'Guiso eterno de prueba', e: '🍲', tipo: 've', tanda: false, min: 90, rac: 1, equipo: eq({ fuegos: 1, olla: 0 }), ing: [['Huevo', 120], ['Cebolla', 40], ['Patata', 100]] })];
+    const falso = { version: 1, esquema: 1, recetas: trampas.concat(real.recetas) };
+    const ls = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
+    const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 412, height: 915 } });
+    await ctx.addInitScript((s) => { try { const o = JSON.parse(s); for (const k in o) localStorage.setItem(k, o[k]); localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} }, ls);
+    await ctx.route('**/data/recetario.json', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(falso) }));
+    const pg = await ctx.newPage(); await pg.goto(base + 'index.html'); await pg.waitForTimeout(500);
+    const R = {};
+    await pg.evaluate(() => { const P = window.PG; delete P.store.food.pref;
+      // la semana que viene: todo trabajo y el jueves de guardia
+      const lun = P.addDays(P.mondayOf(new Date()), 7), T = P.store.shifts.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0], G = P.store.shifts.filter((x) => P.isGuardia(x))[0];
+      for (let w = 0; w < 7; w++) P.setDayOverride(P.iso(P.addDays(lun, w)), (w === 3 ? G : T).id, '');
+      P.store.semBase = { on: true, d: {} }; P.store.gComida = {};
+      P.ui.cjeHoja = null; P.ui.plM = null; P.ui.tpVista = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'sem'; P.save(); P.render(); });
+    const toca = async (sel, ms) => { const e = await pg.$(sel); if (e) await e.click({ timeout: 1500 }).catch(() => {}); await pg.waitForTimeout(ms || 150); };
+    const foto = async () => pg.evaluate(() => { const P = window.PG, M = P.ui.plM, R = P.plmReparto(M), json = {}, noEntra = {};
+      P.recetarioTodo().forEach((r) => { if (r.de === 'json') json[r.n] = 1; if (r.fiesta || r.tipo === 'po' || (r.equipo && r.equipo.horno)) noEntra[r.n] = 1; });
+      const nombres = []; R.dia.forEach((d) => ['desayuno', 'comida', 'cena'].forEach((c) => { if (d.s[c]) nombres.push(d.s[c].n); }));
+      const gd = R.dia.filter((d) => d.g)[0];
+      return { reg: P.plmReglas(R), ollas: R.ollas.map((o) => ({ n: o.o.n, rac: o.o.rac, dias: o.dias.length, sobra: o.sobra, json: !!json[o.o.n], cap: o.c.cap })), horno: P.cocinaPref().horno,
+        malos: nombres.filter((n) => noEntra[n]), postres: nombres.filter((n) => /postre|tarta|flan\b|natillas|crema dulce/i.test(n)),
+        cands: P.plmCands().map((c) => c.n), candsJson: P.plmCands().filter((c) => json[c.n]).length,
+        guardia: gd ? { t: gd.s.comida && gd.s.comida.t, tg: !!(gd.s.comida && gd.s.comida.tg), n: gd.s.comida && gd.s.comida.n, cena: gd.s.cena && gd.s.cena.n } : null,
+        fuegosPref: P.cocinaPref().fuegos, ollaPref: P.cocinaPref().olla, taperOn: M.taper }; });
+    // (a) montar la semana que viene con el recetario cargado
+    await toca('#main [data-a="pl-montar"]', 200); await toca('#main [data-a="cje-sem"][data-d="1"]', 200);
+    await pg.waitForFunction(() => window.PG.recetarioTodo().some((r) => r.de === 'json'), null, { timeout: 5000 }).catch(() => {});
+    await pg.waitForTimeout(300);
+    R.a = await foto();
+    R.a.ui = await pg.evaluate(() => ({ ollas: document.querySelectorAll('#main .plolla').length, rec: [...document.querySelectorAll('#main .plolla .mini')].map((e) => e.textContent).join('|').length > 0, ancho: document.documentElement.scrollWidth }));
+    // (b) ninguna olla pasa de 6 raciones, ni apretando «＋», ni con olla de 3 L (4); no entran fiesta ni postre
+    for (let i = 0; i < 8; i++) await toca('#main .plolla [data-a="plm-rac"][data-d="1"]', 30);
+    R.b = await foto();
+    R.b.mas = await pg.evaluate(() => [...document.querySelectorAll('#main .plolla [data-a="plm-rac"][data-d="1"]')].map((b) => b.disabled));
+    await pg.evaluate(() => { const P = window.PG; P.cocinaPref().olla = 3; P.ui.plM.ollas = P.plmOllas(P.ui.plM); P.render(); });
+    R.b3 = await foto();
+    await pg.evaluate(() => { const P = window.PG; P.cocinaPref().olla = 5; P.ui.plM.ollas = P.plmOllas(P.ui.plM); P.render(); });
+    // (c) el táper del día de guardia: ración de una tanda en la comida del jueves, 🥡 a la vista, «Usar» la escribe; apagado, hospital
+    R.c = await foto();
+    R.c.taper = await pg.evaluate(() => [...document.querySelectorAll('#main .plolla .plrac span')].filter((e) => /🥡/.test(e.textContent)).length);
+    await toca('#main [data-a="plm-taper"]', 150);
+    R.c0 = await foto();
+    await toca('#main [data-a="plm-taper"]', 150);
+    await toca('#main [data-a="plm-paso"][data-v="2"]', 200);
+    await pg.screenshot({ path: process.env.CH7_FOTOS ? process.env.CH7_FOTOS + '/semana-paso2.png' : '/dev/null' }).catch(() => {});
+    await toca('#main [data-a="plm-usar"]', 300);
+    R.c.usada = await pg.evaluate(() => { const P = window.PG, c = P.sbCeldaDia(P.sbFechaW(3), 'comida'), d = c && c.items[0] && P.dishById(c.items[0].id); return d ? { n: d.name, ho: !!d.hospital } : null; });
+    // (d) horno apagado: nada que lo pida; encendido, la trampa de horno ya puede entrar
+    await pg.evaluate(() => { const P = window.PG; P.cocinaPref().horno = false; P.ui.plM = null; P.ui.cjeTab = 'sem'; P.render(); });
+    await toca('#main [data-a="pl-montar"]', 200); await toca('#main [data-a="cje-sem"][data-d="1"]', 200);
+    R.d0 = await foto();
+    await pg.evaluate(() => { const P = window.PG; P.cocinaPref().horno = true; });
+    R.d1 = await foto();
+    await pg.evaluate(() => { const P = window.PG; P.cocinaPref().horno = false; P.ui.plM = null; P.ui.cjeTab = ''; P.render(); });
+    // (e) «Estoy reventado»: botón destacado en la portada del recetario → hoja con 3 platos de ≤20 min sin horno → «Otros tres»
+    await pg.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = { v: 'recetario' }; P.render(); });
+    await pg.waitForTimeout(200);
+    R.e = await pg.evaluate(() => { const b = document.querySelector('#hojaDia [data-a="rev-abre"]'); return { boton: !!b, alto: b ? Math.round(b.getBoundingClientRect().height) : 0, p: b ? getComputedStyle(b).fontSize : '' }; });
+    await toca('#hojaDia [data-a="rev-abre"]', 250);
+    const tres = () => pg.evaluate(() => { const P = window.PG, todo = P.recetarioTodo(), filas = [...document.querySelectorAll('#hojaDia .cjpl')];
+      return { n: filas.length, nombres: filas.map((f) => f.querySelector('b').textContent.trim()), min: filas.map((f) => { const r = todo.filter((x) => x.n === f.querySelector('b').textContent.trim())[0]; return r ? r.min : 999; }),
+        horno: filas.map((f) => { const r = todo.filter((x) => x.n === f.querySelector('b').textContent.trim())[0]; return !r || (r.equipo ? !!r.equipo.horno : false); }),
+        textos: filas.map((f) => f.innerText.replace(/\s+/g, ' ')), botones: [...document.querySelectorAll('#hojaDia .cjpl .btn, #hojaDia [data-a="rev-otros"]')].map((b) => Math.round(b.getBoundingClientRect().height)),
+        pie: /Solo platos sin horno y con despensa básica sin gluten/.test(document.querySelector('#hojaDia').innerText) }; });
+    R.e1 = await tres();
+    if (process.env.CH7_FOTOS) await pg.screenshot({ path: process.env.CH7_FOTOS + '/reventado.png' });
+    await toca('#hojaDia [data-a="rev-otros"]', 200);
+    R.e2 = await tres();
+    await toca('#hojaDia [data-a="rev-otros"]', 200);
+    R.e3 = await tres();
+    await toca('#hojaDia [data-a="rec-cocina"]', 300);
+    R.e4 = await pg.evaluate(() => ({ vista: window.PG.ui.foodVista, rid: window.PG.ui.cocinaRid, hoja: (window.PG.ui.cjeHoja || {}).v || '' }));
+    await ctx.close();
+    await page.setViewportSize(vp409);
+    const reg = R.a.reg, v = reg.v;
+    check('CH7-a 409 la semana con el recetario cumple Sanidad: legumbre ≥3, pescado 2-3 con uno azul, carne roja ≤2, embutido ≤1 plato, arroz ≤1 día, huevo ≤4 y un fuego por día; usa platos del recetario',
+      R.a.ollas.length >= 2 && R.a.ollas.some((o) => o.json) && R.a.candsJson > 5 && v.legumbre >= 3 && v.pescado >= 2 && v.pescado <= 3 && v.azul >= 1 && v.rojo <= 2 && reg.embutidos <= 1 && reg.arrozDias <= 1 && v.huevo <= 4 &&
+      reg.fuegos >= 1 && reg.fuegos <= R.a.fuegosPref && R.a.ui.ollas === R.a.ollas.length && R.a.ui.ancho <= 412, JSON.stringify(R.a));
+    check('CH7-b 409 ninguna olla pasa de 6 raciones (ni apretando «＋» ocho veces, que acaba desactivado) ni de 4 con olla de 3 L, y no entran solos ni el plato de fiesta, ni el postre, ni el de horno',
+      R.b.ollas.length && R.b.ollas.every((o) => o.rac <= 6 && o.rac <= o.cap && o.rac >= o.dias) && R.b.mas.some(Boolean) && R.b3.ollas.length && R.b3.ollas.every((o) => o.rac <= 4 && o.cap <= 4) &&
+      !R.a.cands.some((n) => /de fiesta de prueba|Crema dulce de prueba|al horno de prueba/.test(n)) && R.a.malos.length === 0 && R.a.postres.length === 0 && R.b.malos.length === 0, JSON.stringify([R.b, R.b3, R.a.malos]));
+    check('CH7-c 409 el jueves de guardia lleva una ración de una tanda (🥡 a la vista, congelada si pasan 3 días), «Usar» la escribe en la comida del jueves y con «guardia: táper» apagado vuelve el hospital',
+      R.c.guardia && R.c.guardia.tg && /^(tp|fz)$/.test(R.c.guardia.t) && R.c.ollas.some((o) => o.n === R.c.guardia.n) && R.c.reg.taperGuardia === 1 && R.c.reg.guardias === 1 && R.c.taper === 1 &&
+      R.c.usada && R.c.usada.n === R.c.guardia.n && !R.c.usada.ho && R.c0.guardia && !R.c0.guardia.tg && R.c0.reg.taperGuardia === 0, JSON.stringify([R.c, R.c0]));
+    check('CH7-d 409 con el horno apagado no sale nada que lo pida (ni en las ollas ni en los candidatos); al encenderlo, el plato de horno ya es candidato',
+      R.d0.horno === false && R.d0.malos.length === 0 && !R.d0.cands.some((n) => /al horno de prueba/.test(n)) && R.d1.horno === true && R.d1.cands.some((n) => /Garbanzos al horno de prueba/.test(n)), JSON.stringify([R.d0.cands, R.d1.cands]));
+    const sinRep = (a, b) => a.nombres.every((n) => b.nombres.indexOf(n) < 0);
+    check('CH7-e 409 «Estoy reventado»: botón destacado en la portada (≥44 px, letra ≥11 px) → hoja con 3 platos de ≤20 min sin horno, con su nota; «Otros tres» cambia los tres, y «Cocinar» abre el modo cocina',
+      R.e.boton && R.e.alto >= 44 && parseFloat(R.e.p) >= 11 && R.e1.n === 3 && R.e1.min.every((m) => m > 0 && m <= 20) && R.e1.horno.every((h) => !h) && R.e1.pie && R.e1.botones.length === 4 && R.e1.botones.every((a) => a >= 44) &&
+      !R.e1.nombres.some((n) => /de prueba/.test(n)) && R.e2.n === 3 && sinRep(R.e1, R.e2) && R.e3.n === 3 && sinRep(R.e2, R.e3) && R.e4.vista === 'cocina' && /^(rc|tp):/.test(R.e4.rid) && R.e4.hoja === '', JSON.stringify([R.e, R.e1, R.e2, R.e3, R.e4]));
+  }
+
   // 410) EL CHEF · CH8: TikTok sin gluten al importar (banda «Cambiado» con «Deshacer»), ámbar con «Es de mis marcas seguras ✓»,
   //      lista en el gluten de Comer con «Quitar», y el texto importado nunca se ejecuta (<img onerror>).
   {

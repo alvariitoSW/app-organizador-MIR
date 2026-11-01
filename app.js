@@ -15126,7 +15126,10 @@ const REC_COCINAS=[['es','🇪🇸 España'],['it','🇮🇹 Italia'],['gr','�
 function recetarioCarga(){
   if(RECETARIO||RECETARIO_EST==='cargando')return;
   RECETARIO_EST='cargando';
-  const fin=function(){if((ui.cjeHoja||{}).v==='recetario')render();};
+  const fin=function(){const v=(ui.cjeHoja||{}).v,M=ui.plM;
+    /* la semana que se estaba montando sin tocar nada se rehace con los platos recién llegados */
+    if(M&&M.paso===1&&RECETARIO&&!M.ollas.some(function(o){return o.toc;})){M.ollas=plmOllas(M);render();}
+    else if(v==='recetario'||v==='reventado')render();};
   try{fetch('data/recetario.json').then(function(r){return r.ok?r.json():Promise.reject();}).then(function(j){
     RECETARIO=Array.isArray(j&&j.recetas)?j.recetas:null;RECETARIO_EST=RECETARIO?'ok':'falla';_recTodoMemo=null;fin();
   }).catch(function(){RECETARIO_EST='falla';fin();});}catch(e){RECETARIO_EST='falla';}}
@@ -15147,13 +15150,13 @@ function recetarioTodo(){
   (RECETARIO||[]).forEach(function(r){
     [r.n].concat(r.alias||[]).forEach(function(x){vistos[tpNorm(x)]=1;});
     out.push({id:'rc:'+r.n,n:r.n,e:r.e||'🍽',alias:r.alias||[],m:r.m||'',min:+r.min||0,rac:+r.rac||1,ing:r.ing||[],pasos:r.pasos||[],
-      kcal:+r.kcal||0,prot:+r.prot||0,region:r.region||'',cocina:r.cocina||'es',tipo:r.tipo||'ve',tanda:!!r.tanda,equipo:r.equipo||null,aviso:r.aviso||'',de:'json',
+      kcal:+r.kcal||0,prot:+r.prot||0,region:r.region||'',cocina:r.cocina||'es',tipo:r.tipo||'ve',tanda:!!r.tanda,fiesta:!!r.fiesta,equipo:r.equipo||null,aviso:r.aviso||'',de:'json',
       tmp:r.tmp,porque:r.porque,error:r.error,dias:r.dias,congela:r.congela});});
   TP_RECETAS.forEach(function(r){
     if([r[0]].concat(r[2]||[]).some(function(x){return vistos[tpNorm(x)];}))return;
     const mc=macros(r[5],1);
     out.push({id:'tp:'+r[0],n:r[0],e:r[1],alias:r[2]||[],m:r[3]||'',min:+r[4]||0,rac:1,ing:r[5]||[],pasos:r[6]||[],kcal:mc.kcal,prot:mc.prot,
-      region:'',cocina:'es',tipo:recTipoDe(r[0],r[3]),tanda:esTanda({name:r[0]}),equipo:null,aviso:'',de:'tp'});});
+      region:'',cocina:'es',tipo:recTipoDe(r[0],r[3]),tanda:esTanda({name:r[0]}),fiesta:false,equipo:null,aviso:'',de:'tp'});});
   _recTodoMemo={j:RECETARIO,l:out};return out;}
 function recPuede(r){
   /* ¿se puede hacer con lo que hay en casa? El equipo del JSON manda; sin él (las 43) se adivina por el texto */
@@ -15188,6 +15191,30 @@ function recLista(h){
     return true;});
   const ok=f.filter(recPuede);
   return {l:h.todos?f:ok,esperan:f.length-ok.length,total:todo.length,puede:P};}
+/* ---- «Estoy reventado» (CH7): tres platos de ≤20 min, sin horno y con despensa básica; «Otros tres» ---- */
+const REV_BASICA=/^(huevo|clara|clara de huevo|atun en lata|garbanzo de bote|lenteja de bote|alubia de bote|arroz (blanco|cocido|para)|pasta|tomate (triturado|frito)|aceituna|maiz|cebolla|ajo|patata|zanahoria|pan sin gluten|yogur|copos de avena|platano|limon|queso|maicena|miel|pasas|jamon)/;
+function recDespensaBasica(r){
+  /* con lo que suele haber: huevos, conservas, patata, cebolla, arroz o pasta, lo básico de casa y lo que tengas en la despensa; se perdona uno fresco */
+  const desp=despensaS(),fuera=r.ing.filter(function(x){const n=x[0],t=alimTxt(n);
+    return !(esBasicoCasa(n)||REV_BASICA.test(t)||/ de bote| en lata|congelad/.test(t)||desp.some(function(d){return d.k===despClave(n);}));});
+  return fuera.length<=1;}
+function recReventados(){
+  /* los candidatos, mezclados por grupo (legumbre, pescado, huevo, carne) y con más proteína primero, para que tres seguidos no sean iguales */
+  const l=recetarioTodo().filter(function(r){return r.min>0&&r.min<=20&&!r.fiesta&&!/^(po|de)$/.test(r.tipo)&&/[cn]/.test(r.m)&&r.pasos.length&&recPuede(r)&&
+    !(r.equipo?r.equipo.horno:platoConHorno({name:r.n,steps:r.pasos,ingredients:[]}))&&recDespensaBasica(r);});
+  const por={};l.slice().sort(function(a,b){return (b.prot-a.prot)||(a.n<b.n?-1:1);}).forEach(function(r){const g=plGrupoNombre(r.n+' '+r.ing.map(function(x){return x[0];}).join(' '));(por[g]=por[g]||[]).push(r);});
+  const gs=['legumbre','pescado','huevo','carne','otro'].filter(function(g){return por[g];}),out=[];
+  for(let k=0;out.length<l.length;k++)gs.forEach(function(g){if(por[g][k])out.push(por[g][k]);});
+  return out;}
+function cjeHojaReventado(h){
+  const l=recReventados(),o=(h.o||0)%Math.max(1,l.length),tres=l.concat(l).slice(o,o+Math.min(3,l.length));
+  return '<div class="cap">😮‍💨 ESTOY REVENTADO</div><h2 style="margin:0 0 8px;font-size:19px">Para hoy, ≤20 min y con lo que sueles tener</h2>'+
+    (tres.length?tres.map(function(r){
+      const ln=[r.min+' min',recEquipoTxt(r.equipo)||'🔥 fuego',Math.round(r.kcal)+' kcal · '+Math.round(r.prot)+' g prot'].filter(Boolean).join(' · ');
+      return '<div class="cjpl"><span class="e" aria-hidden="true">'+esc(r.e)+'</span><span class="n"><b style="white-space:normal">'+esc(r.n)+'</b><span>'+esc(ln)+'</span></span>'+
+        '<button class="btn" data-a="rec-cocina" data-id="'+esc(r.id)+'" style="min-height:44px">Cocinar</button></div>';}).join(''):'<p class="mini">Con tu cocina de hoy no sale ninguno.</p>')+
+    '<p class="mini" style="margin:6px 2px 8px">Solo platos sin horno y con despensa básica sin gluten.</p>'+
+    '<button class="btn" data-a="rev-otros" style="min-height:44px;width:100%;justify-content:center"'+(l.length>3?'':' disabled')+'>Otros tres</button>';}
 function cjeHojaRecetario(h){
   const R=recLista(h),chip=function(k,v,txt,on){return '<button class="chipx'+(on?' on':'')+'" data-a="rec-f" data-k="'+k+'" data-v="'+esc(v)+'" aria-pressed="'+(on?'true':'false')+'">'+txt+'</button>';};
   const regs=[],vistas={};
@@ -15195,6 +15222,7 @@ function cjeHojaRecetario(h){
   const lista=h.mas?R.l:R.l.slice(0,60);
   return '<div class="row"><div class="cjst">Recetario</div></div>'+
     '<div class="mini">🌾 Todo sin gluten · '+R.total+' platos · '+R.puede+' con tu cocina'+(RECETARIO_EST==='cargando'?' · cargando…':'')+(RECETARIO_EST==='falla'?' · sin conexión: las 43 de siempre':'')+'</div>'+
+    '<button class="btn p" data-a="rev-abre" style="width:100%;min-height:48px;margin-top:10px;justify-content:center">😮‍💨 Estoy reventado</button>'+
     '<div class="frase" style="margin-top:8px"><span aria-hidden="true">🔎</span><input id="recQ" value="'+esc(ui.recQ||'')+'" data-a="rec-q" placeholder="busca un plato o un ingrediente…" aria-label="buscar en el recetario" autocomplete="off"></div>'+
     '<div class="cap" style="margin-top:10px">COCINA</div><div class="chips">'+REC_COCINAS.map(function(x){return chip('coc',x[0],x[1],h.coc===x[0]);}).join('')+'</div>'+
     (regs.length?'<div class="chips" style="margin-top:6px">'+regs.map(function(x){return chip('reg',x,esc(REC_REGION[x]||x),h.reg===x);}).join('')+'</div>':'')+
@@ -15372,26 +15400,47 @@ function plmCandRec(r){
   r[5].forEach(function(x){const a=alimPorNombre(x[0]);if(!a)return;ids.push({id:a.id,g:x[1]});k+=(+a.kcal||0)*x[1]/100;p+=(+a.pr||0)*x[1]/100;
     const g=nutGrupo(a);if(g)gr[g]=(gr[g]||0)+x[1]/(NUT_RAC[g]||100);});
   let g='',v=0.25;['legumbre','pescado','carne'].forEach(function(q){if((gr[q]||0)>v){v=gr[q];g=q;}});
-  return {n:r[0],e:r[1],rec:r,alims:ids,g:g||plGrupoNombre(r[0]),kcal:Math.round(k),prot:Math.round(p),verd:(gr.verdura||0)>=0.5,de:'recetario'};}
-function plmCandDish(d,de){return {n:d.name,e:d.icon||'🍽',d:d,g:plGrupo(d),kcal:Math.round(+d.kcal||0),prot:Math.round(+d.prot||0),verd:plVerdura(d),de:de};}
+  return Object.assign({n:r[0],e:r[1],rec:r,alims:ids,g:g||plGrupoNombre(r[0]),kcal:Math.round(k),prot:Math.round(p),verd:(gr.verdura||0)>=0.5,de:'recetario'},plmMarcas(r[5].map(function(x){return x[0];})));}
+/* lo que Sanidad cuenta de un plato además de su grupo: pescado azul, carne roja, embutido y arroz */
+function plmMarcas(ns){const t=alimTxt(ns.join(' | '));
+  return {azul:/sardin|atun|salmon|caballa|boquer|bonito|anchoa|arenque|jurel/.test(t),rojo:/ternera|cerdo|cordero|vacuno|buey|costilla/.test(t),
+    emb:/chorizo|morcilla|panceta|jamon|bacon|salchich|longaniza|butifarra|fuet|sobrasada/.test(t),arroz:/(^|\| )arroz/.test(t)};}
+const PLM_POSTRE=/postre|flan\b|tarta|bizcocho|brownie|natillas|helado|pastel|magdalena|galleta|tiramis|cannoli|baklava/i;
+/* cuántas raciones caben en la olla de «Tu cocina» (3 L: 4; 5-6 L: 6) y en la de cada receta */
+function plmOllaMax(){return {3:4,5:6,6:6}[cocinaPref().olla]||6;}
+function plmCandJson(r){
+  /* un plato del recetario de la app (data/recetario.json), con su kcal y proteína, sus raciones y su fuego */
+  const c=plmCandRec([r.n,r.e,r.alias,r.m,r.min,r.ing,r.pasos]),e=r.equipo||{};
+  if(r.kcal>0)c.kcal=Math.round(r.kcal);if(r.prot>0)c.prot=Math.round(r.prot);
+  c.min=r.min;c.fuegos=+e.fuegos||0;c.cap=(+e.olla>0&&r.rac>0)?Math.max(2,Math.min(plmOllaMax(),r.rac)):plmOllaMax();
+  return c;}
+function plmCandDish(d,de){return Object.assign({n:d.name,e:d.icon||'🍽',d:d,g:plGrupo(d),kcal:Math.round(+d.kcal||0),prot:Math.round(+d.prot||0),verd:plVerdura(d),de:de},
+  plmMarcas((d.alims||[]).map(function(x){const a=alimById(x.id);return a?a.n:'';}).concat(d.ingredients||[])));}
 function plmCands(){
   /* las ollas posibles: tus platos de cocinar en tanda, los demás de tu recetario y los de la app */
   const ya={},out=[],P=cocinaPref();
   const mete=function(c){const k=alimTxt(c.n);if(ya[k])return;ya[k]=1;out.push(c);};
   tpTodos().forEach(function(d){if(platoVale(d)&&esTanda(d))mete(plmCandDish(d,'tuyo'));});
   /* los demás platos de la app: solo los que saben qué llevan (sin ingredientes no hay compra ni grupo) */
-  (store.dishes||[]).forEach(function(d){if(!d.tuyo&&platoVale(d)&&!d.nevera&&!esExtraProt(d)&&(+d.kcal||0)>=250&&esTanda(d)&&((d.alims||[]).length>=2||(d.ingredients||[]).length>=2))mete(plmCandDish(d,'recetario'));});
+  (store.dishes||[]).forEach(function(d){if(!d.tuyo&&platoVale(d)&&!d.nevera&&!esExtraProt(d)&&!PLM_POSTRE.test(d.name)&&(+d.kcal||0)>=250&&esTanda(d)&&((d.alims||[]).length>=2||(d.ingredients||[]).length>=2))mete(plmCandDish(d,'recetario'));});
+  /* los del recetario (si ya llegó el archivo): de tanda, con tu cocina, sin fiesta ni postres, y con el fuego que tienes */
+  recetarioTodo().forEach(function(r){if(r.de!=='json'||!r.tanda||r.fiesta||/^(po|de)$/.test(r.tipo)||!/[cn]/.test(r.m)||!recPuede(r))return;
+    const c=plmCandJson(r);if(c.alims.length>=3)mete(c);});
   TP_RECETAS.forEach(function(r){if(r[3].indexOf('c')<0||!esTanda({name:r[0]}))return;
     if(!P.horno&&/horno/i.test(r[0]))return;
     const c=plmCandRec(r);if(c.alims.length<3)return;
     if(esCeliaco()&&r[5].some(function(x){return glutenDe(x[0])==='si';}))return;
     mete(c);});
+  out.forEach(function(c){if(!c.cap)c.cap=plmOllaMax();});
   return out;}
 function plmRapidos(){
   /* para lo que no cubren las ollas: tus platos rápidos y lo que sale con la nevera */
   const out=tpTodos().filter(function(d){return platoVale(d)&&!esTanda(d)&&tpMomentos(d).indexOf('cena')>=0;}).map(function(d){return plmCandDish(d,'tuyo');});
   cjeRapidos('',1).slice(0,6).forEach(function(r){out.push({n:r.fr.txt.charAt(0).toUpperCase()+r.fr.txt.slice(1),e:r.icon,fr:r.fr,kcal:Math.round(r.kcal),prot:Math.round(r.prot),g:'',verd:false,de:'nevera'});});
-  return out.length?out:plmCenasFabrica();}
+  /* y los rápidos del recetario (≤30 min, sin tanda), para cenas de pescado y huevo */
+  const rj=recetarioTodo().filter(function(r){return r.de==='json'&&!r.tanda&&!r.fiesta&&!/^(po|de)$/.test(r.tipo)&&/[cn]/.test(r.m)&&r.min>0&&r.min<=30&&recPuede(r);})
+    .map(plmCandJson).filter(function(c){return c.alims.length>=3;}).slice(0,8);
+  return (out.length?out:plmCenasFabrica()).concat(rj);}
 function plmCenasFabrica(){
   /* las cenas que llenan y engordan poco del nutricionista (las del Lloret), como propuesta */
   return NUT_CENAS.map(function(c){const fr=fraseLeer(c[0]),m=fraseMacros(fr);
@@ -15413,22 +15462,34 @@ function plmDiasProp(n){
   return out.sort(function(a,b){return a-b;});}
 function plmPuedeCocinar(x){return x.key>=iso(new Date())&&!x.tipo.guardia&&!x.tipo.saliente;}
 function plmOllas(M){
-  /* una olla por día de cocinar: el plato que más variedad da a la semana (legumbre, pescado, carne…),
-     lo tuyo antes que el recetario; «Otra combinación» las baraja */
+  /* una olla por día de cocinar (1 fuego a la vez: cada olla, su día) con las reglas de Sanidad: legumbre ≥3 raciones, pescado 2-3
+     (uno azul), carne roja ≤2 raciones, embutido en 1 plato como mucho, arroz 1 día como mucho; lo tuyo antes que el recetario;
+     nunca más raciones de las que caben en la olla; «Otra combinación» las baraja */
   const C=plmCands(),sem=cjeSemana(),hoyK=iso(new Date()),fut=sem.filter(function(x){return x.key>=hoyK;});
   const need=fut.filter(function(x){return !x.tipo.guardia;}).length+Math.floor(fut.filter(function(x){return !x.tipo.guardia;}).length/2);
-  const rac=Math.max(2,Math.min(6,Math.ceil(need/Math.max(1,M.dias.length))));
-  const prev=M.ollas||[],usados={},grupos={},orden=['legumbre','pescado','carne','huevo','otro'];
+  const base=Math.max(2,Math.min(6,Math.ceil(need/Math.max(1,M.dias.length))));
+  const prev=M.ollas||[],usados={},grupos={},orden=['legumbre','pescado','carne','huevo','otro'],st={emb:0,rojo:0,arroz:0,azul:0};
+  const ok=function(c){return !(c.emb&&st.emb>=1)&&!(c.arroz&&st.arroz>=1)&&!(c.rojo&&st.rojo>=1);};
+  const rac=function(c){let r=base;
+    if(c.g==='legumbre')r=Math.max(3,r);else if(c.g==='pescado')r=Math.max(2,Math.min(3,r));else if(c.g==='huevo')r=Math.max(3,Math.min(4,r));
+    if(c.rojo)r=Math.min(r,2);return Math.max(2,Math.min(r,c.cap||6));};
   return M.dias.map(function(i){
-    const libres=C.filter(function(c){return !usados[c.n];});if(!libres.length)return null;
+    const libres=C.filter(function(c){return !usados[c.n]&&ok(c);});if(!libres.length)return null;
     const rot=function(l){const s=(M.seed||0)%Math.max(1,l.length);return l.slice(s).concat(l.slice(0,s));};
+    /* de la lista, lo que mejor encaja con Sanidad si lo hay (azul si aún no hay, carne blanca, sin embutido) */
+    const mejor=function(l,g){const f=function(q){const x=l.filter(q);return x.length?x:l;};
+      if(g==='pescado'&&!st.azul)l=f(function(c){return c.azul;});
+      if(g==='carne')l=f(function(c){return !c.rojo;});
+      l=f(function(c){return !c.arroz;});
+      return f(function(c){return !c.emb;});};
     let pick=null;
     for(const g of orden){if(grupos[g])continue;const l=libres.filter(function(c){return c.g===g;});
-      if(l.length){const tuyos=l.filter(function(c){return c.de==='tuyo';});pick=rot(tuyos.length?tuyos:l)[0];break;}}
+      if(l.length){const tuyos=l.filter(function(c){return c.de==='tuyo';});pick=rot(mejor(tuyos.length?tuyos:l,g))[0];break;}}
     if(!pick)pick=rot(libres)[0];
     usados[pick.n]=1;grupos[pick.g]=1;
+    if(pick.emb)st.emb++;if(pick.rojo)st.rojo++;if(pick.arroz)st.arroz++;if(pick.azul)st.azul++;
     const viejo=prev.filter(function(o){return o.i===i;})[0];
-    return {i:i,n:pick.n,rac:viejo&&viejo.n===pick.n?viejo.rac:rac};}).filter(Boolean);}
+    return {i:i,n:pick.n,rac:viejo&&viejo.n===pick.n?Math.min(viejo.rac,pick.cap||6):rac(pick)};}).filter(Boolean);}
 function plmNuevo(){const M={paso:1,n:3,seed:0,fijo:{},lun:sbLun(),taper:true};M.dias=plmDiasProp(M.n);M.n=Math.max(M.dias.length,M.n);M.ollas=plmOllas(M);return M;}
 function plmReparto(M){
   /* reparte las raciones de cada olla desde el día que cocinas (si cocinas por la tarde, empieza por
@@ -15443,26 +15504,49 @@ function plmReparto(M){
       else if(M.fijo[d.i+'|'+c]&&M.ant&&M.ant[d.i]&&M.ant[d.i][c])d.s[c]=Object.assign({},M.ant[d.i][c],{pin:true});});
     if(d.g){const h=dishHospital();if(!d.s.cena)d.s.cena={n:'Hospital',d:h,kcal:Math.round(+h.kcal||0),prot:Math.round(+h.prot||0),t:'ho'};
       if(!M.taper&&!d.s.comida)d.s.comida={n:'Hospital',d:h,kcal:Math.round(+h.kcal||0),prot:Math.round(+h.prot||0),t:'ho'};}});
-  const ollas=M.ollas.map(function(o){const c=C.filter(function(q){return q.n===o.n;})[0];if(!c)return null;
-    const tarde=plCocina(sem[o.i].key).m>14*60,dias=[];let r=o.rac;
+  /* el táper de la guardia: cada día de guardia lleva SIEMPRE una ración de una tanda ya cocinada (la olla más cercana
+     antes de ese día, mejor que no sea pescado si pasan más de 2 días); se apunta antes que el resto de raciones */
+  const res={};
+  if(M.taper)dia.forEach(function(d){if(d.pas||!d.g||d.s.comida||gComidaS()[d.key+'|comida'])return;
+    let best=-1,bs=-99;
+    M.ollas.forEach(function(o,k){const c=C.filter(function(q){return q.n===o.n;})[0];if(!c||o.i>=d.i||dia[o.i].pas)return;
+      const sc=-(d.i-o.i)-(c.g==='pescado'&&d.i-o.i>2?5:0)-((res[k]||[]).length>=Math.min(o.rac,c.cap||6)-1?99:0);
+      if(sc>bs){bs=sc;best=k;}});
+    if(best<0||bs<-90)return;
+    const o=M.ollas[best],c=C.filter(function(q){return q.n===o.n;})[0],fz=d.i-o.i>=P.taper;
+    (res[best]=res[best]||[]).push({i:d.i,c:'comida',fz:fz});
+    d.s.comida=Object.assign({},c,{t:fz?'fz':'tp',o:o,tg:true});});
+  const ollas=M.ollas.map(function(o,k){const c=C.filter(function(q){return q.n===o.n;})[0];if(!c)return null;
+    const tarde=plCocina(sem[o.i].key).m>14*60,dias=(res[k]||[]).slice();
+    if(o.rac>(c.cap||6))o.rac=c.cap||6;
+    let r=o.rac-dias.length,puestas=0;
     for(let i=o.i;i<7&&r>0;i++){const d=dia[i];if(d.pas)continue;
       ['comida','cena'].forEach(function(cl){if(r<=0||d.s[cl])return;if(i===o.i&&cl==='comida'&&tarde)return;if(d.g&&cl==='cena')return;
         /* la cena de una noche de Lloret solo si llena y engorda poco; si no, la pone el nutricionista */
         if(cl==='cena'&&d.ll&&!plmApta(c))return;
         const otra=d.s[cl==='comida'?'cena':'comida'];if(otra&&otra.n===c.n)return;
-        const fz=i-o.i>=P.taper;d.s[cl]=Object.assign({},c,{t:dias.length?(fz?'fz':'tp'):'cz',o:o});dias.push({i:i,c:cl,fz:fz});r--;});}
+        const fz=i-o.i>=P.taper;d.s[cl]=Object.assign({},c,{t:puestas?(fz?'fz':'tp'):'cz',o:o});puestas++;dias.push({i:i,c:cl,fz:fz});r--;});}
+    dias.sort(function(a,b){return a.i-b.i||(a.c==='comida'?-1:1);});
     /* las raciones que no caben esta semana: si no las tocaste tú, se cocinan menos */
     if(r>0&&!o.toc&&dias.length>=2){o.rac=dias.length;r=0;}
     return {o:o,c:c,dias:dias,sobra:r};}).filter(Boolean);
   /* las cenas de Lloret que quedan: las que llenan y engordan poco, sin repetir dos días seguidos */
   const cl=nutCenaLloret(),LL=[cl.d?plmCandDish(cl.d,cl.de):{n:cl.nombre,e:cl.icon,txt:cl.txt,kcal:cl.kcal,prot:cl.prot,g:plGrupoNombre(cl.nombre),verd:true}];
   R.concat(plmCenasFabrica()).forEach(function(r){if(plmApta(r)&&!LL.some(function(y){return alimTxt(y.n)===alimTxt(r.n);}))LL.push(r);});
+  /* Sanidad en lo que rellena: pescado ≤3 raciones, huevo ≤4 y carne roja ≤2 por semana (si no hay otra cosa, se rellena igual) */
+  const cnt={pescado:0,huevo:0,rojo:0},cuenta=function(s){if(!s)return;if(s.g==='pescado')cnt.pescado++;if(s.g==='huevo')cnt.huevo++;if(s.rojo)cnt.rojo++;};
+  dia.forEach(function(d){if(!d.pas)['comida','cena'].forEach(function(cl){cuenta(d.s[cl]);});});
+  const cabe=function(r){return !((r.g==='pescado'&&cnt.pescado>=3)||(r.g==='huevo'&&cnt.huevo>=4)||(r.rojo&&cnt.rojo>=2));};
+  const pon=function(d,cl,L,desde,t){
+    for(const estricto of [true,false]){
+      for(let k=0;k<L.length;k++){const r=L[(desde+k)%L.length],otra=d.s[cl==='comida'?'cena':'comida'];
+        if(otra&&otra.n===r.n&&(L.length>1||t==='ra'))continue;if(estricto&&!cabe(r))continue;
+        d.s[cl]=Object.assign({},r,{t:t});cuenta(r);return k+1;}}
+    return 0;};
   let ql=M.seed||0;
-  dia.forEach(function(d){if(d.pas||!d.ll||d.s.cena)return;
-    for(let k=0;k<LL.length;k++){const r=LL[(ql+k)%LL.length],otra=d.s.comida;if(otra&&otra.n===r.n&&LL.length>1)continue;d.s.cena=Object.assign({},r,{t:'ll'});ql+=k+1;break;}});
+  dia.forEach(function(d){if(d.pas||!d.ll||d.s.cena)return;ql+=pon(d,'cena',LL,ql,'ll');});
   let q=(M.seed||0);
-  dia.forEach(function(d){if(d.pas||!R.length)return;['comida','cena'].forEach(function(cl){if(d.s[cl])return;
-    for(let k=0;k<R.length;k++){const r=R[(q+k)%R.length],otra=d.s[cl==='comida'?'cena':'comida'];if(otra&&otra.n===r.n)continue;d.s[cl]=Object.assign({},r,{t:'ra'});q+=k+1;break;}});});
+  dia.forEach(function(d){if(d.pas||!R.length)return;['comida','cena'].forEach(function(cl){if(d.s[cl])return;q+=pon(d,cl,R,q,'ra');});});
   const tus=tpTodos().filter(function(d){return platoVale(d)&&tpMomentos(d).indexOf('desayuno')>=0;});
   const des=(tus.length?tus:cjeDesayunos()).slice().sort(function(a,b){return (+b.prot||0)-(+a.prot||0);}).slice(0,3);
   let nd=M.seed||0;
@@ -15479,7 +15563,7 @@ function plmPlato(s){
 function plmUsar(M){
   const R=plmReparto(M);let n=0;
   R.dia.forEach(function(d){if(d.pas)return;['desayuno','comida','cena'].forEach(function(c){const s=d.s[c];if(!s||s.t==='fijo')return;
-    const dd=s.t==='ho'?dishHospital():plmPlato(s);if(!dd)return;sbPoner(d.w,c,dd.id,{auto:true});n++;});});
+    const dd=s.t==='ho'?dishHospital():plmPlato(s);if(!dd)return;sbPoner(d.w,c,dd.id,s.tg?{}:{auto:true});n++;});});   /* el táper de la guardia es de ESA fecha: sin «auto» (gComida) */
   sbS().on=true;
   const kit=R.dia.some(function(d){return !d.pas&&d.ll;});
   if(kit)listaAMano('yogur griego desnatado\nfresas\nmaíz para palomitas\nhummus\nzanahorias\npepinos');
@@ -15492,6 +15576,17 @@ function plmCifras(R){
       if(s.g&&v[s.g]!=null)v[s.g]++;if(s.verd)v.verdura++;});});
   const n=Math.max(1,fut.length);
   return {k:Math.round(k/n),p:Math.round(p/n),obj:obj,pObj:pObj,dp:dp,nd:nd,v:v,slots:fut.length*2,dias:fut.length};}
+function plmReglas(R){
+  /* lo que Sanidad pide a la semana, contado sobre lo montado (comidas y cenas de hoy en adelante) */
+  const v={legumbre:0,pescado:0,azul:0,huevo:0,carne:0,rojo:0,verdura:0},emb={},arr={},fu={};let gd=0,tp=0,ra=0;
+  R.dia.forEach(function(d){if(d.pas)return;
+    if(d.g){gd++;if(d.s.comida&&d.s.comida.tg)tp++;}
+    ['comida','cena'].forEach(function(c){const s=d.s[c];if(!s||s.t==='ho')return;
+      if(s.g&&v[s.g]!=null)v[s.g]++;if(s.g==='pescado'&&s.azul)v.azul++;if(s.rojo)v.rojo++;if(s.verd)v.verdura++;
+      if(s.emb)emb[s.n]=1;if(s.arroz)arr[d.i]=1;});});
+  R.ollas.forEach(function(x){fu[x.o.i]=(fu[x.o.i]||0)+(x.c.fuegos||0);ra=Math.max(ra,x.o.rac);});
+  return {v:v,embutidos:Object.keys(emb).length,arrozDias:Object.keys(arr).length,guardias:gd,taperGuardia:tp,olla:ra,
+    fuegos:Math.max.apply(null,[0].concat(Object.keys(fu).map(function(k){return fu[k];})))};}
 function plmCabHTML(M,t){
   return '<div class="subcab"><button class="btn s volver" data-a="'+(M.paso===2?'plm-paso" data-v="1':'plm-cerrar')+'">'+gymIco('atras','gico sm')+(M.paso===2?' Paso 1':' Semana')+'</button>'+
     '<h2 class="subtit" style="flex:1">Montar la semana</h2><span class="mini">'+M.paso+'/2</span></div>'+
@@ -15512,7 +15607,7 @@ function plmPaso1(M){
       '<div class="plrac">'+o.dias.map(function(y){return '<span>'+(y.fz?'🧊 ':'')+plDia3(sem[y.i].key)+' '+(y.c==='comida'?'C':'Cn')+(sem[y.i].tipo.guardia?' 🥡':'')+(y.c==='cena'&&lloretDe(sem[y.i].key)?' 🌿':'')+'</span>';}).join('')+
         (o.sobra?'<span class="w">sobra'+(o.sobra===1?'':'n')+' '+o.sobra+'</span>':'')+
         '<span class="sp"></span><button class="cji s" data-a="plm-rac" data-k="'+k+'" data-d="-1" aria-label="una ración menos"'+(o.o.rac<=2?' disabled':'')+'>−</button>'+
-        '<button class="cji s" data-a="plm-rac" data-k="'+k+'" data-d="1" aria-label="una ración más"'+(o.o.rac>=8?' disabled':'')+'>＋</button></div></div>';};
+        '<button class="cji s" data-a="plm-rac" data-k="'+k+'" data-d="1" aria-label="una ración más"'+(o.o.rac>=(c.cap||6)?' disabled':'')+'>＋</button></div></div>';};
   /* lo que dice el nutricionista: los grupos que faltaban con tus platos y la cena del Lloret */
   const tus=tpTodos(),gTus={};tus.forEach(function(d){gTus[plGrupo(d)]=1;});
   const dRec=R.ollas.filter(function(o){return o.c.de!=='tuyo'&&!gTus[o.c.g]&&o.c.g!=='otro';});
@@ -15871,6 +15966,7 @@ function cjeHojaHTML(){
   else if(v==='hueco')body=cjeHojaHueco(h);
   else if(v==='receta')body=cjeHojaReceta(h);
   else if(v==='recetario')body=cjeHojaRecetario(h);
+  else if(v==='reventado')body=cjeHojaReventado(h);
   else if(v==='micro')body=microHTML(h);
   if(!body)return '';
   return hojaMarco('cje-cerrar','cjh','Comer',body);}
@@ -26066,7 +26162,7 @@ function act(a,el){
     case 'cs-vacia':{const h=ui.cjeHoja;if(!h)break;sbPoner(h.k,h.c,'',{save:true});ui.cjeHoja=null;flash('hueco vacío');render();break;}
     case 'cje-busca':ui.foodPos=momentoEscribir();ui.foodBusca='';ui.foodVista='buscar';render();window.scrollTo(0,0);break;
     case 'cje-sem':{const d=+el.dataset.d||0;weekDate=d?addDays(mondayOf(weekDate),7*d):mondayOf(new Date());ui.cjeHoja=null;render();break;}
-    case 'pl-montar':ui.tab='food';ui.foodVista='eje';ui.cjeTab='sem';ui.cjeHoja=null;ui.tpVista='';ui.plM=plmNuevo();render();window.scrollTo(0,0);break;
+    case 'pl-montar':ui.tab='food';ui.foodVista='eje';ui.cjeTab='sem';ui.cjeHoja=null;ui.tpVista='';recetarioCarga();ui.plM=plmNuevo();render();window.scrollTo(0,0);break;
     case 'plm-cerrar':ui.plM=null;render();window.scrollTo(0,0);break;
     case 'plm-n':{const M=ui.plM;if(!M)break;M.n=+el.dataset.v||3;M.dias=plmDiasProp(M.n);M.ollas=plmOllas(M);render();break;}
     case 'plm-dia':{const M=ui.plM;if(!M)break;const i=+el.dataset.i,k=M.dias.indexOf(i);
@@ -26078,7 +26174,8 @@ function act(a,el){
       const j=C.findIndex(function(c){return c.n===o.n;});
       for(let k=1;k<=C.length;k++){const c=C[(j+k)%C.length];if(otras.indexOf(c.n)<0){o.n=c.n;break;}}
       render();break;}
-    case 'plm-rac':{const M=ui.plM,o=M&&M.ollas[+el.dataset.k];if(!o)break;o.rac=Math.max(2,Math.min(8,o.rac+(+el.dataset.d||0)));o.toc=true;render();break;}
+    case 'plm-rac':{const M=ui.plM,o=M&&M.ollas[+el.dataset.k];if(!o)break;const c=plmCands().filter(function(q){return q.n===o.n;})[0];
+      o.rac=Math.max(2,Math.min((c&&c.cap)||6,o.rac+(+el.dataset.d||0)));o.toc=true;render();break;}
     case 'plm-taper':if(ui.plM){ui.plM.taper=!ui.plM.taper;render();}break;
     case 'plm-paso':if(ui.plM){ui.plM.paso=+el.dataset.v===2?2:1;render();window.scrollTo(0,0);}break;
     case 'plm-fija':{const M=ui.plM;if(!M)break;const k=el.dataset.i+'|'+el.dataset.c;if(M.fijo[k])delete M.fijo[k];else M.fijo[k]=1;render();break;}
@@ -26164,7 +26261,7 @@ function act(a,el){
       flash(n===1?'1 plato guardado':n+' platos guardados');break;}
     case 'tp-verlos':ui.tpVer=!ui.tpVer;render();break;
     case 'tp-quita':{const d=dishById(el.dataset.id);if(d){delete d.tuyo;save();}render();break;}
-    case 'tp-semana':ui.tpVista='';ui.plM=plmNuevo();render();window.scrollTo(0,0);break;
+    case 'tp-semana':ui.tpVista='';recetarioCarga();ui.plM=plmNuevo();render();window.scrollTo(0,0);break;
     case 'cje-seg':{const h=ui.cjeHoja||(ui.cjeHoja={v:'compra'});h.seg=el.dataset.v;render();break;}
     case 'cje-mark':{const id=el.dataset.id;if(ui.marks.has(id))ui.marks.delete(id);else ui.marks.add(id);saveMarks();render();break;}
     case 'cje-comprado':flash(hacerCompra(ui.marks.size>0));break;
@@ -26186,6 +26283,8 @@ function act(a,el){
       render();break;}
     case 'rec-ver':{const h=ui.cjeHoja;if(!h||h.v!=='recetario'||!recetarioTodo().some(function(r){return r.id===el.dataset.id;}))break;
       ui.cjeHoja={v:'receta',rid:el.dataset.id,vuelve:h,tach:{}};render();window.scrollTo(0,0);break;}
+    case 'rev-abre':ui.cjeHoja={v:'reventado',o:0};recetarioCarga();render();break;
+    case 'rev-otros':{const h=ui.cjeHoja;if(!h||h.v!=='reventado')break;h.o=(h.o||0)+3;if(h.o>=recReventados().length)h.o=0;render();break;}
     case 'rec-vuelve':{const h=ui.cjeHoja;if(h&&h.vuelve){ui.cjeHoja=h.vuelve;render();}break;}
     case 'cje-des':{const P=cocinaPref(),id=el.dataset.id,i=P.desayunos.indexOf(id);if(i>=0)P.desayunos.splice(i,1);else if(P.desayunos.length<3)P.desayunos.push(id);else flash('máximo 3');save();render();break;}
     case 'fr-rec':{const e=fraseRecientes()[+el.dataset.i];if(!e||!e.frase)break;
@@ -26366,8 +26465,8 @@ function act(a,el){
       ui.foodVista='cocina';ui.tab='food';render();window.scrollTo(0,0);break;}
     case 'cocina-paso':{const d=cocinaDe(),n=(d&&(d.steps||[]).filter(Boolean).length)||0,rc=!!(d&&d.deRecetario);
       ui.cocinaPaso=Math.min(Math.max(rc?-1:0,+el.dataset.n||0),rc?n:Math.max(0,n-1));render();window.scrollTo(0,0);break;}
-    case 'rec-cocina':{const h=ui.cjeHoja;if(!h||!h.rid||!recDe(h))break;
-      ui.cocinaRid=h.rid;ui.cocinaPlato='';ui.cocinaPaso=-1;ui.cocinaRac=0;ui.cocinaMano={};ui.cjeHoja=null;
+    case 'rec-cocina':{const h=ui.cjeHoja,rid=el.dataset.id||(h&&h.rid);if(!rid||!recDe({rid:rid}))break;
+      ui.cocinaRid=rid;ui.cocinaPlato='';ui.cocinaPaso=-1;ui.cocinaRac=0;ui.cocinaMano={};ui.cjeHoja=null;
       ui.foodVista='cocina';ui.tab='food';render();window.scrollTo(0,0);break;}
     case 'cocina-cierra':ui.foodVista='';ui.cocinaRid='';ui.cocinaPaso=0;render();window.scrollTo(0,0);break;
     case 'cc-mano':{ui.cocinaMano=ui.cocinaMano||{};ui.cocinaMano[el.dataset.k]=!ui.cocinaMano[el.dataset.k];render();break;}
@@ -29320,7 +29419,7 @@ document.addEventListener('visibilitychange',function(){if(document.hidden){ui.c
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
-Object.assign(window.PG,{recetarioTodo,recPuede,snNocheEventos,mananaTramos,MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
+Object.assign(window.PG,{recetarioTodo,recetarioCarga,recReventados,plmReglas,plmOllaMax,plmOllas,recPuede,snNocheEventos,mananaTramos,MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();
