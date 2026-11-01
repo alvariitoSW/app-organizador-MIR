@@ -37,7 +37,7 @@ Acta `consejo/2026-10-30-chef.md` · maqueta `maquetas/recetario.html` · delega
 - [x] CH3 Maqueta corta (modo cocina, «Tu cocina», filtro Cocina, «Estoy reventado», «Cambiado») · opus + sonnet · ~0,6 M
 - [ ] CH4 ~60 platos enteros para micro + vitro (tanda y táper, legumbre, pescado, cenas de saliente), cada lote con
       `node tests/recetario.test.js` en verde y `node tools/recetario-faltan.js` vacío · sonnet (+ haiku) · ~0,6 M
-- [ ] CH5 Recetario navegable: JSON perezoso en `sw.js`, filtros, «Tu cocina» ampliando `cocinaPref` · sonnet · ~0,9 M
+- [x] CH5 Recetario navegable: JSON perezoso en `sw.js`, filtros, «Tu cocina» ampliando `cocinaPref` · sonnet · ~0,9 M
 - [ ] CH6 Modo cocina: `ui.cocinaTmp`, Wake Lock, plegables, conservación · sonnet · ~0,9 M
 - [ ] CH7 Semana: `plmCands` + reglas de Sanidad + ollas + táper + «Estoy reventado» · sonnet · ~0,9 M
 - [ ] CH8 TikTok sin gluten + «Mis marcas seguras» + `esc()` y prueba `<img onerror>` · sonnet · ~0,9 M → `main` (El Chef I)
