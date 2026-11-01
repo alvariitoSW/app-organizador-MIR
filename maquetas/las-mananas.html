@@ -1,0 +1,263 @@
+<!doctype html><html lang=es><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>Las Mañanas · maqueta LM1</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#9fb3d1;--line:#26354f;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--sobre:#04121c;--page:#02040a}
+@media (prefers-color-scheme:light){:root{--bg:#eef2f9;--bg2:#e6ecf7;--card:#fff;--ink:#0d1729;--ink2:#4a5d7a;--line:#c9d5e8;--brand:#1d4ed8;--brand2:#6d28d9;--ok:#15803d;--warn:#92400e;--sobre:#fff;--page:#d9e0ee}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 40px}
+.intro{max-width:880px;margin:0 auto;padding:18px 16px 0}.intro h1{font-size:22px;margin:0 0 6px}.intro p{color:var(--ink2);margin:0 0 6px}
+.mundo{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:20px 12px}
+.ab{width:412px;height:915px;position:relative;overflow:hidden;border-radius:26px;border:1px solid var(--line);background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px 12px 76px;flex:none}
+.ab .cuerpo{height:100%;overflow:hidden}
+.lbl{position:absolute;top:-1px;right:14px;font-size:14px;font-weight:900;letter-spacing:.12em;color:var(--sobre);background:var(--brand);padding:3px 8px;border-radius:0 0 8px 8px;z-index:6}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:14px;font-weight:900;letter-spacing:.12em;color:var(--ink2);margin-bottom:6px}
+.mini{font-size:14px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:20px;margin:0;line-height:1.2}
+.back{min-width:44px;height:44px;display:flex;align-items:center;font-size:16px;font-weight:800;color:var(--ink2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-weight:800;font-size:14px;padding:0 12px;text-align:center}
+.btn.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:var(--sobre);border:0}
+.btn.g{min-height:56px;font-size:17px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.chip.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.paso{display:flex;gap:10px;font-size:16px;line-height:1.45;margin-bottom:8px}.paso b{color:var(--brand);font-size:18px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:64px;border-top:1px solid var(--line);background:var(--bg2);display:grid;grid-template-columns:repeat(5,1fr);font-size:14px;font-weight:800;color:var(--ink2);text-align:center;padding-top:8px;z-index:1}
+.nav div span{display:block;font-size:18px}.nav .on{color:var(--brand)}
+.pie{position:absolute;left:0;right:0;bottom:64px;padding:8px 12px 10px;background:var(--bg2);border-top:1px solid var(--line)}
+.alarma{border:2px solid var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card));border-radius:14px;padding:10px 12px;margin:2px 0 8px}
+.sw{width:48px;height:28px;border-radius:14px;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ink2)}
+.velo{position:absolute;inset:0;background:rgba(2,4,10,.62);z-index:2}
+.hoja{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--bg2);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:10px 12px 18px;box-shadow:0 -10px 30px color-mix(in srgb,var(--page) 60%,transparent)}
+.asa{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.cat{max-width:880px;margin:0 auto;padding:0 16px}
+.cat h2{font-size:19px;margin:22px 0 4px}
+.cat table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--line)}
+.cat .tw{overflow-x:auto}
+.cat td,.cat th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cat th{color:var(--ink2);font-weight:800}
+/* nuevas · las mañanas */
+.modos{display:flex;gap:4px;font-size:14px;font-weight:700;color:var(--ink2);margin-bottom:8px}
+.modos span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;background:var(--bg2);text-align:center;line-height:1.1}
+.modos .on{border-color:var(--brand);color:var(--ink)}
+.led{background:#05070a;border:1px solid #1d2733;border-radius:14px;padding:14px;margin-bottom:8px;font-family:ui-monospace,Menlo,Consolas,monospace;text-align:center}
+.led .a{color:#ffb000;font-size:22px;font-weight:700;letter-spacing:.04em}
+.led .c{color:#4ff0ff;font-size:28px;font-weight:700;margin-top:4px}
+.btn.hecho{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--ok) 14%,var(--bg2));flex-direction:column;gap:0;line-height:1.2}
+.btn.hecho small{color:var(--ok);font-size:14px}
+.reg2{position:relative;height:136px;margin:6px 6px 0}
+.reg2 .linea{position:absolute;left:0;right:0;top:66px;height:4px;border-radius:2px;background:var(--line)}
+.reg2 .tr{position:absolute;left:0;top:66px;height:4px;border-radius:2px;background:var(--brand);width:40%}
+.reg2 .t{position:absolute;top:60px;width:2px;height:16px;background:var(--ink2);margin-left:-1px}
+.reg2 .t.k{background:var(--brand);width:3px;margin-left:-1.5px}
+.reg2 .m{position:absolute;font-size:14px;line-height:1.2;font-weight:800;text-align:center;transform:translateX(-50%);white-space:nowrap}
+.reg2 .m small{display:block;font-weight:600;color:var(--ink2);font-size:14px}
+.reg2 .arr{top:22px}.reg2 .aba{top:80px}
+.reg2 .m.l{transform:none;text-align:left}.reg2 .m.r{transform:none;text-align:right}
+.reg2 .pie2{position:absolute;top:59px;width:14px;height:14px;border-radius:50%;background:var(--brand);margin-left:-7px;border:2px solid var(--bg2)}
+.reg2 .ahora{position:absolute;top:56px;width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);margin-left:-11px;background:var(--bg2)}
+.pill{display:inline-block;border-radius:10px;padding:2px 8px;border:1px solid var(--brand);color:var(--ink);font-size:14px;font-weight:800;background:color-mix(in srgb,var(--brand) 14%,var(--card))}
+.nota-maq{border:1.5px dashed var(--ink2);border-radius:12px;padding:8px 10px;font-size:14px;color:var(--ink2);margin-bottom:8px;line-height:1.35}
+.fil{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 0;border-bottom:1px solid var(--line)}
+.fil:last-child{border-bottom:0}.fil .e{font-size:24px;width:34px;text-align:center}.fil .n{font-weight:800}
+.fil .h{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums}
+.dif{font-weight:900;color:var(--brand);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.par{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.par:last-child{border-bottom:0}.par .bs{flex:1}
+.par .nm{font-weight:800;font-size:14px;margin-bottom:3px}
+.bar{height:10px;border-radius:5px;margin-bottom:3px}
+.bar.pv{border:1.5px solid var(--ink2);background:transparent}.bar.re{background:var(--brand)}
+.dest{border-left:4px solid var(--brand);padding:6px 10px;font-size:17px;font-weight:800;margin:6px 0 2px}
+.nuevo{font-size:14px;font-weight:900;letter-spacing:.06em;color:var(--sobre);background:var(--brand);border-radius:8px;padding:1px 7px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.seg div{min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;font-weight:800;background:var(--bg2);color:var(--ink2)}
+.seg .on{border-color:var(--brand);color:var(--ink)}
+.cod{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;word-break:break-all;flex:1}
+.cir{width:210px;height:210px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:conic-gradient(var(--brand) 0 50%,var(--line) 50% 100%)}
+.cir div{width:176px;height:176px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:84px;font-weight:900;font-variant-numeric:tabular-nums}
+.dis{opacity:.5}
+</style>
+<div class=intro>
+<h1>Las Mañanas · maqueta LM1</h1>
+<p>Siete pantallas a 412×915: la mañana de hoy, el móvil de la mañana, la semana, las alarmas, dos guías de Android y la pausa. Todos los datos son inventados.</p>
+<p>Se ven en oscuro o en claro según el tema del móvil. Sin colores de alarma: solo números neutros.</p>
+</div>
+
+<div class=mundo>
+
+<!-- A -->
+<section class=ab><span class=lbl>A</span><div class=cuerpo>
+<div class=modos><span>🚌 Conductor</span><span>🏗 Estación</span><span>◷ Reloj</span><span class=on>☰ Línea</span></div>
+<div class=led><div class=a>🚪 Sal de casa · 07:31</div><div class=c>en 21 min</div></div>
+<div class=three>
+<div class="btn hecho"><span>🧍 En pie ✓</span><small>06:52</small></div>
+<div class="btn p">👕 Vestido</div>
+<div class=btn>🚪 He salido</div>
+</div>
+<p class=mini style="margin:6px 2px 10px">Un toque cada uno. Ducha y café van dentro.</p>
+<div class=card>
+<div class=cap>LA MAÑANA</div>
+<div class=reg2>
+<div class=linea></div><div class=tr></div>
+<div class=t style="left:0"></div><div class=t style="left:10%"></div><div class=t style="left:40%"></div><div class=t style="left:60%"></div><div class="t k" style="left:82%"></div><div class=t style="left:90%"></div><div class=t style="left:94%"></div>
+<div class=pie2 style="left:4%"></div>
+<div class=ahora style="left:40%"></div>
+<div class="m arr l" style="left:0">Levantarse<small>06:50</small></div>
+<div class="m arr" style="left:40%">Café<small>07:10</small></div>
+<div class="m arr" style="left:82%;color:var(--brand)">Salir de casa<small>07:31</small></div>
+<div class="m aba" style="left:10%">Ducha<small>06:55</small></div>
+<div class="m aba" style="left:60%">Vestirse<small>07:20</small></div>
+<div class="m aba r" style="right:0">Bus 07:35<small>último 07:37</small></div>
+</div>
+<div class=row style="margin-top:6px"><span class=pill>● ahora 07:10</span><span class=mini>● En pie 06:52 (real)</span></div>
+</div>
+<div class=nota-maq>Antes: “Vestirse” y “Salir de casa” se montaban una encima de otra. Ahora van en dos filas.</div>
+</div><div class=nav><div class=on><span>🏠</span>Hoy</div><div><span>📅</span>Calendario</div><div><span>🍽</span>Comer</div><div><span>🏋</span>Entreno</div><div><span>☰</span>Más</div></div></section>
+
+<!-- B -->
+<section class=ab><span class=lbl>B</span><div class=cuerpo>
+<div class=modos><span>🚌 Conductor</span><span>🏗 Estación</span><span>◷ Reloj</span><span class=on>☰ Línea</span></div>
+<div class=led><div class=a>🚪 Sal de casa · 07:31</div><div class=c>en 21 min</div></div>
+<div class=three><div class="btn hecho"><span>🧍 En pie ✓</span><small>06:52</small></div><div class=btn>👕 Vestido ✓</div><div class="btn p">🚪 He salido</div></div>
+</div>
+<div class=velo></div>
+<div class=hoja>
+<div class=asa></div>
+<p class=ok style="margin:0 0 6px;color:var(--ok);font-weight:800">✓ Saliste a las 07:33</p>
+<h2 style="margin:0;font-size:21px">📱 ¿Móvil esta mañana?</h2>
+<p class=mini style="margin:2px 0 12px">Más o menos. Un toque y listo.</p>
+<div class=cap>MINUTOS</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px">
+<div class=chip style="min-height:56px;justify-content:center;font-size:18px">0</div>
+<div class=chip style="min-height:56px;justify-content:center;font-size:18px">5</div>
+<div class="chip on" style="min-height:56px;justify-content:center;font-size:18px">15</div>
+<div class=chip style="min-height:56px;justify-content:center;font-size:18px">30</div>
+<div class=chip style="min-height:56px;justify-content:center;font-size:18px">45+</div>
+</div>
+<div class=cap>¿CON QUÉ? (SI QUIERES)</div>
+<div class=chips><span class="chip on">Noticias</span><span class=chip>Mensajes</span><span class=chip>Vídeos</span><span class=chip>+ otra</span></div>
+<div class="btn p g">Guardar</div>
+<p style="text-align:center;margin:10px 0 4px;font-weight:700;color:var(--ink2);min-height:44px;display:flex;align-items:center;justify-content:center">Ahora no</p>
+<p class=mini style="text-align:center;margin:0">Se queda en tu móvil. Solo el número y la etiqueta.</p>
+</div>
+</section>
+
+<!-- C -->
+<section class=ab><span class=lbl>C</span><div class=cuerpo>
+<div class=top><span class=back>‹ Hoy</span></div>
+<h1 style="font-size:22px;margin:0">📊 Tu semana en minutos</h1>
+<p class=mini style="margin:2px 0 8px">De media, lo que hiciste frente a lo previsto.</p>
+<div class=card style="padding:4px 12px">
+<div class=fil><span class=e>🛌</span><span class=n>A la cama</span><span class=sp></span><span class=dif>+12 min</span></div>
+<div class=mini style="margin:-4px 0 4px 44px">la semana pasada +20 min</div>
+<div class=fil><span class=e>⏰</span><span class=n>Levantarte</span><span class=sp></span><span class=dif>+4 min</span></div>
+<div class=fil><span class=e>🚪</span><span class=n>Salir de casa</span><span class=sp></span><span class=dif>+9 min</span></div>
+</div>
+<div class=card>
+<div class=cap>TU MAÑANA POR TRAMOS</div>
+<div class=par><div class=bs><div class=nm>Cama → En pie · 4 min <span class=mini style="font-weight:600">/ previsto 0</span></div><div class="bar pv" style="width:2px"></div><div class="bar re" style="width:10%"></div></div><span class=dif>+4</span></div>
+<div class=par><div class=bs><div class=nm>En pie → Vestido · 31 <span class=mini style="font-weight:600">/ previsto 30</span></div><div class="bar pv" style="width:75%"></div><div class="bar re" style="width:77.5%"></div></div><span class=dif>+1</span></div>
+<div class=par><div class=bs><div class=nm>Vestido → Puerta · 29 <span class=mini style="font-weight:600">/ previsto 11</span></div><div class="bar pv" style="width:27.5%"></div><div class="bar re" style="width:72.5%"></div></div><span class=dif>+18</span></div>
+<div class=row style="margin-top:6px"><span class=mini>▭ previsto</span><span class=mini>▬ real</span></div>
+</div>
+<div class=dest>Lo que más se estira: de vestido a la puerta, +18 min.</div>
+<p class=mini style="margin:0 0 10px 14px">Con 5 mañanas apuntadas. Hace falta un mínimo de 4.</p>
+<div class=card><span style="font-weight:700">📱 Móvil de la mañana: 20 min de media</span> <span class=mini>(5 mañanas)</span></div>
+<div class=nota-maq>Sin colores de alarma: solo dónde se va el tiempo.</div>
+</div><div class=nav><div class=on><span>🏠</span>Hoy</div><div><span>📅</span>Calendario</div><div><span>🍽</span>Comer</div><div><span>🏋</span>Entreno</div><div><span>☰</span>Más</div></div></section>
+
+<!-- D -->
+<section class=ab><span class=lbl>D</span><div class=cuerpo>
+<div class=top><span class=back>‹ Hoy</span></div>
+<h1 style="font-size:21px;margin:0">⏰ Pon estas alarmas en tu Reloj</h1>
+<p class=mini style="margin:2px 0 8px">Así suenan aunque la app esté cerrada. Ponlas una vez con este mismo nombre.</p>
+<div class=card style="padding:4px 12px">
+<div class=fil><span class=e>🌿</span><div><div class=n>Vete del Lloret</div><div class=mini>todas las noches menos guardia</div></div><span class=sp></span><span class=h>21:45</span></div>
+<div class=fil><span class=e>🛌</span><div><div class=n>A la cama</div><div class=mini>todas las noches</div></div><span class=sp></span><span class=h>23:00</span></div>
+<div class=fil><span class=e>🚪</span><div><div class=n>Sal de casa</div><div class=mini>lunes a viernes</div></div><span class=sp></span><span class=h>07:31</span></div>
+</div>
+<div class=card style="border-color:var(--brand);padding:4px 12px">
+<div class=row style="padding:6px 0"><span class=cap style="margin:0">DE MITAD DE MAÑANA (NUEVAS)</span><span class=sp></span><span class=nuevo>nuevo</span></div>
+<div class=fil><span class=e>⏳</span><div><div class=n>Quedan 30 min</div><div class=mini>lunes a viernes</div></div><span class=sp></span><span class=h>07:01</span></div>
+<div class=fil><span class=e>⏳</span><div><div class=n>Quedan 10 min</div><div class=mini>lunes a viernes</div></div><span class=sp></span><span class=h>07:21</span></div>
+</div>
+<p class=mini style="margin:0 2px 8px">⏰ El despertador de las 06:50 ya lo tienes: déjalo lejos de la cama.</p>
+<div class=card>
+<div class=row style="min-height:44px"><span style="font-weight:700">Añadir también al calendario (.ics)</span><span class=sp></span><span class=sw></span></div>
+<div class=mini>apagado de serie</div>
+</div>
+<div class="btn p g">Ya las he puesto</div>
+<div class=nota-maq style="margin-top:10px">Las suena el Reloj, no la app: la app cerrada no avisa.</div>
+</div><div class=nav><div class=on><span>🏠</span>Hoy</div><div><span>📅</span>Calendario</div><div><span>🍽</span>Comer</div><div><span>🏋</span>Entreno</div><div><span>☰</span>Más</div></div></section>
+
+<!-- E -->
+<section class=ab><span class=lbl>E</span><div class=cuerpo>
+<div class=top><span class=back>‹ Volver</span></div>
+<h1 style="font-size:21px;margin:0">🌙 Que el móvil no te llame por la mañana</h1>
+<p class=mini style="margin:2px 0 10px">Lo pone Android, no la app. Una vez y ya.</p>
+<div class=seg><div class=on>Pixel</div><div>Samsung</div></div>
+<div class=card>
+<div class=paso><b>1</b><span>Ajustes → Bienestar digital y controles parentales.</span></div>
+<div class=paso><b>2</b><span>Modo concentración.</span></div>
+<div class=paso><b>3</b><span>Elige las apps que distraen (por ejemplo, vídeos y redes).</span></div>
+<div class=paso><b>4</b><span>«Establecer horario»: lunes a viernes, de 06:50 a 07:35.</span></div>
+<div class=paso style="margin-bottom:0"><b>5</b><span>Listo: a esa hora esas apps salen en gris.</span></div>
+</div>
+<div class=card>
+<div class=row style="min-height:44px"><b>Samsung</b><span class=sp></span><span class=mini>▸ ver</span></div>
+<div class=mini>Ajustes → Bienestar digital → Modo concentración (o «Modos y rutinas» → Trabajo).</div>
+</div>
+<p class=mini style="margin:0 2px 12px">Los nombres cambian un poco según el modelo.</p>
+<div class=btn>Ahora no</div>
+<div class=nota-maq style="margin-top:10px">Es un extra: la app funciona igual sin esto.</div>
+</div></section>
+
+<!-- F -->
+<section class=ab><span class=lbl>F</span><div class=cuerpo style="display:flex;flex-direction:column">
+<p class=mini style="text-align:center;margin:6px 0 14px">07:14 · sales a las 07:31</p>
+<div class=cir><div>5</div></div>
+<p style="text-align:center;font-size:22px;font-weight:700;margin:14px 0">Respira. ¿Seguro que ahora?</p>
+<div class="btn p" style="min-height:68px;font-size:22px;border-radius:16px">Cerrar</div>
+<div class="btn dis" style="margin:8px auto 14px;min-height:44px;font-weight:700">Abrir igualmente (en 5 s)</div>
+<div class=card style="border-color:var(--brand)">
+<div class=cap>AL CERRAR</div>
+<div style="font-weight:800;font-size:16px;margin-bottom:8px">¿Apuntamos esta pausa? · Vídeos</div>
+<div class=two style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="btn p">Sí, apúntala</div><div class=btn>No</div></div>
+</div>
+<p class=mini style="text-align:center;margin:0 0 8px">No se guarda nada hasta que tú lo digas.</p>
+<div class=nota-maq>La abre MacroDroid con ?pausa=…; la app pregunta antes de guardar. Solo cuenta: no guarda la hora de cada apertura.</div>
+</div></section>
+
+<!-- G -->
+<section class=ab><span class=lbl>G</span><div class=cuerpo>
+<div class=top><span class=back>‹ Volver</span></div>
+<h1 style="font-size:22px;margin:0">⏸ Una pausa antes de abrir</h1>
+<p class=mini style="margin:2px 0 10px">De prueba 2 semanas. Lo hace MacroDroid (gratis); la app solo enseña la pausa.</p>
+<div class=card>
+<div class=paso><b>1</b><span>Instala MacroDroid desde Google Play.</span></div>
+<div class=paso><b>2</b><span>Nueva macro → Disparador: «Aplicación abierta» → elige las apps (por ejemplo, vídeos y redes).</span></div>
+<div class=paso><b>3</b><span>Restricción: «Hora del día», lunes a viernes, de 06:50 a 07:35.</span></div>
+<div class=paso><b>4</b><span>Acción: «Abrir dirección web» y pega este enlace:</span></div>
+<div class=row style="margin:-2px 0 8px 28px"><div class=cod>https://…/?pausa=videos</div><div class=btn>Copiar</div></div>
+<div class=paso style="margin-bottom:0"><b>5</b><span>Guárdala y pruébala abriendo una de esas apps.</span></div>
+</div>
+<div class=card>Funciona también en Chrome: los datos son los mismos que en la app instalada.</div>
+<div class=btn>Ahora no</div>
+</div></section>
+
+</div>
+
+<div class=cat>
+<h2>Qué se guarda</h2>
+<div class=tw><table>
+<tr><th>Campo</th><th>Qué es</th></tr>
+<tr><td><code>pie</code></td><td>Hora a la que te pusiste en pie (HH:MM)</td></tr>
+<tr><td><code>vestido</code></td><td>Hora a la que acabaste de vestirte (HH:MM)</td></tr>
+<tr><td><code>movil</code></td><td>Minutos de móvil por la mañana (0, 5, 15, 30, 45+)</td></tr>
+<tr><td><code>con</code></td><td>Hasta 3 etiquetas tuyas (Noticias, Mensajes…)</td></tr>
+<tr><td>pausas</td><td>Recuento de pausas por día y etiqueta (por ejemplo, 12-nov · Vídeos · 3)</td></tr>
+</table></div>
+<p><b>No se guarda:</b> la imagen, el texto leído, la lista de apps ni la hora de cada apertura. Nada sale del móvil. Detalle 90 días; después, solo las medias.</p>
+</div>

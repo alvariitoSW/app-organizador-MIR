@@ -150,7 +150,32 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
-### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · siguiente: **CH3**
+### Tanda «Las Mañanas» · el móvil y la hora de salir (pedida el 31/10, **antes** que la CH4 de El Chef) · Consejo 2026-10-31 · acta `consejo/2026-10-31-mananas.md` · **aprobada** (31/10: ~4,2 M, delegada; 1a · 2a · 3a) · LM1 ✅ (31/10, maqueta, rama) · LM2 ✅ (31/10, rama, 9a292ca + 5a1a25c) · LM3 ✅ (31/10, rama, 9fb82c8 + bdf18b5 + de257e7) · siguiente: **LM4** (en marcha) → **LM5**
+
+[v3-movil-mananas] «Conectarla con Bienestar digital para que vea el uso del móvil y me ayude; últimamente necesito 1 h
+para salir de casa y en parte es por el móvil.» Ya hay «minutos de móvil» a mano (L3). Una web no puede leer el uso sola.
+Caminos: (1) medir las mañanas desde la regleta + modo concentración de Android (recomendado); (2) captura de Bienestar
+digital leída en el móvil; (3) app de automatización que pase el uso con «compartir»; (4) app nativa (regla 3, del
+usuario). Orden: El Chef CH3 (maqueta, en marcha) → **Consejo de Las Mañanas y sus tareas** → El Chef CH4 en adelante.
+
+**Acordado (Consejo, 2026-10-31):** medir la mañana con 3 toques («En pie», «Vestido», «He salido») y una frase semanal
+de lo que más se estira dentro de «📊 Tu semana»; al salir, «📱 ¿Móvil esta mañana?» de un toque; 2 alarmas de mitad de
+mañana (Reloj o `.ics` apagado); guía de Android como extra. MacroDroid no lee el uso, pero sirve para una **pausa** de
+5 s antes de abrir una app (lo único con pruebas). La captura con el OCR que ya hay, solo si la pide. App nativa: no.
+Se guarda solo números y etiquetas suyas; nada de imágenes. Pendiente del usuario: presupuesto, camino del móvil y cuánto se guarda.
+
+| Clave | Qué | Tipo | Quién | Presupuesto |
+|---|---|---|---|---|
+| LM1 ✅ | Maqueta sin concurso (7 pantallas a 412×915, `maquetas/las-mananas.html`, aprobada por el Consejo) | maqueta | opus dirige, sonnet; `verificador` | ~0,9 M |
+| LM2 | Marcas + hoja del móvil + `normalize` + solape «Vestirse»/«Salir de casa» | construir | sonnet con ficha | ~0,9 M |
+| LM3 | «Tu semana» con tramos y frase + 2 alarmas + guía de Android | construir | sonnet con ficha; haiku textos | ~0,9 M |
+| LM4 ✅ | Pausa `?pausa=` + recuento + guía MacroDroid (según pregunta 2) · hecha 31/10 en la rama (075d319 + 4fd2da1), 1,0 M | construir | sonnet con ficha | ~0,9 M |
+| LM5 | Cierre: verificador, `/revisa-seguridad`, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
+| LM6 | (Condicional) «Subir captura» con el OCR local | construir | sonnet con ficha | ~0,9 M |
+
+Total ~4,2 M (LM1-LM5). Orden: LM1 ✅ → LM2 ✅ → LM3 ✅ → LM4 ✅ → LM5 (→ LM6) → El Chef CH4.
+
+### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · siguiente: **CH4**
 
 Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
 la app que sigue a su cocina («la continuidad»: hoy micro + vitro pequeña, sin horno ni freidora de aire). Maqueta
@@ -168,6 +193,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 | CH8 | TikTok → sin gluten al importar + «Mis marcas seguras» (según la respuesta) | construir | sonnet con ficha | ~0,9 M |
 | CH9 | Resto del catálogo entero (~270 platos), por lotes | datos | sonnet ×5 | ~1,5 M |
 | CH10 | Ruta de 8 técnicas + «Ahora puedes hacer N platos más» al ganar horno | construir | sonnet con ficha | ~0,6 M |
+| CH10b | **Pulido de toda la app** con las skills de `emilkowalski/skills` (MIT; pedido el 31/10): `mobile-native` (falta `100dvh`, `@media (hover: hover)` y repasar inputs ≥16 px), `animation-performance` y `review-animations` (curvas ease-out, `:active` con `scale(0.97)`, solo transform/opacity, `prefers-reduced-motion`). Se instalan en `.claude/skills/` solo esas 3 (texto, sin código). `verificador` mide antes y después a 412×915 | arreglo | sonnet con ficha | ~0,9 M |
 | CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 
 ### «El Lanzador» (la app Android que lee el uso del móvil) · Consejo 2026-11-01 · acta `consejo/2026-11-01.md` · **aprobada** (01/11: Brave, lanzadora C, todo plegado, ~2,6 M, delegación al Consejo) · siguiente: **K1**
@@ -201,7 +227,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 - [enc-bienestar-digital] → tanda «El Lanzador» (Consejo, 2026-11-01) · Uso real de pantalla y un hábito «sin pantallas» fijo · (01/11) **Sin capturas.** El usuario quiere que la app lea sola el «Acceso al uso» de Android (minutos por app, desbloqueos, por horas). Una web no puede: hace falta envolverla en una app Android. Propuesta a estudiar en Consejo: **TWA** (Bubblewrap) con un poco de código nativo que lea `UsageStatsManager` al abrir y lo pase en el enlace; sigue cargando la web de Pages (se actualiza sola) y **comparte el localStorage de Chrome**. Capacitor: más fácil de programar, pero estrena almacenamiento (hay que mudar los datos). Dudas: APK instalada a mano y su firma (¿en Actions?), `assetlinks.json` en la raíz del dominio (sin él sale la barra de la dirección), la batería. Tipo `estudio` y luego `construir`, ~2 M+.
 - [aparc-parte-diario] El parte cada mañana solo (falta la hora)
 - [aparc-suite-2min] La suite en ~2 minutos
-- [aparc-regleta-pisa] En la regleta de la mañana de Hoy, «Vestirse» y «Salir de casa» se pisan un poco (visto en El Cierre, 30/10)
+- [aparc-regleta-pisa] ✅ arreglado en LM2 (31/10, prueba 403): En la regleta de la mañana de Hoy, «Vestirse» y «Salir de casa» se pisan un poco (visto en El Cierre, 30/10)
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha

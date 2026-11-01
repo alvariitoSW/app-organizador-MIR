@@ -89,6 +89,11 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
   `main`** (El Chef I al cerrar la CH8, El Chef II en la CH11). No cambia el cómo: suite completa en verde, `npm run sella` +
   `version.json`, pruebas encadenadas que caen al revertir, privacidad y Actions en `success`. Sesiones «El Chef · CH<n> ·
   …». En el acta, «(Consejo por delegación)». Se acaba al cerrar la CH11.
+- **Delegación del 31/10/2026 · «Las Mañanas» (LM1-LM5).** El usuario: «la 1, la 2 y la 3» (las tres recomendadas del
+  acta `consejo/2026-10-31-mananas.md`). Aprueba ~4,2 M y que el Consejo decida **la maqueta LM1**, qué se quita (sin
+  borrar datos) y **pasar a `main`** (en la LM5). No cambia el cómo: suite completa en verde, `npm run sella` +
+  `version.json`, pruebas encadenadas que caen al revertir, privacidad (`/revisa-seguridad`) y Actions en `success`.
+  Sesiones «Las Mañanas · LM<n> · …». En el acta, «(Consejo por delegación)». Se acaba al cerrar la LM5; luego, El Chef CH4.
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.

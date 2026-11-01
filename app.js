@@ -535,6 +535,8 @@ function ponerTema(id){
   ponTemaObj(pre,pre.id,null);
   return 'tema «'+pre.nombre+'» puesto, con sus colores de la franja';}
 function idDe(L,v){return L.some(function(x){return x[0]===v;})?v:'';}   /* v si es uno de los ids de una lista [[id,…],…] */
+/* LM4: las etiquetas de la pausa antes de abrir una app (lista cerrada: es lo único que entra por la URL) */
+const PAUSA_ETQ={videos:'Vídeos',redes:'Redes',noticias:'Noticias',mensajes:'Mensajes',juegos:'Juegos',compras:'Compras'};
 function normalize(o){
   const d=DEFAULTS();
   if(!o.meta||typeof o.meta!=='object')o.meta={};
@@ -655,8 +657,37 @@ function normalize(o){
   if(!o.calcol||typeof o.calcol!=='object')o.calcol={};
   if(!o.manana||typeof o.manana!=='object')o.manana={};   /* a qué hora saliste de casa cada día: {'2026-10-15':{salio:'07:29'}} */
   /* {salio, bus (fuiste en bus), real (hora real), eur (lo que costó el taxi ese día), llego (a qué hora llegaste al trabajo)}: vale con hora de salida, de llegada o con precio */
-  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];const okS=v&&/^\d{2}:\d{2}$/.test(v.salio||''),okE=v&&v.eur!=null&&isFinite(+v.eur),okL=v&&/^\d{2}:\d{2}$/.test(v.llego||'');
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!(okS||okE||okL)){delete o.manana[k];return;}if(!okS)delete v.salio;if(!okL)delete v.llego;if(v.real&&!/^\d{1,2}:\d{2}$/.test(v.real))delete v.real;});
+  /* LM2: pie y vestido (HH:MM), movil (minutos: 0, 5, 15, 30 o 45) y con (hasta 3 etiquetas). Pasados 90 días el detalle se borra y queda la media del mes en mananaMedias */
+  if(!o.mananaMedias||typeof o.mananaMedias!=='object'||Array.isArray(o.mananaMedias))o.mananaMedias={};
+  Object.keys(o.mananaMedias).forEach(function(k){const v=o.mananaMedias[k];
+    if(!/^\d{4}-\d{2}$/.test(k)||!v||typeof v!=='object'){delete o.mananaMedias[k];return;}
+    const r={};['n','mov','movN','pv','pvN','vs','vsN'].forEach(function(f){r[f]=typeof v[f]==='number'&&isFinite(v[f])&&v[f]>=0?v[f]:0;});o.mananaMedias[k]=r;});
+  /* LM4: {'2026-11-12':{videos:{c:2,s:1}}}: pausas cerradas (c) y abiertas igualmente (s) por día y etiqueta. Sin horas ni apps. 90 días. */
+  if(!o.pausas||typeof o.pausas!=='object'||Array.isArray(o.pausas))o.pausas={};
+  {const limP=iso(addDays(new Date(),-90));
+  Object.keys(o.pausas).forEach(function(k){const v=o.pausas[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||k<limP||!v||typeof v!=='object'||Array.isArray(v)){delete o.pausas[k];return;}
+    Object.keys(v).forEach(function(e){const t=v[e];
+      if(!Object.prototype.hasOwnProperty.call(PAUSA_ETQ,e)||!t||typeof t!=='object'){delete v[e];return;}
+      const ent=function(x){return typeof x==='number'&&isFinite(x)&&x>=0?Math.floor(x):0;};
+      const r={c:ent(t.c),s:ent(t.s)};if(r.c+r.s===0)delete v[e];else v[e]=r;});
+    if(!Object.keys(v).length)delete o.pausas[k];});}
+  const limMan=iso(addDays(new Date(),-90)),hmMin=function(t){return +t.slice(0,2)*60+ +t.slice(3);};
+  Object.keys(o.manana).forEach(function(k){const v=o.manana[k];
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=='object'||Array.isArray(v)){delete o.manana[k];return;}
+    const okS=/^\d{2}:\d{2}$/.test(v.salio||''),okE=v.eur!=null&&isFinite(+v.eur),okL=/^\d{2}:\d{2}$/.test(v.llego||'');
+    const okP=/^\d{2}:\d{2}$/.test(v.pie||''),okV=/^\d{2}:\d{2}$/.test(v.vestido||'');
+    let okM=v.movil!=null&&v.movil!==''&&typeof v.movil!=='boolean'&&isFinite(+v.movil)&&+v.movil>=0&&+v.movil<=45;
+    if(okM)v.movil=[0,5,15,30,45].reduce(function(b,x){return Math.abs(x-v.movil)<Math.abs(b-v.movil)?x:b;},0);else delete v.movil;
+    if(!okS)delete v.salio;if(!okL)delete v.llego;if(!okP)delete v.pie;if(!okV)delete v.vestido;
+    if(v.real&&!/^\d{1,2}:\d{2}$/.test(v.real))delete v.real;
+    if(!Array.isArray(v.con)||v.con.length>3||!v.con.every(function(t){return typeof t==='string'&&/^[\p{L}\p{N} ]{1,20}$/u.test(t);}))delete v.con;
+    if(k<limMan&&(okP||okV||okM)){const mk=k.slice(0,7),r=o.mananaMedias[mk]||(o.mananaMedias[mk]={n:0,mov:0,movN:0,pv:0,pvN:0,vs:0,vsN:0});
+      r.n++;if(okM){r.mov+=v.movil;r.movN++;}
+      if(okP&&okV){const d=hmMin(v.vestido)-hmMin(v.pie);if(d>0&&d<240){r.pv+=d;r.pvN++;}}
+      if(okV&&okS){const d=hmMin(v.salio)-hmMin(v.vestido);if(d>0&&d<240){r.vs+=d;r.vsN++;}}}
+    if(k<limMan){delete v.pie;delete v.vestido;delete v.movil;delete v.con;}
+    if(!(okS||okE||okL||(k>=limMan&&(okP||okV||okM))))delete o.manana[k];});
   /* La noche: a qué hora volviste del Lloret cada noche, {'2026-10-29':'21:52'} (lo demás de lloret se deja como está) */
   if(o.lloret&&typeof o.lloret==='object'){const vv=o.lloret.vuelta,nv={};
     if(vv&&typeof vv==='object'&&!Array.isArray(vv))Object.keys(vv).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&/^\d{2}:\d{2}$/.test(String(vv[k]||'')))nv[k]=vv[k];});
@@ -1517,7 +1548,7 @@ function suenoCfg(){const d={min:8,cenaMin:90,cenaMax:180,latencia:10,siesta:360
   /* mientras pruebas «siesta de 3 h» (2 semanas), la siesta es esa; al acabar vuelve la tuya sola */
   if(siesta3On())d.siesta=180;
   d.avisoCama=!!o.avisoCama;
-  d.avisoLloret=!!o.avisoLloret;d.avisoSalir=!!o.avisoSalir;   /* al .ics, apagados de serie */
+  d.avisoLloret=!!o.avisoLloret;d.avisoSalir=!!o.avisoSalir;d.avisoMitad=!!o.avisoMitad;   /* al .ics, apagados de serie */
   d.adelanto=o.adelanto!==false;   /* La noche: adelantar la cama 15 min cada 3 días (encendido de serie) */
   d.conduce=o.conduce===true;   /* «no tengo carné»: por defecto vuelves en transporte, no conduciendo */
   return d;}
@@ -5557,8 +5588,16 @@ function nocheHTML(key,esHoy){
     '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div></div>';
   const m=mananaDe(key),h=hoyNow(true)/60;
   /* ya en el trabajo («He llegado» guardado) no se ofrece «He salido» */
-  const sali=m&&m.salio==null&&!C.llego&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)?
-    '<button class="btn p nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 He salido</button>':'';
+  let sali='';
+  if(m&&m.salio==null&&!C.llego&&h>=m.wake-0.5&&h<=(m.llegada!=null?m.llegada:m.plan+0.5)){
+    const dm=(store.manana||{})[key]||{},vs=m.regleta.filter(function(x){return x.e==='vestir';})[0];
+    /* el principal es el siguiente paso: En pie, luego Vestido, luego He salido */
+    const pr=!dm.pie&&vs&&h<vs.h?'pie':!dm.vestido&&h<m.plan?'vestido':'sali';
+    const ficha=function(k,txt){const on=dm[k];
+      return '<button class="btn '+(on?'hecho':pr===k?'p':'s')+'" data-a="manana-marca" data-k="'+k+'" data-key="'+esc(key)+'" aria-pressed="'+(on?'true':'false')+'"><span>'+txt+(on?' ✓':'')+'</span>'+(on?'<small>'+esc(on)+'</small>':'')+'</button>';};
+    sali='<div class="nmarcas">'+ficha('pie','🧍 En pie')+ficha('vestido','👕 Vestido')+
+      '<button class="btn '+(pr==='sali'?'p':'s')+' nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 He salido</button></div>'+
+      '<p class="mini">Un toque cada uno. Ducha y café van dentro.</p>';}
   /* el botón vivo: «He vuelto» cerca de la hora de irte del Lloret, «He llegado» cerca de la de llegar al trabajo */
   const hv=C.hitos.filter(function(x){return x.id==='vete';})[0],hl=C.hitos.filter(function(x){return x.id==='llegar';})[0];
   const viv=hv&&!C.vuelta&&C.now>=hv.hora-20&&C.now<hv.hora+120?['vuelta','🏠 He vuelto']:
@@ -5579,6 +5618,22 @@ function nocheSugHTML(key){
   return '<div class="nsug" role="group" aria-label="Sugerencia de hora de cama">💡 Llevas 3 noches cerca de las '+hm(s.de)+'. ¿Probamos a la cama a las <b>'+hm(s.a)+'</b> desde hoy?'+
     '<div class="row"><button class="btn s p" data-a="noche-sug-si">Vale, '+hm(s.a)+'</button><button class="btn s" data-a="noche-sug-no">Aún no</button></div></div>';}
 /* La hoja de «He vuelto» / «He llegado»: la hora de ahora ya puesta, −5 / +5 y Guardar. No se guarda nada hasta Guardar. */
+function mananaMovilHTML(){
+  const h=ui.mananaMovil;if(!h)return '';
+  const dm=(store.manana||{})[h.key]||{},lim=iso(addDays(new Date(),-90)),base=['Noticias','Mensajes','Vídeos'],tags=base.slice();
+  Object.keys(store.manana||{}).forEach(function(k){if(k>=lim&&Array.isArray(store.manana[k].con))store.manana[k].con.forEach(function(t){if(tags.indexOf(t)<0)tags.push(t);});});
+  h.con.forEach(function(t){if(tags.indexOf(t)<0)tags.push(t);});
+  const mins=[[0,'0'],[5,'5'],[15,'15'],[30,'30'],[45,'45+']];
+  return hojaMarco('mm-cerrar','mmhoja','¿Móvil esta mañana?',
+    '<p class="mmok">✓ Saliste a las '+esc(dm.salio||'')+'</p><h3 class="sh">📱 ¿Móvil esta mañana?</h3><p class="mini">Más o menos. Un toque y listo.</p>'+
+    '<div class="cap">MINUTOS</div><div class="mmmin">'+mins.map(function(x){return '<button class="chip'+(h.min===x[0]?' on':'')+'" data-a="mm-min" data-v="'+x[0]+'" aria-pressed="'+(h.min===x[0])+'">'+x[1]+'</button>';}).join('')+'</div>'+
+    '<div class="cap">¿CON QUÉ? (SI QUIERES)</div><div class="chips">'+tags.map(function(t){const on=h.con.indexOf(t)>=0;return '<button class="chip'+(on?' on':'')+'" data-a="mm-con" data-v="'+esc(t)+'" aria-pressed="'+on+'">'+esc(t)+'</button>';}).join('')+
+    (h.otra?'':'<button class="chip" data-a="mm-otra">+ otra</button>')+'</div>'+
+    (h.otra?'<div class="mmotra"><input type="text" id="mmOtra" maxlength="20" aria-label="Otra etiqueta" autocomplete="off"><button class="btn s" data-a="mm-anadir">Añadir</button></div>':'')+
+    '<button class="btn p nancho" data-a="mm-guardar"'+(h.min==null?' disabled':'')+'>Guardar</button>'+
+    '<button class="btn s nancho mmno" data-a="mm-cerrar">Ahora no</button>'+
+    '<button class="btn s nancho" data-a="pausa-guia">⏸ Una pausa antes de abrir las apps</button>'+
+    '<p class="mini" style="text-align:center">Se queda en tu móvil. Solo el número y la etiqueta.</p>');}
 function nocheHojaHTML(){
   const h=ui.nocheHoja;if(!h)return '';const vuelta=h.k==='vuelta',tit=vuelta?'🏠 He vuelto del Lloret':'🏢 He llegado al trabajo';
   return hojaMarco('noche-cerrar','nhoja',tit,'<h3 class="sh">'+tit+'</h3><p class="mini">La hora ya está puesta. Si no es, muévela.</p>'+
@@ -5597,8 +5652,11 @@ function nocheAlarmasHTML(){
     (v?fila('🌿','Vete del Lloret',v.hora,'todas las noches menos guardia',antCama!=null?antCama-C.cfg.margen-C.cfg.ida:null):'')+
     fila('🛌','A la cama',C.cama,'todas las noches',antCama,C.cama>C.obj?C.obj:null)+
     (s?fila('🚪','Sal de casa',s.hora,'lunes a viernes',null):'')+
+    (s?'<div class="nmitad"><div class="row"><span class="cap">DE MITAD DE MAÑANA</span><span class="nnuevo">nuevo</span></div>'+fila('⏳','Quedan 30 min',s.hora-30,'lunes a viernes',null)+fila('⏳','Quedan 10 min',s.hora-10,'lunes a viernes',null)+'</div>'+
+      '<label class="snrel nics"><input type="checkbox" data-a="sn-avmitad"'+(suenoCfg().avisoMitad?' checked':'')+'><span>Añadir también al calendario (.ics)</span><small>Viene apagado de serie: actívalo si lo quieres en tu calendario.</small></label>':'')+
     '<p class="nnota">⏰ El despertador de las <b>'+hm(g('desp').hora)+'</b> ya lo tienes: déjalo lejos de la cama.'+(mg>0?' En libres, como mucho '+fmtHM(mg)+' más tarde.':'')+'</p>'+
     (antCama!=null?'<p class="nnota">Lo que ha cambiado desde que las pusiste va en pequeño al lado.</p>':'')+
+    '<button class="btn s nancho" data-a="noche-vista" data-v="android">🌙 Que el móvil no te llame por la mañana</button>'+
     '<button class="btn p nancho" data-a="noche-alarmas-ok">Ya las he puesto</button></div>';}
 /* Tu semana en minutos: de media, lo hecho menos lo puesto, los últimos 7 días frente a los 7 anteriores. Pura: no escribe nada. */
 function nocheSemanaDatos(){
@@ -5619,14 +5677,89 @@ function nocheSemanaDatos(){
   if(con){const ll=!!lloretDe(hoy);
     prop=con.act<=0?'vas a tu hora: sigue así':con.id==='cama'?(ll?'vete del Lloret cuando suene la alarma':'a la cama cuando suene la alarma'):con.id==='desp'?'el despertador lejos de la cama':'sal con la alarma de salir';}
   return {filas:filas,prop:prop,hay:!!con};}
+/* Tu mañana por tramos (pura): los últimos 7 días, lo que tardaste frente a lo previsto en Cama → En pie → Vestido → Puerta */
+function mananaTramos(){
+  const hoy=fechaHoy(),T=[{id:'cama',nom:'Cama → En pie',r:[],p:[]},{id:'vest',nom:'En pie → Vestido',r:[],p:[]},{id:'puerta',nom:'Vestido → Puerta',r:[],p:[]}],movs=[];let n=0;
+  for(let i=0;i<7;i++){
+    try{
+      const k=iso(addDays(parseDate(hoy),-i)),dm=(store.manana||{})[k]||{},M=mananaDe(k);if(!M)continue;
+      if(typeof dm.movil==='number'&&isFinite(dm.movil))movs.push(dm.movil);
+      const pieP=Math.round(M.wake*60),puertaP=Math.round(M.plan*60),vs=diaEscenas(k).seg.filter(function(x){return x.e==='vestir'&&x.a>=M.wake;})[0],vestP=vs?Math.round(vs.a*60):puertaP;
+      const pie=mins(dm.pie),ves=mins(dm.vestido),sal=mins(dm.salio);let hay=false;
+      if(pie!=null&&pie-pieP>=0&&pie-pieP<240){T[0].r.push(pie-pieP);T[0].p.push(0);hay=true;}
+      if(pie!=null&&ves!=null&&ves-pie>0&&ves-pie<240){T[1].r.push(ves-pie);T[1].p.push(vestP-pieP);hay=true;}
+      if(ves!=null&&sal!=null&&sal-ves>0&&sal-ves<240){T[2].r.push(sal-ves);T[2].p.push(puertaP-vestP);hay=true;}
+      if(hay)n++;
+    }catch(e){}}
+  const med=function(a){return a.length?Math.round(a.reduce(function(t,x){return t+x;},0)/a.length):null;};
+  return {tramos:T.map(function(t){return {id:t.id,nom:t.nom,real:med(t.r),prev:med(t.p),n:t.r.length};}),n:n,movil:med(movs),movN:movs.length};}
+function nocheAndroidHTML(){
+  const C=nocheCadena(fechaHoy(),20*60),g=function(id){return C?C.hitos.filter(function(x){return x.id===id;})[0]:null;},de=g('desp'),a=g('bus')||g('salir'),sam=ui.nocheAndroid==='samsung';
+  const hor=de&&a?'de lunes a viernes, de '+hm(de.hora)+' a '+hm(a.hora):'de lunes a viernes, a la hora de tus mañanas';
+  const P=['Abre Ajustes y entra en «Bienestar digital y controles parentales».',sam?'Toca «Modo concentración» (o «Modos y rutinas»).':'Toca «Modo concentración».','Elige las apps que te distraen (por ejemplo, vídeos y redes).',
+    sam?'Programa el horario '+hor+'.':'Toca «Establecer horario» y marca lunes a viernes'+(de&&a?', de '+hm(de.hora)+' a '+hm(a.hora):', a la hora de tus mañanas')+'.',
+    sam?'Listo: a esa hora esas apps quedan en pausa.':'Listo: a esa hora esas apps salen en gris.'];
+  const tab=function(v,t){const on=(v==='samsung')===sam;return '<button role="tab" aria-selected="'+(on?'true':'false')+'" class="'+(on?'on':'')+'" data-a="noche-android" data-v="'+v+'">'+t+'</button>';};
+  return '<div class="grid npant"><div class="subcab"><button class="btn s volver" data-a="noche-vista" data-v="alarmas">‹ Volver</button></div>'+
+    '<h2 class="subtit">🌙 Que el móvil no te llame por la mañana</h2><p class="mini">Lo pone Android, no la app. Una vez y ya.</p>'+
+    '<div class="hoyseg" role="tablist">'+tab('pixel','Pixel')+tab('samsung','Samsung')+'</div>'+
+    '<div class="nguia">'+P.map(function(t,i){return '<div class="npaso"><b>'+(i+1)+'</b><span>'+esc(t)+'</span></div>';}).join('')+'</div>'+
+    '<p class="mini">Los nombres cambian un poco según el modelo.</p><button class="btn s nancho" data-a="noche-vista" data-v="alarmas">Ahora no</button></div>';}
 function nocheSemanaHTML(){
   const D=nocheSemanaDatos(),n=function(x){return (x>0?'+':x<0?'−':'')+Math.abs(x);};
   return '<div class="grid npant"><div class="subcab"><button class="btn s volver" data-a="noche-vista" data-v="">‹ Hoy</button></div>'+
     '<h2 class="subtit">Tu semana en minutos</h2><p class="mini">De media, lo que hiciste frente a la hora puesta. Solo tres cifras.</p>'+
     D.filas.map(function(f){return '<div class="nsem"><span>'+f.ico+' '+esc(f.nom)+'</span>'+(f.act!=null?'<b>'+n(f.act)+' min</b>':'<b class="sd">sin datos</b>')+
       (f.act!=null&&f.ant!=null?'<small>la semana pasada '+n(f.ant)+'</small>':'<small>'+(f.act==null?'apunta unas noches en Sueño':'la semana pasada: sin datos')+'</small>')+'</div>';}).join('')+
-    '<p class="nnota">'+(D.hay?'Un cambio para esta semana: <b>'+esc(D.prop)+'</b>.':esc(D.prop)+'.')+'</p></div>';}
-function renderNochePant(){$('#main').innerHTML=ui.hoyVista==='alarmas'?nocheAlarmasHTML():nocheSemanaHTML();}
+    '<p class="nnota">'+(D.hay?'Un cambio para esta semana: <b>'+esc(D.prop)+'</b>.':esc(D.prop)+'.')+'</p>'+nocheTramosHTML(n)+'</div>';}
+function nocheTramosHTML(n){
+  const Tr=mananaTramos(),con=Tr.tramos.filter(function(t){return t.n>0;});let h='';
+  if(con.length){const mx=Math.max.apply(null,con.map(function(t){return Math.max(t.real,t.prev,1);})),w=function(x){return 'width:max(2px,'+(Math.max(x,0)/mx*100).toFixed(1)+'%)';};
+    h+='<div class="ntramos"><div class="cap">TU MAÑANA POR TRAMOS</div>'+con.map(function(t){return '<div class="ntr"><div class="ntrb"><div class="ntn">'+esc(t.nom)+' · '+t.real+' min <span class="mini">/ previsto '+t.prev+'</span></div><i class="pv" style="'+w(t.prev)+'"></i><i class="re" style="'+w(t.real)+'"></i></div><b>'+esc(n(t.real-t.prev))+'</b></div>';}).join('')+
+      '<div class="row"><span class="mini">▭ previsto</span><span class="mini">▬ real</span></div></div>';}
+  else h+='<p class="nnota">Toca «🧍 En pie» y «👕 Vestido» por la mañana y verás aquí dónde se va el tiempo.</p>';
+  if(Tr.n>=4){const NOM={cama:'de la cama a ponerte en pie',vest:'de en pie a vestido',puerta:'de vestido a la puerta'},m=con.slice().sort(function(a,b){return (b.real-b.prev)-(a.real-a.prev);})[0];
+    h+='<p class="ndest">'+(m&&m.real-m.prev>0?'Lo que más se estira: '+esc(NOM[m.id])+', +'+(m.real-m.prev)+' min.':'Vas a tu hora: ningún tramo se ha alargado.')+'</p>';}
+  h+='<p class="mini">Con '+Tr.n+(Tr.n===1?' mañana apuntada':' mañanas apuntadas')+'. Hace falta un mínimo de 4.</p>';
+  if(Tr.movil!=null)h+='<div class="nsem nmov"><span>📱 Móvil de la mañana: <b>'+Tr.movil+' min</b> de media</span><small>('+Tr.movN+(Tr.movN===1?' mañana':' mañanas')+')</small></div>';
+  return h;}
+function renderNochePant(){$('#main').innerHTML=ui.hoyVista==='alarmas'?nocheAlarmasHTML():ui.hoyVista==='android'?nocheAndroidHTML():nocheSemanaHTML();}
+/* LM4: la pausa antes de abrir una app (ui.pausa={etq,fin,res}) y la guía de MacroDroid. Nada se guarda hasta «Sí, apúntala». */
+let pausaTimer=0;
+function pausaEnlace(e){return location.origin+location.pathname+'?pausa='+e;}
+function pausaHTML(){
+  const p=ui.pausa,P=mananaPlan(),n=Math.max(0,Math.ceil((p.fin-Date.now())/1000));
+  return '<div class="grid pz">'+
+    '<p class="mini pzhora">'+esc(horaLocal(new Date()))+(P?' · sales a las '+hm(Math.round(P.plan*60)):'')+'</p>'+
+    '<div class="pzcir"><div role="timer" aria-label="Segundos que faltan">'+n+'</div></div>'+
+    '<p class="pzq">Respira. ¿Seguro que ahora?</p>'+
+    (p.res?'<div class="card pzcard"><div class="cap">AL CERRAR</div><div class="pzt">¿Apuntamos esta pausa? · '+esc(PAUSA_ETQ[p.etq])+'</div>'+
+      '<div class="pz2"><button class="btn p" data-a="pausa-si">Sí, apúntala</button><button class="btn" data-a="pausa-no">No</button></div></div>'+
+      '<p class="mini pzhora">No se guarda nada hasta que tú lo digas.</p>':
+      '<button class="btn p nancho pzcerrar" data-a="pausa-cerrar">Cerrar</button>'+
+      (n>0?'<button class="btn nancho pzseguir" data-a="pausa-seguir" disabled>Abrir igualmente (en '+n+' s)</button>':
+        '<button class="btn nancho pzseguir" data-a="pausa-seguir">Abrir igualmente</button>'))+
+    '</div>';}
+function renderPausa(){
+  if(!ui.pausa){ui.hoyVista='';return render();}
+  $('#main').innerHTML=pausaHTML();
+  clearTimeout(pausaTimer);pausaTimer=0;
+  if(!ui.pausa.res&&ui.pausa.fin>Date.now())pausaTimer=setTimeout(function(){pausaTimer=0;if(ui.hoyVista==='pausa'&&ui.pausa&&!ui.pausa.res)render();},1000);}
+function macroGuiaHTML(){
+  const e=PAUSA_ETQ[ui.macroEtq]?ui.macroEtq:'videos',paso=function(n,t){return '<div class="pzp"><b>'+n+'</b><span>'+t+'</span></div>';};
+  return '<div class="grid pz"><div class="subcab"><button class="btn s volver" data-a="macro-volver">‹ Hoy</button></div>'+
+    '<h2 class="subtit">⏸ Una pausa antes de abrir</h2><p class="mini">De prueba 2 semanas. Lo hace MacroDroid (gratis); la app solo enseña la pausa.</p>'+
+    '<div class="card">'+paso(1,'Instala MacroDroid desde Google Play.')+
+    paso(2,'Nueva macro → Disparador: «Aplicación abierta» → elige las apps (por ejemplo, vídeos y redes).')+
+    paso(3,'Restricción: «Hora del día», lunes a viernes, de 06:50 a 07:35.')+
+    paso(4,'Acción: «Abrir dirección web» y pega este enlace:')+
+    '<div class="chips pzchips">'+Object.keys(PAUSA_ETQ).map(function(k){return '<button class="chip'+(k===e?' on':'')+'" data-a="macro-etq" data-v="'+k+'" aria-pressed="'+(k===e)+'">'+esc(PAUSA_ETQ[k])+'</button>';}).join('')+'</div>'+
+    '<div class="pzenl"><code>'+esc(pausaEnlace(e))+'</code><button class="btn" data-a="macro-copiar">Copiar</button></div>'+
+    paso(5,'Guárdala y pruébala abriendo una de esas apps.')+'</div>'+
+    '<div class="card">Funciona también en Chrome: los datos son los mismos que en la app instalada.</div>'+
+    '<p class="mini">Solo cuenta cuántas pausas y si cerraste: no guarda la hora ni qué apps.</p>'+
+    '<button class="btn nancho" data-a="macro-volver">Ahora no</button></div>';}
+function renderMacroGuia(){$('#main').innerHTML=macroGuiaHTML();}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
   /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
@@ -5851,7 +5984,9 @@ function mananaHTML(key,esHoy){
   /* el bus y el último van pegados a la puerta: su hora va abajo, con el nombre, para no pisarse arriba */
   const marcas=hitos.map(function(x,i){const u=x.e==='ultimo',hh=hCortaHM(hm(Math.round(x.h*60))),abajo=u||x.e==='bus'||x.e==='taxi';
     const fila=u?2:(x.e==='bus'||x.e==='taxi')?1:x.e==='parada'?0:(i%2),arriba=x.e==='cama'||x.e==='parada';   /* la hora arriba solo en levantarse y en la puerta: lo demás se lee abajo */
-    return '<i class="mnh f'+fila+(u?' ult':x.e==='parada'?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(arriba?'<b>'+esc(hh)+'</b>':'')+'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small></i>';}).join('');
+    /* la puerta lleva su nombre arriba de la línea (abajo se montaba con «Vestirse») */
+    const pta=x.e==='parada';
+    return '<i class="mnh f'+fila+(u?' ult':pta?' pta':'')+'" style="left:'+pct(x.h)+'%" title="'+esc(x.txt+' '+hh)+'">'+(pta?'<b>'+esc(x.txt+' '+hh)+'</b>':arriba?'<b>'+esc(hh)+'</b>':'')+(pta?'':'<small>'+esc(abajo?(u?'Último ':x.txt+' ')+hh:x.txt)+'</small>')+'</i>';}).join('');
   const tramo='<span class="mntr ok" style="left:'+pct(m.wake)+'%;width:'+(pct(plan)-pct(m.wake))+'%"></span><span class="mntr mal" style="left:'+pct(m.ultimo)+'%;width:'+(100-pct(m.ultimo))+'%"></span>';
   let linea,boton='',pasos='';
   const HH=function(x){return hCortaHM(hm(Math.round(x*60)));},enBus='<button class="btn s" data-a="manana-sali" data-key="'+esc(key)+'" data-bus="1" data-hhmm="'+esc(hm(Math.round(plan*60)))+'">🚌 fui en bus</button>';
@@ -5886,7 +6021,8 @@ function mananaHTML(key,esHoy){
 function mananaSali(key,hhmm){
   if(!store.manana)store.manana={};
   if(hhmm)store.manana[key]=Object.assign({},store.manana[key]||{},{salio:hhmm});
-  else{const x=store.manana[key];if(x&&x.llego)store.manana[key]={llego:x.llego};else delete store.manana[key];}   /* deshacer la salida no borra la llegada */
+  else{const x=store.manana[key]||{},r={};['llego','pie','vestido'].forEach(function(f){if(x[f])r[f]=x[f];});   /* deshacer la salida no borra la llegada ni En pie / Vestido */
+    if(Object.keys(r).length)store.manana[key]=r;else delete store.manana[key];}
   /* los hábitos «salir a tiempo» y «taxi», si los tienes, se marcan solos (son automáticos); nada que hacer aquí */
   save();render();}
 function estadoDe(key,h){
@@ -6537,7 +6673,7 @@ function snCamaEventos(desde,hasta){
   return out;}
 function snNocheEventos(desde,hasta){
   /* «🌿 Vete del Lloret» (noches con Lloretazo) y «🚪 Sal de casa» (días de bus), con las horas de La noche; apagados de serie */
-  const c=suenoCfg(),out=[];if(!c.avisoLloret&&!c.avisoSalir)return out;
+  const c=suenoCfg(),out=[];if(!c.avisoLloret&&!c.avisoSalir&&!c.avisoMitad)return out;
   const mk=function(k,m,summ,desc,clave){const kc=m>=1440?nextIso(k):k;if(kc<desde||kc>hasta)return;
     out.push({allDay:false,fecha:icsNum(kc),isoKey:kc,hora:hm(m),horaFin:'',dur:10,avisoMin:0,uid:icsUID(clave+'|'+k),summ:summ,desc:desc,cat:'TAREA'});};
   /* la noche de ayer trae la salida de hoy: se empieza un día antes */
@@ -6545,7 +6681,8 @@ function snNocheEventos(desde,hasta){
     const k=iso(d);let C=null;try{C=nocheCadena(k,20*60);}catch(e){C=null;}if(!C)continue;
     const v=C.hitos.filter(function(x){return x.id==='vete';})[0],s2=C.hitos.filter(function(x){return x.id==='salir';})[0];
     if(c.avisoLloret&&v)mk(k,v.hora,'🌿 Vete del Lloret','Para llegar a casa y a la cama a las '+hm(C.cama)+'.','vetell');
-    if(c.avisoSalir&&s2)mk(nextIso(k),s2.hora-1440,'🚪 Sal de casa','Para el bus de las '+hm(C.hitos.filter(function(x){return x.id==='bus';})[0].hora)+'.','salirb');}
+    if(c.avisoSalir&&s2)mk(nextIso(k),s2.hora-1440,'🚪 Sal de casa','Para el bus de las '+hm(C.hitos.filter(function(x){return x.id==='bus';})[0].hora)+'.','salirb');
+    if(c.avisoMitad&&s2){mk(nextIso(k),s2.hora-1440-30,'⏳ Quedan 30 min','Sales de casa a las '+hm(s2.hora)+'.','mitad30');mk(nextIso(k),s2.hora-1440-10,'⏳ Quedan 10 min','Sales de casa a las '+hm(s2.hora)+'.','mitad10');}}
   return out;}
 function snAvisosEventos(desde,hasta){
   return snAvisosOn(desde,hasta).filter(function(a){return a.k>=desde&&a.k<=hasta;}).map(function(a){
@@ -7899,9 +8036,11 @@ function lloretPoner(key){
     (p.bed?(' · a la cama a las '+p.bed+' para tus '+fmt(suenoCfg().min)+' h'):'')+
     (p.ajustado?' · adelantado para llegar a dormir':'')+(p.pronto?' · ⚠ sale muy pronto: ese día no te da':'')+cena;}
 function renderHoy(){
+  if(ui.hoyVista==='pausa')return renderPausa();
+  if(ui.hoyVista==='macrodroid')return renderMacroGuia();
   if(ui.hoyVista==='informe')return renderInforme();
   if(ui.hoyVista==='sueno')return renderSueno();
-  if(ui.hoyVista==='alarmas'||ui.hoyVista==='semana')return renderNochePant();
+  if(ui.hoyVista==='alarmas'||ui.hoyVista==='semana'||ui.hoyVista==='android')return renderNochePant();
   const now=new Date(),hoy=fechaHoy(),dref=parseDate(hoy)||now,inf=dayInfo(hoy),sh=shiftById(inf.shiftId);
   const esHoy=esHoyDeVerdad(hoy);
   if(esHoy&&mvDia(hoy)&&!ui.mvCompleto)return renderHoyViaje(hoy);   /* G12: de viaje, lo esencial */
@@ -8413,6 +8552,7 @@ const HOJAS={
        Comer (Hoy, el calendario), que es cuando el día lo puso el atajo y no tú */
     cerrar:function(){const h=ui.cjeHoja;if(h&&/^(mom|dia|acc)$/.test(h.v||'')){if(h.fuera)ui.foodDate='';ui.frPos='';ui.frase=null;ui.frTxt=null;}ui.cjeHoja=null;}},
   semp:{abierta:function(){return ui.tab==='food'&&ui.foodVista==='semp'&&ui.semPHoja;},html:function(){return semPHojaHTML();},cerrar:function(){ui.semPHoja=null;}},
+  mmovil:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&!!ui.mananaMovil;},html:function(){return mananaMovilHTML();},cerrar:function(){ui.mananaMovil=null;}},
   noche:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&!!ui.nocheHoja;},html:function(){return nocheHojaHTML();},cerrar:function(){ui.nocheHoja=null;}},
   hoy:{abierta:function(){return ui.tab==='hoy'&&!ui.hoyVista&&ui.hoyIt;},html:function(){return hoyHojaHTML();},cerrar:function(){ui.hoyIt=null;}},
   hab:{abierta:function(){return ui.tab==='habitos'&&ui.habEd;},html:function(){return habHojaHTML();},cerrar:function(){ui.habEd=null;}},
@@ -25281,7 +25421,8 @@ function act(a,el){
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'noche-plegar':ui.nocheAbierta=!ui.nocheAbierta;render();break;
-    case 'noche-vista':ui.hoyVista=/^(alarmas|semana)$/.test(el.dataset.v||'')?el.dataset.v:'';render();window.scrollTo(0,0);break;
+    case 'noche-android':ui.nocheAndroid=el.dataset.v==='samsung'?'samsung':'pixel';render();break;
+    case 'noche-vista':ui.hoyVista=/^(alarmas|semana|android)$/.test(el.dataset.v||'')?el.dataset.v:'';render();window.scrollTo(0,0);break;
     case 'noche-hoja':ui.nocheHoja={k:el.dataset.k==='llego'?'llego':'vuelta',t:hoyNow(true)};render();break;
     case 'noche-h-5':case 'noche-h+5':if(ui.nocheHoja){ui.nocheHoja.t=(ui.nocheHoja.t+(a==='noche-h-5'?-5:5)+1440)%1440;render();}break;
     case 'noche-cerrar':ui.nocheHoja=null;render();break;
@@ -26133,7 +26274,33 @@ function act(a,el){
       break;}
     case 'manana-sali':{const hh=el.dataset.hhmm||horaLocal(new Date());
       if(el.dataset.bus){if(!store.manana)store.manana={};store.manana[el.dataset.key]=Object.assign({},store.manana[el.dataset.key]||{},{bus:1});}
-      mananaSali(el.dataset.key,hh);flash(el.dataset.bus?'Apuntado: fuiste en bus (pon la hora real si quieres)':'Apuntado: saliste a las '+hCortaHM(hh));break;}
+      mananaSali(el.dataset.key,hh);flash(el.dataset.bus?'Apuntado: fuiste en bus (pon la hora real si quieres)':'Apuntado: saliste a las '+hCortaHM(hh));
+      if(!el.dataset.bus){ui.mananaMovil={key:el.dataset.key,min:null,con:[],otra:false};render();}break;}
+    case 'manana-marca':{const k=el.dataset.k==='vestido'?'vestido':'pie',key=el.dataset.key;if(!store.manana)store.manana={};
+      const x=Object.assign({},store.manana[key]||{});if(x[k])delete x[k];else x[k]=horaLocal(new Date());
+      if(Object.keys(x).length)store.manana[key]=x;else delete store.manana[key];save();render();break;}
+    case 'mm-min':if(ui.mananaMovil){ui.mananaMovil.min=+el.dataset.v;render();}break;
+    case 'mm-con':{const h=ui.mananaMovil;if(!h)break;const t=el.dataset.v,i=h.con.indexOf(t);
+      if(i>=0)h.con.splice(i,1);else if(h.con.length>=3){flash('Como mucho 3 etiquetas');break;}else h.con.push(t);render();break;}
+    case 'mm-otra':if(ui.mananaMovil){ui.mananaMovil.otra=true;render();}break;
+    case 'mm-anadir':{const h=ui.mananaMovil,inp=document.getElementById('mmOtra');if(!h||!inp)break;const t=inp.value.trim();
+      if(!/^[\p{L}\p{N} ]{1,20}$/u.test(t)){flash('Una palabra o dos, hasta 20 letras');break;}
+      if(h.con.indexOf(t)<0){if(h.con.length>=3){flash('Como mucho 3 etiquetas');break;}h.con.push(t);}h.otra=false;render();break;}
+    case 'mm-guardar':{const h=ui.mananaMovil;if(!h||h.min==null)break;if(!store.manana)store.manana={};
+      const x=Object.assign({},store.manana[h.key]||{},{movil:h.min});if(h.con.length)x.con=h.con.slice();else delete x.con;store.manana[h.key]=x;
+      ui.mananaMovil=null;save();render();flash('Apuntado');break;}
+    case 'mm-cerrar':ui.mananaMovil=null;render();break;
+    case 'pausa-cerrar':if(!ui.pausa)break;ui.pausa.res='c';render();break;
+    case 'pausa-seguir':if(!ui.pausa||ui.pausa.fin>Date.now())break;ui.pausa.res='s';render();break;
+    case 'pausa-si':{const p=ui.pausa;if(!p||!p.res||!PAUSA_ETQ[p.etq])break;if(!store.pausas)store.pausas={};
+      let d=fechaHoy();if(!/^\d{4}-\d{2}-\d{2}$/.test(d))d=iso(new Date());
+      const x=store.pausas[d]=store.pausas[d]||{},e=x[p.etq]=x[p.etq]||{c:0,s:0};e[p.res]++;
+      ui.pausa=null;ui.hoyVista='';save();render();flash('Pausa apuntada');break;}
+    case 'pausa-no':ui.pausa=null;ui.hoyVista='';render();break;
+    case 'pausa-guia':ui.tab='hoy';ui.mananaMovil=null;ui.hoyVista='macrodroid';ui.macroEtq=ui.macroEtq||'videos';render();break;
+    case 'macro-etq':if(Object.prototype.hasOwnProperty.call(PAUSA_ETQ,el.dataset.v)){ui.macroEtq=el.dataset.v;render();}break;
+    case 'macro-copiar':copy(pausaEnlace(ui.macroEtq||'videos'));break;
+    case 'macro-volver':ui.hoyVista='';render();break;
     case 'cafe-mas':{cafeMas(el.dataset.k||fechaHoy());break;}
     case 'cafe-menos':{cafeMenos(el.dataset.k||fechaHoy());break;}
     case 'manana-deshacer':{mananaSali(el.dataset.key,'');break;}
@@ -26812,8 +26979,11 @@ function copiaNombre(){return 'planning-guardias-'+iso(new Date())+'.json';}
 function copiaJSON(){return JSON.stringify(storeParaCopia(),null,1);}
 function storeParaCopia(){
   /* lo que sale del móvil: con «dejar 4:20 fuera de la copia», sin store.consumo */
-  if(store.consumo&&store.consumo.priv&&store.consumo.priv.fueraCopia){const o=Object.assign({},store);delete o.consumo;return o;}
-  return store;}
+  const o=Object.assign({},store);
+  if(store.consumo&&store.consumo.priv&&store.consumo.priv.fueraCopia)delete o.consumo;
+  /* las etiquetas del móvil de la mañana se quedan en el móvil: la copia lleva solo el número */
+  if(store.manana&&typeof store.manana==='object'){o.manana={};Object.keys(store.manana).forEach(function(k){const v=store.manana[k];if(v&&typeof v==='object'&&'con' in v){const c=Object.assign({},v);delete c.con;o.manana[k]=c;}else o.manana[k]=v;});}
+  return o;}
 function dl(){
   const name=copiaNombre();
   try{
@@ -28424,6 +28594,7 @@ document.addEventListener('change',e=>{
     case 'sn-avcama':store.sueno.avisoCama=!!el.checked;save();programarAvisoCama();render();break;
     case 'sn-avlloret':store.sueno.avisoLloret=!!el.checked;save();render();break;
     case 'sn-avsalir':store.sueno.avisoSalir=!!el.checked;save();render();break;
+    case 'sn-avmitad':store.sueno.avisoMitad=!!el.checked;save();render();break;
     case 'sn-adelanto':store.sueno.adelanto=!!el.checked;save();render();break;
     case 'sn-reloj':store.sueno.relojEnergia=!!el.checked;save();render();break;
     /* cambiar tu hora o lo que necesitas dormir mueve también el aviso de cama de esta noche */
@@ -28567,6 +28738,15 @@ try{window.addEventListener('online',function(){try{calSyncAhoraSiToca();}catch(
 
 /* ===================== arranque ===================== */
 /* expone el modelo para depurar / testear desde la consola */
+/* LM4: MacroDroid abre «?pausa=videos»: se vacía la barra SIEMPRE y solo se abre la pantalla si la etiqueta está en la lista cerrada. No guarda nada. */
+function pausaEntrante(){
+  try{
+    const q=new URLSearchParams(location.search||'');if(!q.has('pausa'))return;
+    const v=q.get('pausa')||'';q.delete('pausa');
+    history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''));
+    if(!/^[a-z]{1,12}$/.test(v)||!Object.prototype.hasOwnProperty.call(PAUSA_ETQ,v))return;
+    ui.tab='hoy';ui.hoyVista='pausa';ui.pausa={etq:v,fin:Date.now()+5000,res:''};
+  }catch(e){}}
 function compartidoEntrante(){
   /* el share_target del manifest entrega title/text/url en la query de index.html (método GET).
      Se vacía la barra de direcciones para que al recargar no vuelva a abrirse la importación. */
@@ -28785,6 +28965,7 @@ window.addEventListener('resize',anchoMovil);
 
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
+pausaEntrante();   /* LM4 */
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
 /* Si has entrado compartiendo una receta, vienes con una intención concreta: el asistente del
@@ -28804,7 +28985,7 @@ document.addEventListener('visibilitychange',function(){if(document.hidden){ui.c
 pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espacio */
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
-Object.assign(window.PG,{MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
+Object.assign(window.PG,{snNocheEventos,mananaTramos,MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
   cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();

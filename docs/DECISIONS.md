@@ -2302,3 +2302,106 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   La 397c acepta la hora de salida con el día puesto cuando el vuelo cae de noche.
 - **Descartado:** tocar `setMonth` en la app: el mes lo elige el usuario en un selector, no se calcula así.
 - **Supuestos:** ninguno nuevo.
+
+## El Chef · CH3 · Maqueta corta del recetario (2026-10-31, Consejo por delegación)
+- **Elegido**
+  - Diez pantallas nuevas (6-15) en `maquetas/recetario.html`, con su misma piel y en claro y oscuro: modo cocina (antes,
+    paso con temporizadores, sin vuelta atrás, conservación), «Tu cocina», portada con filtro Cocina, «Estoy reventado»,
+    TikTok «Cambiado», «Mis marcas seguras» y la hoja «Con horno, N platos más». Aprobadas en el acta
+    `consejo/2026-10-30-chef.md` («CH3»).
+  - Las cifras salen del catálogo `P`: 327 de 344 hoy, 17 esperan horno, y al ganarlo 17 nuevos + 34 que vuelven a la
+    receta de siempre.
+- **Descartado**
+  - Concurso de maquetas (Hacienda: la CH3 completa la ya aprobada).
+  - «51 platos más» al ganar horno: 34 ya se hacían adaptados; contarlos inflaba la cifra.
+  - Notificación del sistema obligatoria: va solo si da permiso; lo fijo es el aviso dentro de la app y la vibración.
+- **Supuestos**
+  - Olla en 3/5/6 L y fuegos 1/2/4 como opciones; hoy 2 fuegos y 5 L.
+  - Las kcal, horas y fechas de las pantallas son de ejemplo; los platos de «Estoy reventado» también.
+
+## Las Mañanas · LM1 · Maqueta (2026-10-31, Consejo por delegación)
+- **Elegido**
+  - `maquetas/las-mananas.html` con las 7 pantallas del acta `consejo/2026-10-31-mananas.md`, en claro y oscuro: Hoy con
+    «En pie / Vestido / He salido» y la regleta en dos filas (sin el solape de «Vestirse» y «Salir de casa»), hoja «¿Móvil
+    esta mañana?», «Tu semana» con 3 tramos real/previsto y una frase, 2 alarmas de mitad de mañana en la pantalla de
+    alarmas, guía de Android, pausa de 5 s y guía de MacroDroid.
+  - Diferencias en neutro («+18 min»), sin rojo ni semáforos; la frase solo con 4 mañanas o más.
+- **Descartado**
+  - Concurso de maquetas (Hacienda: el Consejo ya fijó qué va en cada pantalla).
+  - Guardar la hora de cada pausa: solo el recuento por día y etiqueta (acuerdo de privacidad).
+- **Supuestos**
+  - «Bus» y «Último» van en una sola etiqueta de la regleta (a esa escala se pisaban).
+  - Alarmas «Quedan 30 min» 07:01 y «Quedan 10 min» 07:21 con salida a las 07:31; horas y etiquetas son de ejemplo.
+
+## Las Mañanas · LM2 · En pie, Vestido, móvil y regleta (2026-10-31)
+- **Elegido**
+  - La noche (y Hoy a primera hora) lleva tres fichas de un toque: «🧍 En pie», «👕 Vestido» y «🚪 He salido». Marcada, la
+    ficha enseña ✓ y la hora; otro toque la desmarca. La principal es el siguiente paso (En pie, Vestido, He salido).
+  - «He salido» (no «fui en bus») abre la hoja «📱 ¿Móvil esta mañana?»: minutos 0 · 5 · 15 · 30 · 45+, hasta 3 etiquetas
+    (Noticias, Mensajes, Vídeos, las usadas en 90 días y «+ otra»), Guardar o «Ahora no».
+  - La regleta pone «Salir de casa HH:MM» arriba de la línea: ya no se monta con «Vestirse».
+  - `normalize` acepta `pie`, `vestido`, `movil`, `con`. Pasados 90 días el detalle se borra y queda la media del mes en
+    `mananaMedias`. La copia de seguridad lleva el número pero no las etiquetas (`con`).
+  - Deshacer la salida borra solo lo de la salida (`salio`, `bus`, `real`, `eur`, `movil`, `con`); conserva `llego`, `pie`, `vestido`.
+- **Descartado**
+  - Pedir el móvil al marcar «fui en bus» (no hay hora de salida real).
+  - Etiquetas en avisos, notificaciones o `.ics`: nada de esto sale de la pantalla ni de la copia.
+- **Supuestos**
+  - Los minutos se redondean al valor más cercano de 0/5/15/30/45; «45+» se guarda como 45.
+  - Las medias mensuales solo guardan sumas y recuentos (n, mov, pv, vs); no hay etiquetas ahí.
+  - Una copia restaurada pierde las etiquetas (no estaban en la copia); el número se conserva.
+
+## Las Mañanas · LM4 · La pausa antes de abrir (2026-10-31)
+- **Elegido**
+  - `?pausa=videos` (MacroDroid lo abre al detectar una app) enseña la pantalla de pausa: la hora, «sales a las…» si hay plan,
+    cuenta atrás de 5 s, «Cerrar» enorme y «Abrir igualmente (en N s)» apagado hasta llegar a 0.
+  - Tras pulsar cualquiera de los dos pregunta «¿Apuntamos esta pausa? · Vídeos»: «Sí, apúntala» o «No». No se guarda nada hasta el «Sí».
+  - Dato nuevo: `store.pausas = {'2026-11-12': {videos: {c: 2, s: 1}}}` (cerradas y abiertas igualmente por día y etiqueta), 90 días,
+    normalizado. La etiqueta es de una lista cerrada (`PAUSA_ETQ`): Vídeos, Redes, Noticias, Mensajes, Juegos, Compras.
+  - La barra de direcciones se vacía siempre que venga `pausa`, sea válida o no. Una etiqueta que no está en la lista no abre ni guarda nada.
+  - Guía de MacroDroid (5 pasos, chips de etiqueta, enlace con «Copiar») desde la hoja «¿Móvil esta mañana?».
+- **Descartado**
+  - Un número (0–1440) en la URL: la pausa no lleva número; lo único que entra es la etiqueta de una lista cerrada.
+  - Cerrar la app sola: `window.close` no funciona en una PWA abierta por otra app; «Cerrar» devuelve a Hoy.
+  - Guardar la hora de cada apertura o qué apps: solo se cuenta cuántas pausas y si se cerró.
+- **Supuestos**
+  - El día de la cuenta es el de `fechaHoy()` (el de la pantalla), no el de la hora del sistema.
+  - La guía solo cuelga de la hoja del móvil; no hay botón en Ajustes.
+  - `store.pausas` entra en la copia de seguridad como cualquier otro dato (no lleva nada personal más allá de los recuentos).
+
+## Las Mañanas · LM3 · Tu semana por tramos, alarmas de mitad de mañana y guía de Android (2026-10-31)
+- **Elegido**
+  - «📊 Tu semana» se amplía (no hay pantalla nueva): debajo de las tres cifras, «Tu mañana por tramos» (Cama → En pie,
+    En pie → Vestido, Vestido → Puerta) con la media real frente a la prevista de los últimos 7 días, en barras de la
+    marca. Con 4 mañanas o más, una frase: «Lo que más se estira: de vestido a la puerta, +12 min.» (o «Vas a tu hora»).
+    Con menos, «Con N mañanas apuntadas. Hace falta un mínimo de 4.». Y la media del móvil de la mañana. Sin rojo.
+  - Lo previsto sale de la regleta: «En pie» = el despertador; «Vestido» = el inicio del tramo «vestir» (tras ducha y
+    café); «Puerta» = la hora de salir del plan.
+  - «⏰ Alarmas del móvil»: «Quedan 30 min» y «Quedan 10 min» (salida −30 y −10, lunes a viernes) y una casilla para
+    añadirlas al `.ics`, apagada de serie (`sueno.avisoMitad`).
+  - Guía «🌙 Que el móvil no te llame por la mañana» (Pixel / Samsung, 5 pasos con el horario de tu despertador a tu bus),
+    a la que se llega desde Alarmas. Es un extra: no guarda nada.
+- **Descartado**
+  - Tomar como «Vestido» previsto el final del tramo «vestir»: coincide con la salida y dejaba Vestido → Puerta en 0 min.
+  - La tarjeta «Samsung ▸ ver» de la maqueta: dos pestañas Pixel/Samsung ocupan menos y se leen igual.
+- **Supuestos**
+  - Un tramo cuenta si dura entre 0 y 4 h; «Cama → En pie» tiene previsto 0.
+  - Las alarmas de mitad de mañana van al `.ics` sin ningún dato del móvil ni de las marcas.
+
+## Las Mañanas · LM5 · Cierre y paso a main (2026-10-31)
+- **Elegido**
+  - Comprobado tras juntar LM2, LM3 y LM4 en la misma rama: en `app.js` están las marcas y la hoja del móvil
+    (`mananaMovilHTML`, `mm-*`), Tu semana por tramos y las alarmas (`mananaTramos`, `nocheTramosHTML`, `sn-avmitad`,
+    `nocheAndroidHTML`) y la pausa con su guía (`pausaEntrante`, `pausaHTML`, `macroGuiaHTML`, `PAUSA_ETQ`). Sin funciones
+    duplicadas (las dos `guardia` son internas y ya estaban en `main`).
+  - Suite completa en verde después de juntar (regresión 896/896 y los otros 7 bancos).
+  - Verificador a 412×915 (oscuro): las 7 pantallas se ven bien, sin desbordes ni errores en consola; la regleta ya no pisa
+    «Vestirse» con «Salir de casa»; `?pausa=<script>` no abre nada y limpia la URL.
+  - Seguridad: ningún `fetch` nuevo; `sw.js` sin cambios (no cachea imágenes); la etiqueta de `?pausa=` pasa por
+    `/^[a-z]{1,12}$/` y la lista cerrada; las etiquetas «¿Con qué?» se validan en `normalize` y se pintan con `esc()`; la copia
+    de seguridad quita `con` (solo números); el `.ics` y las alarmas solo dicen la hora de salida.
+- **Descartado**
+  - Subir a 14 px los textos `.mini`/`small` y los botones `.btn.s` (12–12,5 px) y las etiquetas de la regleta (8,5–10 px):
+    es un patrón de toda la app, no de esta tanda; cambiarlo cambia lo que ve y se le propone aparte.
+- **Supuestos**
+  - La casilla del `.ics` (13 px) vale porque toda su etiqueta (46 px de alto) es el área de toque.

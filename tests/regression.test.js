@@ -11604,7 +11604,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kp] = { salio: '07:29' };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
-      const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small')].map((x) => x.textContent) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
+      const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small'), ...e.querySelectorAll('.mnh.pta b')].map((x) => x.textContent.replace(/ \d+:\d+$/, '')) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
         taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kp), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
       return out; });
     // «deshacer» quita la hora; «he salido» (hoy) guarda la del móvil
@@ -14286,7 +14286,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
     await page.setViewportSize(vp36);
     check('362 desplegar → «⏰ Alarmas del móvil» enseña vete (21:45), cama (22:35) y sal de casa (07:31) con su hora; «Ya las he puesto» vuelve a Hoy y recuerda la cama',
-      /Pon estas alarmas en tu Reloj/.test(t.a.txt) && t.a.filas.length === 3 && /Vete del Lloret.*21:45/.test(t.a.filas[0]) && /A la cama.*22:35/.test(t.a.filas[1]) && /Sal de casa.*07:31/.test(t.a.filas[2]) && t.a.volver && t.a.ancho <= 412
+      /Pon estas alarmas en tu Reloj/.test(t.a.txt) && t.a.filas.length === 5 && /Quedan 30 min.*07:01/.test(t.a.filas[3]) && /Quedan 10 min.*07:21/.test(t.a.filas[4]) && /Vete del Lloret.*21:45/.test(t.a.filas[0]) && /A la cama.*22:35/.test(t.a.filas[1]) && /Sal de casa.*07:31/.test(t.a.filas[2]) && t.a.volver && t.a.ancho <= 412
       && /Vete del Lloret|En casa|A la cama/.test(t.b.txt) && t.ok[0] === '22:35' && t.ok[1] === '', JSON.stringify([t.a, t.b, t.ok]));
     check('362 «📊 Tu semana»: 3 filas en minutos (cama +32, levantarte +9, salir +4; la semana pasada +48, +14, +11), sin rojo, y «‹ Hoy» vuelve',
       /Tu semana en minutos/.test(t.c.txt) && t.c.filas.length === 3 && /A la cama.*\+32 min.*\+48/.test(t.c.filas[0]) && /Levantarte.*\+9 min.*\+14/.test(t.c.filas[1]) && /Salir de casa.*\+4 min.*\+11/.test(t.c.filas[2]) && !t.c.rojo && t.c.ancho <= 412 && /Vete del Lloret/.test(t.d.txt), JSON.stringify([t.c, t.d.txt]));
@@ -15635,6 +15635,306 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp);
     check('400 Comer · «A la compra» desde la receta entra en la compra de la semana: por pasillos, sin gluten y marcable de un toque, sin lista «A mano»',
       r.hayPlato && r.hayAbre && r.hayCompra && r.sinGluten && !r.sinCruda && r.cebolla && r.nPasillos >= 2 && !r.aMano && r.marcada, JSON.stringify(r));
+  }
+
+  // 401) LAS MAÑANAS · LM2: «🧍 En pie» y «👕 Vestido» en la noche (marcar, desmarcar, sobrevivir a normalize).
+  {
+    const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia40 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia40));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+    const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
+    const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
+      const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
+      return { pie: f(q('pie')), vestido: f(q('vestido')), sali: f(sa), mini: n && n.querySelector('.mini') ? n.querySelector('.mini').textContent : '', man: JSON.stringify(window.PG.store.manana['2026-10-30'] || null) }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia [role="dialog"]'); if (!h) return null;
+      const b = (t) => [...h.querySelectorAll('button')].filter((x) => x.textContent.trim() === t)[0];
+      return { txt: h.textContent.replace(/\s+/g, ' ').trim(), guardarOff: !!(b('Guardar') && b('Guardar').disabled), altoMin: Math.round(h.querySelector('[data-a="mm-min"]').getBoundingClientRect().height),
+        on: [...h.querySelectorAll('[aria-pressed="true"]')].map((x) => x.textContent.trim()), tags: [...h.querySelectorAll('[data-a="mm-con"]')].map((x) => x.textContent.trim()) }; });
+    const R = {};
+    // 401
+    await siembra(); await pon(6, 50, 30); await page.evaluate(() => window.PG.render()); await page.waitForTimeout(200);
+    R.a0 = await fichas();
+    await page.click(sel + '[data-k="pie"]'); await page.waitForTimeout(150); R.a1 = await fichas();
+    await pon(7, 12, 30); await page.evaluate(() => window.PG.render());
+    R.a2 = await fichas();
+    await page.click(sel + '[data-k="vestido"]'); await page.waitForTimeout(150); R.a3 = await fichas();
+    R.a4 = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); P.render(); return JSON.stringify(P.store.manana['2026-10-30']); });
+    await page.click(sel + '[data-k="pie"]'); await page.waitForTimeout(150); R.a5 = await fichas();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
+    await page.setViewportSize(vp40);
+    check('401 06:50 «🧍 En pie» → ✓ y 06:50 y store pie; 07:12 «👕 Vestido» → vestido y «He salido» pasa a principal; sobrevive a normalize; otro toque en En pie lo desmarca',
+      R.a0.pie.p && !R.a0.vestido.p && R.a0.sali.txt === '🚪 He salido' && R.a0.pie.alto >= 44 && R.a0.vestido.alto >= 44 && R.a0.sali.alto >= 44 && /Un toque cada uno\. Ducha y café van dentro\./.test(R.a0.mini) &&
+      R.a1.pie.txt === '🧍 En pie ✓06:50' && R.a1.pie.on === 'true' && R.a1.man === '{"pie":"06:50"}' && R.a2.vestido.p && !R.a2.sali.p &&
+      R.a3.vestido.txt === '👕 Vestido ✓07:12' && R.a3.sali.p && R.a3.man === '{"pie":"06:50","vestido":"07:12"}' && R.a4 === '{"pie":"06:50","vestido":"07:12"}' &&
+      R.a5.pie.on === 'false' && R.a5.man === '{"vestido":"07:12"}', JSON.stringify([R.a0, R.a1, R.a2, R.a3, R.a4, R.a5]));
+  }
+  // 402) LAS MAÑANAS · LM2: «He salido» abre «¿Móvil esta mañana?»; guardar, «Ahora no», la copia sin etiquetas, deshacer y las medias a 90 días.
+  {
+    const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia40 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia40));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+    const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
+    const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
+      const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
+      return { pie: f(q('pie')), vestido: f(q('vestido')), sali: f(sa), mini: n && n.querySelector('.mini') ? n.querySelector('.mini').textContent : '', man: JSON.stringify(window.PG.store.manana['2026-10-30'] || null) }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia [role="dialog"]'); if (!h) return null;
+      const b = (t) => [...h.querySelectorAll('button')].filter((x) => x.textContent.trim() === t)[0];
+      return { txt: h.textContent.replace(/\s+/g, ' ').trim(), guardarOff: !!(b('Guardar') && b('Guardar').disabled), altoMin: Math.round(h.querySelector('[data-a="mm-min"]').getBoundingClientRect().height),
+        on: [...h.querySelectorAll('[aria-pressed="true"]')].map((x) => x.textContent.trim()), tags: [...h.querySelectorAll('[data-a="mm-con"]')].map((x) => x.textContent.trim()) }; });
+    const R = {};
+    // 402
+    await siembra(); await pon(7, 33, 30); await page.evaluate(() => window.PG.render()); await page.waitForTimeout(200);
+    await page.click('#main .noche [data-a="manana-sali"]'); await page.waitForTimeout(250);
+    R.b1 = await hoja();
+    await page.click('#hojaDia [data-a="mm-min"][data-v="15"]'); await page.click('#hojaDia [data-a="mm-con"]:has-text("Noticias")');
+    await page.click('#hojaDia [data-a="mm-otra"]'); await page.fill('#mmOtra', 'Pódcast'); await page.click('#hojaDia [data-a="mm-anadir"]');
+    await page.click('#hojaDia [data-a="mm-con"]:has-text("Mensajes")');
+    await page.click('#hojaDia [data-a="mm-otra"]'); await page.fill('#mmOtra', 'Cuarta'); await page.click('#hojaDia [data-a="mm-anadir"]');
+    R.b2 = await hoja();
+    await page.click('#hojaDia [data-a="mm-con"]:has-text("Mensajes")');
+    await page.click('#hojaDia [data-a="mm-guardar"]'); await page.waitForTimeout(250);
+    R.b3 = await page.evaluate(() => { const P = window.PG; return { x: JSON.stringify(P.store.manana['2026-10-30']), hoja: !!document.querySelector('#hojaDia [role="dialog"]'), copia: JSON.stringify(P.storeParaCopia()) }; });
+    R.b4 = await page.evaluate(() => { const P = window.PG; P.ui.nocheAbierta = true; P.render(); return !!document.querySelector('#main [data-a="manana-deshacer"]'); });
+    await page.click('#main [data-a="manana-deshacer"]'); await page.waitForTimeout(150);
+    R.b5 = await page.evaluate(() => JSON.stringify(window.PG.store.manana['2026-10-30'] || null));
+    // «Ahora no» no guarda el móvil; deshacer conserva En pie
+    await siembra(); await pon(7, 33, 30);
+    await page.evaluate(() => { window.PG.store.manana['2026-10-30'] = { pie: '06:50' }; window.PG.render(); });
+    await page.click('#main .noche [data-a="manana-sali"]'); await page.waitForTimeout(200);
+    await page.click('#hojaDia button:has-text("Ahora no")'); await page.waitForTimeout(150);
+    R.c1 = await page.evaluate(() => ({ x: JSON.stringify(window.PG.store.manana['2026-10-30']), hoja: !!document.querySelector('#hojaDia [role="dialog"]') }));
+    R.c2 = await page.evaluate(() => { const P = window.PG; P.store.manana['2026-07-01'] = { pie: '06:50', vestido: '07:10', salio: '07:30', movil: 15, con: ['Noticias'] }; P.store.manana['2026-06-30'] = { pie: '06:50', movil: 5 };
+      P.store = JSON.parse(JSON.stringify(P.store)); return JSON.stringify([P.store.manana['2026-07-01'], P.store.manana['2026-06-30'] || null, P.store.mananaMedias['2026-07']]); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
+    await page.setViewportSize(vp40);
+    check('402 «🚪 He salido» abre «¿Móvil esta mañana?» con Guardar apagado y minutos de ≥56 px; con 15, Noticias, Pódcast y Mensajes elegidos la 4.ª etiqueta no entra',
+      R.b1 && /Saliste a las 07:33/.test(R.b1.txt) && /¿Móvil esta mañana\?/.test(R.b1.txt) && R.b1.guardarOff && R.b1.altoMin >= 56 &&
+      R.b2.on.join('|') === '15|Noticias|Mensajes|Pódcast' && R.b2.tags.indexOf('Pódcast') >= 0 && R.b2.tags.indexOf('Cuarta') < 0, JSON.stringify([R.b1, R.b2]));
+    check('402c Guardar (tras quitar Mensajes) escribe movil:15 y con [Noticias, Pódcast] y cierra la hoja; la copia no lleva con ni «Pódcast» pero sí el número; deshacer quita la salida y el móvil',
+      R.b3.x === '{"salio":"07:33","movil":15,"con":["Noticias","Pódcast"]}' && !R.b3.hoja && !/"con"|Pódcast/.test(R.b3.copia) && /"movil":15/.test(R.b3.copia) && R.b4 && R.b5 === 'null', JSON.stringify([R.b3.x, R.b3.hoja, R.b4, R.b5]));
+    check('402d «Ahora no» cierra sin guardar movil; deshacer conserva pie; lo de hace 120 días queda en la media del mes y sin detalle',
+      R.c1.x === '{"pie":"06:50","salio":"07:33"}' && !R.c1.hoja && R.c2 === JSON.stringify([{ salio: '07:30' }, null, { n: 1, mov: 15, movN: 1, pv: 20, pvN: 1, vs: 20, vsN: 1 }]), JSON.stringify([R.c1, R.c2]));
+  }
+  // 403) LAS MAÑANAS · LM2: la regleta de la mañana a 412 px, sin «Vestirse» y «Salir de casa» montadas.
+  {
+    const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 29);
+    await page.evaluate(() => { window.__copia40 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia40));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+    const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
+    const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
+      const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
+      return { pie: f(q('pie')), vestido: f(q('vestido')), sali: f(sa), mini: n && n.querySelector('.mini') ? n.querySelector('.mini').textContent : '', man: JSON.stringify(window.PG.store.manana['2026-10-30'] || null) }; });
+    const hoja = () => page.evaluate(() => { const h = document.querySelector('#hojaDia [role="dialog"]'); if (!h) return null;
+      const b = (t) => [...h.querySelectorAll('button')].filter((x) => x.textContent.trim() === t)[0];
+      return { txt: h.textContent.replace(/\s+/g, ' ').trim(), guardarOff: !!(b('Guardar') && b('Guardar').disabled), altoMin: Math.round(h.querySelector('[data-a="mm-min"]').getBoundingClientRect().height),
+        on: [...h.querySelectorAll('[aria-pressed="true"]')].map((x) => x.textContent.trim()), tags: [...h.querySelectorAll('[data-a="mm-con"]')].map((x) => x.textContent.trim()) }; });
+    const R = {};
+    // 403
+    await siembra(); await pon(7, 10, 30);
+    await page.evaluate(() => { window.PG.ui.nocheAbierta = true; window.PG.render(); }); await page.waitForTimeout(250);
+    R.d = await page.evaluate(() => { const r = (e) => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, txt: e.textContent.trim() }; };
+      const L = [...document.querySelectorAll('#main .manana .mnh b, #main .manana .mnh small')].map(r).filter((x) => x.r > x.l);
+      const ves = L.filter((x) => /^Vestirse/.test(x.txt))[0], pta = L.filter((x) => /^Salir de casa/.test(x.txt))[0];
+      const cruza = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      return { hay: !!(ves && pta), cruzan: ves && pta ? cruza(ves, pta) : null, otros: pta ? L.filter((x) => x !== pta && cruza(x, pta)).map((x) => x.txt) : [], fuera: L.filter((x) => x.l < 0 || x.r > window.innerWidth).map((x) => x.txt), ancho: document.documentElement.scrollWidth }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
+    await page.setViewportSize(vp40);
+    check('403 regleta de la mañana a 412 px: «Vestirse» y «Salir de casa» no se montan, nada pisa a la puerta y nada se sale de la pantalla',
+      R.d.hay && R.d.cruzan === false && R.d.otros.length === 0 && R.d.fuera.length === 0 && R.d.ancho <= 412, JSON.stringify(R.d));
+  }
+
+  // 440) LAS MAÑANAS · LM4-a: ?pausa=videos abre la pausa, limpia la barra, no guarda al entrar; «Cerrar» → «Sí, apúntala» cuenta c:1; con «No» no cuenta.
+  {
+    const abre = async (q) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+      await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); });   // las pruebas comparten localStorage: se parte de cero
+      await p.goto(base + 'index.html' + q); await p.waitForFunction(() => window.PG); await p.waitForTimeout(350); return p; };
+    const estado = (p) => p.evaluate(() => { const m = document.querySelector('#main'), b = (t) => [...m.querySelectorAll('button')].filter((x) => x.textContent.trim().indexOf(t) === 0)[0];
+      return { txt: m.textContent.replace(/\s+/g, ' ').trim(), vista: window.PG.ui.hoyVista, query: location.search, seguirOff: !!(b('Abrir igualmente') && b('Abrir igualmente').disabled),
+        altoCerrar: Math.round((b('Cerrar') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height), timer: !!m.querySelector('[role="timer"]'),
+        pausas: JSON.stringify(window.PG.store.pausas || null) }; });
+    const R = {};
+    const p = await abre('?pausa=videos');
+    const hoy = await p.evaluate(() => window.PG.iso(new Date()));
+    R.a1 = await estado(p);
+    await p.click('#main [data-a="pausa-cerrar"]'); await p.waitForTimeout(150);
+    R.a2 = await estado(p);
+    await p.click('#main [data-a="pausa-si"]'); await p.waitForTimeout(250);
+    R.a3 = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, pausa: window.PG.ui.pausa, pausas: JSON.stringify(window.PG.store.pausas) }));
+    await p.evaluate(() => { const P = window.PG; P.ui.pausa = { etq: 'juegos', fin: Date.now() + 5000, res: '' }; P.ui.hoyVista = 'pausa'; P.render(); });
+    await p.click('#main [data-a="pausa-cerrar"]'); await p.click('#main [data-a="pausa-no"]'); await p.waitForTimeout(200);
+    R.a4 = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, pausas: JSON.stringify(window.PG.store.pausas) }));
+    await p.close();
+    check('LM4-a) ?pausa=videos abre la pausa a 412 px (Vídeos, cuenta atrás con role=timer, «Cerrar» ≥68 px, «Abrir igualmente» apagado), vacía la barra y no guarda nada al entrar',
+      R.a1.vista === 'pausa' && R.a1.timer && R.a1.query === '' && R.a1.seguirOff && R.a1.altoCerrar >= 68 && /Respira\. ¿Seguro que ahora\?/.test(R.a1.txt) && /Abrir igualmente \(en [1-5] s\)/.test(R.a1.txt) && R.a1.pausas === '{}', JSON.stringify(R.a1));
+    check('LM4-a) «Cerrar» pregunta «¿Apuntamos esta pausa? · Vídeos» y, con «Sí, apúntala», cuenta c:1 de hoy y vuelve a Hoy; con «No» sigue en 1',
+      /¿Apuntamos esta pausa\? · Vídeos/.test(R.a2.txt) && /No se guarda nada hasta que tú lo digas/.test(R.a2.txt) && R.a2.pausas === '{}' &&
+      R.a3.vista === '' && R.a3.pausa === null && R.a3.pausas === JSON.stringify({ [hoy]: { videos: { c: 1, s: 0 } } }) && R.a4.vista === '' && R.a4.pausas === R.a3.pausas, JSON.stringify([R.a2, R.a3, R.a4]));
+  }
+
+  // 441) LAS MAÑANAS · LM4-b: pasados los 5 s, «Abrir igualmente» se activa y «Sí» cuenta s:1.
+  {
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); });
+    await p.goto(base + 'index.html?pausa=redes'); await p.waitForFunction(() => window.PG); await p.waitForTimeout(350);
+    const seg = () => p.evaluate(() => { const b = document.querySelector('#main [data-a="pausa-seguir"]'); return { off: !!(b && b.disabled), txt: b ? b.textContent.trim() : '' }; });
+    const R = { antes: await seg() };
+    await p.evaluate(() => { const P = window.PG; P.ui.pausa.fin = Date.now() - 1; P.render(); });
+    R.despues = await seg();
+    await p.click('#main [data-a="pausa-seguir"]'); await p.waitForTimeout(150);
+    R.tarjeta = await p.evaluate(() => document.querySelector('#main').textContent.replace(/\s+/g, ' '));
+    await p.click('#main [data-a="pausa-si"]'); await p.waitForTimeout(250);
+    R.fin = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, pausas: JSON.stringify(Object.values(window.PG.store.pausas)) }));
+    await p.close();
+    check('LM4-b) con la cuenta atrás a medias «Abrir igualmente» está apagado; a 0 se activa y, con «Sí», cuenta s:1 en Redes',
+      R.antes.off && /en \d s/.test(R.antes.txt) && !R.despues.off && R.despues.txt === 'Abrir igualmente' && /Redes/.test(R.tarjeta) && R.fin.vista === '' && R.fin.pausas === '[{"redes":{"c":0,"s":1}}]', JSON.stringify(R));
+  }
+
+  // 442) LAS MAÑANAS · LM4-c: una URL maliciosa o fuera de la lista no abre nada, no guarda nada y deja la barra limpia.
+  {
+    const R = [];
+    { const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG); await p0.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); }); await p0.close(); }
+    const malas = ['<img src=x onerror="window.__xss=1">', 'videos"><b>', 'VIDEOS', 'toString', '__proto__', 'hasOwnProperty', ''];
+    for (const m of malas) {
+      const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+      await p.goto(base + 'index.html?pausa=' + encodeURIComponent(m)); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+      R.push(await p.evaluate((m) => ({ m, vista: window.PG.ui.hoyVista, pausa: !!window.PG.ui.pausa, xss: window.__xss, query: location.search, rollo: !!document.querySelector('#main [role="timer"]'), pausas: JSON.stringify(window.PG.store.pausas || {}), img: !!document.querySelector('#main img[src="x"], #main b') && /videos"/.test(document.querySelector('#main').innerHTML) }), m));
+      await p.close();
+    }
+    check('LM4-c) ?pausa= con HTML, comillas, mayúsculas, toString, __proto__ o vacío: no hay pantalla de pausa, no hay XSS, store.pausas sigue vacío y la barra queda limpia',
+      R.length === malas.length && R.every((r) => r.vista !== 'pausa' && !r.pausa && r.xss === undefined && r.query === '' && !r.rollo && r.pausas === '{}' && !r.img), JSON.stringify(R));
+  }
+
+  // 443) LAS MAÑANAS · LM4-d: la guía de MacroDroid desde «¿Móvil esta mañana?»: 5 pasos, el enlace sigue la etiqueta y «‹ Hoy» vuelve.
+  {
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.waitForTimeout(350);
+    await p.evaluate(() => { window.PG.store.pausas = {}; window.PG.save(); });
+    await p.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.mananaMovil = { key: P.iso(new Date()), min: null, con: [], otra: false }; P.render(); });
+    await p.waitForTimeout(200);
+    const R = { hoja: await p.evaluate(() => !!document.querySelector('#hojaDia [data-a="pausa-guia"]')) };
+    await p.click('#hojaDia [data-a="pausa-guia"]'); await p.waitForSelector('#main .pzp'); await p.waitForTimeout(400);
+    const g = () => p.evaluate(() => { const m = document.querySelector('#main'); return { vista: window.PG.ui.hoyVista, hoja: !!document.querySelector('#hojaDia [role="dialog"]'), pasos: m.querySelectorAll('.pzp').length, code: (m.querySelector('code') || {}).textContent || '',
+      on: [...m.querySelectorAll('[data-a="macro-etq"][aria-pressed="true"]')].map((x) => x.textContent.trim()), txt: m.textContent.replace(/\s+/g, ' '), ancho: document.documentElement.scrollWidth,
+      bajos: [...m.querySelectorAll('button')].filter((b) => b.getBoundingClientRect().height < 44).length }; });
+    R.g1 = await g();
+    await p.click('#main [data-a="macro-etq"][data-v="redes"]'); await p.waitForTimeout(150);
+    R.g2 = await g();
+    await p.click('#main [data-a="macro-volver"]:has-text("‹ Hoy")'); await p.waitForTimeout(200);
+    R.v = await p.evaluate(() => ({ vista: window.PG.ui.hoyVista, hoy: /☀️ Hoy/.test(document.querySelector('#main').textContent), pausas: JSON.stringify(window.PG.store.pausas || {}) }));
+    await p.close();
+    check('LM4-d) la hoja «¿Móvil esta mañana?» ofrece «⏸ Una pausa…»; la guía tiene 5 pasos, el enlace acaba en ?pausa=videos y al elegir Redes en ?pausa=redes; botones ≥44 px, sin scroll lateral',
+      R.hoja && R.g1.vista === 'macrodroid' && !R.g1.hoja && R.g1.pasos === 5 && /\?pausa=videos$/.test(R.g1.code) && R.g1.on.join() === 'Vídeos' &&
+      /Solo cuenta cuántas pausas/.test(R.g1.txt) && R.g1.bajos === 0 && R.g1.ancho <= 412 && /\?pausa=redes$/.test(R.g2.code) && R.g2.on.join() === 'Redes', JSON.stringify([R.hoja, R.g1, R.g2]));
+    check('LM4-d) «‹ Hoy» vuelve a Hoy sin guardar nada', R.v.vista === '' && R.v.hoy && R.v.pausas === '{}', JSON.stringify(R.v));
+  }
+
+  // 444) LAS MAÑANAS · LM4-e: normalize de store.pausas: fuera lo de hace 100 días, la etiqueta inventada, el número que no vale y la clave sin fecha.
+  {
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html'); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+    await p.evaluate(() => { const P = window.PG, d = (n) => P.iso(P.addDays(new Date(), n));
+      P.store.pausas = { [d(-100)]: { videos: { c: 3, s: 1 } }, [d(-2)]: { videos: { c: 'x', s: 2 }, hack: { c: 5, s: 5 }, redes: { c: 0, s: 0 }, juegos: { c: -1, s: 1.9 }, toString: { c: 1, s: 1 } }, 'no-fecha': { videos: { c: 1, s: 1 } }, [d(-1)]: { hack: { c: 1, s: 0 } } };
+      P.save(); });
+    await p.reload(); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+    const R = await p.evaluate(() => { const P = window.PG, d = P.iso(P.addDays(new Date(), -2)); return { pausas: JSON.stringify(P.store.pausas), esperado: JSON.stringify({ [d]: { videos: { c: 0, s: 2 }, juegos: { c: 0, s: 1 } } }) }; });
+    await p.close();
+    check('LM4-e) al recargar, store.pausas conserva solo lo válido: sin el día de hace 100 días, sin «hack», sin «no-fecha», c:\'x\' → 0, y los días y etiquetas vacíos se borran',
+      R.pausas === R.esperado, JSON.stringify(R));
+  }
+
+  // 404) LAS MAÑANAS · LM3: «📊 Tu semana» con la mañana por tramos, la frase (con 4 o más mañanas), el móvil y sin colores de alarma.
+  // 405) LAS MAÑANAS · LM3: «⏰ Alarmas del móvil» con «Quedan 30 min» y «Quedan 10 min» y el .ics apagado de serie.
+  // 406) LAS MAÑANAS · LM3: la guía de Android (Pixel y Samsung) desde las alarmas.
+  {
+    const vp41 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate41 || Date; window.__origDate41 = Orig;
+      const fr = new Orig(2026, 9, dia, h, m, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [h, m, dia]);
+    await pon(21, 30, 31);
+    await page.evaluate(() => { window.__copia41 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const siembra = (dias) => page.evaluate((dias) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia41));
+      const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 3; i++) { const k = P.iso(P.addDays(new Date(2026, 9, 29, 12), i)); P.setDayOverride(k, SH.id, ''); P.store.rotation.dayRhythm[k] = { wake: '06:45' }; }
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.suenoReal = {};
+      P.store.manana = {}; dias.forEach((d) => { P.store.manana['2026-10-' + d] = { pie: '06:52', vestido: '07:12', salio: '07:50', movil: d % 2 ? 15 : 30 }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.nocheAbierta = true; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); }, dias);
+    const clic = async (v) => { await page.click('#main [data-a="noche-vista"][data-v="' + v + '"]'); await page.waitForTimeout(150); };
+    const semana = () => page.evaluate(() => { const m = document.querySelector('#main'), d = m.querySelector('.ndest'), b = m.querySelector('.ntr b'), mini = [...m.querySelectorAll('.mini')].map((x) => x.textContent.trim());
+      return { filas: m.querySelectorAll('.ntramos .ntr').length, dest: d ? d.textContent.trim() : null, destCol: d ? getComputedStyle(d).color : '', bCol: b ? getComputedStyle(b).color : '', bad: getComputedStyle(document.documentElement).getPropertyValue('--bad').trim(),
+        mini, mov: (m.querySelector('.nmov') || {}).textContent || '', nota: [...m.querySelectorAll('.nnota')].map((x) => x.textContent).join('|'), ancho: document.documentElement.scrollWidth }; });
+    const R = {};
+    // 404
+    await siembra(['27', '28', '29', '30', '31']); await page.waitForTimeout(200);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#main [data-a="noche-vista"]')].filter((x) => x.dataset.v === 'semana')[0]; if (b) b.click(); }); await page.waitForTimeout(200);
+    R.s5 = await semana();
+    await page.evaluate(() => { const P = window.PG; delete P.store.manana['2026-10-27']; delete P.store.manana['2026-10-28']; P.save(); P.render(); });
+    R.s3 = await semana();
+    await page.evaluate(() => { window.PG.ui.hoyVista = ''; window.PG.render(); });
+    // 405
+    await siembra(['27']); await page.waitForTimeout(200);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#main [data-a="noche-vista"]')].filter((x) => x.dataset.v === 'alarmas')[0]; if (b) b.click(); }); await page.waitForTimeout(200);
+    const alarmas = () => page.evaluate(() => { const f = (t) => { const e = [...document.querySelectorAll('#main .nal')].filter((x) => x.querySelector('b').textContent.trim() === t)[0]; return e ? e.querySelector('.alh').textContent.trim() : null; };
+      const c = document.querySelector('#main [data-a="sn-avmitad"]'), l = c && c.closest('label');
+      return { salir: f('Sal de casa'), q30: f('Quedan 30 min'), q10: f('Quedan 10 min'), on: c ? c.checked : null, alto: l ? Math.round(l.getBoundingClientRect().height) : 0, nuevo: !!document.querySelector('#main .nmitad .nnuevo') }; });
+    R.al0 = await alarmas();
+    await page.click('#main [data-a="sn-avmitad"]'); await page.waitForTimeout(150);
+    R.al1 = await page.evaluate(() => ({ cfg: window.PG.store.sueno.avisoMitad, ev: window.PG.snNocheEventos('2026-10-30', '2026-11-02').map((e) => e.summ + '@' + e.hora) , on: document.querySelector('#main [data-a="sn-avmitad"]').checked }));
+    // 406
+    await clic('android');
+    const guia = () => page.evaluate(() => { const m = document.querySelector('#main'), t = [...m.querySelectorAll('[role="tab"]')];
+      return { pasos: m.querySelectorAll('.npaso').length, sel: t.filter((x) => x.getAttribute('aria-selected') === 'true').map((x) => x.textContent.trim()), p2: (m.querySelectorAll('.npaso span')[1] || {}).textContent || '', p4: (m.querySelectorAll('.npaso span')[3] || {}).textContent || '', tit: (m.querySelector('.subtit') || {}).textContent || '' }; });
+    R.g0 = await guia();
+    await page.click('#main [data-a="noche-android"][data-v="samsung"]'); await page.waitForTimeout(150); R.g1 = await guia();
+    await page.click('#main [data-a="noche-vista"][data-v="alarmas"]:not(.volver)'); await page.waitForTimeout(150);
+    R.g2 = await page.evaluate(() => ({ alarmas: /Pon estas alarmas/.test(document.querySelector('#main').textContent) }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia41; delete window.__copia41; P.ui.hoyVista = ''; P.ui.nocheAbierta = false; P.ui.nocheAndroid = ''; P.save(); P.render(); window.Date = window.__origDate41; });
+    await page.setViewportSize(vp41);
+    check('LM3-a 404 «Tu semana»: 3 tramos, «Lo que más se estira: de vestido a la puerta, +», tarjeta del móvil, sin rojo; con 3 mañanas sin frase y «Con 3 mañanas apuntadas…»',
+      R.s5.filas === 3 && /^Lo que más se estira: de vestido a la puerta, \+12 min\.$/.test(R.s5.dest || '') && /📱 Móvil de la mañana: \d+ min de media\(5 mañanas\)/.test(R.s5.mov) && R.s5.mini.includes('/ previsto 20') && R.s5.mini.includes('/ previsto 26') && R.s5.mini.includes('Con 5 mañanas apuntadas. Hace falta un mínimo de 4.') &&
+      R.s5.destCol !== R.s5.bad && R.s5.bCol !== R.s5.bad && R.s5.ancho <= 412 &&
+      R.s3.dest === null && R.s3.filas === 3 && R.s3.mini.includes('Con 3 mañanas apuntadas. Hace falta un mínimo de 4.'), JSON.stringify([R.s5, R.s3]));
+    const hh = (t) => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
+    check('LM3-b 405 «Alarmas»: «Quedan 30 min» y «Quedan 10 min» = Sal de casa −30/−10, .ics apagado, al marcarlo salen los eventos «⏳», toque ≥44 px',
+      R.al0.salir && hh(R.al0.salir) - hh(R.al0.q30) === 30 && hh(R.al0.salir) - hh(R.al0.q10) === 10 && R.al0.nuevo && R.al0.on === false && R.al0.alto >= 44 &&
+      R.al1.cfg === true && R.al1.on === true && R.al1.ev.some((e) => /^⏳ Quedan 30 min@/.test(e)) && R.al1.ev.some((e) => /^⏳ Quedan 10 min@/.test(e)), JSON.stringify([R.al0, R.al1]));
+    check('LM3-c 406 guía de Android: 5 pasos con Pixel elegido, Samsung cambia el paso 2 («Modos y rutinas») y «Ahora no» vuelve a las alarmas',
+      R.g0.pasos === 5 && R.g0.sel.join() === 'Pixel' && /Establecer horario/.test(R.g0.p4) && R.g1.sel.join() === 'Samsung' && /Modos y rutinas/.test(R.g1.p2) && R.g2.alarmas, JSON.stringify([R.g0, R.g1, R.g2]));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
