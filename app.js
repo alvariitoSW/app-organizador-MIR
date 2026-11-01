@@ -11743,7 +11743,7 @@ function cjeHojaReceta(h){
     '<div class="mini" style="font-size:14px">'+n+(n===1?' ración':' raciones')+'</div>'+
     (d.deRecetario?(recEquipoTxt(d.equipo)?'<div class="mini" style="font-size:14px">'+esc(recEquipoTxt(d.equipo))+'</div>':'')+
       '<div class="aviso card gluaviso"><span>🌾 Sin gluten según los ingredientes. Revisa siempre la etiqueta.'+(d.aviso?'<br>'+esc(d.aviso):'')+'</span></div>':'')+
-    (h.vuelve?'<div><button class="btn s" data-a="rec-vuelve">‹ Recetario</button></div>':'')+
+    (h.vuelve?'<div><button class="btn s" data-a="rec-vuelve" style="min-height:44px">‹ Recetario</button></div>':'')+
     '<div class="recb">'+(ing.length&&!d.deRecetario?'<button class="btn p" data-a="rec-compra">Añadir a la compra</button>':'')+
     (url?'<a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">'+(/tiktok\.com/i.test(url)?'Ver en TikTok':'Ver el vídeo')+'</a>':'')+
     '<button class="btn" data-a="rec-comparte">Compartir</button></div>'+
@@ -15049,7 +15049,7 @@ function cjeHojaRecetario(h){
   const R=recLista(h),chip=function(k,v,txt,on){return '<button class="chipx'+(on?' on':'')+'" data-a="rec-f" data-k="'+k+'" data-v="'+esc(v)+'" aria-pressed="'+(on?'true':'false')+'">'+txt+'</button>';};
   const regs=[],vistas={};
   if(h.coc==='es')recetarioTodo().forEach(function(r){if(r.cocina==='es'&&r.region&&!vistas[r.region]){vistas[r.region]=1;regs.push(r.region);}});
-  const lista=R.l.slice(0,60);
+  const lista=h.mas?R.l:R.l.slice(0,60);
   return '<div class="row"><div class="cjst">Recetario</div></div>'+
     '<div class="mini">🌾 Todo sin gluten · '+R.total+' platos · '+R.puede+' con tu cocina'+(RECETARIO_EST==='cargando'?' · cargando…':'')+(RECETARIO_EST==='falla'?' · sin conexión: las 43 de siempre':'')+'</div>'+
     '<div class="frase" style="margin-top:8px"><span aria-hidden="true">🔎</span><input id="recQ" value="'+esc(ui.recQ||'')+'" data-a="rec-q" placeholder="busca un plato o un ingrediente…" aria-label="buscar en el recetario" autocomplete="off"></div>'+
@@ -15063,6 +15063,7 @@ function cjeHojaRecetario(h){
       return '<button class="cjpl" data-a="rec-ver" data-id="'+esc(r.id)+'"><span class="e">'+esc(r.e)+'</span><span class="n"><b>'+(bloq?'🔒 ':'')+esc(r.n)+'</b>'+
         '<span>'+esc(ln)+'</span>'+(r.aviso?'<span style="color:var(--warn);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(r.aviso)+'</span>':'')+'</span></button>';}).join(''):
       '<p class="mini">Nada con esos filtros. Quita alguno o cambia la búsqueda.</p>')+
+    (R.l.length>60&&!h.mas?'<div class="chips" style="margin-top:10px">'+chip('mas','1','ver los '+(R.l.length-60)+' que faltan',false)+'</div>':'')+
     (R.esperan||h.todos?'<div class="chips" style="margin-top:10px">'+chip('todos','1','ver también los que piden horno 🔒',h.todos)+'</div>':'')+
     (R.esperan&&!h.todos?'<p class="mini">'+R.esperan+(R.esperan===1?' plato espera':' platos esperan')+' horno o freidora.</p>':'');}
 function tpAlim(txt){
@@ -25986,7 +25987,7 @@ function act(a,el){
       if(k==='coc'){h.coc=h.coc===v?'':v;h.reg='';}
       else if(k==='reg')h.reg=h.reg===v?'':v;
       else if(k==='tipo')h.tipo=h.tipo===v?'':v;
-      else if(['tanda','rap','prot','todos'].indexOf(k)>=0)h[k]=!h[k];
+      else if(['tanda','rap','prot','todos','mas'].indexOf(k)>=0)h[k]=!h[k];
       render();break;}
     case 'rec-ver':{const h=ui.cjeHoja;if(!h||h.v!=='recetario'||!recetarioTodo().some(function(r){return r.id===el.dataset.id;}))break;
       ui.cjeHoja={v:'receta',rid:el.dataset.id,vuelve:h,tach:{}};render();window.scrollTo(0,0);break;}

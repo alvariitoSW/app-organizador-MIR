@@ -15968,18 +15968,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.reload(); await page.waitForTimeout(400);
     await abreRecetario();
     R.a0 = { n: (await filas()).length, cab: await cab() };
+    // con más de 60 platos, la lista avisa y el chip «ver los N que faltan» los enseña todos
+    R.mas = await page.evaluate(() => { const t = window.PG.recetarioTodo().filter((r) => window.PG.recPuede(r)).length, c = document.querySelector('#hojaDia [data-a="rec-f"][data-k="mas"]'); return { t, txt: c ? c.textContent : '' }; });
+    if (R.mas.txt) { await page.click('#hojaDia [data-a="rec-f"][data-k="mas"]'); await page.waitForTimeout(100); }
+    R.mas.n = (await filas()).length;
+    check('CH5-e 407 recetario: con más de 60 platos sale «ver los N que faltan» y al tocarlo se ven todos', R.a0.n === 60 && R.mas.t > 60 && R.mas.txt === 'ver los ' + (R.mas.t - 60) + ' que faltan' && R.mas.n === R.mas.t, JSON.stringify(R.mas));
     await page.click('#hojaDia [data-a="rec-f"][data-k="coc"][data-v="it"]'); await page.waitForTimeout(100);
     R.a1 = { n: (await filas()).length, on: await page.$eval('#hojaDia [data-v="it"]', (e) => e.getAttribute('aria-pressed')), alto: await page.$eval('#hojaDia [data-v="it"]', (e) => Math.round(e.getBoundingClientRect().height)),
       regs: await page.evaluate(() => { const rc = window.PG.ui.cjeHoja; return rc.coc; }) };
     R.a1.italia = await page.evaluate(() => window.PG.recetarioTodo().filter((r) => r.cocina === 'it' && window.PG.recPuede(r)).length);
     await page.click('#hojaDia .cjpl'); await page.waitForTimeout(150);
-    R.a2 = await page.evaluate(() => ({ t: document.querySelector('#hojaDia').innerText, volver: !!document.querySelector('#hojaDia [data-a="rec-vuelve"]'), compra: !!document.querySelector('#hojaDia [data-a="rec-compra"]') }));
+    R.a2 = await page.evaluate(() => ({ altoV: Math.round((document.querySelector('#hojaDia [data-a="rec-vuelve"]') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height), t: document.querySelector('#hojaDia').innerText, volver: !!document.querySelector('#hojaDia [data-a="rec-vuelve"]'), compra: !!document.querySelector('#hojaDia [data-a="rec-compra"]') }));
     await page.click('#hojaDia [data-a="rec-vuelve"]'); await page.waitForTimeout(100);
     R.a3 = { n: (await filas()).length, on: await page.$eval('#hojaDia [data-v="it"]', (e) => e.getAttribute('aria-pressed')) };
     check('CH5-a 407 recetario: se abre desde Mis platos con los 61 + las de siempre, 🇮🇹 Italia deja solo las italianas (≥44 px), la receta enseña el equipo y «Sin gluten según los ingredientes», y «‹ Recetario» vuelve con el filtro',
       R.a0.n > 0 && /Todo sin gluten · \d+ platos · \d+ con tu cocina/.test(R.a0.cab) && !/sin conexión/.test(R.a0.cab) &&
       R.a1.n > 0 && R.a1.n === Math.min(60, R.a1.italia) && R.a1.n < R.a0.n && R.a1.on === 'true' && R.a1.alto >= 44 &&
-      /Sin gluten según los ingredientes/.test(R.a2.t) && /🔥|📡|🍲/.test(R.a2.t) && R.a2.volver && !R.a2.compra &&
+      /Sin gluten según los ingredientes/.test(R.a2.t) && /🔥|📡|🍲/.test(R.a2.t) && R.a2.volver && R.a2.altoV >= 44 && !R.a2.compra &&
       R.a3.n === R.a1.n && R.a3.on === 'true', JSON.stringify(R));
     pgX = await sinSw(null);
     await abreRecetario();
