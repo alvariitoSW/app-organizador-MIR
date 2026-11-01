@@ -969,7 +969,8 @@ function normalize(o){
   /* «cómo cocinas» y las tandas hechas: se guardan con la comida */
   if(o.food&&o.food.pref&&typeof o.food.pref==='object'){const P=o.food.pref;
     o.food.pref={horno:!!P.horno,micro:P.micro!==false,vitro:P.vitro!==false,fuegos:[1,2,4].indexOf(+P.fuegos)>=0?+P.fuegos:2,olla:[3,5,6].indexOf(+P.olla)>=0?+P.olla:5,expres:!!P.expres,freidora:!!P.freidora,noCocinar:Array.isArray(P.noCocinar)?P.noCocinar.filter(function(x){return typeof x==='string';}).slice(0,6):['guardia','entreno'],
-      taper:Math.max(1,Math.min(6,Math.round(+P.taper||3))),desayunos:Array.isArray(P.desayunos)?P.desayunos.filter(function(x){return typeof x==='string';}).slice(0,3):[]};}
+      taper:Math.max(1,Math.min(6,Math.round(+P.taper||3))),desayunos:Array.isArray(P.desayunos)?P.desayunos.filter(function(x){return typeof x==='string';}).slice(0,3):[],
+      marcas:(Array.isArray(P.marcas)?P.marcas:[]).filter(function(m){return m&&typeof m.k==='string'&&m.k.trim();}).slice(0,60).map(function(m){return {k:m.k.slice(0,60),n:String(m.n||m.k).slice(0,60),f:esFecha(m.f||'')?m.f:''};})};}
   if(o.food&&o.food.tandasHechas&&typeof o.food.tandasHechas!=='object')delete o.food.tandasHechas;
   /* el sueño de verdad y los libros: sin registrarlos aquí se perderían al recargar */
   /* la rutina de cada tipo de día: anclas a una hora que salen solas en Semana y Hoy */
@@ -14517,6 +14518,13 @@ function renderFoodGluten(){
         'No se cambia nada sin que lo toques.</p>')
         :'<div class="empty">Ninguno de tus platos lleva gluten.</div>')+
     '</div>'+
+    '<div class="card" data-v="marcas"><h2>Mis marcas seguras</h2>'+
+      '<p class="mini">Las marcas que has comprobado una vez. Lo que marcas al importar una receta deja de salir en ámbar.</p>'+
+      (marcasS().length?marcasS().map(function(m){return '<div class="marcafila"><span class="sp"><b>'+esc(m.n)+'</b>'+
+        (m.f?'<br><span class="mini">marcado el '+esc(fechaCorta(m.f))+'</span>':'')+'</span>'+
+        '<button class="btn s" data-a="marca-quita" data-k="'+esc(m.k)+'" aria-label="quitar '+esc(m.n)+'">Quitar</button></div>';}).join('')
+        :'<div class="empty">Aún no has marcado ninguna.</div>')+
+      '<p class="mini" style="margin-top:9px">🌾 Revisa la etiqueta (el símbolo de la espiga barrada) de vez en cuando: las recetas de las marcas cambian. La app no sustituye tu criterio.</p></div>'+
     '<div class="card"><h2>Depende de la marca</h2>'+
       (g.depende.length?(g.depende.map(function(o){return fila(o,'dep');}).join('')+
         '<p class="mini" style="margin-top:9px">Estos pueden ser sin gluten o no según lo que compres: '+
@@ -19572,7 +19580,7 @@ function impTraerEnlace(){
     ui.imp.txt=partes.join('\n');
     ui.imp.estado='';ui.imp.msg='';
     const r=parseReceta(ui.imp.txt);
-    if(r){ui.imp.receta=r;ui.imp.via='local';render();flash('Receta lista: '+r.name+(d.via?(' · vía '+d.via):''));}
+    if(r){ui.imp.receta=impSinGluten(r);ui.imp.via='local';render();flash('Receta lista: '+r.name+(d.via?(' · vía '+d.via):''));}
     else{render();flash('Descripción traída'+(d.via?(' vía '+d.via):'')+': ahora dale a leerla');}
   }).catch(function(e){
     if(gen!==_impGen)return caduca();
@@ -19662,7 +19670,7 @@ function impConClaude(){
     if(data&&data.error){impFuenteNueva();ui.imp.estado='error';ui.imp.msg='Claude no ha visto ninguna receta ahí dentro.';render();return;}
     const r=recetaSana(data);
     if(!r){impFuenteNueva();ui.imp.estado='error';ui.imp.msg='La respuesta no traía una receta reconocible. Prueba otra vez.';render();return;}
-    ui.imp.receta=r;ui.imp.estado='';ui.imp.msg='';ui.imp.via='claude';render();
+    ui.imp.receta=impSinGluten(r);ui.imp.estado='';ui.imp.msg='';ui.imp.via='claude';render();
     flash('Receta leída por Claude: '+r.name);
   }).catch(function(e){
     const code=(e&&e.code)||'upstream_error';
@@ -19678,7 +19686,7 @@ function impLocal(){
   if(!r){impFuenteNueva();ui.imp.estado='error';
     ui.imp.msg='No he sacado nada en claro. Suele pasar cuando la receta se dice en el vídeo y no está escrita: copia el comentario donde esté la lista de ingredientes.';
     render();return;}
-  ui.imp.receta=r;ui.imp.estado='';ui.imp.msg='';ui.imp.via='local';render();
+  ui.imp.receta=impSinGluten(r);ui.imp.estado='';ui.imp.msg='';ui.imp.via='local';render();
   flash('Receta leída: '+r.name);}
 function impGuardar(){
   const r=ui.imp.receta;
@@ -19736,6 +19744,57 @@ function impPegar(){
       flash('Texto pegado: dale a «Leerla aquí mismo»');}
   }).catch(function(){
     flash('No me has dado permiso para leer el portapapeles: pega el enlace a mano en el campo');});}
+/* --- TikTok sin gluten: al importar, lo que lleva gluten se cambia solo por su versión sin gluten y SE VE
+   (banda «Cambiado» con «Deshacer»). Lo que depende de la marca sale en ámbar hasta que lo marcas como
+   «de mis marcas seguras» (se guarda con fecha en cocinaPref().marcas, y la copia de seguridad lo lleva). */
+const IMP_HARINA=/\bharina(?: de trigo(?: integral)?)?(?! de (?:arroz|ma[íi]z|garbanzo|almendra)| sarraceno)/i;
+const IMP_PASTA=/\b(pasta|macarrones|espaguetis?|tallarines|fideos|lasa[ñn]a|canelones)\b/i;
+const IMP_SG=[
+  [/\b(pan rallado|panko)\b/i,function(t){return 'pan rallado sin gluten';}],
+  [IMP_HARINA,function(t){return t.replace(IMP_HARINA,'harina de arroz');}],
+  [/\bsalsa de soja\b/i,function(t){return t.replace(/\bsalsa de soja\b/i,'tamari sin gluten');}],
+  [IMP_PASTA,function(t){return t.replace(IMP_PASTA,'$1 sin gluten');}],
+  [/\bpan\b/i,function(t){return 'pan sin gluten';}],
+  [/\b(cusc[úu]s|cuscus|bulgur)\b/i,function(t){return 'quinoa';}]];
+function marcasS(){const P=cocinaPref();if(!Array.isArray(P.marcas))P.marcas=[];return P.marcas;}
+function marcaClave(linea){return alimTxt(parseIng(linea).item).replace(/\s*\(.*?\)\s*/g,' ').replace(/\s+/g,' ').trim().slice(0,60);}
+function marcaSegura(linea){const k=marcaClave(linea);return !!k&&marcasS().some(function(m){return m.k===k;});}
+function marcaPoner(linea){
+  const k=marcaClave(linea);if(!k||marcaSegura(linea))return false;
+  const it=parseIng(linea).item.replace(/\s+/g,' ').trim();
+  marcasS().push({k:k,n:it.charAt(0).toUpperCase()+it.slice(1),f:iso(new Date())});save();return true;}
+function marcaQuitar(k){const l=marcasS(),i=l.findIndex(function(m){return m.k===k;});if(i<0)return false;l.splice(i,1);save();return true;}
+function impSinGluten(r){
+  /* cambia en r.ingredients lo que lleva gluten y apunta cada cambio en r.cambios (para el «Deshacer») */
+  if(!r)return r;
+  r.cambios=[];if(!esCeliaco()||!Array.isArray(r.ingredients))return r;
+  r.ingredients=r.ingredients.map(function(l){
+    const item=parseIng(l).item,soja=/\bsalsa de soja\b/i.test(item);
+    if(!item||(glutenDe(item)!=='si'&&!soja))return l;
+    let nuevo=null;
+    for(let i=0;i<IMP_SG.length&&nuevo==null;i++)if(IMP_SG[i][0].test(item))nuevo=IMP_SG[i][1](item);
+    if(nuevo==null)nuevo=item+' sin gluten';
+    if(nuevo===item)return l;
+    const pos=l.lastIndexOf(item),linea=(pos>=0?l.slice(0,pos):'')+nuevo;
+    r.cambios.push({de:item,a:nuevo,ld:l,la:linea});return linea;});
+  return r;}
+function impDeshacer(i){
+  const r=ui.imp&&ui.imp.receta,c=r&&(r.cambios||[])[i];if(!c)return false;
+  const j=r.ingredients.indexOf(c.la);if(j>=0)r.ingredients[j]=c.ld;
+  r.cambios.splice(i,1);return true;}
+function impSGHTML(r){
+  /* la banda «Cambiado», el ámbar de las marcas y lo que haya quedado con gluten (todo con esc()) */
+  if(!esCeliaco())return '';
+  const cs=r.cambios||[],ing=r.ingredients||[],visto={},amb=[],mal=[];
+  ing.forEach(function(l){const it=parseIng(l).item,g=glutenDe(it),k=marcaClave(l);
+    if(g==='si')mal.push(it);
+    else if(g==='depende'&&!marcaSegura(l)&&k&&!visto[k]){visto[k]=1;amb.push({k:k,it:it});}});
+  return (cs.length?'<div class="impsg" data-imp="cambiado"><div class="impsgt">✅ Cambiado para que sea sin gluten</div>'+
+      cs.map(function(c,i){return '<div class="impcam"><span class="sp"><s>'+esc(c.de)+'</s> → <b>'+esc(c.a)+'</b></span>'+
+        '<button class="btn s" data-a="imp-deshacer" data-i="'+i+'" aria-label="deshacer: '+esc(c.de)+'">Deshacer</button></div>';}).join('')+'</div>':'')+
+    mal.map(function(it){return '<div class="impamb mal" data-imp="gluten">⚠ <b>Lleva gluten: '+esc(it)+'</b></div>';}).join('')+
+    amb.map(function(o){return '<div class="impamb" data-imp="ambar">🌾 <b>'+esc(o.it)+': mira la etiqueta</b>'+
+      '<button class="btn s" data-a="imp-marca" data-k="'+esc(o.k)+'">Es de mis marcas seguras ✓</button></div>';}).join('');}
 function impPreviaHTML(r){
   return '<div class="tarj" data-imp="previa">'+
     '<div class="tarj-top">'+
@@ -19743,6 +19802,7 @@ function impPreviaHTML(r){
       '<input class="tarj-nm" value="'+esc(r.name)+'" data-a="imp-f" data-f="name" aria-label="nombre del plato">'+
       '<span class="tag '+(ui.imp.via==='claude'?'b2':'b3')+'">'+(ui.imp.via==='claude'?'leída por Claude':'leída por la app')+'</span>'+
     '</div>'+
+    impSGHTML(r)+
     '<div class="fgrid c3 tight" style="margin-top:9px">'+
       '<label class="fld">raciones<input type="number" min="1" max="20" value="'+(+r.portions||1)+'" data-a="imp-f" data-f="portions"></label>'+
       '<label class="fld">kcal / ración<input type="number" min="0" value="'+(+r.kcal||0)+'" data-a="imp-f" data-f="kcal"></label>'+
@@ -26960,6 +27020,10 @@ try{setTimeout(function(){try{calSyncAhoraSiToca();}catch(e){}},4000);}catch(e){
     case 'lector-publico-off':{
       if(!store.lector)store.lector={proxy:'',publico:false};
       store.lector.publico=false;save();render();flash('Desactivado: ya no se usan intermediarios públicos');break;}
+    case 'imp-deshacer':if(impDeshacer(+el.dataset.i))flash('Vuelve a como venía: ojo, lleva gluten');render();break;
+    case 'imp-marca':{const l=((ui.imp.receta||{}).ingredients||[]).filter(function(x){return marcaClave(x)===el.dataset.k;})[0];
+      if(l&&marcaPoner(l))flash('Guardado en «Mis marcas seguras»');render();break;}
+    case 'marca-quita':if(marcaQuitar(el.dataset.k))flash('Quitada: vuelve a salir en ámbar');render();break;
     case 'imp-descartar':{ui.imp.receta=null;ui.imp.via='';render();break;}
     case 'imp-save':flash(impGuardar());break;
     case 'cardio-del':flash(delCardio(el.dataset.id));break;

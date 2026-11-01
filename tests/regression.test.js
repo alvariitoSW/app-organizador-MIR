@@ -16142,6 +16142,65 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vpCh);
   }
 
+  // 410) EL CHEF · CH8: TikTok sin gluten al importar (banda «Cambiado» con «Deshacer»), ámbar con «Es de mis marcas seguras ✓»,
+  //      lista en el gluten de Comer con «Quitar», y el texto importado nunca se ejecuta (<img onerror>).
+  {
+    const vp410 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const dialogos410 = []; const alDialogo = (d) => { dialogos410.push(d.message()); d.dismiss().catch(() => {}); }; page.on('dialog', alDialogo);
+    await page.evaluate(() => { const P = window.PG; window.__copia410 = JSON.parse(JSON.stringify(P.store));
+      P.store.perfil = Object.assign({}, P.store.perfil, { celiaco: true }); P.cocinaPref().marcas = []; P.ui.imp = null; P.save(); });
+    const RECETA = 'Pollo rebozado con chorizo\nIngredientes:\n200 g harina de trigo\n100 g chorizo\n2 huevos\nPreparación:\n1. Reboza el pollo y fríelo despacio en la sartén.';
+    const importa = async (txt) => { await gotoTab('import'); await page.waitForTimeout(150);
+      if (await page.$('[data-a="imp-clear"]')) { await page.click('[data-a="imp-clear"]'); await page.waitForTimeout(100); }
+      await page.fill('#impTxt', txt); await page.click('[data-a="imp-local"]'); await page.waitForTimeout(250); };
+    const vista = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => [...m.querySelectorAll(s)];
+      const caben = q('.impcam .btn, .impamb .btn').every((b) => b.getBoundingClientRect().height >= 43);
+      return { banda: (m.querySelector('[data-imp="cambiado"]') || {}).textContent || '', nCam: q('.impcam').length, ambar: q('[data-imp="ambar"]').map((x) => x.textContent.trim()),
+        mal: q('[data-imp="gluten"]').map((x) => x.textContent.trim()), ing: (m.querySelector('[data-f="ingredients"]') || {}).value || '', caben, ancho: document.documentElement.scrollWidth,
+        marcas: JSON.stringify(window.PG.cocinaPref().marcas.map((x) => x.k)) }; });
+    const R = {};
+    // a) banda «Cambiado» y ámbar
+    await importa(RECETA); R.a = await vista();
+    // b) Deshacer uno
+    await page.click('[data-a="imp-deshacer"][data-i="0"]'); await page.waitForTimeout(150); R.b = await vista();
+    // c) marcar el chorizo, importar otra con chorizo: ya no sale en ámbar
+    await page.click('[data-a="imp-marca"]'); await page.waitForTimeout(150); R.c1 = await vista();
+    R.fecha = await page.evaluate(() => window.PG.cocinaPref().marcas.map((x) => x.f));
+    await importa('Tortilla con chorizo\nIngredientes:\n4 huevos\n80 g chorizo\nPreparación:\n1. Bate los huevos y cuaja la tortilla con el chorizo en la sartén.'); R.c2 = await vista();
+    // d) la lista en el gluten de Comer y «Quitar»: vuelve el ámbar
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'gluten'; P.render(); }); await page.waitForTimeout(150);
+    R.d1 = await page.evaluate(() => { const f = [...document.querySelectorAll('#main .marcafila')]; return { filas: f.map((x) => x.textContent.trim()), b: f[0] ? Math.round(f[0].querySelector('.btn').getBoundingClientRect().height) : 0, aviso: /no sustituye tu criterio/.test(document.querySelector('#main').textContent) }; });
+    await page.click('[data-a="marca-quita"]'); await page.waitForTimeout(150);
+    R.d2 = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .marcafila').length, marcas: window.PG.cocinaPref().marcas.length }));
+    await importa('Tortilla con chorizo\nIngredientes:\n4 huevos\n80 g chorizo\nPreparación:\n1. Bate los huevos y cuaja la tortilla con el chorizo en la sartén.'); R.d3 = await vista();
+    // e) la copia de seguridad guarda las marcas
+    R.e = await page.evaluate(() => { const P = window.PG; P.cocinaPref().marcas.push({ k: 'morcilla', n: 'Morcilla', f: '2026-10-12' }, { k: 7 }, { k: 'x', n: 'Mala', f: 'ayer' });
+      const n = P.normalize(JSON.parse(JSON.stringify(P.store))); P.cocinaPref().marcas.length = 0; return JSON.stringify(n.food.pref.marcas); });
+    // f) texto hostil: nada se ejecuta, ni en la banda, ni en el ámbar, ni en la lista de marcas
+    const HOSTIL = 'Receta hostil\nIngredientes:\n200 g harina <img src=x onerror=alert(1)>\n100 g chorizo <img src=x onerror=alert(1)>\nPreparación:\n1. Mezclar todo y freír durante unos minutos en la sartén.';
+    await importa(HOSTIL); R.f1 = await vista();
+    R.f2 = await page.evaluate(() => ({ imgs: document.querySelectorAll('#main img[src="x"]').length, xss: !!window.__xss }));
+    await page.click('[data-a="imp-marca"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'food'; P.ui.foodVista = 'gluten'; P.render(); }); await page.waitForTimeout(200);
+    R.f3 = await page.evaluate(() => ({ imgs: document.querySelectorAll('#main img[src="x"]').length, texto: (document.querySelector('#main .marcafila') || {}).textContent || '' }));
+    await page.waitForTimeout(300);
+    page.off('dialog', alDialogo);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia410; delete window.__copia410; P.ui.imp = null; P.ui.foodVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp410);
+    check('CH8-a 410 TikTok con harina y chorizo (celíaco): banda «Cambiado para que sea sin gluten» con «harina de trigo → harina de arroz», la receta ya lleva harina de arroz, el chorizo sale en ámbar con «Es de mis marcas seguras ✓», sin cortes y toques ≥44 px',
+      /Cambiado para que sea sin gluten/.test(R.a.banda) && R.a.nCam === 1 && /harina de trigo.*→.*harina de arroz/.test(R.a.banda) && /200 g harina de arroz/.test(R.a.ing) && !/harina de trigo/.test(R.a.ing) &&
+      R.a.ambar.length === 1 && /chorizo/.test(R.a.ambar[0]) && /Es de mis marcas seguras ✓/.test(R.a.ambar[0]) && R.a.caben && R.a.ancho <= 412, JSON.stringify(R.a));
+    check('CH8-b 410 «Deshacer» devuelve la harina de trigo, quita la banda y avisa en rojo de que lleva gluten',
+      R.b.nCam === 0 && R.b.banda === '' && /200 g harina de trigo/.test(R.b.ing) && R.b.mal.length === 1 && /harina de trigo/.test(R.b.mal[0]), JSON.stringify(R.b));
+    check('CH8-c 410 «Es de mis marcas seguras ✓» guarda el chorizo con fecha, deja de salir en ámbar y en una receta nueva con chorizo tampoco sale',
+      R.c1.ambar.length === 0 && R.c1.marcas === '["chorizo"]' && /^\d{4}-\d{2}-\d{2}$/.test(R.fecha[0] || '') && R.c2.ambar.length === 0 && R.c2.nCam === 0, JSON.stringify([R.c1, R.fecha, R.c2]));
+    check('CH8-d 410 en el gluten de Comer sale «Mis marcas seguras» con fecha, el aviso de que no sustituye tu criterio y «Quitar» (≥44 px); al quitarla vuelve el ámbar',
+      R.d1.filas.length === 1 && /Chorizo/.test(R.d1.filas[0]) && /marcado el \d+ /.test(R.d1.filas[0]) && R.d1.b >= 44 && R.d1.aviso && R.d2.filas === 0 && R.d2.marcas === 0 && R.d3.ambar.length === 1, JSON.stringify([R.d1, R.d2, R.d3.ambar]));
+    check('CH8-e 410 la copia de seguridad (normalize) conserva «Mis marcas seguras» con su fecha y descarta lo mal formado', R.e === '[{"k":"morcilla","n":"Morcilla","f":"2026-10-12"},{"k":"x","n":"Mala","f":""}]', String(R.e));
+    check('CH8-f 410 un ingrediente «<img src=x onerror=alert(1)>» importado no se ejecuta: ni alert, ni <img> en la banda, el ámbar ni la lista de marcas, y se ve como texto',
+      dialogos410.length === 0 && !R.f2.xss && R.f2.imgs === 0 && R.f3.imgs === 0 && /&lt;img|<img/.test(R.f1.banda + R.f1.ambar.join('')) && /<img src=x onerror=alert\(1\)>/.test(R.f3.texto), JSON.stringify([dialogos410, R.f1, R.f2, R.f3]));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

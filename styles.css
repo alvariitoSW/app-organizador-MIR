@@ -3854,7 +3854,6 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .lau-det .lau-in{min-width:0;width:100%}
 .lau-ie{border:2px solid var(--lau-borde);border-radius:99px;width:44px;height:44px;font-size:16px;font-weight:700;background:none;color:var(--lau-ink);cursor:pointer}
 .lau-nota{font-size:14px;color:var(--lau-ink2);margin:8px 0 0;padding:10px 14px;background:var(--lau-pastel);border-radius:18px}
-=======
 /* Comer › Hoy: la línea del día (Ahora · Lo siguiente · la semana de un vistazo) */
 .cjahora{padding:10px 12px;margin-bottom:8px}.cjahora .row{margin-bottom:7px}
 .cjsigb{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.cjsigb .btn:only-child{grid-column:1/-1}
@@ -4251,3 +4250,15 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 .cc-rep b{display:block;font-size:22px;color:var(--ok)}
 .racchip{min-height:44px;min-width:44px}
 .cc-tres{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+
+/* ===== TikTok sin gluten y Mis marcas seguras (CH8) ===== */
+.impsg{border:1px solid color-mix(in srgb,var(--ok) 55%,var(--line));background:color-mix(in srgb,var(--ok) 12%,var(--card));border-radius:13px;padding:9px 12px;margin-top:9px}
+.impsgt{font-size:14px;font-weight:800;color:var(--ok);margin-bottom:2px}
+.impcam,.marcafila{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;min-width:0}
+.impcam:last-child{border-bottom:0}
+.impcam .sp,.marcafila .sp{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.impcam s{color:var(--bad)}
+.impcam .btn,.marcafila .btn,.impamb .btn{min-height:44px;flex:none}
+.impamb{border:1px solid color-mix(in srgb,var(--warn) 55%,var(--line));background:color-mix(in srgb,var(--warn) 12%,var(--card));border-radius:12px;padding:9px 11px;margin-top:8px;font-size:14px;overflow-wrap:anywhere}
+.impamb .btn{margin-top:8px;width:100%}
+.impamb.mal{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));background:color-mix(in srgb,var(--bad) 10%,var(--card))}
