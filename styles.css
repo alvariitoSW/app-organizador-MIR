@@ -2538,7 +2538,7 @@ html,body{overscroll-behavior-y:none}
 .cmpu{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--ok) 10%,var(--card));border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}.cmpu>span{font-size:22px}.cmpu>div{flex:1}
 /* ---- apuntar con una frase ---- */
 .frase{display:flex;gap:8px;align-items:center;padding:8px 8px 8px 12px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--brand) 70%,var(--line));background:color-mix(in srgb,var(--brand) 7%,var(--card))}
-.frase input{flex:1;min-width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:14px;padding:6px 0;outline:none}
+.frase input{flex:1;min-width:0;width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:14px;padding:6px 0;outline:none}
 /* la lectura de la frase, debajo del campo, mientras escribes: una o dos líneas */
 .frlect{margin:8px 0 0}
 .frlect:empty{display:none}
