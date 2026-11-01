@@ -15916,6 +15916,92 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       R.pausas === R.esperado, JSON.stringify(R));
   }
 
+  // 445) EL LANZADOR · K1-a: index.html#uso=… guarda el día (3 apps, el nombre con <b> como texto), borra el # y rellena «móvil ayer» con la marca «del móvil ✓»; un chip la quita y Guardar fija el chip.
+  {
+    const hash = (o) => '#uso=' + encodeURIComponent(JSON.stringify(o));
+    const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG);
+    const ayer = await p0.evaluate(() => { const P = window.PG, a = P.iso(P.addDays(new Date(), -1)); P.store.uso = {}; P.store.suenoReal = {}; P.save(); return a; }); await p0.close();
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + hash({ v: 1, d: [{ f: ayer, m: 182, u: 64, a: [['Vídeos', 80], ['<b>x</b>', 70], ['Chat', 60], ['Mapa', 5]] }] }));
+    await p.waitForFunction(() => window.PG); await p.waitForTimeout(400);
+    const R = await p.evaluate(() => { const P = window.PG, k = P.iso(new Date()), u = P.store.uso[P.iso(P.addDays(new Date(), -1))];
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = k; P.ui.snTr = null; P.render();
+      return { hash: location.hash, u: JSON.stringify(u && { m: u.m, u: u.u, a: u.a }), flash: (document.querySelector('#flash') || {}).textContent || '' }; });
+    await p.waitForTimeout(200);
+    const S = () => p.evaluate(() => { const d = document.body, i = document.querySelector('[data-a="sn-movil"]'), det = document.querySelector('.usoplieg');
+      return { v: i && i.value, marca: /del móvil ✓/.test(d.textContent), negrita: !!document.querySelector('.usoapps b b, .usoapps li span b'), apps: [...document.querySelectorAll('.usoapps li span')].map((x) => x.textContent).join('|'),
+        summ: det ? det.querySelector('summary').textContent : '', ancho: document.documentElement.scrollWidth }; });
+    const s1 = await S();
+    await p.evaluate(() => { document.querySelector('.usoplieg').open = true; });
+    const vis = await p.evaluate(() => document.querySelector('.usoapps').getBoundingClientRect().height > 0);
+    await p.click('[data-a="sn-movil-chip"][data-v="60"]'); await p.waitForTimeout(150);
+    const s2 = await S();
+    await p.click('[data-a="sn-tguardar"]'); await p.waitForTimeout(250);
+    const g = await p.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())).movilMin);
+    await p.close();
+    check('K1-a) #uso=… guarda ayer (3 apps, la de «<b>x</b>» como texto), vacía el # y avisa; la hoja trae 182 con «del móvil ✓» y 64 desbloqueos; un chip quita la marca y Guardar fija 60',
+      R.hash === '' && R.u === JSON.stringify({ m: 182, u: 64, a: [['Vídeos', 80], ['<b>x</b>', 70], ['Chat', 60]] }) && /1 día recibido/.test(R.flash)
+      && s1.v === '182' && s1.marca && !s1.negrita && /<b>x<\/b>/.test(s1.apps) && /64 desbloqueos/.test(s1.summ) && vis && s2.v === '60' && !s2.marca && g === 60 && s1.ancho <= 412, JSON.stringify({ R, s1, s2, g, vis }));
+  }
+
+  // 446) EL LANZADOR · K1-b: entradas malas no guardan nada y sí limpian el #; con un q de 95 caracteres el día se guarda sin q.
+  {
+    const hash = (o) => '#uso=' + encodeURIComponent(JSON.stringify(o));
+    const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG);
+    const F = await p0.evaluate(() => { const P = window.PG, d = (n) => P.iso(P.addDays(new Date(), n)); P.store.uso = {}; P.save(); return { ayer: d(-1), man: d(1), viejo: d(-40) }; }); await p0.close();
+    const bueno = (o) => Object.assign({ f: F.ayer, m: 100, u: 10, a: [] }, o);
+    const casos = [['json roto', '#uso=%7Bno'], ['v2', hash({ v: 2, d: [bueno({})] })], ['futura', hash({ v: 1, d: [bueno({ f: F.man })] })], ['vieja', hash({ v: 1, d: [bueno({ f: F.viejo })] })],
+      ['m 5000', hash({ v: 1, d: [bueno({ m: 5000 })] })], ['m texto', hash({ v: 1, d: [bueno({ m: '90' })] })], ['d vacío', hash({ v: 1, d: [] })], ['15 días', hash({ v: 1, d: Array(15).fill(bueno({})) })],
+      ['13000', '#uso=' + 'a'.repeat(13000)], ['fecha 31 feb', hash({ v: 1, d: [bueno({ f: '2026-02-31' })] })]];
+    const malos = [];
+    for (const [n, h] of casos) { const p = await context.newPage(); await p.goto(base + 'index.html' + h); await p.waitForFunction(() => window.PG); await p.waitForTimeout(150);
+      const r = await p.evaluate(() => ({ hash: location.hash, uso: JSON.stringify(window.PG.store.uso) })); await p.close(); if (r.hash !== '' || r.uso !== '{}') malos.push(n + ' ' + JSON.stringify(r)); }
+    const p = await context.newPage(); await p.goto(base + 'index.html' + hash({ v: 1, d: [bueno({ q: '0'.repeat(95) })] })); await p.waitForFunction(() => window.PG); await p.waitForTimeout(150);
+    const q = await p.evaluate(() => { const u = window.PG.store.uso; return JSON.stringify(u); }); await p.close();
+    check('K1-b) JSON roto, v:2, fecha futura/vieja/31 feb, m:5000, m:"90", d vacío o de 15, 13000 caracteres: no guardan y vacían el #; un q de 95 caracteres guarda el día sin q',
+      !malos.length && q === JSON.stringify({ [F.ayer]: { m: 100, u: 10, a: [], ts: JSON.parse(q)[F.ayer].ts } }), JSON.stringify({ malos, q }));
+  }
+
+  // 447) EL LANZADOR · K1-c: caso C: lo tuyo (90) y lo del móvil (182) difieren → aviso; «Dejar 90» lo oculta y se guarda 90; «Usar 182» deja 182.
+  {
+    const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG);
+    const ayer = await p0.evaluate(() => { const P = window.PG, a = P.iso(P.addDays(new Date(), -1)); P.store.uso = {}; P.store.suenoReal = { [P.iso(new Date())]: { h: 7, guardia: false, acostar: '23:00', desp: '06:00', tramos: [[23, 30, 0]], movilMin: 90 } }; P.save(); return a; }); await p0.close();
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html#uso=' + encodeURIComponent(JSON.stringify({ v: 1, d: [{ f: ayer, m: 182, u: 5, a: [['Chat', 50]] }] }))); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+    const abre = async () => { await p.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = P.iso(new Date()); P.ui.snTr = null; P.render(); }); await p.waitForTimeout(150); };
+    const S = () => p.evaluate(() => { const a = document.querySelector('.usoaviso'), i = document.querySelector('[data-a="sn-movil"]'); return { aviso: a ? a.textContent.replace(/\s+/g, ' ').trim() : '', v: i.value, marca: /del móvil ✓/.test(document.body.textContent) }; });
+    await abre(); const a1 = await S();
+    await p.click('[data-a="sn-uso-dejar"]'); await p.waitForTimeout(150); const a2 = await S();
+    await p.click('[data-a="sn-tguardar"]'); await p.waitForTimeout(200);
+    const g1 = await p.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())).movilMin);
+    await abre(); const a3 = await S();
+    await p.click('[data-a="sn-uso-usar"]'); await p.waitForTimeout(150); const a4 = await S();
+    await p.click('[data-a="sn-tguardar"]'); await p.waitForTimeout(200);
+    const g2 = await p.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())).movilMin);
+    await p.close();
+    check('K1-c) con 90 puestos a mano y 182 del móvil sale el aviso sin cambiar nada; «Dejar 90» lo oculta y guarda 90; al reabrir «Usar 182» pone 182 y guarda 182',
+      /Tú pusiste 1h30; el móvil dice 3h02/.test(a1.aviso) && a1.v === '90' && !a1.marca && a2.aviso === '' && a2.v === '90' && g1 === 90 && /Tú pusiste/.test(a3.aviso) && a4.aviso === '' && a4.v === '182' && g2 === 182, JSON.stringify({ a1, a2, g1, a3, a4, g2 }));
+  }
+
+  // 448) EL LANZADOR · K1-d: sin pantallas desde los q: poco uso → 'si', 30 min → 'no', lo puesto a mano no se pisa.
+  {
+    const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG);
+    const D = await p0.evaluate(() => { const P = window.PG, d = (n) => P.iso(P.addDays(new Date(), n)), ok = []; P.store.uso = {};
+      for (const n of [-7, -5, -3]) { const x = P.addDays(new Date(), n), s = P.snPantallas(new Date(x.getFullYear(), x.getMonth(), x.getDate(), 22, 0)); if (s) ok.push({ k: d(n), k2: d(n + 1), ini: s.ini, cama: s.cama }); }
+      P.store.sueno.pant = { resp: ok[2] ? { [ok[2].k]: 'no' } : {} }; P.save(); return ok; }); await p0.close();
+    const q = (ini, v) => { const a = Array(96).fill('0'); a[Math.floor(ini / 15)] = v; return a.join(''); };
+    const dias = []; if (D.length === 3) { dias.push({ f: D[0].k, m: 100, u: 1, q: q(D[0].ini, '3'), a: [] }, { f: D[0].k2, m: 10, u: 1, q: '0'.repeat(96), a: [] },
+      { f: D[1].k, m: 100, u: 1, q: q(D[1].ini, 'f').replace(/f0/, 'ff'), a: [] }, { f: D[1].k2, m: 10, u: 1, q: '0'.repeat(96), a: [] },
+      { f: D[2].k, m: 100, u: 1, q: '0'.repeat(96), a: [] }, { f: D[2].k2, m: 10, u: 1, q: '0'.repeat(96), a: [] }); }
+    const p = await context.newPage();
+    await p.goto(base + 'index.html#uso=' + encodeURIComponent(JSON.stringify({ v: 1, d: dias.length ? dias : [{ f: D[0] ? D[0].k : '2000-01-01', m: 1, u: 1 }] }))); await p.waitForFunction(() => window.PG); await p.waitForTimeout(300);
+    const R = await p.evaluate(() => JSON.stringify({ r: window.PG.store.sueno.pant.resp, a: window.PG.store.sueno.pant.auto }));
+    await p.close();
+    // ini cae en la tarde D con q de 3 min → 'si'; 30 min → 'no'; el 'no' a mano sigue 'no' aunque el uso sea limpio
+    check('K1-d) sin pantallas: 3 min en el cuarto de ini → «si» (auto 3); 30 min → «no» (auto 30); lo puesto a mano («no») no se pisa y no lleva auto',
+      D.length === 3 && ((o) => o.r[D[0].k] === 'si' && o.a[D[0].k] === 3 && o.r[D[1].k] === 'no' && o.a[D[1].k] === 30 && o.r[D[2].k] === 'no' && o.a[D[2].k] === undefined)(JSON.parse(R)), JSON.stringify({ D, R }));
+  }
+
   // 404) LAS MAÑANAS · LM3: «📊 Tu semana» con la mañana por tramos, la frase (con 4 o más mañanas), el móvil y sin colores de alarma.
   // 405) LAS MAÑANAS · LM3: «⏰ Alarmas del móvil» con «Quedan 30 min» y «Quedan 10 min» y el .ics apagado de serie.
   // 406) LAS MAÑANAS · LM3: la guía de Android (Pixel y Samsung) desde las alarmas.

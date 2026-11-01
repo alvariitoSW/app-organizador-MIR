@@ -2477,3 +2477,33 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - kcal/proteína de los 41 alimentos nuevos, aproximados de BEDCA/USDA de memoria (menos seguros: pimiento choricero, mató, miel de caña, cuajo, huevas).
   - Sin corregir: arroz con bogavante (va con langostino), solomillo al whisky (vermut en la lista), pasta alla norma (parmesano).
   - `font-size:16px!important` en campos para toda la app; la hoja del horno sale cada vez que se enciende.
+## El Lanzador · K1 (Consejo por delegación)
+
+**Elegido**
+- Maqueta A + caso C (`maquetas/lanzador-k1.html`). La mini-app de Android abre `index.html#uso=<JSON codificado>` (formato documentado sobre `usoEntrante()` en `app.js`); se valida como entrada no fiable, el `#` se borra siempre con `history.replaceState` y también se escucha `hashchange`.
+- Se guarda por día en `store.uso` (30 días; los cuartos de hora `q`, 8). Un día que vuelve a llegar se sobrescribe. La copia de seguridad ya incluye todo `store`, así que lleva `uso` (solo números y nombres de app).
+- Rellena sin pisar lo escrito a mano: minutos de móvil de la noche (con «del móvil ✓»), aviso si lo tuyo y lo del móvil difieren más de 5 min, plegado «Ayer en el móvil» y el hábito «sin pantallas» (`pantS().auto`).
+- Arreglo de paso: `normalize` perdía `suenoReal[k].movilMin` al recargar; ahora lo conserva.
+
+**Descartado**
+- Opción B de la maqueta.
+- `?` en vez de `#`: la query llega al servidor y se queda en el historial y en `share_target`; el `#` no sale del móvil.
+
+**Supuestos**
+- Un `q` mal formado se omite y el día se guarda sin él; una lista de más de 5 apps se ignora (el día se guarda sin apps); un nombre de app se recorta a 40 caracteres.
+- «Sin pantallas» se decide solo cuando ya ha pasado `cama+30` y están los `q` que tocan; sumar cuartos de hora aproxima los minutos (un cuarto solapado cuenta entero).
+- Si el usuario cambia a mano la respuesta de «sin pantallas», se borra la marca `auto` de esa tarde.
+- «Usar X» pone el valor del móvil en la hoja con la marca «del móvil ✓»; hay que pulsar Guardar para fijarlo. El plegado se cierra al repintar la hoja.
+
+## Pruebas que dependían de la fecha (01/11/2026)
+
+**Elegido**
+- La app estaba bien; eran las pruebas. Se añade a `tests/regression.test.js` `fijaHoy(page, s)` / `sueltaHoy(page)`: cambia `Date` dentro de la página (el reloj sigue andando desde la fecha fija, los temporizadores no se tocan) y lo deja como estaba al final del bloque.
+- 250: octubre de 2026 (la noche antes de un sábado libre la cama sale, bien, a las 00:20). 316: el miércoles de esta semana a las 10:00 (en domingo por la noche no queda día para cocinar y «Siguiente» sale desactivado, que cortaba el trozo 4). 288, 289, 290, 299, 326 y 333 (ocultas tras el corte): `FECHA_FIJA` = miércoles 14/10/2026 (el 1 de noviembre es domingo; el 8 de diciembre, festivo). La 326 compara con el mes de la página, no con el de Node.
+
+**Descartado**
+- `page.clock` de Playwright: se instala antes de cargar la página y no se puede quitar a mitad de la suite.
+- Tocar la app: en los ocho casos hacía lo correcto para esa fecha.
+
+**Supuestos**
+- Las pruebas que siguen usando la fecha real pueden caer otros días raros (fin de mes, festivos); se arreglan igual cuando salgan.

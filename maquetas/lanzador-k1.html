@@ -1,0 +1,131 @@
+<!doctype html><html lang=es><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>El Lanzador · maqueta K1</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#9fb3d1;--line:#26354f;--brand:#38e1ff;--brand2:#7c5cff;--ok:#34d399;--warn:#fbbf24;--sobre:#04121c;--page:#02040a}
+@media (prefers-color-scheme:light){:root{--bg:#eef2f9;--bg2:#e6ecf7;--card:#fff;--ink:#0d1729;--ink2:#4a5d7a;--line:#c9d5e8;--brand:#1d4ed8;--brand2:#6d28d9;--ok:#15803d;--warn:#92400e;--sobre:#fff;--page:#d9e0ee}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 40px}
+.intro{max-width:880px;margin:0 auto;padding:18px 16px 0}.intro h1{font-size:22px;margin:0 0 6px}.intro p{color:var(--ink2);margin:0 0 6px}
+.mundo{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:20px 12px}
+.ab{width:412px;height:915px;position:relative;overflow:hidden;border-radius:26px;border:1px solid var(--line);background:radial-gradient(600px 300px at 10% -5%,color-mix(in srgb,var(--brand2) 16%,transparent),transparent 70%),linear-gradient(var(--bg),var(--bg2));padding:12px 12px 76px;flex:none}
+.ab .cuerpo{height:100%;overflow:hidden}
+.lbl{position:absolute;top:-1px;right:14px;font-size:14px;font-weight:900;letter-spacing:.12em;color:var(--sobre);background:var(--brand);padding:3px 8px;border-radius:0 0 8px 8px;z-index:6}
+.card{background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
+.cap{font-size:14px;font-weight:900;letter-spacing:.12em;color:var(--ink2);margin-bottom:6px}
+.mini{font-size:14px;color:var(--ink2)}.row{display:flex;align-items:center;gap:8px}.sp{flex:1}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:8px}.top h1{font-size:20px;margin:0;line-height:1.2}
+.back{min-width:44px;height:44px;display:flex;align-items:center;font-size:16px;font-weight:800;color:var(--ink2)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:13px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-weight:800;font-size:14px;padding:0 12px;text-align:center}
+.btn.p{background:linear-gradient(90deg,var(--ok),var(--brand));color:var(--sobre);border:0}
+.btn.g{min-height:56px;font-size:17px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);font-size:14px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.chip.on{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--brand2) 16%,var(--bg2))}
+.paso{display:flex;gap:10px;font-size:16px;line-height:1.45;margin-bottom:8px}.paso b{color:var(--brand);font-size:18px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:64px;border-top:1px solid var(--line);background:var(--bg2);display:grid;grid-template-columns:repeat(5,1fr);font-size:14px;font-weight:800;color:var(--ink2);text-align:center;padding-top:8px;z-index:1}
+.nav div span{display:block;font-size:18px}.nav .on{color:var(--brand)}
+.pie{position:absolute;left:0;right:0;bottom:64px;padding:8px 12px 10px;background:var(--bg2);border-top:1px solid var(--line)}
+.alarma{border:2px solid var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card));border-radius:14px;padding:10px 12px;margin:2px 0 8px}
+.sw{width:48px;height:28px;border-radius:14px;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ink2)}
+.velo{position:absolute;inset:0;background:rgba(2,4,10,.62);z-index:2}
+.hoja{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--bg2);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:10px 12px 18px;box-shadow:0 -10px 30px color-mix(in srgb,var(--page) 60%,transparent)}
+.asa{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.cat{max-width:880px;margin:0 auto;padding:0 16px}
+.cat h2{font-size:19px;margin:22px 0 4px}
+.cat table{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--line)}
+.cat .tw{overflow-x:auto}
+.cat td,.cat th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cat th{color:var(--ink2);font-weight:800}
+/* nuevas · las mañanas */
+.modos{display:flex;gap:4px;font-size:14px;font-weight:700;color:var(--ink2);margin-bottom:8px}
+.modos span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;background:var(--bg2);text-align:center;line-height:1.1}
+.modos .on{border-color:var(--brand);color:var(--ink)}
+.led{background:#05070a;border:1px solid #1d2733;border-radius:14px;padding:14px;margin-bottom:8px;font-family:ui-monospace,Menlo,Consolas,monospace;text-align:center}
+.led .a{color:#ffb000;font-size:22px;font-weight:700;letter-spacing:.04em}
+.led .c{color:#4ff0ff;font-size:28px;font-weight:700;margin-top:4px}
+.btn.hecho{border-color:var(--ok);color:var(--ink);background:color-mix(in srgb,var(--ok) 14%,var(--bg2));flex-direction:column;gap:0;line-height:1.2}
+.btn.hecho small{color:var(--ok);font-size:14px}
+.reg2{position:relative;height:136px;margin:6px 6px 0}
+.reg2 .linea{position:absolute;left:0;right:0;top:66px;height:4px;border-radius:2px;background:var(--line)}
+.reg2 .tr{position:absolute;left:0;top:66px;height:4px;border-radius:2px;background:var(--brand);width:40%}
+.reg2 .t{position:absolute;top:60px;width:2px;height:16px;background:var(--ink2);margin-left:-1px}
+.reg2 .t.k{background:var(--brand);width:3px;margin-left:-1.5px}
+.reg2 .m{position:absolute;font-size:14px;line-height:1.2;font-weight:800;text-align:center;transform:translateX(-50%);white-space:nowrap}
+.reg2 .m small{display:block;font-weight:600;color:var(--ink2);font-size:14px}
+.reg2 .arr{top:22px}.reg2 .aba{top:80px}
+.reg2 .m.l{transform:none;text-align:left}.reg2 .m.r{transform:none;text-align:right}
+.reg2 .pie2{position:absolute;top:59px;width:14px;height:14px;border-radius:50%;background:var(--brand);margin-left:-7px;border:2px solid var(--bg2)}
+.reg2 .ahora{position:absolute;top:56px;width:22px;height:22px;border-radius:50%;border:3px solid var(--ink);margin-left:-11px;background:var(--bg2)}
+.pill{display:inline-block;border-radius:10px;padding:2px 8px;border:1px solid var(--brand);color:var(--ink);font-size:14px;font-weight:800;background:color-mix(in srgb,var(--brand) 14%,var(--card))}
+.nota-maq{border:1.5px dashed var(--ink2);border-radius:12px;padding:8px 10px;font-size:14px;color:var(--ink2);margin-bottom:8px;line-height:1.35}
+.fil{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 0;border-bottom:1px solid var(--line)}
+.fil:last-child{border-bottom:0}.fil .e{font-size:24px;width:34px;text-align:center}.fil .n{font-weight:800}
+.fil .h{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums}
+.dif{font-weight:900;color:var(--brand);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.par{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.par:last-child{border-bottom:0}.par .bs{flex:1}
+.par .nm{font-weight:800;font-size:14px;margin-bottom:3px}
+.bar{height:10px;border-radius:5px;margin-bottom:3px}
+.bar.pv{border:1.5px solid var(--ink2);background:transparent}.bar.re{background:var(--brand)}
+.dest{border-left:4px solid var(--brand);padding:6px 10px;font-size:17px;font-weight:800;margin:6px 0 2px}
+.nuevo{font-size:14px;font-weight:900;letter-spacing:.06em;color:var(--sobre);background:var(--brand);border-radius:8px;padding:1px 7px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.seg div{min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;font-weight:800;background:var(--bg2);color:var(--ink2)}
+.seg .on{border-color:var(--brand);color:var(--ink)}
+.cod{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;word-break:break-all;flex:1}
+.cir{width:210px;height:210px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:conic-gradient(var(--brand) 0 50%,var(--line) 50% 100%)}
+.cir div{width:176px;height:176px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:84px;font-weight:900;font-variant-numeric:tabular-nums}
+.dis{opacity:.5}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:800;color:var(--ink2)}
+.fld input{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px;padding:0 12px}
+.del{display:inline-block;font-size:12px;font-weight:800;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:1px 6px;margin-left:6px}
+details{border:1px solid var(--line);border-radius:12px;padding:0 12px;margin-top:8px;background:var(--bg)}
+summary{min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:800;cursor:pointer}
+.apps{list-style:none;margin:0 0 10px;padding:0;font-size:14px}.apps li{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)}
+.big{font-size:26px;font-weight:900}.aviso{border:1px dashed var(--warn);border-radius:12px;padding:8px 10px;margin-top:8px;font-size:14px}
+.tira{height:62px;border-radius:12px;background:var(--bg);border:1px solid var(--line);margin-bottom:8px;display:flex;align-items:center;justify-content:center;color:var(--ink2);font-size:13px}
+</style>
+<div class="intro"><h1>El Lanzador · K1 · la parte web</h1>
+<p>Lo que cambia en la hoja de la noche cuando llega el uso del móvil (enlace <code>#uso=…</code> que abre la lanzadora). Lo de arriba de la hoja (la franja, las horas, el KSS) no cambia: aquí va resumido.</p>
+<p>A = el campo de siempre, ya relleno y con su marca. B = una cifra grande en lugar del campo. C = lo que pasa si ya habías escrito otra cifra a mano.</p></div>
+<div class="mundo">
+
+<div class="ab"><span class="lbl">A</span><div class="cuerpo">
+<div class="velo"></div><div class="hoja" style="top:240px">
+<div class="asa"></div><h3 style="margin:0 0 8px">Anoche</h3>
+<div class="tira">franja, horas y «¿cómo de despejado?» (sin cambios)</div>
+<label class="fld"><span>📱 Minutos de móvil ayer <span class="del">del móvil ✓</span></span><input value="182" inputmode="numeric"></label>
+<div class="chips" style="margin-top:6px"><span class="chip">30</span><span class="chip">60</span><span class="chip">90</span><span class="chip">120</span><span class="chip">180</span></div>
+<p class="mini" style="margin:0">Lo ha leído la lanzadora. Puedes cambiarlo.</p>
+<details open><summary>Ayer en el móvil · 64 desbloqueos ▾</summary>
+<ul class="apps"><li><span>YouTube</span><b>1h11</b></li><li><span>WhatsApp</span><b>40 min</b></li><li><span>Instagram</span><b>22 min</b></li></ul>
+<p class="mini" style="margin:0 0 10px">🌙 Sin pantallas anoche: <b>cumplido</b> (6 min desde las 22:15).</p></details>
+<div class="btn p g" style="margin-top:10px">Guardar · 7h05 dormidas</div>
+</div></div><div class="nav"><div><span>◉</span>Hoy</div><div><span>▦</span>Mes</div><div><span>🍽</span>Comer</div><div><span>🏋</span>Entreno</div><div><span>⋯</span>Más</div></div></div>
+
+<div class="ab"><span class="lbl">B</span><div class="cuerpo">
+<div class="velo"></div><div class="hoja" style="top:240px">
+<div class="asa"></div><h3 style="margin:0 0 8px">Anoche</h3>
+<div class="tira">franja, horas y «¿cómo de despejado?» (sin cambios)</div>
+<div class="card"><div class="cap">📱 AYER EN EL MÓVIL</div>
+<div class="row"><span class="big">3h02</span><span class="del">del móvil ✓</span><span class="sp"></span><span class="btn">Cambiar</span></div></div>
+<details><summary>64 desbloqueos y las 3 apps ▾</summary><ul class="apps"><li><span>YouTube</span><b>1h11</b></li></ul></details>
+<p class="mini">🌙 Sin pantallas anoche: cumplido.</p>
+<div class="btn p g" style="margin-top:10px">Guardar · 7h05 dormidas</div>
+</div></div><div class="nav"><div><span>◉</span>Hoy</div><div><span>▦</span>Mes</div><div><span>🍽</span>Comer</div><div><span>🏋</span>Entreno</div><div><span>⋯</span>Más</div></div></div>
+
+<div class="ab"><span class="lbl">C</span><div class="cuerpo">
+<div class="velo"></div><div class="hoja" style="top:300px">
+<div class="asa"></div><h3 style="margin:0 0 8px">Anoche</h3>
+<div class="tira">franja, horas y «¿cómo de despejado?» (sin cambios)</div>
+<label class="fld"><span>📱 Minutos de móvil ayer</span><input value="90" inputmode="numeric"></label>
+<div class="aviso">Tú pusiste <b>90</b>; el móvil dice <b>182</b>.<div class="row" style="margin-top:6px"><span class="btn">Usar 182</span><span class="btn">Dejar 90</span></div></div>
+<details><summary>Ayer en el móvil · 64 desbloqueos ▸</summary></details>
+<div class="btn p g" style="margin-top:10px">Guardar · 7h05 dormidas</div>
+</div></div><div class="nav"><div><span>◉</span>Hoy</div><div><span>▦</span>Mes</div><div><span>🍽</span>Comer</div><div><span>🏋</span>Entreno</div><div><span>⋯</span>Más</div></div></div>
+
+</div>
+<div class="cat"><h2>Por qué A (Consejo, por delegación)</h2>
+<p class="mini">A cambia lo mínimo: el mismo campo de siempre, ya relleno, con la marca «del móvil ✓» y editable; lo demás, plegado. B quita el campo y obliga a un botón más para corregir. C no es otra opción: es el caso de una cifra escrita a mano, que nunca se pisa sin preguntar. La pantalla C va con la A.</p></div>

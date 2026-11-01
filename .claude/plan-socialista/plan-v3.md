@@ -196,6 +196,14 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 | CH10b | **Pulido de toda la app** con las skills de `emilkowalski/skills` (MIT; pedido el 31/10): `mobile-native` (falta `100dvh`, `@media (hover: hover)` y repasar inputs ≥16 px), `animation-performance` y `review-animations` (curvas ease-out, `:active` con `scale(0.97)`, solo transform/opacity, `prefers-reduced-motion`). Se instalan en `.claude/skills/` solo esas 3 (texto, sin código). `verificador` mide antes y después a 412×915 | arreglo | sonnet con ficha | ~0,9 M |
 | CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 
+### «El Lanzador» (la app Android que lee el uso del móvil) · Consejo 2026-11-01 · acta `consejo/2026-11-01.md` · **aprobada** (01/11: Brave, lanzadora C, todo plegado, ~2,6 M, delegación al Consejo) · **K1 hecha** (01/11, rama `claude/plan-socialista-q4sp1t`, ddb8562, sin `main`: la suite de main ya cae en la 250 y la 274) · siguiente: **K2**
+
+| Clave | Qué | Tipo | Modelo | Presupuesto |
+|---|---|---|---|---|
+| K1 | Web: leer `#uso=…`, validar (entrada no fiable), `replaceState`, guardar y rellenar lo que elija (maqueta antes) · [enc-bienestar-digital] | construir (pantalla con maqueta) | sonnet | ~1,2 M |
+| K2 | `android/`: lanzadora que pide «Acceso al uso», lee `queryEvents` al abrir y abre la web en su navegador fijado; sin INTERNET, iconos XML; workflow de firma → Release | construir | sonnet + haiku | ~1,0 M |
+| K3 | Instalar en su móvil (HyperOS) y ajustar, con el usuario | arreglo | sonnet | ~0,4 M |
+
 ### Después (sin planificar todavía)
 
 0. [v3-viajes] **Viajes y vacaciones** (2026-10-29, «un poco más adelante»), con su propio Consejo (Sanidad + Bienestar): el vuelo (hora, aeropuerto), a qué hora salir de casa, bus o taxi y cómo está la carretera, el billete apuntado como gasto (y si va a Madrid a menudo, como fijo); y **la rutina en vacaciones**: la app es para la continuidad, y en vacaciones no se usa ni hace falta apuntar: debatir cómo ayudar sin romper rachas y cómo volver. Primeras notas en el acta `consejo/2026-10-29-2.md` · maqueta → construir
@@ -216,7 +224,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 - ~~[v3-gmail]~~ fuera del plan (parte aprobado 30/10)
 - [aparc-comida-entreno] Los días de entreno a las 18:30, ¿la comida después del entreno?
 - [aparc-sueno-vistas] / [aparc-sueno-sitio] Apuntar el sueño en Estación, Reloj y Línea; dónde vive el sueño en Hoy
-- [enc-bienestar-digital] Uso real de pantalla y un hábito «sin pantallas» fijo
+- [enc-bienestar-digital] → tanda «El Lanzador» (Consejo, 2026-11-01) · Uso real de pantalla y un hábito «sin pantallas» fijo · (01/11) **Sin capturas.** El usuario quiere que la app lea sola el «Acceso al uso» de Android (minutos por app, desbloqueos, por horas). Una web no puede: hace falta envolverla en una app Android. Propuesta a estudiar en Consejo: **TWA** (Bubblewrap) con un poco de código nativo que lea `UsageStatsManager` al abrir y lo pase en el enlace; sigue cargando la web de Pages (se actualiza sola) y **comparte el localStorage de Chrome**. Capacitor: más fácil de programar, pero estrena almacenamiento (hay que mudar los datos). Dudas: APK instalada a mano y su firma (¿en Actions?), `assetlinks.json` en la raíz del dominio (sin él sale la barra de la dirección), la batería. Tipo `estudio` y luego `construir`, ~2 M+.
 - [aparc-parte-diario] El parte cada mañana solo (falta la hora)
 - [aparc-suite-2min] La suite en ~2 minutos
 - [aparc-regleta-pisa] ✅ arreglado en LM2 (31/10, prueba 403): En la regleta de la mañana de Hoy, «Vestirse» y «Salir de casa» se pisan un poco (visto en El Cierre, 30/10)

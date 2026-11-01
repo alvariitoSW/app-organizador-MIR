@@ -4263,7 +4263,7 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 .impamb .btn{margin-top:8px;width:100%}
 .impamb.mal{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));background:color-mix(in srgb,var(--bad) 10%,var(--card))}
 
-/* ============ CH10b · pulido de móvil (skills mobile-native, animation-performance y review-animations de emilkowalski) ============
+/* ============ CH10b · pulido de móvil (skills mobile-native, animation-performance y review-animations de emilkowalski) =====
    · campos a 16 px: con menos, el móvil hace zoom al tocarlos y la pantalla «salta».
    · botones: al pulsarlos se hunden un pelo (scale .97) con curva ease-out; :where() deja las reglas propias de cada botón mandar.
    · el hover solo existe con ratón (arriba, @media (hover:hover)); un toque ya no deja el botón «pegado» en su estado hover. */
@@ -4271,3 +4271,14 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color])
 :where(button:not(:disabled),[role=button]):active{transform:scale(.97)}
 :where(button,[role=button]){-webkit-tap-highlight-color:transparent}
 @media (prefers-reduced-motion:reduce){:where(button,[role=button]):active{transform:none}}
+=======
+/* K1: la lanzadora (uso del móvil leído solo) */
+.snmovil .del{display:inline-block;font-size:12px;font-weight:800;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:0 6px;margin-left:4px;text-transform:none}
+.usoaviso{margin-top:10px;padding:10px 12px;border:2px dashed var(--warn);border-radius:12px;background:color-mix(in srgb,var(--warn) 10%,var(--bg2))}
+.usoaviso p{margin:0 0 8px;font-size:14px}
+.usoaviso .row{display:flex;gap:8px}.usoaviso .btn{flex:1;min-height:44px;font-size:14px}
+.usoplieg{margin-top:10px}
+.usoplieg summary{min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:800;cursor:pointer}
+.usoapps{list-style:none;margin:0 0 6px;padding:0}
+.usoapps li{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.usoapps li span{overflow-wrap:anywhere}

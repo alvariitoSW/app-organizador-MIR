@@ -672,6 +672,12 @@ function normalize(o){
       const ent=function(x){return typeof x==='number'&&isFinite(x)&&x>=0?Math.floor(x):0;};
       const r={c:ent(t.c),s:ent(t.s)};if(r.c+r.s===0)delete v[e];else v[e]=r;});
     if(!Object.keys(v).length)delete o.pausas[k];});}
+  /* K1: store.uso = {'2026-11-12':{m,u,q?,a:[[app,min]…≤3],ts}}: lo que lee la lanzadora de Android. 30 días; q (cuartos de hora) solo 8. */
+  if(!o.uso||typeof o.uso!=='object'||Array.isArray(o.uso))o.uso={};
+  {const limU=iso(addDays(new Date(),-30)),limQ=iso(addDays(new Date(),-8));
+  Object.keys(o.uso).forEach(function(k){const r=/^\d{4}-\d{2}-\d{2}$/.test(k)&&k>=limU?usoLimpia(o.uso[k]):null;
+    if(!r){delete o.uso[k];return;}
+    if(k<limQ)delete r.q;r.ts=typeof o.uso[k].ts==='number'&&isFinite(o.uso[k].ts)?o.uso[k].ts:0;o.uso[k]=r;});}
   const limMan=iso(addDays(new Date(),-90)),hmMin=function(t){return +t.slice(0,2)*60+ +t.slice(3);};
   Object.keys(o.manana).forEach(function(k){const v=o.manana[k];
     if(!/^\d{4}-\d{2}-\d{2}$/.test(k)||!v||typeof v!=='object'||Array.isArray(v)){delete o.manana[k];return;}
@@ -992,6 +998,7 @@ function normalize(o){
     /* los trozos (de 18 a 42 h), lo dormido en la guardia y lo despejado que estabas (1–9) */
     if(x.rt!=null)sr[k].rt=Math.max(0,Math.min(sr[k].h,+x.rt||0));
     if(+x.kss>=1&&+x.kss<=9)sr[k].kss=Math.round(+x.kss);
+    if(x.movilMin!=null&&x.movilMin!==''&&isFinite(+x.movilMin)&&+x.movilMin>=0)sr[k].movilMin=Math.min(1440,Math.round(+x.movilMin));   /* K1: antes se perdía al recargar */
     if(+x.kssTarde>=1&&+x.kssTarde<=9)sr[k].kssTarde=Math.round(+x.kssTarde);
     if(x.kssH!=null&&+x.kssH>=0&&+x.kssH<=23)sr[k].kssH=Math.round(+x.kssH);
     if(Array.isArray(x.tramos))sr[k].tramos=x.tramos.filter(function(t){return Array.isArray(t)&&+t[1]>+t[0]&&+t[0]>=18&&+t[1]<=42;}).slice(0,12)
@@ -6440,12 +6447,26 @@ function suenoSemana(key){
   return {lun:lun,dias:dias,total:Math.round(total*10)/10,n:n,media:n?Math.round(total/n*10)/10:0};}
 /* minutos de móvil por día (lo apuntas en la hoja de la noche) y la media; sin semáforos */
 function movilTxt(m){return m<60?m+' min':Math.floor(m/60)+'h'+('0'+(m%60)).slice(-2);}
+/* K1: uso del móvil leído por la lanzadora. usoLimpia() valida un día ({m,u,q?,a}) venga del enlace o del disco: devuelve el día limpio o null.
+   Un q que no cuadra se omite (el día se queda sin cuartos de hora, pero se guarda). usoDe(k) = el uso del día k-1 (el «ayer» de la noche k). */
+function usoLimpia(v){
+  if(!v||typeof v!=='object'||Array.isArray(v))return null;
+  if(!Number.isInteger(v.m)||v.m<0||v.m>1440||!Number.isInteger(v.u)||v.u<0||v.u>3000)return null;
+  const r={m:v.m,u:v.u},a=[];
+  if(typeof v.q==='string'&&/^[0-9a-f]{96}$/.test(v.q))r.q=v.q;
+  if(Array.isArray(v.a)&&v.a.length<=5)v.a.forEach(function(p){
+    if(!Array.isArray(p)||p.length!==2||typeof p[0]!=='string'||!Number.isInteger(p[1])||p[1]<0||p[1]>1440)return;
+    const n=p[0].replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g,'').trim().slice(0,40).trim();
+    if(n)a.push([n,p[1]]);});
+  a.sort(function(x,y){return y[1]-x[1];});r.a=a.slice(0,3);return r;}
+function usoDe(k){const d=parseDate(k);if(!d||!store.uso)return null;const u=store.uso[iso(addDays(d,-1))];return u&&typeof u==='object'?u:null;}
+function movilMinDe(k,r){return r&&r.movilMin!=null?r.movilMin:(usoDe(k)?usoDe(k).m:null);}
 function snMovilSemanaHTML(dias,hoyK){
-  const con=dias.filter(function(d){return d.r&&d.r.movilMin!=null;});
+  const con=dias.filter(function(d){return movilMinDe(d.k,d.r)!=null;});
   if(!con.length)return '';
-  const med=Math.round(con.reduce(function(a,d){return a+d.r.movilMin;},0)/con.length);
+  const med=Math.round(con.reduce(function(a,d){return a+movilMinDe(d.k,d.r);},0)/con.length);
   return '<div class="snmov" role="img" aria-label="minutos de móvil por día">'+dias.map(function(d){
-    return '<span>'+(d.r&&d.r.movilMin!=null?'📱 '+movilTxt(d.r.movilMin):(d.k>hoyK?'':'—'))+'</span>';}).join('')+'</div>'+
+    return '<span>'+(movilMinDe(d.k,d.r)!=null?'📱 '+movilTxt(movilMinDe(d.k,d.r)):(d.k>hoyK?'':'—'))+'</span>';}).join('')+'</div>'+
     '<p class="mini" style="margin:6px 0 0">📱 Móvil: media '+Math.floor(med/60)+' h '+('0'+(med%60)).slice(-2)+' al día, '+con.length+' día'+(con.length===1?'':'s')+' apuntado'+(con.length===1?'':'s')+'.</p>';}
 function suenoSemanaHTML(key){
   /* lo real, no el plan: una barra por día contra tu objetivo. Un día sin apuntar sale vacío y lo
@@ -7288,7 +7309,8 @@ function snTipo(x){return x[0]>=30?['si','☀️ Siesta']:(x[2]?['gu','🩺 En l
 function suenoHojaHTML(){
   const k=ui.snHoja,d=parseDate(k);if(!d)return '';
   if(!ui.snTr||ui.snTr.k!==k)ui.snTr={k:k,tr:snTramosDe(k).map(function(x){return [Math.round(x[0]*60)/60,Math.round(x[1]*60)/60,x[2]];}),
-    kss:cnKss(k)||0,supuesto:!((suenoReal(k)||{}).tramos||[]).length,mov:(suenoReal(k)||{}).movilMin==null?null:(suenoReal(k)||{}).movilMin};
+    kss:cnKss(k)||0,supuesto:!((suenoReal(k)||{}).tramos||[]).length,mov:(suenoReal(k)||{}).movilMin==null?(usoDe(k)?usoDe(k).m:null):(suenoReal(k)||{}).movilMin,
+    movAuto:(suenoReal(k)||{}).movilMin==null&&!!usoDe(k)};
   const T=ui.snTr,s=snResumenTramos(T.tr),DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],sal=salidaDeGuardia(k);
   const tit=(k===iso(new Date())?'Anoche':('Noche del '+DN[(d.getDay()+6)%7]+' al '+DN[d.getDay()]+' '+d.getDate()))+(sal?' · guardia':'');
   const filas=T.tr.map(function(x,i){const t=snTipo(x);
@@ -7307,10 +7329,25 @@ function suenoHojaHTML(){
     '<div class="row snres"><span>'+(s.rt?'En la guardia':'Noche')+' <b>'+fmtHM(s.noche*60)+'</b></span>'+(s.siesta?'<span>+ después <b>'+fmtHM(s.siesta*60)+'</b></span>':'')+'<span class="sp"></span><span>Total <b>'+fmtHM(s.cuenta*60)+'</b></span></div>'+
     '<div class="dsucap" style="margin-top:12px">¿CÓMO DE DESPEJADO ESTÁS AHORA?</div>'+
     kssEscalaHTML(T.kss,' data-a="sn-kss"','1 muy despierto · 9 mucho sueño')+
-    '<label class="fld snmovil" style="margin-top:12px"><span>📱 Minutos de móvil ayer <small>(opcional)</small></span><input type="text" inputmode="numeric" data-a="sn-movil" value="'+(T.mov==null?'':T.mov)+'" placeholder="p. ej. 90" maxlength="3" aria-label="Minutos de móvil ayer"></label>'+
+    '<label class="fld snmovil" style="margin-top:12px"><span>📱 Minutos de móvil ayer <small>(opcional)</small>'+(T.movAuto?' <span class="del">del móvil ✓</span>':'')+'</span><input type="text" inputmode="numeric" data-a="sn-movil" value="'+(T.mov==null?'':T.mov)+'" placeholder="p. ej. 90" maxlength="3" aria-label="Minutos de móvil ayer"></label>'+
     '<div class="snmas snmovc">'+[30,60,90,120,180].map(function(n){return '<button class="chipx'+(T.mov===n?' on':'')+'" data-a="sn-movil-chip" data-v="'+n+'">'+n+'</button>';}).join('')+'</div>'+
-    '<p class="mini" style="margin:6px 0 0">Míralo en Ajustes del móvil → Bienestar digital. Tardas 10 segundos; puedes dejarlo vacío.</p>'+
+    (T.movAuto?'<p class="mini" style="margin:6px 0 0">Lo ha leído la lanzadora. Puedes cambiarlo.</p>':'<p class="mini" style="margin:6px 0 0">Míralo en Ajustes del móvil → Bienestar digital. Tardas 10 segundos; puedes dejarlo vacío.</p>')+
+    usoAvisoHTML(k,T)+usoPliegueHTML(k)+
     '<button class="btn p gbig" style="margin-top:10px;width:100%" data-a="sn-tguardar">Guardar · '+fmtHM(s.cuenta*60)+' dormidas</button>');}
+/* K1: caso C (lo tuyo y lo del móvil difieren más de 5 min: no cambia nada sin tocar) y el plegado «Ayer en el móvil» */
+function usoAvisoHTML(k,T){
+  const x=(suenoReal(k)||{}).movilMin,u=usoDe(k);
+  if(T.usoDejar||x==null||!u||Math.abs(u.m-x)<=5)return '';
+  return '<div class="usoaviso" role="group" aria-label="El móvil dice otra cifra"><p>Tú pusiste <b>'+esc(movilTxt(x))+'</b>; el móvil dice <b>'+esc(movilTxt(u.m))+'</b>.</p>'+
+    '<div class="row"><button class="btn p" data-a="sn-uso-usar">Usar '+esc(movilTxt(u.m))+'</button><button class="btn" data-a="sn-uso-dejar">Dejar '+esc(movilTxt(x))+'</button></div></div>';}
+function usoPliegueHTML(k){
+  const u=usoDe(k);if(!u)return '';
+  const D=iso(addDays(parseDate(k),-1)),au=store.sueno&&store.sueno.pant&&store.sueno.pant.auto&&store.sueno.pant.auto[D],rs=store.sueno&&store.sueno.pant&&store.sueno.pant.resp&&store.sueno.pant.resp[D];
+  let pa='';
+  if(au!=null&&(rs==='si'||rs==='no')){const P=snPantallas(new Date(+D.slice(0,4),+D.slice(5,7)-1,+D.slice(8,10),22,0));
+    pa='<p class="mini">🌙 Sin pantallas anoche: <b>'+(rs==='si'?'cumplido':'no cumplido, y no pasa nada')+'</b> ('+esc(au)+' min'+(P?' desde las '+esc(hCortaHM(P.hIni)):'')+').</p>';}
+  return '<details class="usoplieg"><summary>Ayer en el móvil · '+u.u+' desbloqueos</summary>'+
+    (u.a.length?'<ul class="usoapps">'+u.a.map(function(p){return '<li><span>'+esc(p[0])+'</span><b>'+esc(movilTxt(p[1]))+'</b></li>';}).join('')+'</ul>':'')+pa+'</details>';}
 function snTCambia(i,k,v){
   /* una hora escrita: dentro de la franja 18:00→18:00; si el final queda antes del principio, se
      corre el otro extremo (no se tira lo que escribiste) */
@@ -26898,7 +26935,9 @@ function act(a,el){
     case 'sn-tab':ui.snTab=el.dataset.v||'';ui.tab='hoy';ui.hoyVista='sueno';ui.snVista='';render();window.scrollTo(0,0);break;
     case 'sn-tquita':if(ui.snTr){ui.snTr.tr.splice(+el.dataset.i,1);ui.snTr.supuesto=false;}render();break;
     case 'sn-tmas':snTMas(el.dataset.v);render();break;
-    case 'sn-movil-chip':if(ui.snTr)ui.snTr.mov=+el.dataset.v||0;render();break;
+    case 'sn-movil-chip':if(ui.snTr){ui.snTr.mov=+el.dataset.v||0;ui.snTr.movAuto=false;}render();break;
+    case 'sn-uso-usar':{const u=ui.snTr&&usoDe(ui.snTr.k);if(u){ui.snTr.mov=u.m;ui.snTr.movAuto=true;ui.snTr.usoDejar=true;}render();break;}
+    case 'sn-uso-dejar':if(ui.snTr)ui.snTr.usoDejar=true;render();break;
     case 'sn-tguardar':flash(snTGuardar());ui.snHoja='';render();break;
     case 'pvt-empezar':case 'pvt-otra':{const ms=SN_T.pvtMs;_pvt={rts:[],falsos:0,on:0,fin0:Date.now()+ms,fin:false};render();pvtProgramar();
       _pvt.iv=setInterval(function(){if(!_pvt||_pvt.fin)return;const q=document.getElementById('pvtQ');if(!q){pvtCorta(_pvt);_pvt=null;return;}q.textContent=Math.ceil(Math.max(0,_pvt.fin0-Date.now())/1000);
@@ -26915,7 +26954,7 @@ function act(a,el){
 
     case 'sn-cerrar':ui.hoyVista='';ui.snVista='';ui.snHoja='';render();window.scrollTo(0,0);break;
     case 'sn-vista':if(_pvt){pvtCorta(_pvt);_pvt=null;}ui.snVista=el.dataset.v||'';ui.snHoja='';render();window.scrollTo(0,0);break;
-    case 'pant-resp':{const k=el.dataset.k;if(!/^\d{4}-\d{2}-\d{2}$/.test(k||''))break;pantS().resp[k]=el.dataset.v==='si'?'si':'no';save();render();break;}
+    case 'pant-resp':{const k=el.dataset.k;if(!/^\d{4}-\d{2}-\d{2}$/.test(k||''))break;pantS().resp[k]=el.dataset.v==='si'?'si':'no';if(pantS().auto)delete pantS().auto[k];save();render();break;}
     case 'pant-guia-cierra':pantS().guia=true;save();render();break;
     case 'sn-hoja':{const k=el.dataset.k||iso(new Date());if(k>iso(new Date()))break;ui.snHoja=k;ui.snTr=null;render();break;}
     case 'hoy-informe':{ui.tab='hoy';ui.hoyVista='informe';ui.infLun=el.dataset.sem==='pasada'?'':iso(mondayOf(new Date()));render();window.scrollTo(0,0);break;}
@@ -29139,7 +29178,7 @@ document.addEventListener('change',e=>{
       if(el.dataset.k==='hora'){if(/^\d{1,2}:\d{2}$/.test(el.value||''))g.piscinaSal.hora=el.value;}
       else{const v=Math.round(num(el.value,90));if(v>=30&&v<=240)g.piscinaSal.dur=v;}
       save();render();break;}
-    case 'sn-movil':{if(ui.snTr){const n=parseInt(el.value,10);ui.snTr.mov=isNaN(n)?null:Math.max(0,Math.min(999,n));}render();break;}
+    case 'sn-movil':{if(ui.snTr){const n=parseInt(el.value,10);ui.snTr.mov=isNaN(n)?null:Math.max(0,Math.min(999,n));ui.snTr.movAuto=false;}render();break;}
     case 'sn-tt':snTCambia(+el.dataset.i,+el.dataset.k,el.value);render();break;
     case 'sn-conduce':store.sueno.conduce=!!el.checked;save();render();break;
     case 'sn-avcama':store.sueno.avisoCama=!!el.checked;save();programarAvisoCama();render();break;
@@ -29297,6 +29336,46 @@ function pausaEntrante(){
     history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:''));
     if(!/^[a-z]{1,12}$/.test(v)||!Object.prototype.hasOwnProperty.call(PAUSA_ETQ,v))return;
     ui.tab='hoy';ui.hoyVista='pausa';ui.pausa={etq:v,fin:Date.now()+5000,res:''};
+  }catch(e){}}
+/* K1 · LA LANZADORA. La mini-app de Android abre  index.html#uso=<datos>  con
+     <datos> = encodeURIComponent(JSON.stringify(P))
+     P = {v:1, d:[ {f:"AAAA-MM-DD", m:<minutos de pantalla ese día, entero 0-1440>, u:<desbloqueos, entero 0-3000>,
+                    q:<opcional: 96 caracteres hex 0-f = minutos de uso en cada cuarto de hora 00:00…23:45, cada uno 0-15>,
+                    a:[[nombre de la app (texto), minutos 0-1440], … hasta 5]}, … de 1 a 14 días ]}
+   Entrada NO fiable: hash >12000 caracteres, JSON roto, v≠1 o d fuera de 1..14 → se ignora todo; un día malo (fecha futura o de hace
+   más de 30 días, m/u fuera de rango) → se ignora ese día. Un q que no cuadra se omite y el día se guarda sin él. De las apps se
+   guardan las 3 con más minutos, sin caracteres de control y a 40 letras. El hash se borra SIEMPRE que empiece por #uso=.
+   Guarda store.uso[f] (un día que vuelve a llegar se sobrescribe), rellena el «sin pantallas» y avisa con un flash. */
+function usoPantallas(){
+  /* «sin pantallas»: minutos de uso en [ini, cama+30) de la tarde D, sacados de los q de D y D+1. Solo si no hay respuesta a mano. */
+  const pr=pantS();if(!pr.auto||typeof pr.auto!=='object'||Array.isArray(pr.auto))pr.auto={};
+  Object.keys(store.uso||{}).forEach(function(D){
+    const u=store.uso[D];if(!u||!u.q||(pr.resp[D]&&pr.auto[D]==null))return;
+    const d=parseDate(D);if(!d)return;
+    const P=snPantallas(new Date(d.getFullYear(),d.getMonth(),d.getDate(),22,0));if(!P||P.k!==D)return;
+    const bm=mins(P.cama);if(bm==null)return;const fin=(bm<720?bm+1440:bm)+30,ini=P.ini;
+    if(new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,fin).getTime()>Date.now())return;
+    const q2=store.uso[iso(addDays(d,1))],qs=[u.q,q2&&q2.q];let tot=0;
+    for(let j=Math.floor(ini/15);j<Math.ceil(fin/15);j++){const q=qs[j<96?0:1];if(!q)return;tot+=parseInt(q.charAt(j%96),16);}
+    pr.resp[D]=tot<10?'si':'no';pr.auto[D]=tot;});}
+function usoEntrante(){
+  try{
+    const h=location.hash||'';if(h.indexOf('#uso=')!==0)return;
+    history.replaceState(null,'',location.pathname+location.search);
+    if(h.length>12000)return;
+    let P;try{P=JSON.parse(decodeURIComponent(h.slice(5)));}catch(e){return;}
+    if(!P||typeof P!=='object'||P.v!==1||!Array.isArray(P.d)||P.d.length<1||P.d.length>14)return;
+    const hoy=iso(new Date()),lim=iso(addDays(new Date(),-30));let n=0;
+    if(!store.uso||typeof store.uso!=='object'||Array.isArray(store.uso))store.uso={};
+    P.d.forEach(function(x){
+      if(!x||typeof x!=='object'||typeof x.f!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(x.f))return;
+      const d=parseDate(x.f);if(!d||iso(d)!==x.f||x.f>hoy||x.f<lim)return;
+      const r=usoLimpia(x);if(!r)return;r.ts=Date.now();store.uso[x.f]=r;n++;});
+    if(!n)return;
+    const limQ=iso(addDays(new Date(),-8));
+    Object.keys(store.uso).forEach(function(k){if(k<lim)delete store.uso[k];else if(k<limQ)delete store.uso[k].q;});
+    usoPantallas();save();
+    flash('Uso del móvil: '+n+' día'+(n===1?'':'s')+' recibido'+(n===1?'':'s'));
   }catch(e){}}
 function compartidoEntrante(){
   /* el share_target del manifest entrega title/text/url en la query de index.html (método GET).
@@ -29517,6 +29596,8 @@ window.addEventListener('resize',anchoMovil);
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
 pausaEntrante();   /* LM4 */
+usoEntrante();   /* K1: la lanzadora */
+window.addEventListener('hashchange',function(){usoEntrante();render();});
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
 /* Si has entrado compartiendo una receta, vienes con una intención concreta: el asistente del
