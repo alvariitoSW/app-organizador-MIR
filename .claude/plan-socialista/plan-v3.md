@@ -196,7 +196,7 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 | CH10b | **Pulido de toda la app** con las skills de `emilkowalski/skills` (MIT; pedido el 31/10): `mobile-native` (falta `100dvh`, `@media (hover: hover)` y repasar inputs ≥16 px), `animation-performance` y `review-animations` (curvas ease-out, `:active` con `scale(0.97)`, solo transform/opacity, `prefers-reduced-motion`). Se instalan en `.claude/skills/` solo esas 3 (texto, sin código). `verificador` mide antes y después a 412×915 | arreglo | sonnet con ficha | ~0,9 M |
 | CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 
-### «El Lanzador» (la app Android que lee el uso del móvil) · Consejo 2026-11-01 · acta `consejo/2026-11-01.md` · **aprobada** (01/11: Brave, lanzadora C, todo plegado, ~2,6 M, delegación al Consejo) · siguiente: **K1**
+### «El Lanzador» (la app Android que lee el uso del móvil) · Consejo 2026-11-01 · acta `consejo/2026-11-01.md` · **aprobada** (01/11: Brave, lanzadora C, todo plegado, ~2,6 M, delegación al Consejo) · **K1 hecha** (01/11, rama `claude/plan-socialista-q4sp1t`, ddb8562, sin `main`: la suite de main ya cae en la 250 y la 274) · siguiente: **K2**
 
 | Clave | Qué | Tipo | Modelo | Presupuesto |
 |---|---|---|---|---|
