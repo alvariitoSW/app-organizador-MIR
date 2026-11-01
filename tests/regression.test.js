@@ -63,6 +63,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(String(e)));
 
+  // «HOY» FIJO PARA UN BLOQUE: hay pruebas que caían según el día real (día 1 del mes, fin de mes). Con fijaHoy() el reloj
+  // de la página se congela en el día 15 del mes en curso a las 12:00 (o en la fecha de PRUEBAS_HOY=AAAA-MM-DD, para probar
+  // cualquier día), y sueltaHoy() lo devuelve. Mismo patrón que las pruebas 75, 221 y 263.
+  // (con miercoles = true se corre al miércoles de esa semana: hay pruebas que necesitan días pasados Y por venir en la semana)
+  const fijaHoy = async (h = 12, mi = 0, miercoles = false) => {
+    const e = (process.env.PRUEBAS_HOY || '').match(/^(\d{4})-(\d\d)-(\d\d)$/), n = new Date();
+    const f = e ? [+e[1], +e[2] - 1, +e[3]] : [n.getFullYear(), n.getMonth(), 15];
+    if (miercoles) { const w = new Date(f[0], f[1], f[2], 12), g = new Date(f[0], f[1], f[2] - ((w.getDay() + 6) % 7) + 2, 12); f[0] = g.getFullYear(); f[1] = g.getMonth(); f[2] = g.getDate(); }
+    await page.evaluate(([y, mo, d, h, mi]) => { const Orig = window.__origDateFijo || Date; window.__origDateFijo = Orig;
+      const fr = new Orig(y, mo, d, h, mi, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [...f, h, mi]);
+  };
+  const sueltaHoy = () => page.evaluate(() => { if (window.__origDateFijo) { window.Date = window.__origDateFijo; delete window.__origDateFijo; } });
+
   // navegación: la barra tiene tres grupos —Calendario (Hoy/Semana/Mes), Entreno y Comer
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'month']);
@@ -4211,6 +4225,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // de una sentada en «Hoy», y EN ESE ORDEN: primero el día, luego lo que hay que HACER, y al final
   // lo de consulta. Antes el sol y los botones de navegar se colaban en medio de la lista.
   {
+    await fijaHoy(12, 0, true); // miércoles: lunes y martes «Hoy» trae la puerta del informe de la semana y la tarjeta crece
     await page.evaluate(() => {
       const P = window.PG, hoy = P.iso(new Date()), g = P.gymS();
       g.rutinas.length = 0;
@@ -4261,6 +4276,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.gymS().rutinas.length = 0;
       P.save();
     });
+    await sueltaHoy();
   }
 
   // ===================== Entreno: qué toca hoy =====================
@@ -9807,21 +9823,26 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 250) POR FECHA, EL CICLO NO PONE GUARDIAS NI SALIENTES (salían 8 de 6, «2 sin tipo» y salientes
   // dobles) y EL SALIENTE NO SUMA LA NOCHE QUE AÚN NO HA PASADO («dormiste 13h18», «a la cama 07:25»)
   {
+    await fijaHoy(); // sin depender del día real (día 1 / fin de mes)
     const r = await page.evaluate(() => { const P = window.PG, c = JSON.parse(JSON.stringify(P.store)), hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth();
       P.store.rotation.mode = 'date'; P.store.rotation.daySet = {}; P.store.rotation.anchorSet = true;
       const gd = P.store.shifts.find((s) => P.isGuardia(s));
-      [5, 12, 19].forEach((d, i) => P.setDayOverride(P.iso(new Date(y, m, d, 12)), gd.id, i ? 'urg' : 'umi'));
+      // la guardia del medio cae en martes (así el saliente es miércoles y el día siguiente jueves, laborable): con el día 12 fijo, en
+      // los meses en que el 13 es viernes el «mañana» del saliente es sábado y se levanta más tarde (la prueba caía por el calendario)
+      const dm = 8 + ((2 - new Date(y, m, 8, 12).getDay() + 7) % 7);
+      [dm - 7, dm, dm + 7].forEach((d, i) => P.setDayOverride(P.iso(new Date(y, m, d, 12)), gd.id, i ? 'urg' : 'umi'));
       let guard = 0, sal = 0, sinTipo = 0;
       for (let d = 1; d <= 28; d++) { const k = P.iso(new Date(y, m, d, 12)), i = P.dayInfo(k), sh = P.store.shifts.find((x) => x.id === i.shiftId);
         if (sh && P.isGuardia(sh)) { guard++; if (!i.guard) sinTipo++; } if (sh && /saliente/i.test(sh.name)) sal++; }
       // el día después de la guardia del 12: lo que dice el panel
-      const k13 = P.iso(new Date(y, m, 13, 12)), sl = P.sleepOf(k13), nt = P.nightOf ? P.nightOf(k13, sl) : null;
+      const k13 = P.iso(new Date(y, m, dm + 1, 12)), sl = P.sleepOf(k13), nt = P.nightOf ? P.nightOf(k13, sl) : null;
       P.store = c; P.save(); P.render();
       return { guard, sal, sinTipo, h: sl.h, rec: nt && nt.rec }; });
     check('por fecha el ciclo no mete guardias ni salientes: 3 guardias puestas = 3 guardias, con tipo, y como mucho un saliente cada una',
       r.guard === 3 && r.sinTipo === 0 && r.sal <= 3, JSON.stringify(r));
     check('el saliente no suma la noche de hoy (≈2 h + la siesta) y la cama no sale de madrugada',
       r.h < 10 && !!r.rec && +r.rec.slice(0, 2) >= 19, JSON.stringify(r));
+    await sueltaHoy();
   }
 
   // 251) HOY Y COMER DICEN LO MISMO, Y «MONTAR» LLEGA A LA PROTEÍNA. El calendario repartía el plan
@@ -11660,6 +11681,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // Lloretazo (D.esc.fumar false); con el hábito «Fumar menos», sí; los taxis del mes se cuentan aparte de la
   // semana. Fija: el cigarro salía siempre, fuera o no cosa tuya.
   {
+    await fijaHoy(); // sin depender del día real (día 1 / fin de mes)
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
       P.__t288 = { nH: P.habitosS().items.length, manana: JSON.stringify(P.store.manana || {}), viaje: P.store.rotation.viaje, consumo: JSON.stringify(P.store.consumo || {}) };
       P.store.consumo = {}; P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
@@ -11672,6 +11694,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const t2 = P.__t288; P.habitosS().items.length = t2.nH; P.store.manana = JSON.parse(t2.manana); P.store.rotation.viaje = t2.viaje; P.store.consumo = JSON.parse(t2.consumo); delete P.__t288; P.save();
       return { sin, con, mes }; });
     check('sin hábito de fumar el conductor no fuma en el Lloretazo; con «Fumar menos», sí; los taxis del mes se cuentan', r.sin === false && r.con === true && r.mes.n >= 2 && r.mes.taxi >= 1, JSON.stringify(r));
+    await sueltaHoy();
   }
   // 289) EL TAXI DE SERIE, EN CADENA: sin la clave «taxi» en el viaje se da por hecho que vas en taxi: el hábito
   // automático «taxi» se marca solo en un día de jornada pasado sin hora apuntada, la escena de la mañana es el
@@ -11679,6 +11702,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // voy en taxi» de Ajustes → Ir y volver lo quita y entonces nada de eso cuenta sin hora apuntada. Fija: el taxi
   // solo contaba si apuntabas la hora, y la tira no explicaba los pasos.
   {
+    await fijaHoy(); // sin depender del día real (día 1 / fin de mes)
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
       const kt = kd(-1), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
       P.__t289 = { kt, ov: (P.store.rotation.shiftByDay || {})[kt], mode: P.store.rotation.mode, viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), nH: P.habitosS().items.length, tab: P.ui.tab };
@@ -11707,18 +11731,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.bus.salio === '07:31' && r.bus.hab === '' && r.bus.e745 === 'bus' && r.bus.sem === Math.max(0, r.sem.taxi - 1) && r.bus.deshacer, JSON.stringify(r.bus));
     check('«de serie voy en taxi» en Ajustes lo quita: sin hora apuntada ya no cuenta taxi en el hábito, la escena, la semana ni el mes',
       r.b.deSerie === false && !r.b.marcado && r.b.hab === '' && r.b.e745 === 'bus' && r.b.taxi === false && r.b.sem === 0 && r.b.mes === 0, JSON.stringify(r.b));
+    await sueltaHoy();
   }
   // 290) EL TAXI ES UN GASTO, EN CADENA: con el viaje puesto (taxi de serie, 8 € el viaje) y dos mañanas de este
   // mes apuntadas con taxi, Dinero → Hoy enseña la tarjeta «Taxis al hospital» con la cuenta del mes y los euros
   // (n × 8), y Dinero → Mes la línea; al cambiar el precio en Ajustes → Ir y volver (12 €, campo de cambio) la
   // cuenta cambia y la tira de la mañana lo dice entre paréntesis. Fija: el taxi era un hábito sin precio.
   {
+    await fijaHoy(); // sin depender del día real (día 1 / fin de mes)
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), mk = hoy.slice(0, 7);
       P.__t290 = { viaje: P.store.rotation.viaje, manana: JSON.stringify(P.store.manana || {}), tab: P.ui.tab };
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: true, taxiEur: 8 };
-      const k1 = mk + '-01', k2 = mk + '-02'; P.store.manana = {}; P.store.manana[k1] = { salio: '07:40' }; if (k2 <= hoy) P.store.manana[k2] = { salio: '07:41' };
+      // k1 y k2: los dos primeros días del mes con tira de mañana (día de bus): el 1 puede caer en domingo y entonces no hay tira que mirar
+      const dd = []; for (let i = 1; i <= 12 && dd.length < 2; i++) { const k = mk + '-' + String(i).padStart(2, '0'); if (P.mananaDe(k)) dd.push(k); }
+      const k1 = dd[0], k2 = dd[1]; P.store.manana = {}; P.store.manana[k1] = { salio: '07:40' }; if (k2 <= hoy) P.store.manana[k2] = { salio: '07:41' };
       P.save(); P.ui.hoyVista = ''; P.ui.dineroVista = ''; P.ui.dinTab = ''; P.render();
-      const T = P.taxisMes(mk); return { mk, n: T.n, eur: T.eur, precio: P.viajeCfg().taxiEur }; });
+      const T = P.taxisMes(mk); return { mk, k1, n: T.n, eur: T.eur, precio: P.viajeCfg().taxiEur }; });
     await page.click('[data-a="drawer-toggle"]');
     await page.waitForTimeout(200);
     await page.click('[data-a="drawer-nav"][data-t="dinero"]');
@@ -11732,15 +11760,16 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.fill('#main input[data-a="viaje-f"][data-f="eur"]', '12');
     await page.keyboard.press('Tab');
     await page.waitForTimeout(300);
-    r.b = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), mk = hoy.slice(0, 7), T = P.taxisMes(mk);
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = mk + '-01'; P.render();
+    r.b = await page.evaluate((k1) => { const P = window.PG, hoy = P.iso(new Date()), mk = hoy.slice(0, 7), T = P.taxisMes(mk);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = k1; P.render();
       const e = document.querySelector('#main .manana');
-      const out = { precio: P.viajeCfg().taxiEur, n: T.n, eur: T.eur, tn: P.mananaMes(mk + '-01').taxi, tira: e ? e.textContent.replace(/\s+/g, ' ') : '' };   /* la tira cuenta hasta el día que miras */
-      const t = P.__t290; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.ui.diaHoy = ''; P.ui.cfgVista = ''; P.ui.dinTab = ''; P.ui.tab = t.tab; delete P.__t290; P.save(); P.render(); return out; });
+      const out = { precio: P.viajeCfg().taxiEur, n: T.n, eur: T.eur, tn: P.mananaMes(k1).taxi, tira: e ? e.textContent.replace(/\s+/g, ' ') : '' };   /* la tira cuenta hasta el día que miras */
+      const t = P.__t290; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.ui.diaHoy = ''; P.ui.cfgVista = ''; P.ui.dinTab = ''; P.ui.tab = t.tab; delete P.__t290; P.save(); P.render(); return out; }, r.k1);
     check('Dinero → Hoy enseña los taxis del mes y lo que cuestan (n × 8 €), y Dinero → Mes la línea',
       r.n >= 1 && r.eur === r.n * 8 && r.precio === 8 && /TAXIS AL HOSPITAL/.test(r.hoy) && r.hoy.indexOf(r.n + ' este mes') >= 0 && r.hoy.indexOf(fmtMil(r.eur) + ' €') >= 0 && r.mes, JSON.stringify(r));
     check('el precio del taxi se cambia en Ajustes → Ir y volver (12 €) y la tira de la mañana lo dice',
       r.b.precio === 12 && r.b.eur === r.b.n * 12 && r.b.n === r.n && r.b.tn >= 1 && new RegExp('este mes: ' + r.b.tn + ' taxis? \\(≈ ' + fmtMil(r.b.tn * 12) + ' €\\)').test(r.b.tira), JSON.stringify(r.b));
+    await sueltaHoy();
   }
   // 291) LA CABINA DE GUARDIA, EN CADENA (módulo, cargado en Hoy): con una guardia de 15:00 a 8:00, a las 20:00 la
   // cabina lleva la clase «guardia» (bata blanca en las mangas, panel rojo), el busca del salpicadero con las horas
@@ -11996,12 +12025,17 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // inventa); y esos días de vacaciones no suman horas de servicio en el abono. Fija: el ciclo y el calendario de
   // Google ponían vacaciones solas, no había cuenta de días gastados y el abono sumaba la jornada de días libres.
   {
+    await fijaHoy(); // sin depender del día real (día 1 / fin de mes)
     const ini = await page.evaluate(() => { const P = window.PG, d = new Date(), m = new Date(d.getFullYear(), d.getMonth() + 1, 1, 12);
-      const lun = new Date(m.getTime()); while (lun.getDay() !== 1) lun.setDate(lun.getDate() + 1); const vie = new Date(lun.getTime()); vie.setDate(vie.getDate() + 4);
+      const lun = new Date(m.getTime()); while (lun.getDay() !== 1) lun.setDate(lun.getDate() + 1);
+      // los festivos no cuentan como día gastado (8/12 cae en martes en 2026): se miran los de esa semana para esperar 5 menos ellos
+      const fest = ((P.store.ahorro || {}).festivos) || [], esF = (n) => (fest.indexOf(P.iso(P.addDays(lun, n))) >= 0 ? 1 : 0);
+      const nf = [0, 1, 2, 3, 4].reduce((t, n) => t + esF(n), 0), nm = esF(9);
+      const vie = new Date(lun.getTime()); vie.setDate(vie.getDate() + 4);
       const mie = new Date(lun.getTime()); mie.setDate(mie.getDate() + 9);
       P.__t299 = { nVac: (P.store.rotation.vacaciones || []).length, mode: P.store.rotation.mode, sbd: JSON.stringify(P.store.rotation.shiftByDay || {}), pats: JSON.stringify(P.store.patterns), anchor: P.store.rotation.anchor, idx: P.store.rotation.index, tab: P.ui.tab, mon: P.ui.monSel };
       P.store.rotation.mode = 'date'; P.ui.tab = 'month'; P.ui.mesHoja = false; P.save(); P.render();
-      return { lun: P.iso(lun), vie: P.iso(vie), mie: P.iso(mie), y: m.getFullYear(), mo: m.getMonth() }; });
+      return { nf, nm, lun: P.iso(lun), vie: P.iso(vie), mie: P.iso(mie), y: m.getFullYear(), mo: m.getMonth() }; });
     await gotoTab('month');
     await page.evaluate((x) => { window.PG.ui.mesHoja = false; window.monthDate && (window.monthDate = new Date(x.y, x.mo, 1)); }, ini);
     // ir al mes siguiente con la flecha de la cabecera
@@ -12026,7 +12060,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate((x) => { const P = window.PG, t = P.__t299; P.store.rotation.vacaciones.length = t.nVac; P.store.rotation.shiftByDay = JSON.parse(t.sbd); P.store.patterns = JSON.parse(t.pats);
       P.store.rotation.anchor = t.anchor; P.store.rotation.index = t.idx; P.store.rotation.mode = t.mode; P.ui.mesModo = null; P.ui.mesHoja = false; P.ui.tab = t.tab; P.ui.monSel = t.mon; delete P.__t299; P.save(); P.render(); }, ini);
     check('vacaciones a mano: lunes→viernes son 5 días gastados («🏖️ … de 22»), pintar un día suma 1, el ciclo no pone vacaciones y esos días no suman horas de servicio',
-      r.vistos === 2 && r.a.n === r.antes + 5 && /de 22 días de vacaciones/.test(r.a.txt) && r.b.n1 === r.antes + 6 && !r.b.cicloVac && r.b.n2 === r.antes + 6 && r.b.hSinVac - r.b.h >= 6 * 7 - 1, JSON.stringify(r));
+      r.vistos === 2 && r.a.n === r.antes + 5 - ini.nf && /de 22 días de vacaciones/.test(r.a.txt) && r.b.n1 === r.antes + 6 - ini.nf - ini.nm && !r.b.cicloVac && r.b.n2 === r.antes + 6 - ini.nf - ini.nm && r.b.hSinVac - r.b.h >= (6 - ini.nf - ini.nm) * 7 - 1, JSON.stringify(r));
+    await sueltaHoy();
   }
   // 300) TODO LO QUE TIENE SU DÍA SE VE EN EL MES, EN CADENA (conduce Mes): con seis eventos con fecha y una nota el
   // mismo día, la casilla enseña los seis y la nota (sin «+N»); un evento de cada semana sale aparte, como chapita
@@ -12526,6 +12561,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // Mes no sale si a los 400 ms ya estás en Comer. Fija: el sábado proponía lunes a domingo (5 días ya comidos), el
   // desayuno salía vacío teniendo desayunos la app y el aviso del Mes salía en Comer.
   {
+    await fijaHoy(12, 0, true);
     const vp316 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
     await page.evaluate(() => { const P = window.PG; P.__t316 = { sb: JSON.stringify(P.store.semBase || null), gc: JSON.stringify(P.store.gComida || null), n: P.store.dishes.length, pv: P.store.meta.pulsarVisto };
       P.store.meta.pulsarVisto = false; P.ui.mhintDicho = false; P.ui.mesModo = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
@@ -12561,6 +12597,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.antes.filas === 0 && r.antes.siguiente && !r.antes.sig && /ya pasó/.test(r.antes.ya) &&
       r.esta.filas === r.quedan && r.esta.des.length === r.quedan && r.esta.des.every((x) => x) &&
       JSON.stringify(r.p0) === JSON.stringify(r.p1), JSON.stringify(r));
+    await sueltaHoy();
   }
   // 317) LAS BEBIDAS EN ML, EN CADENA: en Comer se escribe «un vaso de leche» y la tarjeta «Te leo» pone ml junto a la
   // cantidad; se cambia a «pollo con arroz» y vuelven los g; otra vez «un vaso de leche» y «Apuntar»: lo apuntado dice
@@ -12921,6 +12958,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // escalera separa los meses: (a) con «▲ Ver del 1 al …», el día 1 la lleva a su izquierda (si no cae en lunes) y los
   // días que tienen encima el mes anterior, arriba; (b) el 1 del mes siguiente también la lleva, y con › a ese mes sigue.
   {
+    await fijaHoy(); // sin depender del día real (día 1 / fin de mes)
     const fr = (k) => page.evaluate((k) => { const b = document.querySelector('#main .cal [data-key="' + k + '"]'); if (!b) return null;
       const cs = getComputedStyle(b).boxShadow; return { l: b.classList.contains('frl'), t: b.classList.contains('frt'), sombra: /-4px 0px 0px 1px|0px -4px 0px 1px/.test(cs) }; }, k);
     const ks = await page.evaluate(() => { const P = window.PG, d = new Date(); window.__copia326 = P.ui.mesAtras;
@@ -12936,7 +12974,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const linea = (x) => !!x && (x.l || x.t) && x.sombra;
     check('una línea en escalera separa los meses del Mes: el día 1 la lleva (y el 1 del mes siguiente) y un día de en medio no',
       linea(r.a.uno) && (r.a.uno.l || ks.lunes) && linea(r.a.sig) && r.a.dentro && !r.a.dentro.l && !r.a.dentro.t, JSON.stringify({ r, ks }));
-    check('con › al mes siguiente, su día 1 sigue marcando la frontera con el mes de antes', r.b.mes === (new Date().getMonth() + 1) % 12 && linea(r.b.sig), JSON.stringify(r));
+    check('con › al mes siguiente, su día 1 sigue marcando la frontera con el mes de antes', r.b.mes === +ks.sig.slice(5, 7) - 1 && linea(r.b.sig), JSON.stringify(r));
+    await sueltaHoy();
   }
   // 327) EL MÓVIL EN «MODO ORDENADOR», EN CADENA: con «Sitio de escritorio» (Brave/Chrome) el navegador pinta a 980 px
   // aunque la pantalla sea de 412 y no hace caso al ancho del móvil: la app salía diminuta y, instalada, sin menú
@@ -13543,6 +13582,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // no entran»; (c) un hueco apuntado a mano con texto sobrevive a «¿Me la propones?» (montar solo rellena huecos vacíos). Fija: las pestañas
   // eran Hoy · Cocina · Plan · Despensa, la cena solo se elegía entre platos y la compra no decía de qué cena venía cada cosa.
   {
+    await fijaHoy(12, 0, true); // miércoles a mediodía: «montar» rellena lo que queda de la semana (en domingo o por la tarde no queda nada)
     const vp332 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
     const toca = async (sel, ms) => { const e = await page.$(sel); if (e) await e.click().catch(() => {}); await page.waitForTimeout(ms || 150); return !!e; };
     const r = {};
@@ -13601,6 +13641,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !r.b5.lineas.some((l) => /huevo/i.test(l)) && /Ya en casa, no entran:.*huevo/i.test(r.b5.ya) && /De tus 2 cenas/.test(r.pie), JSON.stringify({ b4: r.b4, b5: r.b5, pie: r.pie }));
     check('«¿Me la propones?» solo rellena huecos vacíos: la cena apuntada a mano (texto y plato) sigue igual y se escribe lo demás',
       r.c1 && /Cena con Marta/.test(r.c2.txt) && /"kind":"txt"/.test(r.c2.txt) && /Algo de fruta/.test(r.c2.nota) && /d332/.test(r.c2.plato) && r.c2.otras >= 2 && r.c2.tab === 'casa', JSON.stringify(r.c2));
+    await sueltaHoy();
   }
   // 334) VITAMINAS: LA PARADA «CIERRE 💊» DE LA LÍNEA Y LA HOJA «% DIARIO», EN CADENA: (a) con el día vacío la parada dice
   // «aún sin datos»; (b) se apunta una frase con la lupa (200 g de un alimento que trae unos micros y no otros) y la
