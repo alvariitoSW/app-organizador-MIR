@@ -2405,3 +2405,21 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
     es un patrón de toda la app, no de esta tanda; cambiarlo cambia lo que ve y se le propone aparte.
 - **Supuestos**
   - La casilla del `.ics` (13 px) vale porque toda su etiqueta (46 px de alto) es el área de toque.
+
+## El Lanzador · K1 (Consejo por delegación)
+
+**Elegido**
+- Maqueta A + caso C (`maquetas/lanzador-k1.html`). La mini-app de Android abre `index.html#uso=<JSON codificado>` (formato documentado sobre `usoEntrante()` en `app.js`); se valida como entrada no fiable, el `#` se borra siempre con `history.replaceState` y también se escucha `hashchange`.
+- Se guarda por día en `store.uso` (30 días; los cuartos de hora `q`, 8). Un día que vuelve a llegar se sobrescribe. La copia de seguridad ya incluye todo `store`, así que lleva `uso` (solo números y nombres de app).
+- Rellena sin pisar lo escrito a mano: minutos de móvil de la noche (con «del móvil ✓»), aviso si lo tuyo y lo del móvil difieren más de 5 min, plegado «Ayer en el móvil» y el hábito «sin pantallas» (`pantS().auto`).
+- Arreglo de paso: `normalize` perdía `suenoReal[k].movilMin` al recargar; ahora lo conserva.
+
+**Descartado**
+- Opción B de la maqueta.
+- `?` en vez de `#`: la query llega al servidor y se queda en el historial y en `share_target`; el `#` no sale del móvil.
+
+**Supuestos**
+- Un `q` mal formado se omite y el día se guarda sin él; una lista de más de 5 apps se ignora (el día se guarda sin apps); un nombre de app se recorta a 40 caracteres.
+- «Sin pantallas» se decide solo cuando ya ha pasado `cama+30` y están los `q` que tocan; sumar cuartos de hora aproxima los minutos (un cuarto solapado cuenta entero).
+- Si el usuario cambia a mano la respuesta de «sin pantallas», se borra la marca `auto` de esa tarde.
+- «Usar X» pone el valor del móvil en la hoja con la marca «del móvil ✓»; hay que pulsar Guardar para fijarlo. El plegado se cierra al repintar la hoja.

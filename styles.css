@@ -4229,3 +4229,13 @@ button.cndl{display:block;width:100%;text-align:left;min-height:44px;font:inheri
 .pzenl{display:flex;gap:8px;align-items:center;margin:8px 0 10px 34px}
 .pzenl code{flex:1;font-size:14px;word-break:break-all;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 #main .pzenl .btn{min-height:44px}
+/* K1: la lanzadora (uso del móvil leído solo) */
+.snmovil .del{display:inline-block;font-size:12px;font-weight:800;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:0 6px;margin-left:4px;text-transform:none}
+.usoaviso{margin-top:10px;padding:10px 12px;border:2px dashed var(--warn);border-radius:12px;background:color-mix(in srgb,var(--warn) 10%,var(--bg2))}
+.usoaviso p{margin:0 0 8px;font-size:14px}
+.usoaviso .row{display:flex;gap:8px}.usoaviso .btn{flex:1;min-height:44px;font-size:14px}
+.usoplieg{margin-top:10px}
+.usoplieg summary{min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:800;cursor:pointer}
+.usoapps{list-style:none;margin:0 0 6px;padding:0}
+.usoapps li{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-bottom:1px solid var(--line)}
+.usoapps li span{overflow-wrap:anywhere}
