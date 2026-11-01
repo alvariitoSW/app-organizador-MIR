@@ -14,6 +14,8 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 **La Gran Ley está hecha (G1-G12 en main; G13 a medias).** «Los Remates» también (main 42b230d, 30/10). «El Cierre» también (C1-C4, 30/10): iconos en la mañana y el cajón, horas de comer que siguen a la guardia. **El plan está terminado.**
 
+**01/11 · fuera del plan:** «Pedido desde una captura» en Comer · **HECHA** (main cd45eec). Idea que queda: probarlo con Uber Eats y Just Eat.
+
 ## Por hacer
 
 ### «El Cierre» (lo último del plan) · **HECHA · 30/10** · delegada el 2026-10-30 · sesión «El Cierre · iconos y horas de comer»
