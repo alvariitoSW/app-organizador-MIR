@@ -1,0 +1,139 @@
+<!doctype html><html lang="es"><meta charset=utf-8><title>Captura de pedido · maqueta</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185}
+*{box-sizing:border-box}
+body{margin:0;background:#03060c;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px;display:flex;gap:28px;align-items:flex-start}
+.ab{width:390px;height:844px;background:var(--bg);border-radius:28px;overflow:hidden;position:relative;border:1px solid #1a2438}
+.lbl{position:absolute;top:-2px;left:0;right:0}
+.cap0{font-size:12px;color:#7d8fae;margin:0 0 8px 6px;font-weight:700;letter-spacing:.04em}
+.wrap{padding:14px 12px}
+.sub{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.sub h2{margin:0;font-size:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px}
+.sec{font-size:10.5px;letter-spacing:.14em;color:var(--ink2);font-weight:800;margin:0 0 8px}
+.mini{font-size:11.5px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:8px 12px;font:inherit;font-size:13px;font-weight:700;min-height:40px}
+.btn.s{min-height:32px;padding:5px 10px;font-size:12px}
+.btn.p{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#04121c}
+.btn.big{width:100%;justify-content:center;min-height:48px;font-size:15px}
+.new{border-color:color-mix(in srgb,var(--brand) 55%,var(--line));box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 26%,transparent),0 14px 34px -20px color-mix(in srgb,var(--brand) 60%,transparent)}
+.tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--brand) 18%,var(--card));color:var(--brand);letter-spacing:.04em}
+.tag.w{background:color-mix(in srgb,var(--warn) 18%,var(--card));color:var(--warn)}
+.tag.o{background:color-mix(in srgb,var(--ok) 18%,var(--card));color:var(--ok)}
+.apps{display:flex;gap:6px;margin:8px 0 10px}
+.apps span{font-size:11px;font-weight:800;padding:4px 8px;border-radius:8px;color:#fff}
+.frase{display:flex;gap:6px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:6px 6px 6px 10px}
+.frase .in{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#5d7193;font-size:13px}
+.ico{width:40px;height:40px;border-radius:12px;border:1px solid color-mix(in srgb,var(--brand) 55%,var(--line));display:grid;place-items:center;font-size:18px}
+.cadg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cadg div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:var(--ink2)}
+.cadg i{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-style:normal;font-weight:900;color:#fff;font-size:13px}
+.dim{opacity:.45}
+.it{border-top:1px dashed var(--line);padding:10px 0}
+.it:first-of-type{border-top:0;padding-top:2px}
+.ith{display:flex;gap:8px;align-items:flex-start}
+.ith .em{font-size:20px;width:28px;text-align:center}
+.ith .nm{flex:1;min-width:0}.ith .nm b{display:block;font-size:14px}
+.ith .kc{text-align:right;font-variant-numeric:tabular-nums}.ith .kc b{display:block;font-size:15px}.ith .kc span{font-size:11px;color:var(--ink2)}
+.ing{margin:6px 0 0 36px;display:flex;flex-wrap:wrap;gap:5px}
+.ing span{font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:3px 8px;background:var(--bg2)}
+.ing span.q{border-color:color-mix(in srgb,var(--warn) 60%,var(--line));color:var(--warn)}
+.ing span.gf{border-color:color-mix(in srgb,var(--ok) 60%,var(--line));color:var(--ok)}
+.cnt{margin:8px 0 0 36px;display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--warn) 10%,var(--card));border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:12px;padding:7px 9px;font-size:12.5px}
+.step{display:inline-flex;flex:none;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.step b{padding:4px 10px;font-size:14px}.step span{padding:4px 10px;background:var(--bg2);color:var(--ink2);font-weight:900}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin:4px 0 10px}
+.tot div{background:var(--bg2);border-radius:12px;padding:7px 2px}.tot b{display:block;font-size:17px;font-variant-numeric:tabular-nums}.tot span{font-size:10.5px;color:var(--ink2)}
+.seg{display:flex;gap:6px;margin-bottom:10px}.seg span{flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;padding:7px 0;font-size:12.5px;font-weight:700}
+.seg span.on{background:color-mix(in srgb,var(--brand) 20%,var(--card));border-color:var(--brand);color:var(--brand)}
+.ign{font-size:11.5px;color:var(--ink2);margin:6px 2px 0}
+.foot{position:absolute;left:0;right:0;bottom:0;padding:10px 12px 16px;background:linear-gradient(transparent,var(--bg) 22%)}
+.note{position:absolute;right:-6px;top:0;transform:translateX(100%);width:0}
+.n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#ffd23f;color:#111;font-size:11px;font-weight:900;margin-right:4px;vertical-align:middle}
+.leg{width:300px;color:#c8d4e8;font-size:13px;line-height:1.45}
+.leg h3{margin:0 0 6px;font-size:15px;color:#fff}
+.leg p{margin:0 0 10px}
+</style>
+<body>
+
+<!-- 1 · dónde se entra -->
+<div>
+<div class="cap0">1 · DÓNDE SE ENTRA</div>
+<div class="ab"><div class="wrap">
+  <div class="sub"><span class="btn s">‹ Añadir</span><h2>Comer fuera</h2></div>
+
+  <div class="card new">
+    <div style="display:flex;align-items:center;gap:8px"><b style="font-size:15px">📷 Desde una captura del pedido</b><span class="sp" style="flex:1"></span><span class="tag">NUEVO</span></div>
+    <div class="apps"><span style="background:#00a082">Glovo</span><span style="background:#06c167">Uber Eats</span><span style="background:#ff8000">Just Eat</span><span style="background:#2b3a55">otra</span></div>
+    <p class="mini" style="margin:0 0 10px">La <b style="color:var(--ink)">cesta</b> (todo el pedido) y, si quieres afinar, la <b style="color:var(--ink)">ficha de cada plato</b> (trae los ingredientes). Se leen en el móvil: la foto no sale del teléfono.</p>
+    <span class="btn p big"><span class="n" style="background:#04121c;color:var(--brand)">1</span>Elegir capturas (hasta 6)</span>
+  </div>
+
+  <div class="card">
+    <div class="sec">LO ÚLTIMO QUE PEDISTE FUERA</div>
+    <div class="ith"><span class="em">🍔</span><span class="nm"><b>ONLYFAN + papas + Fanta</b><span class="mini">Rockabilly · hace 3 días · desde captura</span></span><span class="kc"><b>repetir</b><span>1.240 kcal</span></span></div>
+  </div>
+
+  <div class="card"><b style="font-size:14px">Cadenas</b>
+    <div class="cadg" style="margin-top:8px">
+      <div><i style="background:#da291c">M</i>McDonald's</div><div><i style="background:#d62300">BK</i>Burger King</div><div><i style="background:#e4002b">KFC</i>KFC</div><div><i style="background:#006491">D</i>Domino's</div>
+      <div><i style="background:#00704a">T</i>Telepizza</div><div><i style="background:#f6a623">G</i>Goiko</div><div><i style="background:#702082">TB</i>Taco Bell</div><div><i style="background:#b8860b">100</i>100 Mont.</div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin:14px 4px 6px">Y EN LA PORTADA DE COMER, JUNTO A LA FRASE</div>
+  <div class="frase"><span>✍️</span><span class="in">bocata de pavo con queso y mayo</span><span class="ico" style="position:relative">📷<span class="n" style="position:absolute;top:-8px;right:-8px;margin:0">2</span></span><span class="btn p s">Apuntar</span></div>
+  <p class="mini" style="margin:6px 4px 0">El icono 📷 abre las capturas igual que el botón grande.</p>
+</div></div>
+</div>
+
+<!-- 2 · revisar -->
+<div>
+<div class="cap0">2 · REVISAR LO LEÍDO (ANTES DE APUNTAR)</div>
+<div class="ab"><div class="wrap" style="padding-bottom:120px">
+  <div class="sub"><span class="btn s">‹ Comer fuera</span><h2 style="font-size:18px">Tu pedido</h2></div>
+  <p class="mini" style="margin:-6px 2px 10px">Leído de 3 capturas · Rockabilly y Healthy Poke. Toca cualquier cosa para cambiarla.</p>
+
+  <div class="card">
+    <div class="it">
+      <div class="ith"><span class="em">🍔</span><span class="nm"><b>The Black Native</b><span class="tag o">POR INGREDIENTES</span></span><span class="kc"><b>860</b><span>48 P · 52 H · 50 G</span></span></div>
+      <div class="ing"><span class="gf">pan brioche sin gluten</span><span>cerdo negro 170 g</span><span>bacon 30 g</span><span>queso 30 g</span><span>salsa hoisin 25 g</span><span>pico de gallo 40 g</span></div>
+    </div>
+    <div class="it">
+      <div class="ith"><span class="em">🍔</span><span class="nm"><b>ONLYFAN</b><span class="tag w">PLATO TIPO · sin ingredientes</span></span><span class="kc"><b>820</b><span>40 P · 55 H · 47 G</span></span></div>
+      <div class="ing"><span class="q">hamburguesa con bacon, grande ▾</span><span class="gf">pan sin gluten</span></div>
+      <div class="ing"><span>+ papas fritas, ración 150 g · 290 kcal</span><span>+ Fanta Limón 330 ml · 70 kcal</span></div>
+    </div>
+    <div class="it">
+      <div class="ith"><span class="em">🥤</span><span class="nm"><b>Batido Snikers Dad</b><span class="tag w">PLATO TIPO</span></span><span class="kc"><b>620</b><span>14 P · 80 H · 26 G</span></span></div>
+      <div class="ing"><span class="q">batido de chocolate con nata, grande ▾</span></div>
+    </div>
+    <div class="it">
+      <div class="ith"><span class="em">🥗</span><span class="nm"><b>Healthy Salmon Bowl</b><span class="tag o">POR INGREDIENTES</span></span><span class="kc"><b>640</b><span>32 P · 70 H · 24 G</span></span></div>
+      <div class="cnt"><span class="n">3</span><span style="flex:1">El pedido trae <b>2</b> (2x1). ¿Cuántos te has comido?</span><span class="step"><span>−</span><b>1</b><span>+</span></span></div>
+    </div>
+    <p class="ign">No es comida, no se apunta: «Pedido por 10+ personas», «Añadir más artículos», precios.</p>
+  </div>
+
+  <div class="card">
+    <div class="sec">TOTAL QUE TE APUNTAS</div>
+    <div class="tot"><div><b>3.300</b><span>kcal</span></div><div><b>134</b><span>prot g</span></div><div><b>257</b><span>hidr g</span></div><div><b>147</b><span>grasa g</span></div></div>
+    <div class="seg"><span>Comida</span><span class="on">Cena</span><span>Otra</span></div>
+    <p class="mini" style="margin:0"><span class="n">4</span>La próxima vez que pidas ONLYFAN en Rockabilly irá directo con lo que corrijas aquí.</p>
+  </div>
+</div>
+<div class="foot"><span class="btn p big">Apuntar en la cena · 3.300 kcal</span></div>
+</div>
+</div>
+
+<div class="leg">
+  <h3>Cómo funciona</h3>
+  <p><span class="n">1</span>Eliges las capturas de la galería. Mientras las lee sale «leyendo 2 de 3…». La primera vez descarga el lector (unos 6 MB, el mismo del ticket de Mercadona).</p>
+  <p><span class="n">2</span>El mismo atajo, en la frase de la portada de Comer.</p>
+  <p><b style="color:var(--ok)">Por ingredientes</b>: si hay ficha con descripción, cada ingrediente pasa por el lector de frases (el que ya sabe que eres celíaco y pone el pan sin gluten).<br>
+     <b style="color:var(--warn)">Plato tipo</b>: si solo está en la cesta, se encaja en un plato estándar que eliges (▾).</p>
+  <p><span class="n">3</span>Si el pedido trae más de uno, pregunta cuántos te comiste (por defecto 1).</p>
+  <p><span class="n">4</span>Lo que corriges se recuerda por restaurante y plato.</p>
+  <p class="mini" style="color:#8fa6c6">Cifras inventadas para la maqueta.</p>
+</div>
+</body></html>
