@@ -2405,3 +2405,24 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
     es un patrón de toda la app, no de esta tanda; cambiarlo cambia lo que ve y se le propone aparte.
 - **Supuestos**
   - La casilla del `.ics` (13 px) vale porque toda su etiqueta (46 px de alto) es el área de toque.
+
+## El Chef · CH4 · 60 platos enteros para micro + vitro (2026-11-01)
+- **Elegido**
+  - 60 platos nuevos en `data/recetario.json` (61 con la fabada), en 4 lotes de 15, cada uno con `tests/recetario.test.js`
+    en verde y `tools/recetario-faltan.js` vacío antes del siguiente: legumbre de tanda (15), guisos y pescado de tanda (15),
+    pescado también azul y huevo (15), cenas de saliente de ≤20 min + desayuno con proteína + algo griego (15).
+  - 10 de Italia, Grecia y el Mediterráneo (pasta e ceci, fakes, revithia, psari plaki, tajín de pollo, lubina en papillote,
+    shakshuka, pasta con atún, ensalada griega, souvlaki); el resto, de España.
+  - Nombres honestos para lo adaptado: «Lubina en papillote al micro», «Sardinas a la plancha», «Huevos a la flamenca en
+    cazuela», «Pescado con tomate en cazuela (psari plaki)», «Revuelto de trigueros y gambas» (no hay ajetes en la tabla).
+  - Ningún alimento nuevo: los 96 ingredientes ya estaban en la tabla; las aproximaciones van en `duda` (pez espada y bonito
+    como atún fresco, chipirón como calamar, pochas como alubia blanca seca, Tolosa con alubia roja, sin vino).
+  - Escritas por ayudantes sonnet con un encargo común; sin opus escribiendo recetas.
+- **Descartado**
+  - Platos que casi repiten los 43 de la app («Pisto con huevo y atún», «Espaguetis al pomodoro»…), fritos, «de fiesta» y postres.
+  - Añadir pez espada, chipirón, ajetes o vino a la tabla: con la aproximación explicada basta para kcal y proteína.
+- **Supuestos**
+  - Las tortitas de avena llevan huevo, clara y yogur griego (~32 g de proteína); la avena, en etiqueta (certificada).
+  - Maicena, pan sin gluten, especias y tortilla de maíz van en `etiqueta` aunque la tabla no las marque como «depende».
+  - Sardinas en escabeche aguantan 3 días; la piperrada se hace en tanda y el huevo se pone al comer.
+  - Gasto ~1,7 M frente a ~0,6 M previstos: cada lote con sonnet costó ~0,23 M (no ~0,15 M), el lote 4 parado se perdió (~0,09 M) y la sesión principal se llevó ~0,7 M. Para la CH9: un ayudante por lote que escribe con script de una vez y sin releer el JSON entero.
