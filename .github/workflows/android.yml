@@ -64,6 +64,8 @@ jobs:
           if [ -n "${LANZADOR_KEYSTORE_FILE:-}" ]; then
             "$BT/apksigner" verify --print-certs "$APK" | grep -v 'SHA-1'
             cp "$APK" "lanzador-v${{ github.run_number }}.apk"
+            # el mismo .apk dentro de un .zip: Brave y Chrome retienen las descargas .apk en el móvil, un .zip no
+            zip -j -X "lanzador-v${{ github.run_number }}.zip" "lanzador-v${{ github.run_number }}.apk"
             echo "FIRMADA=1" >> "$GITHUB_ENV"
           fi
 
@@ -82,7 +84,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "lanzador-v${{ github.run_number }}" "lanzador-v${{ github.run_number }}.apk" \
+          gh release create "lanzador-v${{ github.run_number }}" "lanzador-v${{ github.run_number }}.apk" "lanzador-v${{ github.run_number }}.zip" \
             --target "$GITHUB_SHA" --latest \
             --title "Lanzador v${{ github.run_number }}" \
-            --notes "La lanzadora de Android (El Lanzador). Descárgala en el móvil e instálala; al abrirla pide «Acceso al uso», lee el uso del móvil y abre la app en Brave. Sin permiso de internet."
+            --notes "La lanzadora de Android (El Lanzador). Descárgala en el móvil e instálala (si el navegador no termina de bajar el .apk, baja el .zip y ábrelo desde Archivos); al abrirla pide «Acceso al uso», lee el uso del móvil y abre la app en Brave. Sin permiso de internet."
