@@ -16372,6 +16372,59 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('CH10-f 411 apagar y volver a encender da la misma hoja con los mismos números, sin duplicados ni perder la técnica hecha', R.f0.horno === false && R.f1.horno && R.f1.n === R.e1.n && R.f1.m === R.e1.m && R.f1.ids === R.e1.ids && R.f2.unicos && R.f2.tec === '["sofrito"]', JSON.stringify([R.f0, R.f1, R.f2]));
   }
 
+  // 412) EL CHEF · CH10b: pulido de móvil. En un móvil de verdad (toque, 412×915): ningún campo visible de Comer ni de Ajustes baja de 16 px (con menos el
+  //      móvil hace zoom al tocarlo); un botón con :hover no queda «pegado» tras un toque; al pulsar se hunde (scale .97); y con «reducir movimiento»
+  //      ninguna transición ni animación (tampoco las de ::before/::after) dura más de ~0.
+  {
+    const ls412 = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
+    const nuevo412 = async (extra) => {
+      const ctx = await browser.newContext(Object.assign({ serviceWorkers: 'block', viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true }, extra || {}));
+      await ctx.addInitScript((j) => { try { const o = JSON.parse(j); for (const k in o) localStorage.setItem(k, o[k]); } catch (e) {} }, ls412);
+      const pg = await ctx.newPage(); await pg.goto(base + 'index.html'); await pg.waitForFunction(() => window.PG, null, { timeout: 15000 }); await pg.waitForTimeout(400);
+      return { ctx, pg };
+    };
+    const campos = (pg) => pg.evaluate(() => { const v = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
+      const l = [...document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]):not([type=color]):not([type=file]),select,textarea')].filter(v);
+      return { n: l.length, malos: l.filter((e) => parseFloat(getComputedStyle(e).fontSize) < 16).map((e) => e.tagName + '.' + e.className + ':' + getComputedStyle(e).fontSize).slice(0, 5), ancho: document.documentElement.scrollWidth }; });
+    const R = {}; const m412 = await nuevo412(); const q = m412.pg;
+    R.hover = await q.evaluate(() => matchMedia('(hover:hover)').matches);
+    // a) Comer (Hoy, Cocina, Plan, Despensa) y Ajustes (todas las pantallas): ningún campo por debajo de 16 px
+    let n = 0; const malos = []; let ancho = 0;
+    const suma = async () => { const c = await campos(q); n += c.n; malos.push(...c.malos); ancho = Math.max(ancho, c.ancho); };
+    await q.click('[data-a="nav-comer"]'); await q.waitForTimeout(150);
+    for (const v of ['', 'coc', 'sem', 'desp']) { if (await q.$('[data-a="cje-tab"][data-v="' + v + '"]')) await q.click('[data-a="cje-tab"][data-v="' + v + '"]'); else await q.evaluate((t) => { window.PG.ui.foodVista = 'eje'; window.PG.ui.cjeTab = t; window.PG.render(); }, v); await q.waitForTimeout(150); await suma(); }
+    await q.click('[data-a="drawer-toggle"]'); await q.waitForTimeout(150);
+    await q.click('[data-a="drawer-nav"][data-t="ajustes"]'); await q.waitForTimeout(200);
+    for (const v of ['calendario', 'sol', 'aspecto', 'lector', 'comida']) {
+      if (await q.$('[data-a="aju-vista"][data-v="' + v + '"]')) { await q.click('[data-a="aju-vista"][data-v="' + v + '"]'); await q.waitForTimeout(150); await suma(); await q.evaluate(() => { window.PG.ui.ajuVista = ''; window.PG.render(); }); await q.waitForTimeout(100); }
+    }
+    R.campos = { n, malos, ancho };
+    // b) un botón con :hover no queda pintado tras un toque; y todo :hover de la hoja de estilos vive dentro de @media (hover:hover)
+    await q.evaluate(() => { const m = document.querySelector('#main'); m.insertAdjacentHTML('beforeend', '<button class="btn" id="t412a">uno</button><button class="btn" id="t412b">dos</button><button id="t412c">tres</button>'); });
+    const caja = await q.evaluate(() => { const r = document.querySelector('#t412a'); r.scrollIntoView({ block: 'center' }); const b = r.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
+    await q.touchscreen.tap(caja.x, caja.y); await q.waitForTimeout(250);
+    R.hov = await q.evaluate(() => ({ a: getComputedStyle(document.querySelector('#t412a')).boxShadow, b: getComputedStyle(document.querySelector('#t412b')).boxShadow,
+      sueltos: [...document.styleSheets].flatMap((h) => { try { return [...h.cssRules]; } catch (e) { return []; } }).filter((x) => x instanceof CSSStyleRule && /:hover/.test(x.selectorText)).length }));
+    // c) al pulsar, el botón se hunde (scale .97)
+    const c3 = await q.evaluate(() => { const r = document.querySelector('#t412c'); r.scrollIntoView({ block: 'center' }); const b = r.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; });
+    await q.mouse.move(c3.x, c3.y); await q.mouse.down(); await q.waitForTimeout(250);
+    R.act = await q.evaluate(() => getComputedStyle(document.querySelector('#t412c')).transform);
+    await q.mouse.up();
+    await m412.ctx.close();
+    // d) con «reducir movimiento»: ninguna transición ni animación (ni de ::before/::after) pasa de ~0
+    const mr = await nuevo412({ reducedMotion: 'reduce' }); const w = mr.pg;
+    await w.click('[data-a="nav-comer"]'); await w.waitForTimeout(200);
+    R.red = await w.evaluate(() => { const seg = (t) => Math.max(0, ...String(t).split(',').map((x) => { x = x.trim(); return x.endsWith('ms') ? parseFloat(x) / 1000 : parseFloat(x) || 0; }));
+      let max = 0, quien = '', n = 0;
+      for (const e of document.querySelectorAll('*')) for (const ps of [null, '::before', '::after']) { const c = getComputedStyle(e, ps); const d = Math.max(seg(c.transitionDuration), seg(c.animationDuration)); n++; if (d > max) { max = d; quien = e.tagName + '.' + e.className + (ps || ''); } }
+      return { max, quien, n, media: matchMedia('(prefers-reduced-motion: reduce)').matches }; });
+    await mr.ctx.close();
+    check('412-a ningún campo visible de Comer ni de Ajustes baja de 16 px (con menos, el móvil hace zoom) y no se sale de 412', R.campos.n >= 1 && R.campos.malos.length === 0 && R.campos.ancho <= 412 && R.hover === false, JSON.stringify([R.campos, R.hover]));
+    check('412-b un botón con :hover no queda pintado tras un toque (el hover solo existe con ratón: ninguna regla :hover fuera de @media (hover:hover))', R.hov.a === R.hov.b && R.hov.sueltos === 0, JSON.stringify(R.hov));
+    check('412-c al pulsar un botón se hunde un pelo (scale .97)', /matrix\(0\.97, 0, 0, 0\.97/.test(R.act), R.act);
+    check('412-d con «reducir movimiento» ninguna transición ni animación dura más de ~0 (ni ::before ni ::after)', R.red.media && R.red.max <= 0.001, JSON.stringify(R.red));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
