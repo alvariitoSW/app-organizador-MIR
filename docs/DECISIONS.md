@@ -2423,3 +2423,16 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 - «Sin pantallas» se decide solo cuando ya ha pasado `cama+30` y están los `q` que tocan; sumar cuartos de hora aproxima los minutos (un cuarto solapado cuenta entero).
 - Si el usuario cambia a mano la respuesta de «sin pantallas», se borra la marca `auto` de esa tarde.
 - «Usar X» pone el valor del móvil en la hoja con la marca «del móvil ✓»; hay que pulsar Guardar para fijarlo. El plegado se cierra al repintar la hoja.
+
+## Pruebas que dependían de la fecha (01/11/2026)
+
+**Elegido**
+- La app estaba bien; eran las pruebas. Se añade a `tests/regression.test.js` `fijaHoy(page, s)` / `sueltaHoy(page)`: cambia `Date` dentro de la página (el reloj sigue andando desde la fecha fija, los temporizadores no se tocan) y lo deja como estaba al final del bloque.
+- 250: octubre de 2026 (la noche antes de un sábado libre la cama sale, bien, a las 00:20). 316: el miércoles de esta semana a las 10:00 (en domingo por la noche no queda día para cocinar y «Siguiente» sale desactivado, que cortaba el trozo 4). 288, 289, 290, 299, 326 y 333 (ocultas tras el corte): `FECHA_FIJA` = miércoles 14/10/2026 (el 1 de noviembre es domingo; el 8 de diciembre, festivo). La 326 compara con el mes de la página, no con el de Node.
+
+**Descartado**
+- `page.clock` de Playwright: se instala antes de cargar la página y no se puede quitar a mitad de la suite.
+- Tocar la app: en los ocho casos hacía lo correcto para esa fecha.
+
+**Supuestos**
+- Las pruebas que siguen usando la fecha real pueden caer otros días raros (fin de mes, festivos); se arreglan igual cuando salgan.
