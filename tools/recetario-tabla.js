@@ -45,7 +45,12 @@ function cargaTabla() {
 }
 
 function cargaRecetario() {
-  return JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'recetario.json'), 'utf8'));
+  const R = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'recetario.json'), 'utf8'));
+  /* RECETARIO_LOTE=a.json:b.json → añade esos lotes (arrays de recetas) para probarlos antes de juntarlos */
+  (process.env.RECETARIO_LOTE || '').split(':').filter(Boolean).forEach((f) => {
+    R.recetas = R.recetas.concat(JSON.parse(fs.readFileSync(f, 'utf8')));
+  });
+  return R;
 }
 
 /* kcal y proteína de una ración, de la tabla (los gramos son por ración) */
