@@ -65,7 +65,7 @@ Sustituye a las delegaciones por tanda (las antiguas, en `archivo/delegaciones-h
 Si el usuario delega algo de esta segunda lista para una tanda concreta, se apunta aquí en una línea con la fecha y
 se borra al cerrar la tanda.
 
-- (02/11/2026) «La Competencia» C1-C6 y C4b: sin Consejo por tanda; cada una va directa a su ficha (el usuario, 1-a).
+- (02/11/2026) «La Competencia» C1-C6 y C4b: sin Consejo por tanda; cada una va directa a su ficha (el usuario, 1-a). Ampliado el 02/11 al plan en 3 fases (~38 M, máx. ~50 M), salvo PDF y Excel, que vuelven al usuario.
 
 - Lo acordado entra en `plan-v3.md` con «(Consejo, fecha)».
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.

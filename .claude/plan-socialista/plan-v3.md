@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-Nada en marcha. Lo siguiente: Sueño de un toque (S1, maqueta).
+**La Competencia · fase 1** (02/11): encargo `encargos/competencia-fase-1.md`. Fase 2 el 03/11, fase 3 el 04/11.
 
 ## Por hacer
 
@@ -33,7 +33,7 @@ Nada en marcha. Lo siguiente: Sueño de un toque (S1, maqueta).
 presupuesto, estilo e importar planning (3 preguntas del acta). Va **después** de «Sueño de un toque», que suma la fila 2 (víspera
 de guardia con «Avisarme», +0,3 M) si el usuario dice que sí. Propuesta de Hacienda: sin Consejo por tanda (cada una va directa a su ficha).
 
-**Plan en 3 fases y 2-3 días (propuesto el 02/11, espera a que el usuario apruebe el presupuesto).** Cada día, una sesión
+**Plan en 3 fases y 2-3 días · aprobado por el usuario el 02/11** (~38 M, máx. ~50 M; PDF y Excel «ya lo veremos más adelante»). Cada día, una sesión
 «directora» lanza en paralelo las sesiones de las tandas que viven en zonas distintas del código, cada una con su ficha y su
 bloque de números de prueba reservado (10 por tanda, detrás de los de `main`), y las pasa a `main` de una en una (suite completa,
 sello, Actions). La portada de Hoy va en cadena: Sueño → C1 → C3.
