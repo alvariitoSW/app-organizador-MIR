@@ -2,7 +2,7 @@
 
 **Estado al cerrar la fase 1 (02/11/2026, rama `claude/la-competencia`):** en `main` están el arreglo de salud (397d con
 fecha fija, «otro mes» en el Mes · 449g), **S1 Sueño de un toque** (450-459) y **C2 Apuntar** (460-463). **C1 Letra y calma**
-(470-474): ver la última línea de este encargo, la que dice si llegó a `main`.
+(470-474): las tres en `main` (runs de Actions 41499947452, 41506808867 y 41509654910, todos en `success`).
 
 ## Material
 

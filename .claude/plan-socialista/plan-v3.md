@@ -12,7 +12,9 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Competencia · fase 1** (02/11): maquetas de las fases 1 y 2 **hechas y aprobadas** por el usuario (02/11: `maquetas/competencia-a.html` y `competencia-b.html`, opciones recomendadas). **Cómo se construye (Consejo, 2026-11-02, acta `consejo/2026-11-02-competencia-construir.md`):** (S1 ∥ C2) → C1 sola → (C3 ∥ C4 ∥ C5) → (C6 ∥ C4b); pruebas 450-459 S1 · 460 C2 · 470 C1 · 480 C3 · 490 C4 · 500 C5 · 510 C6 · 520 C4b; fase 1 ~6,1 M. **Aprobado por el usuario** (1-a «otras noches» · 2-a «Faltan X h en tus 3 últimas noches»). Antes, arreglar la 397d y la CH6-c 408 que caen en `main`; luego los pasos 2-5 de `encargos/competencia-fase-1.md`.
+**La Competencia · fase 2** (siguiente, sesión nueva): encargo `encargos/competencia-fase-2.md` — (C3 ∥ C4 ∥ C5) → (C6 ∥ C4b), pruebas 480-529, ~12 M. Acta `consejo/2026-11-02-competencia-construir.md`.
+
+~~La Competencia · fase 1~~ ✅ (02/11, en `main`): salud (397d con fecha fija, «otro mes» · 449g, CH6-c y arco del sol firmes) · S1 Sueño de un toque (450-459) · C2 Apuntar (460-463) · C1 Letra y calma, suelo 13/14 px y avisos de uno en uno (470-474). Gasto 10,3 M frente a ~6,1 M (`gastos.md`). Cierra [v3-sueno-un-toque].
 
 ## Por hacer
 
