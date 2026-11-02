@@ -24,3 +24,4 @@ tests/zz-trozo-*.test.js
 test-results/
 # huella del código de la última suite completa en verde (la exige el hook sella-antes-de-main)
 .claude/.suite-verde
+node_modules
