@@ -1206,7 +1206,8 @@ ul.slots{list-style:none;margin:0;padding:0}
    el alto de la pantalla: al bajar hasta ella, el mes ocupa el móvil entero. Encima solo queda una
    fila de navegación; «repartir» y «vaciar» bajan a la tarjeta de cuentas del mes. */
 .mesnav{display:flex;gap:6px;align-items:center;margin-top:8px;min-width:0}
-.mesnav input[type=month]{flex:1 1 auto;min-width:0;width:auto}
+.mesnav .mesir{position:relative;overflow:hidden}
+.mesnav .mesir input[type=month]{position:absolute;inset:0;width:100%;height:100%;min-width:0;opacity:0;cursor:pointer;margin:0;padding:0;border:0}
 .mesnav .btn{flex:0 0 auto}
 .cal.ext{grid-auto-rows:minmax(92px,auto);min-height:0}
 /* LA SEMANA PASADA, ENCOGIDA. Fila 1 = los nombres de los días, fila 2 = la semana que ya pasó

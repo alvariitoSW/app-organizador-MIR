@@ -9238,7 +9238,9 @@ function renderMonth(){
            la segunda pareja de ‹ › de la misma pantalla. Se queda el selector, que es lo único
            que esas flechas no hacen: saltar a un mes cualquiera. -->
       <div class="mesnav">
-        <input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" aria-label="ir a un mes">
+        <!-- el campo de mes enseñaba «noviembre de 20…» cortado (en 144 px no cabe y el mes ya está arriba):
+             ahora es un botón «otro mes» con el campo transparente encima, que abre el selector al tocarlo -->
+        <label class="btn s mesir">otro mes<input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" aria-label="ir a otro mes"></label>
         <button class="btn s" data-a="mon-today">hoy</button>
         <button class="btn p s" data-a="dia-editar" title="cambiar o añadir en un día (o mantén pulsada su casilla)">✏️ editar</button>
         <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
@@ -26355,6 +26357,7 @@ function act(a,el){
       A.exp.act=null;save();render();break;}
     case 'rev-nota':{const t=String((document.getElementById('rvNota')||{}).value||'').trim().slice(0,280),A=asistS(),k=iso(new Date());
       A.notas=A.notas.filter(function(x){return x.fecha!==k;});if(t)A.notas.push({fecha:k,txt:t});save();flash(t?'guardado: dentro de un mes te lo recuerdo aquí':'borrado');render();break;}
+    case 'mon-set':try{if(el.showPicker)el.showPicker();}catch(_){}break; /* «otro mes»: abre el selector nativo (en el móvil ya lo abre el toque) */
     case 'mon-today':monthDate=new Date(new Date().getFullYear(),new Date().getMonth(),1,12,0,0,0);render();break;
     case 'ir-inicio':
       /* el reloj de arriba es la casa: desde cualquier sitio, al Mes de este mes, sin hojas abiertas */

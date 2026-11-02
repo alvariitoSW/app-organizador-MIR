@@ -15575,6 +15575,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (d) minutos de móvil: se apuntan en la hoja de la noche (campo y chips), vuelven al reabrirla y salen en la semana con su media
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true); // miércoles: la noche de ayer cae en la misma semana (en lunes caía en la anterior y la prueba fallaba)
     await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia397d', JSON.stringify(P.store));
       const sr = P.store.suenoReal = {}, hoy = new Date(); sr[P.iso(P.addDays(hoy, -1))] = { h: 7, guardia: false, movilMin: 60 };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.save(); P.render(); });
@@ -15594,6 +15595,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.sem = await page.evaluate(() => { const e = document.querySelector('#main .snmov'); const p = e && e.nextElementSibling; return e ? { n: e.children.length, txt: e.innerText.replace(/\s+/g, ' '), frase: p ? p.innerText : '', ancho: document.documentElement.scrollWidth } : null; });
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397d')); localStorage.removeItem('__copia397d'); P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
+    await sueltaHoy();
     check('397d Minutos de móvil · escribir 90 y luego tocar el chip 120 deja 120, se guarda en la noche (y en la copia) y la semana de Sueño enseña «📱» por día y la media',
       r.campo === 1 && r.chips.length === 5 && r.chips.every((c) => parseInt(c.split(':')[1], 10) >= 44) && r.val === '120' && r.guardado === 120 && r.copia &&
       r.sem && r.sem.n === 7 && /2h00/.test(r.sem.txt) && /1h00/.test(r.sem.txt) && /—/.test(r.sem.txt) && /media 1 h 30 al día, 2 días apuntados/.test(r.sem.frase) && r.sem.ancho <= 412, JSON.stringify(r));
@@ -16601,6 +16603,28 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('449-d quitar la Fanta resta 140 kcal y el batido como «Postre» pasa de 650 a 450', R.k0 - R.k1 === 140 && R.k1 - R.k2 === 200, JSON.stringify([R.k0, R.k1, R.k2]));
     check('449-e «Apuntar en la cena» guarda 4 tomas en la cena con el mismo total que la pantalla, el poke ×1, y vuelve a Comer', /la cena/.test(R.boton) && R.log.n === 4 && R.log.cena && Math.abs(R.log.kcal - kFin) <= 2 && R.log.bowl === 1 && R.log.vista === '' && R.ult, JSON.stringify([R.boton, R.log, kFin, R.ult]));
     check('449-f tras recargar, ONLYFAN sale «como la última vez» (sin la Fanta) y «calcular de nuevo» lo olvida', R.memo.modo === 'memo' && R.memo.kcal === 1070 && R.memo.tag && R.olvida.modo === 'tipo' && R.olvida.memo === 0, JSON.stringify([R.memo, R.olvida]));
+  }
+
+  // 449g) SALUD 02/11 · el selector de mes del Mes: era un campo de 144 px que enseñaba «November 20…» / «noviembre de 20…»
+  // cortado. Ahora es un botón «otro mes» que cabe entero; elegir enero lleva a enero y «hoy» vuelve. Cae con el campo de antes.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy();
+    await gotoTab('month');
+    await page.waitForTimeout(200);
+    const R = {};
+    R.boton = await page.evaluate(() => { const i = document.querySelector('#main [data-a="mon-set"]'), l = i && i.closest('label');
+      if (!l) return null; const r = l.getBoundingClientRect(); return { txt: l.textContent.trim(), cabe: l.scrollWidth <= l.clientWidth + 1, alto: Math.round(r.height), dentro: r.right <= 412, campoTapa: Math.round(i.getBoundingClientRect().width) >= Math.round(r.width) - 1 }; });
+    const y = await page.evaluate(() => new Date().getFullYear() + 1);
+    await page.fill('#main [data-a="mon-set"]', y + '-01'); await page.waitForTimeout(200);
+    R.tras = await page.evaluate(() => (document.querySelector('#main .card.calmes h2') || {}).textContent || '');
+    await page.click('#main [data-a="mon-today"]'); await page.waitForTimeout(200);
+    R.vuelve = await page.evaluate(() => (document.querySelector('#main .card.calmes h2') || {}).textContent || '');
+    R.mesHoy = await page.evaluate(() => new Date().toLocaleDateString('es-ES', { month: 'long' }));
+    await sueltaHoy(); await page.setViewportSize(vp);
+    check('449g Mes · «otro mes» cabe entero (≥44 px de alto, sin cortar), elegir enero del año que viene lleva a enero y «hoy» vuelve al mes de hoy',
+      !!R.boton && R.boton.txt === 'otro mes' && R.boton.cabe && R.boton.alto >= 44 && R.boton.dentro && R.boton.campoTapa &&
+      new RegExp('enero de ' + y).test(R.tras) && R.vuelve.indexOf(R.mesHoy) >= 0, JSON.stringify(R));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

@@ -2576,3 +2576,17 @@ Mover filas viejas de «Tareas medidas» a otro archivo (rompería el marcador `
 y los `.md` no la cambian. `main-al-dia` no bloquea sin red. En la limpieza se cerraron [enc-mananas] y [enc-chef]
 (estaban hechas) y quedan en «Por hacer» La Gran Ley (G13 a medias), Tanda Comer (S6-S7) y La Reforma (R7-R10), que
 quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
+
+## 2026-11-02 · La Competencia, fase 1 · paso 0: salud de `main`
+
+**Elegido.**
+- **397d** (minutos de móvil en la semana de Sueño): la prueba ponía la noche en «ayer» con el reloj real y en lunes esa
+  noche cae en la semana anterior. Ahora corre con `fijaHoy(12, 0, true)` (miércoles). No era un fallo de la app.
+- **Selector de mes del Mes**: el campo de 144 px enseñaba «November 20…» (y en el móvil, «noviembre de 20…») cortado.
+  Pasa a ser un botón «otro mes» con el campo transparente encima: al tocarlo se abre el selector del móvil
+  (`showPicker()` en el ordenador). Prueba **449g**: cae con el campo de antes (`boton: null`).
+- **CH6-c 408** (botones del modo cocina): pasa suelta y en la suite de hoy; no se ha tocado.
+
+**Descartado.** Poner el campo de mes en su propia fila (una fila más en el Mes, que C4 va a rehacer en la fase 2).
+
+**Supuestos.** El nombre del mes ya se ve en la barra de arriba y en el título de la tarjeta, así que el botón no lo repite.
