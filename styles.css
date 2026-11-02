@@ -22,7 +22,7 @@ html:not(.dark){
   --t-11:11px;--t-12:12.5px;--t-14:14px;--t-16:16px;--t-20:20px;--t-28:28px;--t-44:44px;
   --e-4:4px;--e-8:8px;--e-12:12px;--e-16:16px;--e-24:24px;--e-32:32px;
   --m-1:120ms;--m-2:200ms;--m-3:320ms;--ease-out:cubic-bezier(.23,1,.32,1);--curva-suave:cubic-bezier(.32,.72,0,1);--curva-muelle:cubic-bezier(.34,1.56,.64,1);
-  --toque:44px;
+  --toque:44px;--toque-grande:56px;
   --texto:var(--ink);--texto-2:var(--ink2);--borde:var(--line);--borde-fuerte:color-mix(in srgb,var(--line),var(--ink) 22%);
   --bien:var(--ok);--ojo:var(--warn);--mal:var(--bad);--info:#7cb4ff;
   --base-1:var(--card);--base-2:color-mix(in srgb,var(--card),var(--bg) 45%);--base-3:color-mix(in srgb,var(--card),var(--ink) 4%);
@@ -1784,6 +1784,29 @@ html.dark{--ses1:#3987e5;--ses2:#d95926;--ses3:#199e70}
 /* ============ ENTRENO: abrir y empezar, serie a serie ============ */
 .gsemcfg{border:0;background:none;color:var(--ink2);font:inherit;font-size:12px;cursor:pointer;padding:4px 0}
 .gsemcfg b{color:var(--ink);font-size:15px}
+/* C2 · rótulo de la semana, cinta fina L–D, plan recomendado y la hoja «＋ serie» */
+.gsemrow{margin:0 var(--e-4);justify-content:stretch}
+.gsemrow .gsemcfg{display:flex;align-items:center;justify-content:space-between;gap:var(--e-8);width:100%;min-height:var(--toque);font-size:var(--t-12)}
+.gsemrow .gsemcfg b{font-size:var(--t-16)}
+.gcinta{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--e-4)}
+body[data-tab] #main .gcinta button.gcd{min-height:var(--toque-grande)}
+.gvuelta2{display:block;width:100%;margin-top:var(--e-4);min-height:var(--toque);border:1px solid var(--borde);border-radius:var(--r-12);background:var(--superficie-1);color:var(--ink);font:inherit;font-weight:800;font-size:var(--t-14);cursor:pointer}
+.gcd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e-4);padding:0;
+  border:1px solid var(--borde);border-radius:var(--r-12);background:var(--superficie-1);color:var(--ink);font:inherit;font-weight:900;font-size:var(--t-14);cursor:pointer}
+.gcd small{font-size:var(--t-11);font-weight:700;color:var(--ink2);line-height:1}
+.gcd.hoy{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.gcd.sel{background:var(--marca-suave)}
+.gcd.hecho small{color:var(--bien)}
+.gcd:focus-visible,.gser:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.gplanrec{margin-top:var(--e-12);padding:var(--e-12);border:1.5px solid var(--brand);border-radius:var(--r-16);background:color-mix(in srgb,var(--brand) 8%,var(--card))}
+.gplanrec .cap{color:var(--brand);margin-bottom:var(--e-4)}
+.gplanrec b{font-size:var(--t-16)}
+.gplanrec .mini{margin-top:var(--e-4)}
+.gser{display:flex;width:100%;text-align:left;justify-content:flex-start;margin-top:var(--e-8);min-height:var(--toque-grande)}
+.gser small{display:block;font-weight:600;color:var(--ink2);font-size:var(--t-12)}
+.gpaso{display:grid;grid-template-columns:var(--toque-grande) 1fr var(--toque-grande);gap:var(--e-8);align-items:center;text-align:center;margin-top:var(--e-8)}
+.gpaso b{font-size:var(--t-20)}
+.gpaso .btn{min-height:var(--toque-grande)}
 .ghero2{border:1px solid color-mix(in srgb,var(--brand) 50%,var(--line));border-radius:18px;padding:14px;
   background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 16%,var(--card)),var(--card))}
 .ghero2.calma{border-color:var(--line);background:var(--card)}
@@ -4030,6 +4053,9 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .npant .nancho{width:100%;min-height:48px;margin-top:14px}
 /* ===== Dinero · Tu mes (El Vaso) ===== */
 .tm .tm-hero{padding:12px}
+.tm-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--e-8)}
+.tm-mas{flex:none;min-height:var(--toque-grande);min-width:var(--toque-grande);padding:0 var(--e-16);border:0;border-radius:var(--r-16);background:var(--brand);color:var(--sobre-marca);font:inherit;font-weight:900;font-size:var(--t-16);cursor:pointer}
+.tm-mas:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
 .tm-t{font-size:13px;font-weight:800;color:var(--ink2)}
 .tm-fila{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .tm-n{font-size:44px;font-weight:900;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums}

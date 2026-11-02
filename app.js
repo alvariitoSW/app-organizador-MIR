@@ -17892,12 +17892,50 @@ function gymSemanasSeguidas(){
     if(d>=min)n++;else if(w>0)break;}
   return n;}
 function gymSemanaLinkHTML(sel){
-  /* lo único de la antigua tarjeta «Esta semana» que la lámina no dibuja: el mínimo semanal (⚙, abre «Tu semana de
-     entreno»), cuántos hechos y en qué semana del bloque vas (o la descarga) */
+  /* C2: el rótulo dice la semana del bloque y los entrenos hechos («Semana 1 de 5 · 0 entrenos»); toda la fila sigue
+     abriendo «Tu semana de entreno» (el mínimo semanal, antes el ⚙) */
   const lun=mondayOf(parseDate(sel)||new Date()),s=entrenoSemana(iso(lun)),bq=bloqueDe(iso(lun));
   let hechos=0;for(let i=0;i<7;i++)if(gymHechoEn(iso(addDays(lun,i))))hechos++;
-  return '<div class="glnk"><button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana: mínimo de entrenos"><b>'+hechos+(s&&s.total?(' de '+s.total):'')+'</b> hechos'+
-    (s&&s.min?' · mín. '+s.min:'')+' · '+(bq.descarga?'<b style="color:var(--warn)">descarga</b>':'bloque · sem '+bq.sem+'/'+bq.de)+' ⚙</button></div>';}
+  const nt=hechos+(hechos===1?' entreno':' entrenos');
+  return '<div class="glnk gsemrow"><button class="gsemcfg" data-a="gym-panel" data-p="plan" aria-label="ajustes de la semana: mínimo de entrenos"><b>'+
+    (bq.descarga?'<span style="color:var(--warn)">Semana de descarga</span>':'Semana '+bq.sem+' de '+bq.de)+' · '+nt+'</b>'+
+    '<span class="mini">'+(s&&s.min?'mín. '+s.min+' · ':'')+'ajustar ›</span></button></div>';}
+/* C2: la cinta fina L–D que sustituye al dibujo grande cuando hay rutinas: cada día lleva su letra y qué toca */
+function gymCintaHTML(sel){
+  const d=laminaDatos(sel);
+  const corto=function(x){
+    if(x.t==='no')return x.malo==='guardia'?'Guard.':(x.malo==='saliente'?'Salien.':x.malo.slice(0,6));
+    if(x.t==='sal')return 'Salien.';if(x.t==='pisc')return 'Pisc.';if(x.t==='libre')return 'Libre';
+    return x.rt?String(x.rt.nombre).split(' ')[0].slice(0,6):(x.t==='parque'?'Parque':'Gimn.');};
+  /* la vuelta tras un parón sigue a un toque: antes era la parte «vuelta» del dibujo grande */
+  const vu=d.vuelta?'<button class="gvuelta2" data-a="gym-panel" data-p="regreso" aria-label="Tu vuelta: semana '+d.vuelta.sem+' de '+d.vuelta.de+', al '+d.vuelta.pct+' %. Toca para ver el plan">Tu vuelta · semana '+d.vuelta.sem+' de '+d.vuelta.de+' · al '+d.vuelta.pct+' % ›</button>':'';
+  return '<div class="gcinta" role="group" aria-label="Tu semana">'+d.dias.map(function(x){
+    return '<button class="gcd'+(x.hoy?' hoy':'')+(x.sel?' sel':'')+(x.hecho?' hecho':'')+'" data-a="gym-dia" data-key="'+x.k+'" aria-label="'+esc(lamDiaTxt(x))+'"'+(x.sel?' aria-current="true"':'')+'>'+
+      x.l+'<small>'+(x.hecho?'✓':esc(corto(x)))+'</small></button>';}).join('')+'</div>'+vu;}
+/* C2: «＋ serie» del entreno libre: los 5 últimos ejercicios con la última vez, y kg/reps ya puestos con pasos */
+let _serie=null;
+function serieUltimos(){
+  const hoyD=parseDate(iso(new Date())),vistos={},out=[];
+  gymS().registro.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'')||(b.ts||0)-(a.ts||0);}).forEach(function(x){
+    if(out.length>=5||vistos[x.ex])return;vistos[x.ex]=1;
+    const dd=Math.max(0,Math.round((hoyD-parseDate(x.fecha))/864e5));
+    out.push({ex:x.ex,kg:+x.kg||0,reps:+x.reps||8,hace:dd===0?'hoy':(dd===1?'ayer':'hace '+dd+' días')});});
+  return out;}
+function serieEditHTML(){
+  if(!_serie||!_serie.ex)return '';
+  return '<div class="cap" style="margin-top:10px">'+esc(_serie.ex)+' · esta serie</div>'+
+    '<div class="gpaso"><button class="btn" data-a="serie-paso" data-k="kg" data-d="-2.5" aria-label="menos 2,5 kilos">−2,5</button><b id="serieKg">'+fmtKg(_serie.kg)+' kg</b><button class="btn" data-a="serie-paso" data-k="kg" data-d="2.5" aria-label="más 2,5 kilos">+2,5</button></div>'+
+    '<div class="gpaso"><button class="btn" data-a="serie-paso" data-k="reps" data-d="-1" aria-label="una repetición menos">−1</button><b id="serieReps">'+_serie.reps+' reps</b><button class="btn" data-a="serie-paso" data-k="reps" data-d="1" aria-label="una repetición más">+1</button></div>'+
+    '<button class="btn p gbig" data-a="serie-guardar" style="width:100%;margin-top:10px">Guardar serie</button>';}
+function serieAbre(key){
+  _serie={key:key||iso(new Date()),ex:'',kg:0,reps:8};
+  const u=serieUltimos();
+  openModal('＋ serie',
+    (u.length?'<div class="cap">Tus últimos ejercicios</div>'+u.map(function(x){
+      return '<button class="btn gser" data-a="serie-elige" data-n="'+esc(x.ex)+'" data-kg="'+x.kg+'" data-reps="'+x.reps+'"><span><b>'+esc(x.ex)+'</b><small>la última vez: '+fmtKg(x.kg)+' kg × '+x.reps+' · '+x.hace+'</small></span></button>';}).join('')
+     :'<p class="mini">Aún no has apuntado ninguna serie. Escribe el ejercicio y los kilos.</p><label class="fld">ejercicio<input id="serieEx" placeholder="Sentadilla" list="gymLista"></label>'+
+       '<button class="btn" data-a="serie-elige" data-n="" style="margin-top:6px">Seguir</button>')+
+    '<div id="serieEdit">'+serieEditHTML()+'</div>',null);}
 function rutinaMeta(rt){
   const ejs=rt.ejercicios,n=ejs.reduce(function(a,e){return a+ejSets(e).length;},0);
   const min=Math.round(ejs.reduce(function(a,e){return a+ejSets(e).length*(40+ejDescanso(e,rt));},0)/60);
@@ -17941,10 +17979,16 @@ function gymHeroHTML(sel){
   const ultS=sesionesRecientes(1)[0];
   const iu=ultS?fuerza.findIndex(function(r){return r.id===ultS.rutinaId;}):-1;
   const sigR=fuerza.length?fuerza[(iu+1)%fuerza.length]:null;
-  return '<div class="ghero2 calma"><div class="k">'+dtxt+'</div><div class="m" style="font-size:14px;color:var(--ink)">'+esc(txt)+'</div>'+
+  /* C2: con la tarjeta de hoy vacía (sin ninguna rutina) se ve ya el plan recomendado, a un toque de «Usar este plan» */
+  const cap=g.rutinas.length?null:capacidadSemanas(8),rec=cap?PLAN_TPL[planRecomendada(cap)]:null;
+  const planRec=rec?'<div class="gplanrec"><div class="cap">Plan recomendado</div><b>'+esc(rec.n)+' · '+rec.dias+' días</b>'+
+    '<div class="mini">Encaja con tus guardias: caben unos '+String(cap.fuerza).replace('.',',')+' días de fuerza a la semana'+(cap.pisc>=1?', más piscina en salientes':'')+'.</div>'+
+    '<button class="gbig2" data-a="plan-crear">Usar este plan</button></div>':'';
+  return '<div class="ghero2 calma"><div class="k">'+dtxt+'</div><div class="m" style="font-size:14px;color:var(--ink)">'+esc(txt)+'</div>'+planRec+
     (malo==='guardia'?movilidadHTML():'')+
     (e&&e.tipo==='pisc'?'<button class="gbig2" data-a="gym-agua-nueva">＋ Sesión de piscina por series</button>':'')+
     (g.rutinas.length?(sigR&&!malo&&!(e&&e.tipo==='pisc')?'<button class="gbig2 sec" data-a="ses-empezar" data-id="'+esc(sigR.id)+'" data-key="'+esc(sel)+'">▶ Empezar '+esc(sigR.nombre)+' igualmente</button>':''):'<button class="gbig2" data-a="rt-nueva-rapida">＋ Crear rutina</button>')+
+    '<button class="gbig2 sec" data-a="gym-serie" data-key="'+esc(sel)+'">＋ serie</button>'+
     '<div class="glnk">'+(e&&e.tipo==='pisc'?'<button data-a="gym-panel" data-p="cardio">apuntar piscina</button><span>·</span>':'')+
       '<button data-a="gym-panel" data-p="sesion">apuntar a mano</button></div></div>';}
 /* ===== G7 · Entreno: ficha del ejercicio, «lo que toca hoy» y el entrenador de la guardia ===== */
@@ -18244,14 +18288,15 @@ function renderGymPortada(){
   const c=gymCtx(),g=c.g;
   const cerr=ui.gymCerrada?gymCerradaHTML():'';
   $('#main').innerHTML='<div class="grid">'+cerr+
-    laminaHTML(c.sel)+
-    gymSemanaLinkHTML(c.sel)+
+    (g.rutinas.length?gymSemanaLinkHTML(c.sel)+(ui.gymLam?laminaHTML(c.sel):gymCintaHTML(c.sel)):gymSemanaLinkHTML(c.sel))+
     gymAvisoHTML(c.sel)+
     avisosPuertaHTML()+
     (c.sel===iso(new Date())&&!ui.gymSesionActiva&&(gymCompleto()||regresoDe(c.sel))?listoHTML(c.sel):'')+
     gymHeroHTML(c.sel)+pesoCorporalAvisoHTML()+
+    (g.rutinas.length?'':laminaHTML(c.sel))+
     '<div class="gsec"><b>TUS RUTINAS</b><span class="sp"></span><button class="btn s" data-a="gym-panel" data-p="plannuevo">📋 plan</button><button class="btn s" data-a="gym-panel" data-p="rutinas">todas</button><button class="btn s" data-a="rt-nueva-rapida">＋ nueva</button></div>'+
     (g.rutinas.length?('<div class="grts">'+g.rutinas.map(rutinaTarjetaHTML).join('')+'</div>'):'')+
+    (g.rutinas.length?'<div class="glnk"><button data-a="lam-abrir" aria-pressed="'+(ui.gymLam?'true':'false')+'">'+(ui.gymLam?'Ocultar el dibujo':'Explícamelo · 45 s')+'</button></div>':'')+
     (gymCompleto()?musculosHTML(c.sel):'')+
     '<div class="gtiles">'+
       gymFicha('objetivos','chispa','Objetivos',objetivosS().length||'—',objetivosS().length?'en marcha':'ponte uno')+
@@ -23626,8 +23671,9 @@ function dinTuMesHTML(){
   const aviso='<div class="card tm-hero"><div class="tm-t">Aún no sé tus gastos del día a día</div><p class="tm-p">Sube la captura de Fintonic de este mes para saber con cuánto acabas.</p>'+
     '<label class="tm-bt p" style="cursor:pointer">📷 Subir Fintonic<input type="file" accept="image/*" multiple data-a="fin-fotos" hidden></label></div>';
   return cab+
-    (D.sinVar?aviso:'<div class="card tm-hero"><div class="tm-t">Acabarás el mes con</div><div class="tm-fila"><span class="tm-n">'+(D.acabas<0?'−':'~')+f(Math.abs(D.acabas))+' €</span>'+
-      (D.acabas>0?'<span class="tm-a">· ahorras '+f(D.ahorras)+'</span>':'<span class="tm-a mal">· este mes no te llega</span>')+'</div>'+tgChipsHTML(D)+'</div>')+
+    (D.sinVar?aviso:'<div class="card tm-hero"><div class="tm-cab"><div><div class="tm-t">Acabarás el mes con</div><div class="tm-fila"><span class="tm-n">'+(D.acabas<0?'−':'~')+f(Math.abs(D.acabas))+' €</span>'+
+      (D.acabas>0?'<span class="tm-a">· ahorras '+f(D.ahorras)+'</span>':'<span class="tm-a mal">· este mes no te llega</span>')+'</div></div>'+
+      '<button class="tm-mas" data-a="dinero-apuntar">＋ Gasto</button></div>'+tgChipsHTML(D)+'</div>')+
     '<div class="tm-vrow"><button class="tm-vaso" data-a="tumes-fijos" aria-pressed="'+sep+'" aria-label="Vaso del mes. Toca para separar los fijos y ver cuánto te queda tras pagarlos.">'+tmVasoSVG(D,sep)+'</button>'+
       '<div class="tm-lado" aria-live="polite">'+(sep?ladoB:ladoA)+'</div></div>'+
     (D.sinVar?'<div class="tm-cadena" role="group" aria-label="La cuenta del mes: '+f(D.ingreso)+' menos '+f(D.fijos)+' igual a '+f(D.tras)+'">'+
@@ -26062,19 +26108,22 @@ function act(a,el){
     case 'dinero-apuntar':{
       const hoyK=iso(new Date());
       const cats=DIN_CAT.map(function(c){return '<option value="'+c[0]+'">'+c[1]+' '+c[2]+'</option>';}).join('');
+      /* C2: la hoja recuerda la última categoría (dineroS().ultCat, campo añadido, sin migrar) */
+      const ultC=dineroS().ultCat,ultF=DIN_CAT.filter(function(c){return c[0]===ultC;})[0];
       openModal('Apuntar un gasto',
         '<div class="fgrid c3">'+
           '<label class="fld">en qué<input id="mPgNombre" placeholder="compra del súper" value="'+esc(ui.pagoNombre||'')+'"></label>'+
           '<label class="fld">cuánto (€)<input id="mPgImporte" type="text" inputmode="decimal" placeholder="41,30"></label>'+
           '<label class="fld">qué día<input id="mPgFecha" type="date" value="'+hoyK+'"></label>'+
-          '<label class="fld">de qué<select id="mPgCat">'+cats+'</select></label>'+
+          '<label class="fld">de qué'+(ultF?' · la última vez fue «'+esc(ultF[2])+'»':'')+'<select id="mPgCat">'+cats+'</select></label>'+
         '</div>',
         function(){const g=function(id){return (document.getElementById(id)||{}).value||'';};
           const r=addPago({nombre:g('mPgNombre'),importe:g('mPgImporte'),fecha:g('mPgFecha'),cat:g('mPgCat')});
           if(/ponle un importe/.test(r)){flash(r);return false;}
+          dineroS().ultCat=g('mPgCat');save();
           ui.pagoNombre='';flash(r);render();return true;});
       setTimeout(function(){const c=document.getElementById('mPgCat');
-        if(c&&ui.pagoCat)c.value=ui.pagoCat;ui.pagoCat='';
+        if(c&&ui.pagoCat)c.value=ui.pagoCat;else if(c&&ultF)c.value=ultF[0];ui.pagoCat='';
         const i=document.getElementById('mPgImporte');if(i)i.focus();},60);
       break;}
     case 'dinero-compra':{
@@ -27028,6 +27077,21 @@ function act(a,el){
     case 'gym-rut':flash(addRutina(ui.gymRutinaSel,el.dataset.n));break;
     case 'gym-filtro-tipo':ui.gymFiltroTipo=(ui.gymFiltroTipo===el.dataset.t)?'':el.dataset.t;render();break;
     case 'gym-filtro-region':ui.gymFiltroRegion=(ui.gymFiltroRegion===el.dataset.r)?'':el.dataset.r;render();break;
+    case 'gym-serie':serieAbre(el.dataset.key);break;
+    case 'serie-elige':{const ex=el.dataset.n||(document.getElementById('serieEx')||{}).value||'';
+      if(!ex.trim()){flash('dime qué ejercicio es');break;}
+      _serie.ex=ex.trim();_serie.kg=+el.dataset.kg||0;_serie.reps=+el.dataset.reps||8;
+      const ed=document.getElementById('serieEdit');if(ed)ed.innerHTML=serieEditHTML();
+      const gb=document.querySelector('#modal [data-a="serie-guardar"]');if(gb)gb.scrollIntoView({block:'nearest'});break;}
+    case 'serie-paso':{if(!_serie)break;
+      if(el.dataset.k==='kg')_serie.kg=Math.max(0,Math.round((_serie.kg+(+el.dataset.d))*10)/10);
+      else _serie.reps=Math.max(1,Math.min(200,_serie.reps+(+el.dataset.d)));
+      const a=document.getElementById('serieKg'),b=document.getElementById('serieReps');
+      if(a)a.textContent=fmtKg(_serie.kg)+' kg';if(b)b.textContent=_serie.reps+' reps';break;}
+    case 'serie-guardar':{if(!_serie||!_serie.ex)break;
+      const r=addSet(_serie.key,{ex:_serie.ex,kg:_serie.kg,reps:_serie.reps});   /* el mismo guardado que «apuntar serie» */
+      ui.gymEx=_serie.ex;closeModal();render();flash(r);break;}
+    case 'lam-abrir':{ui.gymLam=!ui.gymLam;render();if(ui.gymLam)setTimeout(lamTour,0);break;}
     case 'gym-set-ex':{ui.gymEx=el.dataset.n;
       ui.gymPanel='sesion';   /* el formulario vive ahí: si no, el ejercicio se pone en una pantalla que no se ve */
       render();window.scrollTo(0,0);

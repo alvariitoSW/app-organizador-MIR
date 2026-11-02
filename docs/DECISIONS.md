@@ -2607,3 +2607,13 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Descartado.** Poner el campo de mes en su propia fila (una fila más en el Mes, que C4 va a rehacer en la fase 2).
 
 **Supuestos.** El nombre del mes ya se ve en la barra de arriba y en el título de la tarjeta, así que el botón no lo repite.
+
+## 2026-11-02 · La Competencia · C2 Apuntar en menos toques
+**Elegido (opciones recomendadas):**
+- Dinero: pastilla «＋ Gasto» de 56 px (`--toque-grande`) arriba a la derecha de Tu mes; abre la hoja de siempre con hoy y la última categoría (`dineroS().ultCat`, campo añadido, sin migrar) y la etiqueta «la última vez fue …». La cuenta Empiezas − Fijos − Gastos = Acabas y «€/día» siguen y no hace falta scroll.
+- Entreno: con rutina, cinta L–D de 56 px en vez del dibujo grande (que sale sin rutina y con «Explícamelo», `ui.gymLam`); «Empezar» / «▶ Seguir» arriba; con la tarjeta vacía, plan recomendado con «Usar este plan» (reutiliza `plan-crear`).
+- «＋ serie» (hoja con los 5 últimos ejercicios, ±2,5 kg / ±1 rep) guarda con `addSet`, el mismo guardado que «apuntar serie».
+- Rótulo «Semana N de M · N entrenos»; toda la fila abre «Tu semana de entreno» (donde estaba el ⚙, sin emoji).
+**Descartado:** otra hoja de gasto; copiar mi último entreno y guardar como rutina (tanda 7); tocar «Vienes de guardia» (solo queda por encima de «Empezar»).
+**Supuestos:** la vuelta tras un parón (antes una parte del dibujo grande) pasa a un botón bajo la cinta «Tu vuelta · semana N de M · al X %»; «Explícamelo» es un enlace al final de la portada; «＋ serie» sale también en el día libre con rutinas; el día de la serie es el elegido en la portada.
+**Pruebas:** 460-463. Cae con X revertido: 460 sin la pastilla `.tm-mas` o sin recordar la categoría; 462 con el dibujo grande otra vez arriba (la cinta no existe). Pruebas viejas cambiadas por decisión: 212 (ya no hay lámina que buscar), 353 (abre el dibujo con `gymLam`), 356/357/358 (cinta en vez de lámina; rótulo nuevo), 323/350 (la vuelta se busca sin `.glam`).
