@@ -7863,6 +7863,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       hoyCorto.filas >= 1 && hoyCorto.deDosLineas === 0 && hoyCorto.sinElRelleno && hoyCorto.sinTarjetaSol, JSON.stringify(hoyCorto));
 
     // y el sol sigue entero: tocar el arco amarillo del reloj abre su hoja, con el arco y el sitio
+    // (el modo de Hoy se recuerda entre pruebas: si alguna lo dejó en otro, aquí se entra en Reloj, que es donde vive el arco)
+    if (!(await page.$('#main .hoyreloj svg'))) { const b = await page.$('#main [data-a="hoy-modo"][data-v="reloj"]'); if (b) { await b.click(); await page.waitForTimeout(300); } }
     // el reloj se dibuja en la caja -60 -14 420 328 (las etiquetas van por fuera del anillo)
     const pSol = await page.evaluate(() => { const v = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / v.width, t = Math.PI;
       return { x: v.left + (150 + 129 * Math.sin(t) + 60) / k, y: v.top + (150 - 129 * Math.cos(t) + 14) / k }; });
