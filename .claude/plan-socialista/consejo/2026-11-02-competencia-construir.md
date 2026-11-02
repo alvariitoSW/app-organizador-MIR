@@ -87,3 +87,12 @@ Todas las capturas las hace el `verificador` a 412×915, en **claro y en oscuro*
 
 `plan-v3.md` → La Competencia: el orden (S1 ∥ C2) → C1 → (C3 ∥ C4 ∥ C5) → (C6 ∥ C4b), los bloques de pruebas 450-529 y la
 fase 1 en ~6,1 M (Consejo, 2026-11-02).
+
+## Lo que decidió el usuario (02/11/2026)
+
+Las recomendadas en todas las tandas · 1-a: se quita «Te faltan N noches» y la fila «Anoche …» lleva «otras noches», que abre
+Sueño · 2-a: «Faltan X h en tus 3 últimas noches · cama HH:MM», sin rojo. **Plan aprobado: empieza la construcción de la fase 1.**
+
+Revisión de salud del mismo día (verificador, sobre el código de `main`): caen la 397d (minutos de móvil en la semana de Sueño)
+y la CH6-c 408 (los botones del modo cocina miden 46 px). Hay que arreglarlas **antes** de la primera suite final de la fase 1:
+el hook no deja pasar a `main` sin la suite completa en verde.
