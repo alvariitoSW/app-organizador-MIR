@@ -77,6 +77,24 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   };
   const sueltaHoy = () => page.evaluate(() => { if (window.__origDateFijo) { window.Date = window.__origDateFijo; delete window.__origDateFijo; } });
 
+  // ===== C3 · HOY EN UNA PANTALLA (480-485) =====
+  // prepara: cuatro hábitos (uno que no toca en guardia ni saliente), los días de alrededor de trabajo, y Hoy en el modo pedido
+  const c3Prepara = (modo, guardia, saliente) => page.evaluate(([modo, guardia, saliente]) => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)),
+      SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren/i.test(x.name || ''))[0], GU = P.store.shifts.filter(P.isGuardia)[0];
+    if (!window.__copiaC3) window.__copiaC3 = JSON.parse(JSON.stringify(P.store));
+    for (let i = -3; i <= 3; i++) P.setDayOverride(d(i), SH.id, '');
+    if (guardia) P.setDayOverride(d(0), GU.id, 'urg'); if (saliente) P.setDayOverride(d(-1), GU.id, 'urg');
+    P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} });
+    P.store.habitos = { items: [['Agua 2 L', '💧', []], ['Estirar', '🧘', []], ['Estudiar', '📚', ['guardia', 'saliente']], ['Leer', '📖', []]].map((n, i) => ({ id: 'hbc3' + i, nombre: n[0], icono: n[1], color: '#38bdf8',
+      dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: n[2], auto: '', min: '1 min', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' })), registro: {} };
+    P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = modo; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); }, [modo, guardia, saliente]);
+  const c3Suelta = () => page.evaluate(() => { const P = window.PG; if (window.__copiaC3) { P.store = window.__copiaC3; delete window.__copiaC3; } P.ui.hoyModo = 'reloj'; P.ui.diaHoy = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+  const c3Orden = () => page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), t = (e) => (e ? e.getBoundingClientRect().top + scrollY : -1), b = (e) => (e ? e.getBoundingClientRect().bottom + scrollY : -1);
+    return { ahora: !!q('.hoyahora'), frase: ((q('.hoyahora .hoyfrase') || {}).textContent || '').trim(), bateria: document.querySelectorAll('#main .hoyahora .hoyener .bat i').length,
+      tira: document.querySelectorAll('#main .habtira .habtira-b').length, tiraTop: t(q('.habtira')), ahoraBot: b(q('.hoyahora')), paraTop: t(q('.parahoy')), paraBot: b(q('.parahoy')), dibTop: t(q('#hoyBusSlot')),
+      dibFuera: !!q('#hoyBusSlot') && !!q('#hoyBusSlot').closest('.hoybusfuera'), cartel: !!q('.ncartel'), cond: !!q('.hoycond'), vh: innerHeight }; });
+
+
   // navegación: la barra tiene tres grupos —Calendario (Hoy/Semana/Mes), Entreno y Comer
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'month']);
@@ -11288,7 +11306,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main .hoyseg [data-v="bus"]').catch(() => {});
     r.m.vuelta = await page.evaluate(() => ({ cd: !!document.querySelector('#main #hoyBusSlot .cd'), es: !!document.querySelector('#main #hoyBusSlot .es'), ls: localStorage.getItem('guardias-hoybusv') }));
     // (i) con el conductor, el «¿cómo amaneces?» no es una tarjeta: está en la radio de la cabina (y «Para hoy», en el quiosco)
-    r.i = await page.evaluate(() => ({ sinTarjeta: !document.querySelector('#main .asck'), sinParaHoy: !document.querySelector('#main .parahoy'), radio: !!document.querySelector('#main .cd [data-o="kss"]'), quiosco: !!document.querySelector('#main .cd [data-o="parahoy"]') }));
+    r.i = await page.evaluate(() => ({ sinTarjeta: !document.querySelector('#main .asck'), paraHoyArriba: (() => { const p = document.querySelector('#main .parahoy'), d = document.querySelector('#main #hoyBusSlot'); return !p || !!(p.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING); })(), radio: !!document.querySelector('#main .cd [data-o="kss"]'), quiosco: !!document.querySelector('#main .cd [data-o="parahoy"]') }));
     // (h) un toque en el cartel de la primera comida sin apuntar, a su hora, la apunta
     // si lo de antes dejó el día sin comidas con platos por apuntar, se pone una con el gesto de Plan
     const comida = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date());
@@ -11348,7 +11366,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.n.ida.carretera && r.n.vuelta.carretera && r.n.ida.humo === 0 && r.n.andando.humo === 0 && !r.n.andando.carretera && r.n.fumando.humo === 3 && r.n.fumando.brasa && !r.n.fumando.carretera && r.n.amb === 'acantilado' && r.n.sinFumar.humo === 0 && !r.n.sinFumar.brasa && !r.n.sinFumar.carretera, JSON.stringify(r.n));
     check('en el conductor, la radio (el sueño) se abre y su «abrir Sueño» lleva a Sueño', r.c === 'sueno', JSON.stringify(r.c));
     check('volver a pintar Hoy no recarga el conductor: es el mismo, en su sitio', r.d.mismo && r.d.dentro, JSON.stringify(r.d));
-    check('con el conductor, «¿cómo amaneces?» y «Para hoy» no son tarjetas: van en la radio y en la máquina de billetes de la cabina', r.i.sinTarjeta && r.i.sinParaHoy && r.i.radio && r.i.quiosco, JSON.stringify(r.i));
+    check('con el conductor, «¿cómo amaneces?» no es tarjeta (va en la radio) y «Para hoy» (C3) queda encima del dibujo, con su máquina de billetes en la cabina', r.i.sinTarjeta && r.i.paraHoyArriba && r.i.radio && r.i.quiosco, JSON.stringify(r.i));
     check('un toque en el cartel de una comida, a su hora, la apunta sin abrir la hoja', r.h.comida && r.h.hecha && !r.h.hoja, JSON.stringify(r.h));
     check('sin la noche apuntada, la radio dice «sin apuntar»', /sin apuntar/.test(r.g), JSON.stringify(r.g));
     check('de guardia a las 23:40 el autobús va de servicio nocturno, no a la cochera', /SERVICIO NOCTURNO/.test(r.e.nxl) && !/COCHERA/.test(r.e.nxl), JSON.stringify(r.e));
@@ -17005,6 +17023,95 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     let salida = ''; try { salida = require('child_process').execFileSync('node', ['tools/suelo-letra.mjs', '--seco'], { cwd: require('path').resolve(__dirname, '..'), encoding: 'utf8' }); } catch (e) { salida = String(e); }
     check('474 Letra · el script del suelo en seco dice 0 cambios en styles.css y 0 en app.js', /styles\.css: 0 tamaños cambiados · app\.js: 0 tamaños cambiados/.test(salida), salida.slice(-300));
+  }
+
+
+  // 480) C3 · «AHORA» Y EL DIBUJO QUE BAJA (412×915, con el conductor): «Ahora» (frase + energía, con el cartel y la cadena justo encima) abre Hoy; la tira de hábitos va debajo, luego «Para hoy» y el dibujo del conductor entero va el último.
+  //      Encadenada: marcar un hábito en la tira lo deja hecho (aria-pressed) y vuelve a quitarlo al segundo toque, sin mover el orden. Cae si el dibujo vuelve arriba o «Ahora» desaparece.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c3Prepara('bus', false, false); await page.waitForTimeout(500);
+    const o = await c3Orden(); //, JSON.stringify(o), await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return [k, P.diaTipo(k), P.ui.hoyModo, P.habitoToca(P.store.habitos.items[0], k), document.querySelector('#main .grid').children.length]; }));
+    await page.click('#main .habtira .habtira-b'); await page.waitForTimeout(150);
+    const h1 = await page.evaluate(() => ({ on: (document.querySelector('#main .habtira .habtira-b.on') || { getAttribute: () => null }).getAttribute('aria-pressed'), reg: Object.keys(window.PG.store.habitos.registro).length }));
+    await page.click('#main .habtira .habtira-b.on'); await page.waitForTimeout(150);
+    const h2 = await page.evaluate(() => ({ on: document.querySelectorAll('#main .habtira .habtira-b.on').length, reg: Object.keys(window.PG.store.habitos.registro).length }));
+    const o2 = await c3Orden();
+    await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('480 Hoy · «Ahora» (frase, energía, cartel) arriba, luego los hábitos y «Para hoy», y el dibujo del conductor el último; un hábito se marca y se desmarca desde la tira',
+      o.ahora && o.frase.length > 8 && o.bateria === 4 && o.cartel && o.ahoraBot < o.vh && o.tiraTop > o.ahoraBot && o.paraTop > o.tiraTop && o.dibTop > o.paraBot && o.dibFuera &&
+      h1.on === 'true' && h1.reg === 1 && h2.on === 0 && h2.reg === 0 && o2.dibTop > o2.paraBot, JSON.stringify({ o, h1, h2 }));
+  }
+
+  // 481) C3 · LA TIRA, HASTA 3 Y MANTENER PULSADO: con cuatro hábitos que tocan salen 3; mantener pulsado el primero abre su ficha (habEd) en vez de marcarlo.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c3Prepara('bus', false, false); await page.waitForTimeout(300);
+    const n = await page.evaluate(() => document.querySelectorAll('#main .habtira .habtira-b').length);
+    const bb = await (await page.$('#main .habtira .habtira-b')).boundingBox();
+    await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.mouse.down(); await page.waitForTimeout(900); await page.mouse.up(); await page.waitForTimeout(250);
+    const r = await page.evaluate(() => ({ ed: window.PG.ui.habEd ? window.PG.ui.habEd.id : null, marcado: Object.keys(window.PG.store.habitos.registro).length }));
+    await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('481 Hoy · la tira enseña como mucho 3 hábitos y mantener pulsado uno abre su ficha sin marcarlo', n === 3 && /^hbc3/.test(r.ed || '') && r.marcado === 0, JSON.stringify({ n, r }));
+  }
+
+  // 482) C3 · SIN TIRA EN GUARDIA NI SALIENTE, Y EL AVISO DE NO CONDUCIR A LA VISTA: un día de trabajo la tira sale; el día de guardia y el saliente, no; con carné y la energía baja
+  //      en esos días sale «Mejor no conduzcas» en «Ahora» (y nunca en un día de trabajo).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    const R = {};
+    for (const [nom, g, sa] of [['trabajo', false, false], ['guardia', true, false], ['saliente', false, true]]) {
+      await c3Prepara('bus', g, sa);
+      await page.evaluate(() => { const P = window.PG; P.store.sueno.conduce = true; P.render(); }); await page.waitForTimeout(300);
+      R[nom] = Object.assign(await c3Orden(), await page.evaluate(() => { const P = window.PG, e = P.energiaHoy(P.iso(new Date())); return { n: e ? e.n : null, conduce: P.store.sueno.conduce, tipo: P.diaTipo(P.iso(new Date())) }; }));
+    }
+    await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    const esp = (x) => x.cond === (!!x.conduce && x.n != null && x.n <= 2 && (x.tipo === 'guardia' || x.tipo === 'saliente'));
+    check('482 Hoy · en guardia y en saliente no hay tira de hábitos (sí en un día de trabajo), y «Mejor no conduzcas» solo sale con carné, en guardia o saliente y con la energía baja',
+      R.trabajo.tira === 3 && R.guardia.tira === 0 && R.saliente.tira === 0 && R.guardia.tipo === 'guardia' && R.saliente.tipo === 'saliente' && esp(R.trabajo) && esp(R.guardia) && esp(R.saliente) && !R.trabajo.cond, JSON.stringify(R));
+  }
+
+  // 483) C3 · «PARA HOY» SIN FILAS DE HÁBITOS: los hábitos que tocan salen en la tira y no se repiten como filas en «Para hoy» (ni en el reloj ni con el conductor); marcar uno en la tira no los hace volver.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    const R = {};
+    for (const modo of ['reloj', 'bus']) {
+      await c3Prepara(modo, false, false); await page.waitForTimeout(300);
+      await page.click('#main .habtira .habtira-b'); await page.waitForTimeout(150);
+      R[modo] = await page.evaluate(() => ({ nombres: /Agua 2 L|Estirar|Leer|Estudiar/.test((document.querySelector('#main .parahoy') || { textContent: '' }).textContent),
+        tira: document.querySelectorAll('#main .habtira .habtira-b').length, hecho: document.querySelectorAll('#main .habtira .habtira-b.on').length }));
+    }
+    await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('483 Hoy · «Para hoy» ya no lleva filas de hábitos (reloj y conductor): salen en la tira de 3 y marcar uno no los devuelve a la lista',
+      ['reloj', 'bus'].every((m) => R[m].nombres === false && R[m].tira === 3 && R[m].hecho === 1), JSON.stringify(R));
+  }
+
+  // 484) C3 · OTRO DÍA, COMO ANTES: mirando mañana con el conductor el dibujo se queda dentro de la tarjeta del día (no baja) y no hay «Ahora» ni tira.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c3Prepara('bus', false, false);
+    await page.click('#main [data-a="dia-next"]'); await page.waitForTimeout(400);
+    const o = await page.evaluate(() => ({ ahora: !!document.querySelector('#main .hoyahora'), tira: !!document.querySelector('#main .habtira'), dibEnCard: !!document.querySelector('#main .grid > .card #hoyBusSlot'), fuera: !!document.querySelector('#main .hoybusfuera') }));
+    await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('484 Hoy · otro día con el conductor el dibujo sigue en la tarjeta del día y no sale «Ahora» ni la tira', !o.ahora && !o.tira && o.dibEnCard && !o.fuera, JSON.stringify(o));
+  }
+
+  // 485) C3 · EL RÓTULO DEL TURNO EN CLARO: en tema claro el texto del rótulo («Día de trabajo · 8–15») mide ≥4,5:1 y el color del turno pasa a una barra a su izquierda; en oscuro el texto sigue siendo del color del turno.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c3Prepara('reloj', false, false);
+    const eraOsc = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+    const med = () => page.evaluate(() => { const el = document.querySelector('#main .hoyest'), cs = getComputedStyle(el), tc = el.style.getPropertyValue('--tc').trim();
+      const lum = (c) => { const m = c.startsWith('color(') ? c.match(/[\d.]+/g).map((v) => Number(v) * 255) : c.match(/[\d.]+/g).map(Number); const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(m[0]) + 0.7152 * f(m[1]) + 0.0722 * f(m[2]); };
+      let bg = el; let fondo = 'rgb(255, 255, 255)'; while (bg) { const c = getComputedStyle(bg).backgroundColor; if (c && !/rgba\(.*, 0\)|transparent/.test(c)) { fondo = c; break; } bg = bg.parentElement; }
+      const a = lum(cs.color) + 0.05, b = lum(fondo) + 0.05, p = document.createElement('i'); p.style.color = tc; document.body.appendChild(p); const col = getComputedStyle(p).color; p.remove();
+      return { fondo, cls: bg && bg.className, color: cs.color, tc: col, borde: cs.borderLeftColor, anchoBorde: cs.borderLeftWidth, contraste: Math.max(a, b) / Math.min(a, b) }; });
+    await page.evaluate(() => { document.documentElement.classList.remove('dark'); }); await page.waitForTimeout(700); const claro = await med();
+    await page.evaluate(() => { document.documentElement.classList.add('dark'); }); await page.waitForTimeout(700); const osc = await med();
+    await page.evaluate((o) => { document.documentElement.classList.toggle('dark', o); }, eraOsc);
+    await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('485 Hoy · en claro el rótulo del turno mide ≥4,5:1 (texto en tinta, color del turno en la barra) y en oscuro sigue en el color del turno',
+      claro.contraste >= 4.5 && claro.borde === claro.tc && parseFloat(claro.anchoBorde) >= 4 && osc.color === osc.tc, JSON.stringify({ claro, osc }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

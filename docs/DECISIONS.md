@@ -2625,3 +2625,13 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Descartado:** otra hoja de gasto; copiar mi último entreno y guardar como rutina (tanda 7); tocar «Vienes de guardia» (solo queda por encima de «Empezar»).
 **Supuestos:** la vuelta tras un parón (antes una parte del dibujo grande) pasa a un botón bajo la cinta «Tu vuelta · semana N de M · al X %»; «Explícamelo» es un enlace al final de la portada; «＋ serie» sale también en el día libre con rutinas; el día de la serie es el elegido en la portada.
 **Pruebas:** 460-463. Cae con X revertido: 460 sin la pastilla `.tm-mas` o sin recordar la categoría; 462 con el dibujo grande otra vez arriba (la cinta no existe). Pruebas viejas cambiadas por decisión: 212 (ya no hay lámina que buscar), 353 (abre el dibujo con `gymLam`), 356/357/358 (cinta en vez de lámina; rótulo nuevo), 323/350 (la vuelta se busca sin `.glam`).
+
+## 2026-11-02 · La Competencia · C3 Hoy en una pantalla
+**Elegido (opciones recomendadas):**
+- «Ahora» (`hoyAhoraHTML`, con el conductor y solo hoy): la frase de lo que toca (`hoyFraseAhora`, de `hoyItems`) + la energía (`energiaHoy`) + «Mejor no conduzcas» (`hoyConducirHTML`: con carné, guardia o saliente y energía ≤2), debajo del cartel y la cadena de siempre (`nocheHTML`, sin tocar).
+- Tira de hábitos (`habTiraHTML`): los 3 primeros que tocan hoy, mantener pulsado abre el hábito (`data-lp="hab"`), oculta en guardia y saliente. «Para hoy» ya no lleva filas de hábitos (la cabina las sigue leyendo de `paraHoyItems`).
+- El dibujo del conductor baja entero (`.hoybusfuera`), tras «Para hoy»; el coach (energía larga) va tras el dibujo. Otro día, el dibujo se queda en su tarjeta como antes.
+- Añadido: el rótulo del turno (`.hoyest`) en tema claro pasa a texto en tinta con barra izquierda del color del turno (≥4,5:1); en oscuro sigue en el color del turno (variable `--tc`).
+**Descartado:** una tarjeta «Comida de hoy» nueva (es de C5; la comida sigue en la cadena y la cabina); tocar `avisoCola()`; tira con desplazamiento lateral.
+**Supuestos:** la tira es por orden de la lista (un hábito hecho no sale de la tira, para poder desmarcarlo); la frase omite «Luego» si lo siguiente cae dentro del turno actual; el aviso de no conducir sale solo en guardia/saliente con energía baja.
+**Pruebas:** 480-485. Cae con X revertido: 480-484 sin `hoyAhoraHTML`/`habTiraHTML`/`.hoybusfuera`; 485 sin la regla `html:not(.dark) .hoyest`. Pruebas viejas cambiadas por decisión: 275 («Para hoy» ya no falta con el conductor: queda encima del dibujo). Las 79 y 83 caen también solas en el código sin tocar (dependen de pruebas anteriores): ajenas.
