@@ -4871,21 +4871,21 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 1 · la tira: siete días con su estado, y el viernes marcado como choque
     const tira = await page.evaluate(() => {
       // la semana ya no es una tarjeta con círculos: son los 7 bancales/roques de la lámina, cada uno con su frase
-      const dd = [...document.querySelectorAll('#main .glam .gdia')];
+      const dd = [...document.querySelectorAll('#main .gcinta .gcd')];
       return { n: dd.length, tarjeta: !!document.querySelector('#main .gsem, #main .gsc'),
         etiquetas: dd.map((e) => e.getAttribute('aria-label')),
         pie: (document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim() };
     });
-    check('«Entreno» abre con la semana en la lámina (7 días) y el día de guardia dicho como guardia, sin la tarjeta de círculos',
+    check('«Entreno» abre con la semana en la cinta (7 días) y el día de guardia dicho como guardia, sin la tarjeta de círculos',
       tira.n === 7 && !tira.tarjeta && tira.etiquetas.filter((x) => /guardia/i.test(x)).length >= 1,
       JSON.stringify(tira));
 
     // 2 · tocar otro día cambia la línea que lo explica (la tira no es decoración)
     const antesPie = tira.pie + '|' + mont.jueves;
-    const botLun = await page.$('#main .glam .gdia[data-key="' + mont.lunes + '"]');
+    const botLun = await page.$('#main .gcinta .gcd[data-key="' + mont.lunes + '"]');
     if (botLun) { await botLun.click(); await page.waitForTimeout(300); }
-    const piel = await page.evaluate(() => ((document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent + '|' + ((document.querySelector('#main .glam .gdia[aria-current]') || { dataset: {} }).dataset.key || '')).replace(/\s+/g, ' ').trim());
-    check('tocar un día de la lámina lo selecciona y la tarjeta grande cuenta lo que hay ese día',
+    const piel = await page.evaluate(() => ((document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent + '|' + ((document.querySelector('#main .gcinta .gcd[aria-current]') || { dataset: {} }).dataset.key || '')).replace(/\s+/g, ' ').trim());
+    check('tocar un día de la cinta lo selecciona y la tarjeta grande cuenta lo que hay ese día',
       !!botLun && piel !== antesPie && piel.endsWith('|' + mont.lunes), JSON.stringify({ antes: antesPie, ahora: piel }));
 
     // 3 · el descanso por grupo muscular: lo que justifica que hoy toque torso y no pierna (vive en «Progreso»)
@@ -8376,7 +8376,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.gymDate = K1; P.render();
       const heroS = (document.querySelector('#main .ghero2') || { textContent: '' }).textContent;
       // y la semana no lo marca como choque ni ofrece «moverla»: la pusiste ahí tú
-      const circS = (document.querySelector('#main .glam .gdia[data-key="' + K1 + '"]') || { getAttribute: () => 'NO' }).getAttribute('aria-label');
+      const circS = (document.querySelector('#main .gcinta .gcd[data-key="' + K1 + '"]') || { getAttribute: () => 'NO' }).getAttribute('aria-label');
       const avisos = Array.from(document.querySelectorAll('#main .gaviso')).map((x) => x.textContent).join(' | ');
       // 4) sin repintar: se pregunta por K6 (se memoriza «no hay salida»), se pone guardia en K5 y se
       //    exporta. El saliente de K6 tiene que ir a Google
