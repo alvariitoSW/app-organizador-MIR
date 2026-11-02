@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Competencia · fase 1** (02/11): encargo `encargos/competencia-fase-1.md`. Fase 2 el 03/11, fase 3 el 04/11.
+**La Competencia · fase 1** (02/11): maquetas de las fases 1 y 2 **hechas y aprobadas** por el usuario (02/11: `maquetas/competencia-a.html` y `competencia-b.html`, opciones recomendadas). **Siguiente:** el Consejo aprueba cómo se construye, `encargos/competencia-construir.md` (sesión nueva, `/plan-socialista`); luego los pasos 2-5 de `encargos/competencia-fase-1.md`.
 
 ## Por hacer
 

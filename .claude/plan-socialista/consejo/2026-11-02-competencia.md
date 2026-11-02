@@ -154,3 +154,5 @@ Además: si le parece bien, el informe y este acta pasan a `main` (solo document
 ## Lo que decidió el usuario (02/11/2026)
 
 1-a (C1-C6, ~17,7 M, sin Consejo por tanda) · 2-a (la cara se queda) · 3-b (foto del cuadrante: pasa de C7 a **C4b**, +2,5 M, detrás de C4). Lo que no se hace va a Ideas como «algún día, sin prisa» `[v3-competencia-algun-dia]`. Presupuesto aprobado: **~20,2 M** nuevos (C1-C6 + C4b + 0,3 de la víspera en Sueño).
+
+**Maquetas (02/11/2026, tarde):** `maquetas/competencia-a.html` y `competencia-b.html` (S1, C1-C6, C4b), aprobadas por el usuario («apruebo las maquetas a y b»). Pide un Consejo para aprobar cómo se construye: `encargos/competencia-construir.md`.
