@@ -12,7 +12,9 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Competencia · fase 2** (siguiente, sesión nueva): encargo `encargos/competencia-fase-2.md` — (C3 ∥ C4 ∥ C5) → (C6 ∥ C4b), pruebas 480-529, ~12 M. Acta `consejo/2026-11-02-competencia-construir.md`.
+**La Competencia · fase 3** (siguiente, sesión nueva): encargo `encargos/competencia-fase-3.md` — antes, la pasada del verificador por todas las pantallas y las maquetas de la fase 3 (quedaron de la fase 2); luego K3 → K4 ‖ C7 ‖ deslizar, «+» y récords; PDF/Excel lo último y preguntando. ~14 M.
+
+~~La Competencia · fase 2~~ ✅ (02/11, en `main` ab1be8d, run 41526387915 success): C3 Hoy (480-485) · C4 Mes (490-496) · C5 Comer (500-503) · C4b Foto del cuadrante (520-529) · C6 Privado, hábitos y «Esperan turno» (510-519b). Pasada en tema claro hecha al empezar. Gasto 9,6 M frente a ~12 M (`gastos.md`).
 
 ~~La Competencia · fase 1~~ ✅ (02/11, en `main`): salud (397d con fecha fija, «otro mes» · 449g, CH6-c y arco del sol firmes) · S1 Sueño de un toque (450-459) · C2 Apuntar (460-463) · C1 Letra y calma, suelo 13/14 px y avisos de uno en uno (470-474). Gasto 10,3 M frente a ~6,1 M (`gastos.md`). Cierra [v3-sueno-un-toque].
 
