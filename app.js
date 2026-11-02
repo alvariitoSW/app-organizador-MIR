@@ -4882,7 +4882,8 @@ function paraHoyItems(key){
       ck:ck(T.accion,' data-id="'+h.id+'" data-key="'+key+'"',T.on,T.etq)});});
   return f;}
 function paraHoyHTML(key){
-  const f=paraHoyItems(key);
+  /* C3: los hábitos ya no van en filas aquí: van en la tira de encima (habTiraHTML). La cabina del conductor sí los lee de paraHoyItems */
+  const f=paraHoyItems(key).filter(function(x){return !x.hab;});
   if(!f.length)return '';
   const attrs=function(ds){return Object.keys(ds||{}).map(function(k){return ' data-'+k+'="'+esc(ds[k])+'"';}).join('');};
   f.forEach(function(x){
@@ -6146,6 +6147,35 @@ function macroGuiaHTML(){
     '<p class="mini">Solo cuenta cuántas pausas y si cerraste: no guarda la hora ni qué apps.</p>'+
     '<button class="btn nancho" data-a="macro-volver">Ahora no</button></div>';}
 function renderMacroGuia(){$('#main').innerHTML=macroGuiaHTML();}
+/* ===================== C3 · HOY EN UNA PANTALLA =====================
+   «Ahora» = el cartel y la cadena (nocheHTML, justo encima) + la frase de lo que toca + la energía (+ el aviso de no conducir).
+   La tira de hábitos: hasta 3 de los que tocan hoy, oculta en guardia y saliente. Mantener pulsado abre el hábito. */
+function hoyFraseAhora(key,inf){
+  let it=[];try{it=hoyItems(key,inf);}catch(e){it=[];}
+  const n=hoyNow(true),h=function(x){return '<em>'+esc(hCortaHM(x.hora))+'</em>';};
+  const dura=it.filter(function(x){return x.fin&&x.m2<=n&&n<finMin(x)&&x.tipo!=='meal';})[0];
+  const sig=it.filter(function(x){return x.m2>=(dura?finMin(dura):n+1)&&x.m2>n&&x.tipo!=='sleep';})[0];
+  const nom=function(x){return '<em>'+esc(nombreCorto(x.txt))+'</em>';};
+  if(dura)return nom(dura)+' hasta las <em>'+esc(hCortaHM(dura.fin))+'</em>.'+(sig?' Luego '+nom(sig)+' a las '+h(sig)+'.':'');
+  return sig?'Libre hasta las '+h(sig)+': luego '+nom(sig)+'.':'Nada más en la agenda de hoy.';}
+function hoyConducirHTML(key,e){
+  /* el aviso de no conducir, a la vista: solo con carné, en guardia o saliente y con la energía baja */
+  if(!e||e.n>2||!suenoCfg().conduce)return '';
+  const t=diaTipo(key);if(t!=='guardia'&&t!=='saliente')return '';
+  return '<div class="hoycond" role="status"><b>Mejor no conduzcas</b><small>Energía '+esc(e.nom.toLowerCase())+'. Que te lleven o duerme 20 min antes. Gafas de sol.</small></div>';}
+function hoyAhoraHTML(key,inf,esHoy){
+  if(!esHoy)return '';
+  const e=energiaHoy(key),d=new Date();
+  return '<div class="card hoyahora"><div class="row" style="margin-bottom:4px"><div class="hoycap" style="flex:1">Ahora · '+esc(hm(d.getHours()*60+d.getMinutes()))+'</div>'+
+    (e?'<span class="hoyener" role="img" aria-label="Energía '+esc(e.nom.toLowerCase())+', '+e.n+' de 4">Energía <span class="bat'+(e.n<=2?' baja':'')+'">'+[1,2,3,4].map(function(i){return '<i'+(i<=e.n?' class="l"':'')+'></i>';}).join('')+'</span> '+esc(e.nom)+'</span>':'')+'</div>'+
+    '<p class="hoyfrase">'+hoyFraseAhora(key,inf)+'</p>'+hoyConducirHTML(key,e)+'</div>';}
+function habTiraHTML(key,esHoy){
+  if(!esHoy)return '';
+  const t=diaTipo(key);if(t==='guardia'||t==='saliente')return '';
+  const l=habitosS().items.filter(function(h){return habitoToca(h,key);});if(!l.length)return '';
+  return '<div class="habtira"><div class="hoycap">Hábitos de hoy · mantén pulsado para abrir</div><div class="habtira-l">'+
+    l.slice(0,3).map(function(h){const T=habTick(h,key);
+      return '<button class="habtira-b'+(T.on?' on':'')+'" data-a="'+T.accion+'" data-id="'+esc(h.id)+'" data-key="'+esc(key)+'" data-lp="hab" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'"><i aria-hidden="true">'+(T.on?'✓':'')+'</i>'+esc(T.cm?h.min:h.nombre)+'</button>';}).join('')+'</div></div>';}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
   /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
@@ -6155,7 +6185,7 @@ function hoyDiaHTML(key,inf,esHoy){
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   const sn=esHoy?snBotonHTML(key,'margin:0 0 10px'):'';
   if(m==='linea')return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
-  if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
+  if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+(esHoy?hoyAhoraHTML(key,inf,esHoy):hoyBusHTML(key,inf,esHoy));   /* C3: hoy el dibujo baja (renderHoy); otro día se queda aquí */
   const it=hoyItems(key,inf);
   return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
@@ -8485,7 +8515,7 @@ function renderHoy(){
       '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
     modoAvisoHTML(true)+mvBandaHTML()+
-    '<div class="row" style="gap:8px;align-items:center"><div class="hoyest" style="color:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+
+    '<div class="row" style="gap:8px;align-items:center"><div class="hoyest" style="--tc:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+
     (guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div><span class="sp"></span>'+entrenoContadorHTML(hoy)+'</div>'+
     /* EL DÍA COMO CARRIL, en el sitio donde estaban la barra horizontal y la lista de horas. Es
        las dos cosas a la vez y mejor que ninguna: cada cosa ocupa el rato que ocupa de verdad, así
@@ -8510,7 +8540,9 @@ function renderHoy(){
     /* la cuenta atrás y «Próximos» eran dos listas de lo mismo: ahora es la carretera, que además enseña la distancia */
     /* con el conductor, el sueño y el «¿cómo amaneces?» van en la radio y «Para hoy» en el quiosco de la ciudad y
        el poste de los hábitos: debajo del dibujo solo queda lo que no está dentro de la cabina */
-    (esHoy?mvResumenHTML(store.modoViaje)+mvSalidaHTML(store.modoViaje||{},hoy)+coachHTML(hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy)+(hoyModo()==='bus'?'':paraHoyHTML(hoy))+loQueVieneHTML():
+    (esHoy?mvResumenHTML(store.modoViaje)+mvSalidaHTML(store.modoViaje||{},hoy)+(hoyModo()==='bus'?'':coachHTML(hoy))+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy)+habTiraHTML(hoy,esHoy)+paraHoyHTML(hoy)+
+      /* C3: con el conductor, el dibujo baja entero, debajo de «Para hoy»; la energía ya va en «Ahora» y el coach, tras el dibujo */
+      (hoyModo()==='bus'?'<div class="hoybusfuera">'+hoyBusHTML(hoy,inf,esHoy)+'</div>'+coachHTML(hoy):'')+loQueVieneHTML():
       tareasHoyHTML(hoy)+pagosHoyHTML(hoy)+repasoHoyHTML(hoy))+
     '</div>';
   hoyBusMonta();carrMonta('hoy');

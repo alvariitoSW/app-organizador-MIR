@@ -4394,3 +4394,23 @@ small{font-size:max(.83em,var(--suelo))}
 .cmplh.cmvit{margin:0;border-radius:0;box-shadow:none;background:none;border-top:1px dashed var(--line);padding:8px 0}
 .cmplb[hidden]{display:none!important}
 html:not(.dark) .cjs7 b{color:#4f6180}
+/* C3 · Hoy en una pantalla: «Ahora» (frase + energía + no conducir), la tira de hábitos y el dibujo del conductor al final */
+.hoyest{color:var(--tc,var(--ink))}
+html:not(.dark) .hoyest{color:var(--ink);border-left:5px solid var(--tc,transparent);padding-left:var(--t-12)}
+.hoycap{font:700 var(--t-13)/1.3 system-ui,sans-serif;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+.hoyahora .hoyfrase{font-size:var(--t-16);font-weight:800;line-height:1.35;margin:0 0 4px}
+.hoyahora .hoyfrase em{font-style:normal;color:var(--brand)}
+html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underline;text-decoration-color:var(--brand);text-underline-offset:3px}
+.hoyener{display:inline-flex;align-items:center;gap:6px;font-size:var(--t-13);font-weight:800;color:var(--ink2)}
+.hoyener .bat{display:inline-flex;gap:3px}
+.hoyener .bat i{width:20px;height:10px;border-radius:3px;background:var(--line)}
+.hoyener .bat i.l{background:var(--ok)}
+.hoyener .bat.baja i.l{background:var(--warn)}
+.hoycond{border-radius:12px;padding:10px 12px;background:var(--bg2);border:1.5px solid var(--bad);font-weight:800;font-size:var(--t-16);line-height:1.3;margin-top:6px}
+.hoycond small{display:block;font-weight:600;color:var(--ink2);font-size:var(--t-14)}
+.habtira{margin:0 0 var(--t-12)}
+.habtira-l{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.habtira-b{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 14px 0 10px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:700;font-size:var(--t-14);cursor:pointer}
+.habtira-b i{width:22px;height:22px;border-radius:50%;border:2px solid var(--ink2);flex:none;display:grid;place-items:center;font-style:normal;font-size:var(--t-13);color:var(--bg)}
+.habtira-b.on i{background:var(--ok);border-color:var(--ok)}
+.hoybusfuera{margin:0 0 var(--t-12)}

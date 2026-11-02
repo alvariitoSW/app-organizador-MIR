@@ -2643,3 +2643,13 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Descartado:** tocar texto libre, kit de vuelta, cena antes de salir, tandas, objetivo/techo, «¿Me la propones?».
 **Supuestos:** el margen va como fila propia sobre los cuatro recuadros (llevas/objetivo se quedan); el resumen de «Tu semana» dice cuántas kcal quedan; el estado plegado no se guarda entre sesiones.
 **Pruebas:** 500-503 (un bloque). Cae con X revertido: con app.js y styles.css de antes la 500 cae y la 501 revienta al no existir `.cmplh`. Viejas cambiadas por decisión: 239 (espera «Tocaban … lo cambiaste»); 319, 334, 338, 396 abren antes el plegable (`abrePleg`); 334 busca `.cjvit` dentro de `.cmplb`.
+
+## 2026-11-02 · La Competencia · C3 Hoy en una pantalla
+**Elegido (opciones recomendadas):**
+- «Ahora» (`hoyAhoraHTML`, con el conductor y solo hoy): la frase de lo que toca (`hoyFraseAhora`, de `hoyItems`) + la energía (`energiaHoy`) + «Mejor no conduzcas» (`hoyConducirHTML`: con carné, guardia o saliente y energía ≤2), debajo del cartel y la cadena de siempre (`nocheHTML`, sin tocar).
+- Tira de hábitos (`habTiraHTML`): los 3 primeros que tocan hoy, mantener pulsado abre el hábito (`data-lp="hab"`), oculta en guardia y saliente. «Para hoy» ya no lleva filas de hábitos (la cabina las sigue leyendo de `paraHoyItems`).
+- El dibujo del conductor baja entero (`.hoybusfuera`), tras «Para hoy»; el coach (energía larga) va tras el dibujo. Otro día, el dibujo se queda en su tarjeta como antes.
+- Añadido: el rótulo del turno (`.hoyest`) en tema claro pasa a texto en tinta con barra izquierda del color del turno (≥4,5:1); en oscuro sigue en el color del turno (variable `--tc`).
+**Descartado:** una tarjeta «Comida de hoy» nueva (es de C5; la comida sigue en la cadena y la cabina); tocar `avisoCola()`; tira con desplazamiento lateral.
+**Supuestos:** la tira es por orden de la lista (un hábito hecho no sale de la tira, para poder desmarcarlo); la frase omite «Luego» si lo siguiente cae dentro del turno actual; el aviso de no conducir sale solo en guardia/saliente con energía baja.
+**Pruebas:** 480-485. Cae con X revertido: 480-484 sin `hoyAhoraHTML`/`habTiraHTML`/`.hoybusfuera`; 485 sin la regla `html:not(.dark) .hoyest`. Pruebas viejas cambiadas por decisión: 275 («Para hoy» ya no falta con el conductor: queda encima del dibujo). Las 79 y 83 caen también solas en el código sin tocar (dependen de pruebas anteriores): ajenas.
