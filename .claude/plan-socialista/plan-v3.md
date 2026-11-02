@@ -133,6 +133,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 | K1 | Web: leer `#uso=…`, validar (entrada no fiable), `replaceState`, guardar y rellenar lo que elija (maqueta antes) · [enc-bienestar-digital] | construir (pantalla con maqueta) | sonnet | ~1,2 M |
 | K2 | `android/`: lanzadora que pide «Acceso al uso», lee `queryEvents` al abrir y abre la web en su navegador fijado; sin INTERNET, iconos XML; workflow de firma → Release | construir | sonnet + haiku | ~1,0 M |
 | K3 | Instalar en su móvil (HyperOS) y ajustar, con el usuario | arreglo | sonnet | ~0,4 M |
+| K4 | **Widget de inicio** (pedido 02/11, del informe de La Competencia): en el Lanzador, 3-4 botones grandes que abren la web ya en su gesto (anotar anoche, + gasto, empezar entreno, apuntar comida) con `#accion=…`, que la web valida como entrada no fiable. **Solo botones, sin datos**: el Lanzador no tiene INTERNET ni ve el localStorage de Brave, así que no puede enseñar la próxima guardia ni las kcal. Maqueta (la elige el usuario) → Android + la web → instalar con el usuario (va con K3 o detrás) | maqueta → construir | sonnet | ~2,2 M |
 
 ### Después (sin planificar todavía)
 
@@ -146,7 +147,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
-- [v3-competencia-algun-dia] (02/11, «algún día, sin prisa») Lo que el Consejo de La Competencia dejó fuera: importar el planning en PDF y Excel (librería nueva y tocar `sw.js`: decide el usuario), deslizar para cambiar de día, «+» flotante, widget de inicio y récords en gráfico. Acta `consejo/2026-11-02-competencia.md`.
+- [v3-competencia-algun-dia] (02/11, «algún día, sin prisa») Lo que el Consejo de La Competencia dejó fuera: importar el planning en PDF y Excel (librería nueva y tocar `sw.js`: decide el usuario; «para más adelante», 02/11), deslizar para cambiar de día, «+» flotante y récords en gráfico. El widget pasó a la K4 del Lanzador (02/11). Acta `consejo/2026-11-02-competencia.md`.
 - [v3-mapa-comidas] (2026-10-30) Un mapamundi tipo Google Maps que vea dónde estoy ahora, poder decir «en este sitio he comido aquí» y guardar una foto de lo que he comido (de vacaciones o al salir de trabajar). A futuro. Ojo, regla 3: la ubicación y las fotos se quedan en el móvil (IndexedDB, no localStorage); los mosaicos del mapa (OpenStreetMap) se piden por red y dejan ver por dónde andas, así que decide el usuario.
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - ~~(→ El Cierre C3) [v3-horas-guardia]~~ ✅ hecho 30/10 · Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
