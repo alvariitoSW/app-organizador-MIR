@@ -4414,3 +4414,9 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
 .habtira-b i{width:22px;height:22px;border-radius:50%;border:2px solid var(--ink2);flex:none;display:grid;place-items:center;font-style:normal;font-size:var(--t-13);color:var(--bg)}
 .habtira-b.on i{background:var(--ok);border-color:var(--ok)}
 .hoybusfuera{margin:0 0 var(--t-12)}
+/* C6 · «Privado»: banda fija arriba del 4:20 y el interruptor del Plan */
+.cnbanda{display:flex;align-items:center;gap:var(--e-8);flex-wrap:wrap;margin:var(--e-8) 0;padding:var(--e-8) var(--e-12);border:1px solid var(--brand);border-radius:var(--r-12);background:var(--bg2)}
+.cnbanda>div{flex:1 1 200px;display:flex;flex-direction:column;gap:2px}.cnbanda b{font-size:var(--t-14)}.cnbanda span{font-size:var(--t-13);color:var(--ink2)}
+.cnbanda .btn{min-height:var(--toque)}
+.cnprivsw{min-height:var(--toque);align-items:center}.cnprivsw input{width:22px;height:22px;flex:none}.cnprivsw b{font-size:var(--t-16)}
+.habplant{margin-top:var(--e-8)}

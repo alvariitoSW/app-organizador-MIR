@@ -971,7 +971,7 @@ function normalize(o){
       tb:pl.tb&&esFecha(pl.tb.desde||'')&&[3,7,28].indexOf(+pl.tb.dias)>=0?{desde:pl.tb.desde,dias:+pl.tb.dias}:null,
       tbHist:(Array.isArray(pl.tbHist)?pl.tbHist:[]).filter(function(h){return h&&esFecha(h.desde||'');}).slice(-30).map(function(h){return {desde:h.desde,dias:+h.dias||0,roto:!!h.roto};}),
       desc:pl.desc&&esFecha(pl.desc.desde||'')?{desde:pl.desc.desde,dias:[7,14,21].indexOf(+pl.desc.dias)>=0?+pl.desc.dias:14,mitad:!!pl.desc.mitad,base:Math.max(0,Math.min(99,+pl.desc.base||0))}:null};
-    const pv0=c.priv||{};c.priv={oculto:!!pv0.oculto,fueraCopia:!!pv0.fueraCopia};
+    const pv0=c.priv||{};c.priv={oculto:!!pv0.oculto,fueraCopia:!!pv0.fueraCopia,privado:pv0.privado===true};   /* C6: «Privado» (tapa sin PIN): campo añadido, no migración */
     /* la cortina del 4:20: solo sal y hash (nunca el PIN) */
     if(pv0.pin&&/^[0-9a-f]{32}$/.test(String(pv0.pin.s))&&/^[0-9a-f]{64}$/.test(String(pv0.pin.h)))c.priv.pin={s:pv0.pin.s,h:pv0.pin.h};
     if(!idDe(CN_MOT,c.ultMotivo))delete c.ultMotivo;}
@@ -4949,6 +4949,7 @@ function addFoodEntry(dateStr,opt){
   return r;}
 function deshacerCambio(){
   const u=_ultimoCambio;_ultimoCambio=null;if(!u)return 'nada que deshacer';
+  if(u.tipo==='priv'){consumoS().priv.privado=false;save();return 'deshecho: Privado quitado';}
   const l=foodLog(u.k);
   if(u.tipo==='add'){l.forEach(function(x){if(u.ids.indexOf(x.id)>=0)cocinadoDevuelve(x);});const q=l.filter(function(x){return u.ids.indexOf(x.id)<0;});const n=l.length-q.length;l.length=0;q.forEach(function(x){l.push(x);});save();return n?'deshecho: quitado':'ya no estaba';}
   if(u.e&&u.e.dishId)u.e.tap=cocinadoGasta(u.e.dishId,+u.e.rac||1);   /* vuelve la toma: vuelve a coger del táper */
@@ -6175,7 +6176,7 @@ function habTiraHTML(key,esHoy){
   const l=habitosS().items.filter(function(h){return habitoToca(h,key);});if(!l.length)return '';
   return '<div class="habtira"><div class="hoycap">Hábitos de hoy · mantén pulsado para abrir</div><div class="habtira-l">'+
     l.slice(0,3).map(function(h){const T=habTick(h,key);
-      return '<button class="habtira-b'+(T.on?' on':'')+'" data-a="'+T.accion+'" data-id="'+esc(h.id)+'" data-key="'+esc(key)+'" data-lp="hab" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'"><i aria-hidden="true">'+(T.on?'✓':'')+'</i>'+esc(T.cm?h.min:h.nombre)+'</button>';}).join('')+'</div></div>';}
+      return '<button class="habtira-b'+(T.on?' on':'')+'" data-a="'+T.accion+'" data-id="'+esc(h.id)+'" data-key="'+esc(key)+'" data-lp="hab" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'"><i aria-hidden="true">'+(T.on?'✓':'')+'</i>'+esc(T.cm?h.min:habN(h))+'</button>';}).join('')+'</div></div>';}
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
   /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
@@ -6272,7 +6273,7 @@ function hoyBusDatos(key,inf,esHoy){
    saliente al llegar, y dos cuando hay gym. */
 const ESCENAS={cama:'durmiendo',movil:'con el móvil en la cama',leer:'en la cama, sin pantallas',ducha:'en la ducha',cafe:'café y desayuno',vestir:'vistiéndote',
   parada:'en la parada',bus:'en el bus',taxi:'en un taxi',cabina:'de servicio',guardia:'de guardia',sesion:'en sesión',comida:'comiendo',bici:'en bici',
-  parque:'entrenando',escritorio:'estudiando',salon:'en el salón',mar:'Lloretazo',paseo:'paseando',siesta:'siesta',plan:'cita',casa:'en casa',camino:'de camino'};
+  parque:'entrenando',escritorio:'estudiando',salon:'en el salón',get mar(){return cnOculta('Lloretazo');},paseo:'paseando',siesta:'siesta',plan:'cita',casa:'en casa',camino:'de camino'};
 /* LOS TIEMPOS DE LA MAÑANA, en Ajustes → Ir y volver: la ducha, el café, la bici de vuelta y cuánto después del
    tuyo pasa el último bus que te vale (de serie 15, 15, lo que tarda el viaje y 2 min) */
 function tiemposManana(){const t=((store.rotation||{}).viaje||{}).tiempos||{},v=viajeCfg(),n=function(x,d){return x!=null&&isFinite(+x)&&+x>=0?+x:d;};
@@ -8215,7 +8216,7 @@ function renderInforme(){
         (function(){const h=suenoAHora(d.sueno.dias);return tile('🛏','SUEÑO',d.sueno.n?fmtHM(d.sueno.media*60):'—',d.sueno.n?'de media':'',
           d.sueno.n?('objetivo '+fmtHM(suenoCfg().min*60)+' · '+d.sueno.n+'/7 apuntadas'+(h.n?' · '+h.ok+' a tu hora':'')+(d.cortas?(' · '+d.cortas+' de menos de '+fmt(suenoCfg().min-1)+' h'):'')):'sin apuntar');})()+
         tile('🍽','DIETA',d.dieta.tieneObj?d.dieta.obj:d.dieta.con,d.dieta.tieneObj?'/ 7 días':'días',d.dieta.con?((d.dieta.tieneObj?'en objetivo · ':'apuntados · ')+d.dieta.prot+' g P de media'):'sin apuntar')+
-        tile('✅','HÁBITOS',d.hab.pct==null?'—':d.hab.pct,d.hab.pct==null?'':'%',d.hab.por.slice(0,2).map(function(x){return esc(x.h.nombre.toLowerCase())+' '+x.n+'/'+x.de;}).join(' · ')||'sin hábitos')+
+        tile('✅','HÁBITOS',d.hab.pct==null?'—':d.hab.pct,d.hab.pct==null?'':'%',d.hab.por.slice(0,2).map(function(x){return esc(habN(x.h).toLowerCase())+' '+x.n+'/'+x.de;}).join(' · ')||'sin hábitos')+
         tile('📚','ESTUDIO',fmtHM(d.est.min),'',(d.est.pags?d.est.pags+' págs · ':'')+(function(p){return p?(p+' 🍅 en el HUD'):'sin HUD enlazado';})(hudLeer().pomos))+
         tile('💪','ENTRENO',d.gym.ses,d.gym.toca?('/ '+d.gym.toca):'','días entrenados')+
         tile('💰','AHORRO',fmt(d.aho.aparto),'€',d.aho.rec?('objetivo '+esc(eur(d.aho.rec))+'/mes'):(d.aho.aparto?'apartado en '+esc(ahoMesTxt(d.aho.mes)):'nada apartado ese mes'))+
@@ -8461,10 +8462,10 @@ function lloretDe(key){
 function lloretPoner(key){
   const ya=lloretDe(key);
   if(!store.lloret)store.lloret={};
-  if(ya&&ya.auto){if(!store.lloret.salta)store.lloret.salta={};store.lloret.salta[key]=1;save();return 'Hoy no hay Lloretazo: la cena vuelve a su hora';}
-  if(ya){store.eventos=store.eventos.filter(function(e){return e!==ya;});save();return 'Lloretazo quitado de ese día';}
+  if(ya&&ya.auto){if(!store.lloret.salta)store.lloret.salta={};store.lloret.salta[key]=1;save();return cnOculta('Hoy no hay Lloretazo: la cena vuelve a su hora');}
+  if(ya){store.eventos=store.eventos.filter(function(e){return e!==ya;});save();return cnOculta('Lloretazo quitado de ese día');}
   if(store.lloret.salta&&store.lloret.salta[key]){delete store.lloret.salta[key];save();
-    const q=lloretAuto(key);if(q)return 'Lloretazo '+q.hora+'–'+q.fin+' · cena antes de salir';}
+    const q=lloretAuto(key);if(q)return cnOculta('Lloretazo '+q.hora+'–'+q.fin+' · cena antes de salir');}
   const p=lloretPlan(key);
   store.eventos.push({id:uid('ll'),titulo:'🌿 Lloretazo',hora:hm(p.de),fin:hm(p.a),modo:'fecha',fecha:key,dow:[],
     color:'#38bdf8',on:true,lloret:true});
@@ -8474,9 +8475,9 @@ function lloretPoner(key){
   try{const inf=dayInfo(key),sh=shiftById(inf.shiftId);if(sh){const cp=comidaPrincipalDe(key,inf);
     slotsFor(sh.id).forEach(function(sl){if(!/cena/i.test(sl.label||''))return;const h=mins(horaDeToma(key,sl,cp));
       if(h!=null&&h>=p.de-20&&h<p.a)cena=' · la cena ('+hm(h)+') cae en medio: cena antes de salir';});}}catch(e){}
-  return 'Lloretazo '+hm(p.de)+'–'+hm(p.a)+' ('+p.cfg.ida+' min de ida, '+p.cfg.estancia+' allí, '+p.cfg.ida+' de vuelta)'+
+  return cnOculta('Lloretazo '+hm(p.de)+'–'+hm(p.a)+' ('+p.cfg.ida+' min de ida, '+p.cfg.estancia+' allí, '+p.cfg.ida+' de vuelta)'+
     (p.bed?(' · a la cama a las '+p.bed+' para tus '+fmt(suenoCfg().min)+' h'):'')+
-    (p.ajustado?' · adelantado para llegar a dormir':'')+(p.pronto?' · ⚠ sale muy pronto: ese día no te da':'')+cena;}
+    (p.ajustado?' · adelantado para llegar a dormir':'')+(p.pronto?' · ⚠ sale muy pronto: ese día no te da':'')+cena);}
 function renderHoy(){
   if(ui.hoyVista==='pausa')return renderPausa();
   if(ui.hoyVista==='macrodroid')return renderMacroGuia();
@@ -8510,8 +8511,8 @@ function renderHoy(){
       (esHoy?'':'<button class="btn p s" data-a="dia-hoy">volver a hoy</button>')+
       '<button class="btn s" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button>'+
       '<span class="sp"></span>'+
-      '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="Lloretazo: '+
-        esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">🌿'+(lloretDe(hoy)?' ✓':'')+'</button>'+
+      '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="'+esc(cnOculta('Lloretazo'))+': '+
+        esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">'+cnOculta('🌿')+(lloretDe(hoy)?' ✓':'')+'</button>'+
       '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
     modoAvisoHTML(true)+mvBandaHTML()+
@@ -8637,7 +8638,7 @@ function agendaDia0(key,inf){
     const info={items:tomaItems(t,key)};
     const platos=info.items.map(function(it){const dd=dishById(it.id);return dd?dd.name:'';}).filter(Boolean).join(' + ');
     const antesLl=/cena/i.test(t.label||'')&&lloretDe(key);
-    add(t.hora,'',t.ico,t.label||'Comida',(antesLl?'antes del Lloretazo'+(platos?' · ':''):'')+platos,'meal',tlColor('meal'),{slot:t.slot,sh:t.sh,conPlatos:info.items.length>0});});
+    add(t.hora,'',t.ico,t.label||'Comida',(antesLl?cnOculta('antes del Lloretazo')+(platos?' · ':''):'')+platos,'meal',tlColor('meal'),{slot:t.slot,sh:t.sh,conPlatos:info.items.length>0});});
   if(sl.bed){const bm=mins(sl.bed),wm=mins(sl.wake);
     const tarde=bm!=null&&wm!=null&&bm<wm;   /* a la cama pasada la medianoche: va al final del día */
     add(sl.bed,'','🛌','A la cama','','sleep',tlColor('sleep'),{m2:tarde?bm+1440:bm});}
@@ -11753,12 +11754,12 @@ function monchisCardHTML(sel){
      si no hay nada apuntado, va en una línea */
   if(!hay&&!(hoy&&new Date().getHours()>=21)&&!ui.mcAbre)
     return '<button class="mcll mcmini" data-a="mc-abre"><span>🍫</span><div><b>Monchis: '+fmtMil(tope)+' kcal de tope</b><div class="mini">'+
-      (p?'Lloretazo '+hm(p.de)+'–'+hm(p.a)+' · ':'')+'toca para ver qué tienes a mano</div></div></button>';
+      (p?cnOculta('Lloretazo '+hm(p.de)+'–'+hm(p.a))+' · ':'')+'toca para ver qué tienes a mano</div></div></button>';
   const op=monchisOpciones();
   const fila=function(x,i,tipo){return '<div class="mcop"><span>'+esc(x.e)+'</span><span class="n"><b>'+esc(x.n)+'</b>'+(x.tag?' <em class="tg">'+esc(x.tag)+'</em>':'')+
       '<span>'+fmtMil(x.m.kcal)+' kcal'+(x.m.prot>=5?' · '+Math.round(x.m.prot)+' g P':'')+(x.nota?' · '+esc(x.nota):'')+'</span></span>'+
       '<button class="add" data-a="mc-add" data-t="'+tipo+'" data-i="'+i+'" aria-label="apuntar '+esc(x.n)+' en monchis">＋</button></div>';};
-  return (ll&&hoy?'<div class="mcll"><span>🌿</span><div><b>Lloretazo '+hm(p.de)+'–'+hm(p.a)+'</b><div class="mini">luego suele dar hambre: deja algo a mano y no te pases</div></div></div>':'')+
+  return (ll&&hoy?'<div class="mcll"><span>'+cnOculta('🌿')+'</span><div><b>'+cnOculta('Lloretazo '+hm(p.de)+'–'+hm(p.a))+'</b><div class="mini">luego suele dar hambre: deja algo a mano y no te pases</div></div></div>':'')+
     '<div class="card mcard"><div class="row"><span class="cap">🍫 MONCHIS</span><span class="sp"></span><span class="mini">'+(ya>tope?'te has pasado '+fmtMil(ya-tope)+' kcal':'te quedan '+fmtMil(tope-ya)+' kcal')+'</span></div>'+
       '<div class="mcbar" role="img" aria-label="monchis '+ya+' de '+tope+' kcal"><i class="'+(ya>tope?'x':'')+'" style="width:'+Math.min(100,Math.round(ya/Math.max(1,tope)*100))+'%"></i></div>'+
       '<div class="row mini" style="margin-top:3px"><span>tope</span><div class="d4step"><button data-a="mc-tope" data-d="-50" aria-label="bajar tope">−</button><b>'+fmtMil(tope)+'</b><button data-a="mc-tope" data-d="50" aria-label="subir tope">+</button></div><span class="sp"></span><span>'+fmtMil(ya)+' / '+fmtMil(tope)+' kcal</span></div>'+
@@ -11784,7 +11785,7 @@ function consumoS(){if(!store.consumo||typeof store.consumo!=='object')store.con
   if(!c.plan||typeof c.plan!=='object')c.plan={};const p=c.plan;
   if(!(+p.pot>0))p.pot=15;if(typeof p.ventana!=='string')p.ventana='';if(typeof p.guardia!=='boolean')p.guardia=true;
   if(!Array.isArray(p.tbHist))p.tbHist=[];
-  if(!c.priv||typeof c.priv!=='object')c.priv={oculto:false,fueraCopia:false};
+  if(!c.priv||typeof c.priv!=='object')c.priv={oculto:false,fueraCopia:false,privado:false};
   return c;}
 let _cnIdx=null;
 function consumoDe(k){
@@ -11930,11 +11931,21 @@ function cuditToca(){const l=consumoS().cudit;return !l.length||l[l.length-1].fe
 /* ---------- pantallas ---------- */
 function cnCab(v){
   return '<div class="subcab"><h2 class="subtit">🌿 4:20</h2></div>'+
+    (consumoS().priv.privado?'<div class="cnbanda" role="status"><div><b>Privado está activado</b><span>4:20 no sale en Hoy, ni en Más, ni en los avisos. Aquí dentro sí lo ves todo.</span></div><button class="btn s" data-a="cn-privado-quita">Quitar privado</button></div>':'')+
     '<div class="cnvis" role="tablist">'+CN_VISTAS.map(function(x){return '<button role="tab" aria-selected="'+(v===x[0])+'" class="'+(v===x[0]?'on':'')+'" data-a="cn-vista" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';}
 /* ---------- la cortina (PIN de 4 cifras) y el descanso ----------
    La cortina tapa la sección ante quien coja el móvil; NO cifra nada. Se guarda sal + hash SHA-256, nunca el PIN.
    Abierta = en memoria (ui.cnAbierto): se cierra al salir de la sección, al cerrar la app o tras 2 min en segundo plano. */
-function cnTapado(){try{return !!(store.consumo&&store.consumo.priv&&store.consumo.priv.pin);}catch(e){return false;}}   /* try: HAB_AUTOS lo lee al cargar, antes de que exista store */
+function cnPin(){try{return !!(store.consumo&&store.consumo.priv&&store.consumo.priv.pin);}catch(e){return false;}}   /* ¿hay PIN que pedir? (C6: ya no es lo mismo que tapar) */
+function cnTapado(){try{const p=store.consumo&&store.consumo.priv;return !!(p&&(p.pin||p.privado===true));}catch(e){return false;}}   /* ¿hay que tapar el 4:20 fuera de su sección? PIN o «Privado». try: HAB_AUTOS lo lee al cargar, antes de que exista store */
+/* C6: con «Privado» (o PIN) «Lloretazo» y «4:20» no salen escritos fuera de la sección: pasan por aquí. La cuenta atrás «Sal al Lloret» no (es el sitio). */
+function cnOculta(t){
+  t=String(t==null?'':t);if(!cnTapado())return t;
+  return t.replace(/lloretazos?/gi,function(m,o,s){const a=s.slice(0,o).replace(/\s+$/,'');return !a||/[.:·¿¡«»]$/.test(a)||/\p{Extended_Pictographic}$/u.test(a)?'Plan privado':'plan privado';})
+    .replace(/(^|[^\d:])4:20(?!\d)/g,'$1privado').replace(/🌿/g,'🌙');}
+function habPriv(h){return cnTapado()&&!!h&&(h.auto==='sin420'||h.auto==='lloretsin');}
+function habN(h){return habPriv(h)?'Plan privado':cnOculta(h&&h.nombre);}   /* el hábito de 4:20, tapado, es «Plan privado» */
+function habI(h){return habPriv(h)?'🌙':(cnTapado()?cnOculta(h&&h.icono):(h&&h.icono));}
 async function cnHash(sal,pin){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(sal+pin));
   return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');}
 async function cnPinOk(pin){const p=consumoS().priv.pin;return !!p&&(await cnHash(p.s,pin))===p.h;}
@@ -11943,8 +11954,8 @@ async function cnPinPone(pin){const v=crypto.getRandomValues(new Uint8Array(16))
 async function cnPinSigue(P){
   /* con las 4 cifras puestas: según el paso, comprueba, pide el nuevo o lo guarda */
   const t=P.t;P.t='';P.mal=false;
-  if(P.modo==='entrar'||P.modo==='actual'){
-    if(await cnPinOk(t)){if(P.modo==='entrar'){ui.cnAbierto=true;ui.cnPin=null;ui.cnFallos=0;}else P.modo='nuevo';}
+  if(P.modo==='entrar'||P.modo==='actual'||P.modo==='quita'){
+    if(await cnPinOk(t)){if(P.modo==='entrar'){ui.cnAbierto=true;ui.cnPin=null;ui.cnFallos=0;}else if(P.modo==='quita'){ui.cnPin=null;ui.cnFallos=0;cnPrivadoPon(false);}else P.modo='nuevo';}
     else{P.mal=true;ui.cnFallos=(ui.cnFallos||0)+1;if(ui.cnFallos>=5){ui.cnBloq=Date.now()+30000;ui.cnFallos=0;}}
   }else if(P.modo==='nuevo'){P.nuevo=t;P.modo='repite';}
   else if(P.modo==='repite'){
@@ -11952,7 +11963,7 @@ async function cnPinSigue(P){
     else{P.mal=true;P.modo='nuevo';P.nuevo='';}}
   render();}
 function cnPinHTML(P){
-  const tit={entrar:'Escribe tu PIN para entrar',actual:'Escribe tu PIN actual',nuevo:'Elige un PIN de 4 cifras',repite:'Repítelo para confirmar'}[P.modo]||'',n=P.t.length,
+  const tit={entrar:'Escribe tu PIN para entrar',quita:'Escribe tu PIN para quitar «Privado»',actual:'Escribe tu PIN actual',nuevo:'Elige un PIN de 4 cifras',repite:'Repítelo para confirmar'}[P.modo]||'',n=P.t.length,
     bloq=Date.now()<(ui.cnBloq||0);
   return '<div class="grid mt cn"><div class="subcab"><h2 class="subtit">🌿 4:20</h2></div><div class="card cnpin">'+
     '<p class="cnpt">'+esc(tit)+'</p><div class="cnpd" role="img" aria-label="'+n+' de 4 cifras">'+[0,1,2,3].map(function(i){return '<b'+(i<n?' class="f"':'')+'></b>';}).join('')+'</div>'+
@@ -11962,9 +11973,18 @@ function cnPinHTML(P){
     '<p class="mini" style="margin-top:14px">Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>'+
     (P.modo==='entrar'?'<details class="cnolv"><summary>¿Lo olvidaste?</summary><p class="mini">Se quita desde Ajustes → Copia de seguridad. No pierdes ningún dato.</p></details>':
       '<button class="btn s" data-a="cn-pin-x">Cancelar</button>')+'</div></div>';}
+/* «Privado»: tapa a la vista, sin PIN. Se pone y se quita desde el interruptor (4:20 → Plan), la banda de dentro y «Deshacer» (unos segundos).
+   Con PIN puesto, quitarlo desde la banda o el interruptor pide el PIN; «Deshacer» no (acabas de ponerlo). */
+function cnPrivadoPon(on,deshacible){
+  const pv=consumoS().priv;pv.privado=!!on;
+  if(on&&deshacible)_ultimoCambio={tipo:'priv',ts:Date.now()};
+  save();flash(on?'Privado puesto: tapado en Hoy, en Más y en los avisos':'Privado quitado');render();}
+function cnPrivadoQuita(){
+  if(cnPin()){ui.cnPin={modo:'quita',t:''};render();return;}
+  cnPrivadoPon(false);}
 function cnPinPantalla(){
   /* ¿hay que pintar el teclado en vez de la sección? */
-  if(cnTapado()&&!ui.cnAbierto)ui.cnPin=ui.cnPin&&ui.cnPin.modo==='entrar'?ui.cnPin:{modo:'entrar',t:''};
+  if(cnPin()&&!ui.cnAbierto)ui.cnPin=ui.cnPin&&ui.cnPin.modo==='entrar'?ui.cnPin:{modo:'entrar',t:''};
   if(!ui.cnPin)return false;
   $('#main').innerHTML=cnPinHTML(ui.cnPin);return true;}
 /* el descanso: 7, 14 o 21 días, o bajar a la mitad (14 días con la mitad de tu media de antes) */
@@ -12142,11 +12162,13 @@ function renderConsumoPlan(){
       (cu.length?'<div class="cncuh">'+cu.map(function(x){return '<div><b>'+x.p+'</b><span>'+esc(fechaCorta(x.fecha))+'</span></div>';}).join('')+'</div><p class="mini" style="margin:6px 0 0">'+esc(cuditLectura(cu[cu.length-1].p))+'. Es lo que dice el cuestionario, no un diagnóstico.</p>':
         '<p class="mini" style="margin:4px 0 0">8 preguntas sobre los últimos 6 meses. Se guarda la puntuación y la tendencia; nada sale del móvil.</p>'))+'</div>'+
     '<div class="card"><div class="cap">PRIVACIDAD</div>'+
+      '<label class="row cnprivsw" style="gap:10px"><input type="checkbox" data-a="cn-priv" data-k="privado"'+(c.priv.privado?' checked':'')+' aria-describedby="cnPrivTx"> <b>Privado</b></label>'+
+      '<p class="mini" id="cnPrivTx" style="margin:0 0 6px">Tapa 4:20 en Hoy, en Más y en los avisos. No cifra tus datos.</p>'+
       '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="oculto"'+(c.priv.oculto?' checked':'')+'> en «Más», mostrar como «🔒 Privado», sin cifras</label>'+
       '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(c.priv.fueraCopia?' checked':'')+'> dejar 4:20 fuera de la copia que compartes</label>'+
       '<div class="cap" style="margin-top:10px">CORTINA CON PIN</div>'+
-      (cnTapado()?'<p class="cntx">Puesta. Para quitarla: Ajustes → Copia de seguridad.</p><button class="btn" data-a="cn-pin-cambia">Cambiar el PIN</button>':
-        '<p class="cntx">Tapa la sección ante quien coja el móvil; no cifra tus datos.</p><button class="btn" data-a="cn-pin-nuevo">Poner cortina con PIN</button>')+
+      (cnPin()?'<p class="cntx">Puesta. Para quitarla: Ajustes → Copia de seguridad.</p><button class="btn" data-a="cn-pin-cambia">Cambiar el PIN</button>':
+        '<p class="cntx">Si además quieres pedir un número para entrar. Tapa la sección; no cifra tus datos.</p><button class="btn" data-a="cn-pin-nuevo">Poner cortina con PIN</button>')+
       '<p class="mini" style="margin:6px 0 0">Todo vive en tu móvil; nada se manda a ningún servidor.</p></div>'+
   '</div>';}
 /* ---- la semana con lo que hay en la nevera ----
@@ -19494,9 +19516,9 @@ function rutinaDia(key){
   const tuyas=R.map(function(a){return rutinaAjusta(sl,a,B,occ);}).filter(Boolean);
   tuyas.forEach(function(a){add(a.h,a.ico,a.txt,a.sub,false);out[out.length-1].movido=a.movido||'';});
   /* los hábitos con ancla a una hora salen en su sitio del día, como una frase «a las 18:00 → estirar» */
-  const HA=habitosS().items.filter(function(h){return h.ancla&&h.ancla.t==='hora'&&h.ancla.v&&habitoToca(h,key)&&!out.some(function(a){return a.txt===h.nombre;});});
+  const HA=habitosS().items.filter(function(h){return h.ancla&&h.ancla.t==='hora'&&h.ancla.v&&habitoToca(h,key)&&!out.some(function(a){return a.txt===habN(h);});});
   if(HA.length){const BB=R.length?B:bloquesDelDia(key),OO=R.length?occ:rutinaOcupado(key,sl,BB);
-    HA.forEach(function(h){const aj=rutinaAjusta(sl,{h:h.ancla.v,ico:h.icono,txt:h.nombre,sub:habCorto(key)&&h.min?h.min:''},BB,OO);
+    HA.forEach(function(h){const aj=rutinaAjusta(sl,{h:h.ancla.v,ico:habI(h),txt:habN(h),sub:habCorto(key)&&h.min?h.min:''},BB,OO);
       if(aj){add(aj.h,aj.ico,aj.txt,aj.sub,false);out[out.length-1].movido=aj.movido||'';}});}
   if(sl.bed&&t!=='guardia')add(sl.bed,'🛌','A la cama',sl.h?fmtHM(Math.round(sl.h*60))+' de sueño':'',true);
   return out.sort(function(a,b){return (mins(a.h)||0)-(mins(b.h)||0);});}
@@ -19554,13 +19576,13 @@ const HAB_AUTO={
   estudio:{lab:'📚 30 min de estudio',estado:function(key){const m=estMinDe(key);return m>=30?'ok':(m>0?'min':'');}},
   prot:{lab:'🍗 llegar a la proteína',estado:function(key){const ob=+objetivoMacros().prot||0;if(!ob||!logDe(key).length)return '';const p=foodTotals(key).prot;
     return p>=ob?'ok':(p>=ob*0.75&&key<iso(new Date())?'min':'');}},
-  sin420:{get lab(){return cnTapado()?'✔ día sin (privado)':'🌿 día sin 4:20';},estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
+  sin420:{get lab(){return cnTapado()?'🌙 Plan privado':'🌿 día sin 4:20';},estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
   /* de la hora apuntada al salir y del plan del viaje, sin pasar por las escenas (que a su vez leen los hábitos) */
   puerta:{lab:'🚪 salir de casa a tiempo',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P||s==null)return '';return s<=P.plan+1e-6?'ok':(s<=P.ultimo+1e-6?'min':'');}},
   taxi:{lab:'🚕 taxi al trabajo (a reducir)',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P)return '';
     if(s!=null)return s>P.ultimo+1e-6?'ok':'';
     return viajeCfg().taxi&&key<=iso(new Date())?'ok':'';}},   /* sin hora apuntada: de serie, taxi */
-  lloretsin:{get lab(){return cnTapado()?'🌙 Lloretazo (privado)':'🌿 Lloretazo sin';},toca:function(key){return !!lloretDe(key);},
+  lloretsin:{get lab(){return cnTapado()?'🌙 Plan privado':'🌿 Lloretazo sin';},toca:function(key){return !!lloretDe(key);},
     estado:function(key){return habCerrado(key)&&!consumoDe(key).some(function(x){return x.ctx==='lloret';})?'ok':'';}}};
 const HAB_AUTOS=[['','No, a mano']].concat(Object.keys(HAB_AUTO).map(function(k){return [k,HAB_AUTO[k].lab];}));
 const HAB_TRAS=[['despertar','al despertar'],['guardia','al salir de guardia'],['comer','después de comer'],['entreno','después de entrenar'],
@@ -19605,7 +19627,7 @@ function habPuntosDia(k){
 function habTick(h,key){
   /* el estado de la fila de un hábito, igual en Hoy y en Hábitos: qué marca el ✓ y cómo se dice */
   const est=habitoEstadoH(h,key),on=!!est,cm=!!(habCorto(key)&&h.min&&!on);
-  return {est:est,on:on,cm:cm,accion:cm?'hab-min':'hab-mark',etq:h.nombre+(on?': hecho':(cm?': marcar el mínimo':': marcar hecho'))};}
+  return {est:est,on:on,cm:cm,accion:cm?'hab-min':'hab-mark',etq:habN(h)+(on?': hecho':(cm?': marcar el mínimo':': marcar hecho'))};}
 function toggleHabito(hid,key,est){
   /* sin «est»: hecho ↔ nada. Con «min»: la versión mínima (o quitarla) */
   const h=habitosS();
@@ -19652,11 +19674,11 @@ function habMejorHora(hab){const l=(habitosS().horas||{})[hab.id]||[];if(l.lengt
 function habAnclaTxt(h){
   const a=h.ancla||{};
   if(a.t==='hora'&&a.v)return 'a las '+hCortaHM(a.v);
-  if(a.t==='tras'){const x=HAB_TRAS.filter(function(q){return q[0]===a.v;})[0];return x?x[1]:'';}
+  if(a.t==='tras'){const x=HAB_TRAS.filter(function(q){return q[0]===a.v;})[0];return x?cnOculta(x[1]):'';}
   return '';}
 function habFrase(h,corto){
   /* «al salir de guardia → 3 posturas»: la intención de implementación, en una línea */
-  const an=habAnclaTxt(h),que=corto&&h.min?h.min:h.nombre;
+  const an=habAnclaTxt(h),que=corto&&h.min?h.min:habN(h);
   return an?an.charAt(0).toUpperCase()+an.slice(1)+' → '+que.charAt(0).toLowerCase()+que.slice(1):'';}
 function habFase(h){return h.fase||'marcha';}
 function habEnMarcha(){return habitosS().items.filter(function(h){return habFase(h)==='marcha';});}
@@ -19697,6 +19719,14 @@ function habCorto(key){
   const a=asistS().corto[key];if(a===true||a===false)return a;
   return diaTipo(key)==='saliente'||(cnKss(key)||0)>=7;}
 function habCortoSugerido(key){return asistS().corto[key]==null&&habCorto(key);}
+function habPlantillasHTML(enMarcha){
+  /* C6: las plantillas siguen a la vista aunque ya tengas hábitos; con 3 en marcha, la que toques espera turno */
+  const ya=habitosS().items.map(function(h){return String(h.nombre||'').toLowerCase();}),l=[];
+  HAB_PRESETS.forEach(function(p,i){if(ya.indexOf(p.nombre.toLowerCase())<0)l.push('<button class="chipx" data-a="hab-preset" data-i="'+i+'">'+esc(p.icono+' '+p.nombre)+'</button>');});
+  if(!l.length)return '';
+  return '<div class="card habplant"><div class="acap"><span>PLANTILLAS</span><span class="mini">un toque y empiezas</span></div>'+
+    (enMarcha>=3?'<p class="mini" style="margin:4px 0 0">Ya tienes 3 en marcha: la plantilla que toques espera su turno.</p>':'')+
+    '<div class="chips" style="margin-top:8px">'+l.join('')+'</div></div>';}
 function renderHabitos(){
   const v=ui.habVista||'';
   if(v==='rev')return renderRevision();
@@ -19710,21 +19740,21 @@ function renderHabitos(){
   const fila=function(h){
     const toca=habitoToca(h,hoyK),T=toca?habTick(h,hoyK):{est:'',on:false,cm:false},dia=habDia(h),an=habAnclaTxt(h);
     return '<div class="hbr hbr3'+(toca?'':' notoca')+'" data-lp="hab" data-id="'+h.id+'">'+
-      '<button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.icono+' '+h.nombre)+(T.cm?' <small class="hcorto">hoy: '+esc(h.min)+'</small>':'')+'</b>'+
+      '<button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(habI(h)+' '+habN(h))+(T.cm?' <small class="hcorto">hoy: '+esc(h.min)+'</small>':'')+'</b>'+
         '<span>'+esc(an?an.charAt(0).toUpperCase()+an.slice(1):diasCorta(h.dow))+(toca?'':' · hoy no toca')+'</span>'+
         '<span class="hdia" aria-label="día '+dia+' de unos 66"><i style="width:'+Math.min(100,Math.round(dia/66*100))+'%;background:'+esc(h.color)+'"></i></span>'+
         '<span class="hdiat"><span>día '+dia+' de ~66</span>'+(h.min?'<span>día malo: '+esc(h.min)+'</span>':'')+'</span></button>'+
       '<span class="hbrr">'+(toca&&!T.on&&h.min&&!corto?'<button class="hmin" data-a="hab-min" data-id="'+h.id+'" data-key="'+hoyK+'" aria-label="hecho el mínimo: '+esc(h.min)+'">mín.</button>':'')+
-        (toca?'<button class="hbt'+(T.on?' on':'')+'" style="--c:'+esc(h.color)+'" data-a="'+T.accion+'" data-id="'+h.id+'" data-key="'+hoyK+'" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'">'+(T.est==='min'?'½':(T.on?'✓':esc(h.icono)))+'</button>':
-          '<span class="hbt" style="--c:'+esc(h.color)+'" title="hoy no toca">'+esc(h.icono)+'</span>')+'</span></div>';};
-  const lin=function(h,der,acc){return '<div class="ali hlin"><span class="e">'+esc(h.icono)+'</span><button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(h.nombre)+'</b></button>'+
+        (toca?'<button class="hbt'+(T.on?' on':'')+'" style="--c:'+esc(h.color)+'" data-a="'+T.accion+'" data-id="'+h.id+'" data-key="'+hoyK+'" aria-pressed="'+T.on+'" aria-label="'+esc(T.etq)+'">'+(T.est==='min'?'½':(T.on?'✓':esc(habI(h))))+'</button>':
+          '<span class="hbt" style="--c:'+esc(h.color)+'" title="hoy no toca">'+esc(habI(h))+'</span>')+'</span></div>';};
+  const lin=function(h,der,acc){return '<div class="ali hlin"><span class="e">'+esc(habI(h))+'</span><button class="hbn" data-a="hab-ed" data-id="'+h.id+'"><b>'+esc(habN(h))+'</b></button>'+
     (acc||'<em>'+esc(der)+'</em>')+'</div>';};
   const sigueMes=function(h){const d=parseDate(h.soloVisto||h.creado||hoyK)||new Date();return MONTH_FULL[addDays(d,30).getMonth()].toLowerCase();};
   const t=asistTarjetaHab(hoyK);
-  const hueco=M.length<3?'<div class="hbr hhueco"><span>'+(espera.length?'Un hueco libre. ¿Empiezas <b>'+esc(espera[0].nombre.toLowerCase())+'</b>?':'Un hueco libre para un hábito nuevo.')+'</span>'+
+  const hueco=M.length<3?'<div class="hbr hhueco"><span>'+(espera.length?'Un hueco libre. ¿Empiezas <b>'+esc(habN(espera[0]).toLowerCase())+'</b>?':'Un hueco libre para un hábito nuevo.')+'</span>'+
     (espera.length?'<button class="btn s hemp" data-a="hab-fase" data-id="'+espera[0].id+'" data-v="marcha">Empezar</button>':'<button class="btn s hemp" data-a="hab-ed" data-id="">＋ Nuevo</button>')+'</div>':'';
   const demas=M.length>3?'<p class="mini hdemas">Tienes '+M.length+' en marcha. Lo que funciona es uno o dos nuevos a la vez, tres como mucho: ¿dejas alguno esperando turno? '+
-    M.map(function(h){return '<button class="chipx" data-a="hab-fase" data-id="'+h.id+'" data-v="espera">⏸ '+esc(h.nombre)+'</button>';}).join(' ')+'</p>':'';
+    M.map(function(h){return '<button class="chipx" data-a="hab-fase" data-id="'+h.id+'" data-v="espera">⏸ '+esc(habN(h))+'</button>';}).join(' ')+'</p>':'';
   $('#main').innerHTML='<div class="grid ajg hab3">'+
     '<div class="subcab"><h2 class="subtit">✅ Hábitos</h2><span class="sp"></span><button class="dlink" data-a="hab-vista" data-v="rev">Tu semana ›</button></div>'+
     (t?'<div class="card asist">'+asistTjHTML(t)+'</div>':'')+
@@ -19738,6 +19768,7 @@ function renderHabitos(){
         return lin(h,i?'':'el siguiente',M.length<3?'<button class="btn s hemp" data-a="hab-fase" data-id="'+h.id+'" data-v="marcha">Empezar</button>':null);}).join('')+'</div>':''):
       '<div class="card"><p class="note" style="margin:0">Aún no tienes ninguno: crea el primero o empieza con uno de estos.</p><div class="chips" style="margin-top:8px">'+
         HAB_PRESETS.map(function(p,i){return '<button class="chipx" data-a="hab-preset" data-i="'+i+'">'+esc(p.icono+' '+p.nombre)+'</button>';}).join('')+'</div></div>')+
+    (items.length?habPlantillasHTML(M.length):'')+
     '<div class="alst"><button class="ali" data-a="hab-ed" data-id=""><span class="e">＋</span><b>Nuevo hábito</b><span class="ch">›</span></button></div>'+
   '</div>';
 }
@@ -19751,12 +19782,12 @@ function habHojaHTML(){
   /* el obstáculo y su plan: al tercer día (el asistente lo pregunta), no al crear */
   const obst=e.id&&(e.obst||(h&&habDia(h)>=3));
   return hojaMarco('hab-ed-x','hhab',e.id?'editar hábito':'nuevo hábito',
-    '<div class="hhd"><b>'+(e.id?esc(e.icono+' '+e.nombre):'Hábito nuevo')+'</b>'+(e.id?'':'<small>cuatro preguntas; el resto, cuando haga falta</small>')+'</div>'+
+    '<div class="hhd"><b>'+(e.id?esc(h?habI(h)+' '+habN(h):e.icono+' '+e.nombre):'Hábito nuevo')+'</b>'+(e.id?'':'<small>cuatro preguntas; el resto, cuando haga falta</small>')+'</div>'+
     n(1,'¿QUÉ?')+'<div class="row" style="gap:8px;flex-wrap:nowrap">'+
       '<input id="habEdIco" value="'+esc(e.icono)+'" maxlength="4" aria-label="icono" style="width:58px;flex:none;text-align:center">'+
       '<input id="habEdNom" value="'+esc(e.nombre)+'" maxlength="40" placeholder="p. ej. Leer 10 páginas" aria-label="nombre" style="flex:1;min-width:0"></div>'+
     n(2,'¿DESPUÉS DE QUÉ?','pegado a algo que ya haces se aprende antes que a una hora')+'<div class="hchs">'+
-      HAB_TRAS.map(function(x){return chip('hab-ed-ancla','tras:'+x[0],an.t==='tras'&&an.v===x[0],x[1]);}).join('')+chip('hab-ed-ancla','hora',an.t==='hora','⏰ a una hora')+chip('hab-ed-ancla','',!an.t,'sin ancla')+'</div>'+
+      HAB_TRAS.map(function(x){return chip('hab-ed-ancla','tras:'+x[0],an.t==='tras'&&an.v===x[0],cnOculta(x[1]));}).join('')+chip('hab-ed-ancla','hora',an.t==='hora','⏰ a una hora')+chip('hab-ed-ancla','',!an.t,'sin ancla')+'</div>'+
       (an.t==='hora'?'<input id="habEdHora" type="time" value="'+esc(an.v||'')+'" aria-label="hora" style="width:auto;margin-top:6px">':'')+
       (h&&!an.t&&habMejorHora(h)?'<p class="mini" style="margin:6px 0 0">Sueles hacerlo hacia las '+esc(hCortaHM(habMejorHora(h)))+'. <button class="dlink" data-a="hab-ancla-hora" data-id="'+h.id+'" data-v="'+habMejorHora(h)+'">anclarlo ahí</button></p>':'')+
     n(3,'EL MÍNIMO DEL DÍA MALO','cuenta igual')+
@@ -19764,12 +19795,12 @@ function habHojaHTML(){
     n(4,'¿CUÁNDO NO TOCA?')+'<div class="hchs">'+TT.map(function(t){const ti=diaTipoInfo(t);
       return chip('hab-ed-noen',t,e.noEn.indexOf(t)>=0,ti[2]+' '+ti[1]);}).join('')+'</div>'+
     (obst?'<div class="hlab">QUÉ SUELE IMPEDIRLO <small>y qué harás entonces: duplica las veces que sale</small></div><div class="hchs">'+chip('hab-ed-obst','',!e.obst,'nada')+
-      HAB_OBST.map(function(x){return chip('hab-ed-obst',x[0],e.obst===x[0],x[1]);}).join('')+'</div>'+
+      HAB_OBST.map(function(x){return chip('hab-ed-obst',x[0],e.obst===x[0],cnOculta(x[1]));}).join('')+'</div>'+
       (e.obst?'<input id="habEdPlan" value="'+esc(e.plan||'')+'" maxlength="60" placeholder="entonces haré… (p. ej. el mínimo al llegar)" aria-label="plan si aparece" style="margin-top:6px">':''):
       (e.id?'':'<p class="mini hinfo">Al tercer día te pregunto qué te lo puede impedir y qué harás entonces.</p>'))+
     '<details class="hmas"'+(ui.habEdMas?' open':'')+'><summary>Más: días, se marca solo, color'+(e.id?', fase y probar 14 días':'')+'</summary>'+
       '<div class="hlab">QUÉ DÍAS</div><div class="hchs">'+DS.map(function(x){return chip('hab-ed-dow',x[0],e.dow.indexOf(x[0])>=0,x[1]);}).join('')+'</div>'+
-      '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+HAB_AUTOS.map(function(x){return chip('hab-ed-auto',x[0],e.auto===x[0],x[1]);}).join('')+'</div>'+
+      '<div class="hlab">SE MARCA SOLO</div><div class="hchs">'+HAB_AUTOS.map(function(x){return chip('hab-ed-auto',x[0],e.auto===x[0],cnOculta(x[1]));}).join('')+'</div>'+
       (e.auto==='taxi'?'<p class="mini" style="margin:6px 0 0"><button class="btn s '+(viajeCfg().taxi?'g':'')+'" data-a="viaje-taxi">'+(viajeCfg().taxi?'✓':'○')+' de serie voy en taxi</button> '+
         (viajeCfg().taxi?'Cada día de jornada cuenta como taxi salvo que apuntes en Hoy que saliste a tiempo.':'Solo cuenta taxi si apuntas en Hoy que saliste después del último bus.')+'</p>':'')+
       '<div class="hlab">POR QUÉ <small>una frase tuya</small></div>'+
@@ -19821,9 +19852,9 @@ function asistIntenciones(k){
   /* lo que propone para hoy, sacado de lo que hay hoy: elegir una es la intención del día */
   const out=[],e=entrenoDe(k),hb=habitosS().items.filter(function(h){return habitoToca(h,k);});
   if(e&&e.hora&&!gymHechoEn(k))out.push(['entreno','💪 entreno a las '+hCortaHM(e.hora)]);
-  if(lloretDe(k))out.push(['lloretsin',cnTapado()?'🌙 Lloretazo (privado)':'🌿 Lloretazo sin']);
+  if(lloretDe(k))out.push(['lloretsin',cnTapado()?'🌙 Plan privado':'🌿 Lloretazo sin']);
   const est=hb.filter(function(h){return /estudi|mir|repas/i.test(h.nombre)||h.auto==='estudio';})[0];
-  if(est)out.push(['estudio','📚 '+(est.min&&habCorto(k)?est.min:'estudio')+(lloretDe(k)?' antes del Lloretazo':'')]);
+  if(est)out.push(['estudio','📚 '+(est.min&&habCorto(k)?est.min:'estudio')+(lloretDe(k)?cnOculta(' antes del Lloretazo'):'')]);
   if(habCorto(k)&&hb.some(function(h){return h.min;}))out.push(['corto','🌱 lo mínimo y descansar']);
   out.push(['pantallas','📵 pantallas fuera a las '+hCortaHM(hm(Math.max(0,(mins(sleepOf(k).bed||'23:00')||23*60)-30)))]);
   return out.slice(0,3);}
@@ -19849,53 +19880,53 @@ const HAB_R=[
   function corto(X){ /* 1 · versión corta */
     if(!habCortoSugerido(X.k))return null;
     const hm_=habitosS().items.filter(function(h){return habitoToca(h,X.k)&&h.min;});if(!hm_.length)return null;
-    return {id:'corto',ico:'🌱',t:'Hoy, versión corta',txt:(diaTipo(X.k)==='saliente'?'Sales de guardia':'Amaneces a '+X.kss+' de 9')+'. Hoy pido solo lo mínimo: '+hm_.map(function(h){return h.icono+' '+h.min;}).join(', ')+'. La racha sigue igual.',
+    return {id:'corto',ico:'🌱',t:'Hoy, versión corta',txt:(diaTipo(X.k)==='saliente'?'Sales de guardia':'Amaneces a '+X.kss+' de 9')+'. Hoy pido solo lo mínimo: '+hm_.map(function(h){return habI(h)+' '+h.min;}).join(', ')+'. La racha sigue igual.',
       acc:[['Vale','asist-corto',' data-v="1" data-k="'+X.k+'"',1],['Hoy entero','asist-corto',' data-v="0" data-k="'+X.k+'"']]};},
   function prueba(X){ /* «probar 14 días» terminado: ¿te quedas con el cambio? */
     const h=habitosS().items.filter(function(h){return h.prueba&&-diasHasta(h.prueba.desde)>=14;})[0];if(!h)return null;
     const P=habPct(h,14),a=h.prueba.antes;
-    return {id:'prueba:'+h.id,ico:'🧪',t:h.nombre+': 14 días con '+h.prueba.txt,txt:(P.pct==null?'No ha tocado ningún día.':P.pct+' % hecho'+(a!=null?' frente a '+a+' % antes':''))+'. ¿Te quedas con el cambio?',
+    return {id:'prueba:'+h.id,ico:'🧪',t:habN(h)+': 14 días con '+h.prueba.txt,txt:(P.pct==null?'No ha tocado ningún día.':P.pct+' % hecho'+(a!=null?' frente a '+a+' % antes':''))+'. ¿Te quedas con el cambio?',
       acc:[['Me quedo','hab-prueba',' data-id="'+h.id+'" data-v="1"',1],['Volver a lo de antes','hab-prueba',' data-id="'+h.id+'" data-v="0"']]};},
   function obstaculo(X){ /* hoy pasa lo que suele impedirlo: su plan, con el ✓ ahí mismo */
     const t=diaTipo(X.k);
     const h=habEnMarcha().filter(function(h){if(!h.plan||!habitoToca(h,X.k)||habitoHecho(h.id,X.k))return false;
       return (h.obst==='guardia'&&(t==='guardia'||t==='saliente'))||(h.obst==='lloret'&&!!lloretDe(X.k))||(h.obst==='cansancio'&&(t==='saliente'||X.kss>=7));})[0];
     if(!h)return null;
-    const por={guardia:t==='saliente'?'Sales de guardia':'Hoy hay guardia',lloret:'Hoy hay Lloretazo',cansancio:t==='saliente'?'Sales de guardia':'Amaneces a '+X.kss+' de 9'}[h.obst];
-    return {id:'obst:'+h.id+':'+X.k,ico:h.icono,t:por+': '+h.plan,txt:'Tu plan para '+h.nombre.toLowerCase()+' cuando pasa esto. Hecho así, cuenta entero.',
+    const por={guardia:t==='saliente'?'Sales de guardia':'Hoy hay guardia',lloret:cnOculta('Hoy hay Lloretazo'),cansancio:t==='saliente'?'Sales de guardia':'Amaneces a '+X.kss+' de 9'}[h.obst];
+    return {id:'obst:'+h.id+':'+X.k,ico:habI(h),t:por+': '+h.plan,txt:'Tu plan para '+habN(h).toLowerCase()+' cuando pasa esto. Hecho así, cuenta entero.',
       acc:[['Hecho','hab-mark',' data-id="'+h.id+'" data-key="'+X.k+'"',1]]};},
   function cruzo(X){ /* dos fallos seguidos: ¿qué se cruzó? (y lo que contestes cambia el hábito) */
     const h=habEnMarcha().filter(function(h){if(!habitoToca(h,X.k)||habitoHecho(h.id,X.k))return false;
       let f=0,vistos=0;for(let i=1;i<=14&&vistos<2;i++){const d=iso(addDays(parseDate(X.k),-i));if(h.creado&&d<h.creado)break;if(!habitoToca(h,d))continue;vistos++;if(!habitoHecho(h.id,d))f++;}return f>=2;})[0];
     if(!h)return null;
-    return {id:'cruzo:'+h.id,ico:h.icono,t:'Dos días sin '+h.nombre.toLowerCase()+'. ¿Qué se cruzó?',txt:'Lo que contestes cambia el hábito: el mínimo, el cuándo o los días en que no toca.',
+    return {id:'cruzo:'+h.id,ico:habI(h),t:'Dos días sin '+habN(h).toLowerCase()+'. ¿Qué se cruzó?',txt:'Lo que contestes cambia el hábito: el mínimo, el cuándo o los días en que no toca.',
       acc:[['Cansancio','hab-cruzo',' data-id="'+h.id+'" data-v="cansancio"'],['Se me olvidó','hab-cruzo',' data-id="'+h.id+'" data-v="olvido"'],['No tocaba','hab-cruzo',' data-id="'+h.id+'" data-v="notoca"']]};},
   function ayer(X){ /* ayer falló y hoy toca: el mínimo vale (no la culpa) */
     const ay=iso(addDays(parseDate(X.k),-1));
     const h=habEnMarcha().filter(function(h){return h.min&&habitoToca(h,X.k)&&!habitoHecho(h.id,X.k)&&habitoToca(h,ay)&&!habitoHecho(h.id,ay)&&!(h.creado&&ay<h.creado);})[0];
     if(!h)return null;
-    return {id:'ayer:'+h.id+':'+X.k,ico:h.icono,t:'Ayer no hubo '+h.nombre.toLowerCase(),txt:'Hoy, '+h.min+' vale: cuenta igual para que se haga costumbre.',
+    return {id:'ayer:'+h.id+':'+X.k,ico:habI(h),t:'Ayer no hubo '+habN(h).toLowerCase(),txt:'Hoy, '+h.min+' vale: cuenta igual para que se haga costumbre.',
       acc:[['Hecho el mínimo','hab-min',' data-id="'+h.id+'" data-key="'+X.k+'"',1]]};},
   function obst3(X){ /* al tercer día: ¿qué te lo puede impedir? */
     const h=habEnMarcha().filter(function(h){return !h.obst&&habDia(h)>=3;})[0];if(!h)return null;
-    return {id:'obst3:'+h.id,ico:h.icono,t:'Llevas '+habDia(h)+' días con '+h.nombre.toLowerCase(),txt:'¿Qué te lo puede impedir? Con un plan para ese día («si pasa X, hago Y») sale el doble de veces.',
-      acc:HAB_OBST.map(function(o){return [o[1],'hab-obst',' data-id="'+h.id+'" data-v="'+o[0]+'"'];})};},
+    return {id:'obst3:'+h.id,ico:habI(h),t:'Llevas '+habDia(h)+' días con '+habN(h).toLowerCase(),txt:'¿Qué te lo puede impedir? Con un plan para ese día («si pasa X, hago Y») sale el doble de veces.',
+      acc:HAB_OBST.map(function(o){return [cnOculta(o[1]),'hab-obst',' data-id="'+h.id+'" data-v="'+o[0]+'"'];})};},
   function sinPensar(X){ /* cada 14 días: ¿ya te sale sin pensar? */
     const h=habEnMarcha().filter(function(h){if(habDia(h)<14)return false;const u=(h.si||[]).slice(-1)[0];return !u||-diasHasta(u.f)>=14;})[0];
     if(!h)return null;const an=habAnclaTxt(h);
-    return {id:'sinp:'+h.id+':'+X.k,ico:h.icono,t:'¿'+h.nombre+(an?' '+an:'')+' ya te sale sin pensar?',txt:'Día '+habDia(h)+' de ~66. Tres «sí» seguidos y pasa a «ya te salen solos»: queda un hueco.',
+    return {id:'sinp:'+h.id+':'+X.k,ico:habI(h),t:'¿'+habN(h)+(an?' '+an:'')+' ya te sale sin pensar?',txt:'Día '+habDia(h)+' de ~66. Tres «sí» seguidos y pasa a «ya te salen solos»: queda un hueco.',
       acc:[['Sí','hab-si',' data-id="'+h.id+'" data-v="1"',1],['Aún no','hab-si',' data-id="'+h.id+'" data-v="0"']]};},
   function sigue(X){ /* los que ya salen solos: una vez al mes, ¿sigue? */
     const h=habitosS().items.filter(function(h){return habFase(h)==='solo'&&-diasHasta(h.soloVisto||h.creado||X.k)>=30;})[0];if(!h)return null;
-    return {id:'sigue:'+h.id+':'+X.k,ico:h.icono,t:'¿'+h.nombre+' sigue saliendo solo?',txt:'Una vez al mes lo pregunto. Si ha vuelto a costar, vuelve a «en marcha».',
+    return {id:'sigue:'+h.id+':'+X.k,ico:habI(h),t:'¿'+habN(h)+' sigue saliendo solo?',txt:'Una vez al mes lo pregunto. Si ha vuelto a costar, vuelve a «en marcha».',
       acc:[['Sí','hab-sigue',' data-id="'+h.id+'" data-v="1"',1],['Ha vuelto a costar','hab-sigue',' data-id="'+h.id+'" data-v="0"']]};},
   function hueco(X){ /* sitio para uno nuevo */
     if(habEnMarcha().length>=3)return null;const h=habitosS().items.filter(function(h){return habFase(h)==='espera';})[0];if(!h)return null;
-    return {id:'hueco:'+h.id,ico:h.icono,t:'Tienes sitio para uno nuevo',txt:'¿Empiezas '+h.nombre.toLowerCase()+'? Uno o dos a la vez es lo que funciona.',
+    return {id:'hueco:'+h.id,ico:habI(h),t:'Tienes sitio para uno nuevo',txt:'¿Empiezas '+habN(h).toLowerCase()+'? Uno o dos a la vez es lo que funciona.',
       acc:[['Empezar','hab-fase',' data-id="'+h.id+'" data-v="marcha"',1]]};},
   function nunca(){ /* 8 · un hábito que nunca se hace un tipo de día */
     const sg=habitoSugerencia();if(!sg)return null;
-    return {id:'nunca:'+sg.h.id+'|'+sg.t,ico:'💡',t:'Los días de '+diaTipoInfo(sg.t)[1].toLowerCase()+' no haces '+sg.h.nombre.toLowerCase(),
+    return {id:'nunca:'+sg.h.id+'|'+sg.t,ico:'💡',t:'Los días de '+diaTipoInfo(sg.t)[1].toLowerCase()+' no haces '+habN(sg.h).toLowerCase(),
       txt:'Ninguna vez en '+sg.n+' ocasiones (4 semanas). ¿Dejo de pedírtelo esos días? Así la racha no se rompe por trabajar.',acc:[['Sí, esos días no','hab-noen',' data-id="'+sg.h.id+'" data-t="'+sg.t+'"',1]]};},
   function kssentreno(X){ /* 7 · cansado y con entreno */
     const en=X.kss>=7&&entrenoDe(X.k);if(!en||gymHechoEn(X.k))return null;
@@ -19910,7 +19941,7 @@ const HAB_R=[
     const hs=habEnMarcha().filter(function(h){return habitoToca(h,X.k);});if(!hs.length)return null;
     const quedan=hs.filter(function(h){return !habitoHecho(h.id,X.k);});
     return {id:'hab-nada',ico:'✅',t:(hs.length-quedan.length)+' de '+hs.length+' hoy',nada:true,acc:[],
-      txt:quedan.length?'Te queda'+(quedan.length>1?'n ':' ')+quedan.map(function(h){return h.nombre.toLowerCase();}).join(' y ')+'.':'Hecho lo de hoy.'};}];
+      txt:quedan.length?'Te queda'+(quedan.length>1?'n ':' ')+quedan.map(function(h){return habN(h).toLowerCase();}).join(' y ')+'.':'Hecho lo de hoy.'};}];
 const CN_R=[
   function guardia(X){ /* 2 · víspera de guardia con Lloretazo */
     if(!(X.c.plan.guardia&&X.hoy.getHours()<23&&esDiaGuardia(iso(addDays(X.hoy,1)))&&lloretDe(X.k)))return null;
@@ -19974,10 +20005,10 @@ function renderRevision(){
   /* el cruce: el que más se separa, con n suficiente */
   const F=cnAfecta(28).filter(function(f){return f.ok&&f.dif&&['kss','animo','sueno','estudio','cama'].indexOf(f.id)>=0;})
     .sort(function(a,b){return Math.abs(b.dif/(b.mSin||1))-Math.abs(a.dif/(a.mSin||1));})[0];
-  const cruce=F?('Los días con sesión: '+F.t.toLowerCase()+' '+cnFmt(F,F.mCon)+' (n '+F.nCon+'); sin: '+cnFmt(F,F.mSin)+' (n '+F.nSin+').'):
+  const cruce=cnTapado()?'Este cruce no se enseña con «Privado» puesto.':F?('Los días con sesión: '+F.t.toLowerCase()+' '+cnFmt(F,F.mCon)+' (n '+F.nCon+'); sin: '+cnFmt(F,F.mSin)+' (n '+F.nSin+').'):
     'Aún no hay un cruce con días suficientes en los dos lados (hacen falta 5 y 5).';
   /* la propuesta: un experimento que encaje con lo que sale */
-  const prop=expActivo()?null:(F&&(F.id==='kss'||F.id==='sueno'||F.id==='cama')?'antes22':(S.hab!=null&&S.hab<60?'minimo':(cnLloret(fin.slice(0,7)).n?'lloretsin':'pantallas')));
+  const prop=expActivo()?null:cnTapado()?(S.hab!=null&&S.hab<60?'minimo':'pantallas'):(F&&(F.id==='kss'||F.id==='sueno'||F.id==='cama')?'antes22':(S.hab!=null&&S.hab<60?'minimo':(cnLloret(fin.slice(0,7)).n?'lloretsin':'pantallas')));
   const mes=A.notas.filter(function(x){return x.fecha<=iso(addDays(hoy,-25))&&x.fecha>=iso(addDays(hoy,-40));}).slice(-1)[0];
   const nota=A.notas.filter(function(x){return x.fecha===fin;})[0];
   subPantalla('hab-vista','Hábitos','Tu semana',
@@ -19999,10 +20030,10 @@ function renderRevision(){
 /* ---------- objetivos de trimestre: tres como mucho, pegados a una métrica que ya existe ---------- */
 /* ---------- experimentos n-de-1 ---------- */
 const EXP={
-  antes22:{t:'Sesión antes de las 22:00',por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
-  lloretsin:{t:'Lloretazo sin, entre semana',por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
+  antes22:{c:1,get t(){return cnTapado()?'Un experimento privado':'Sesión antes de las 22:00';},por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
+  lloretsin:{c:1,get t(){return cnTapado()?'Plan privado sin, entre semana':'Lloretazo sin, entre semana';},por:'medido en lo despejado que amaneces (KSS)',v:'kss',bueno:-1,u:''},
   minimo:{t:'Versión mínima los días malos',por:'medido en el % de hábitos cumplidos',v:'habitos',bueno:1,u:' %'},
-  nadar:{t:'Moverme cuando tengo ganas',por:'medido en las ganas que no acaban en sesión',v:'aguante',bueno:1,u:''},
+  nadar:{c:1,get t(){return cnTapado()?'Un experimento privado':'Moverme cuando tengo ganas';},get por(){return cnTapado()?'medido en lo que apuntas':'medido en las ganas que no acaban en sesión';},v:'aguante',bueno:1,u:''},
   pantallas:{t:'Pantallas fuera 30 min antes de la cama',por:'medido en las horas dormidas',v:'sueno',bueno:1,u:' h'}};
 function expVar(v,k){
   /* el KSS de la MAÑANA SIGUIENTE: lo de esta noche se nota al despertar (como en cnAfecta). Antes se
@@ -20038,7 +20069,7 @@ function renderExperimentos(){
   subPantalla('hab-vista','Hábitos','Experimentos',
     '<p class="mini" style="margin:0">Un cambio pequeño durante 7 o 14 días, comparado con tus dos semanas de antes. Uno a la vez. El historial es tu manual de lo que funciona contigo.</p>'+
     act+
-    (x?'':'<div class="alst">'+Object.keys(EXP).map(function(id){const E=EXP[id];
+    (x?'':'<div class="alst">'+Object.keys(EXP).filter(function(id){return !(cnTapado()&&EXP[id].c);}).map(function(id){const E=EXP[id];
       return '<div class="ali"><span class="hmt"><b>'+esc(E.t)+'</b><span>'+esc(E.por)+'</span></span>'+
         '<button class="chipx" data-a="exp-start" data-v="'+id+'" data-d="7">7 días</button><button class="chipx" data-a="exp-start" data-v="'+id+'" data-d="14">14</button></div>';}).join('')+'</div>')+
     (A.exp.hist.length?'<div class="acap">LO QUE HAS PROBADO</div><div class="alst">'+A.exp.hist.slice().reverse().map(function(h){const E=EXP[h.id]||{t:h.id,u:''};
@@ -24091,10 +24122,12 @@ function eventoAplica(ev,key){
   const inf=dayInfo(key);
   if(inf.vac)return false;
   return bloquesTrabajo(key,inf).length>0;}
+/* C6: con «Privado» el evento del Lloretazo sale como «Plan privado» (una copia para pintar; el guardado no se toca) */
+function cnEvOculto(e){return cnTapado()&&e&&e.lloret?Object.assign({},e,{titulo:'🌙 Plan privado'}):e;}
 function eventosDeFecha(key){const d=parseDate(key);if(!d)return [];
   const ll=eventosPuntualesDe(key).some(function(e){return e.lloret;})?null:lloretAuto(key);
   return eventosDelDia(d.getDay()).filter(function(e){return eventoAplica(e,key);}).concat(eventosPuntualesDe(key)).concat(ll?[ll]:[])
-    .sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});}
+    .map(cnEvOculto).sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});}
 /* el Lloretazo de cada noche es rutina: va en Hoy y en el día, no repetido en cada casilla del mes
    ni en cada fila de la semana */
 function eventosCalendario(key){return eventosDeFecha(key).filter(function(e){return !e.auto;});}
@@ -24628,7 +24661,7 @@ function evFilaHTML(ev){
   return '<button class="evfila'+(ev.on===false?' off':'')+'" data-a="ev-abrir" data-id="'+esc(ev.id)+'">'+
     (d?('<span class="fch"><em>'+d.getDate()+'</em><span>'+MON[d.getMonth()]+'</span></span>')
        :('<span class="fch sem"><em>'+diasCorta(ev.dow)+'</em><span>cada sem</span></span>'))+
-    '<span class="tx"><b>'+esc(ev.titulo||'(sin título)')+'</b><span>'+esc(cuando)+
+    '<span class="tx"><b>'+esc(cnOculta(cnEvOculto(ev).titulo||'(sin título)'))+'</b><span>'+esc(cuando)+
       (ev.recordatorio?' · 🔔':'')+(ev.on===false?' · apagado':'')+'</span></span>'+
     (dur?('<span class="dur">'+esc(dur)+'</span>'):'')+
     '<span class="evdot" style="background:'+esc(ev.color||'#38e1ff')+'"></span></button>';}
@@ -25273,8 +25306,8 @@ function renderData(){
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
         <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
           <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
-      ${cnTapado()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Cortina del 4:20</b>
-        <span class="note" style="flex:1 1 100%">Tapa la sección ante quien coja el móvil; no cifra tus datos. La copia lleva tus datos del 4:20 y la cortina. Si olvidaste el PIN, quítala aquí: no se borra ningún dato.</span>
+      ${cnPin()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Cortina con PIN</b>
+        <span class="note" style="flex:1 1 100%">Tapa la sección ante quien coja el móvil; no cifra tus datos. La copia lleva tus datos privados y la cortina. Si olvidaste el PIN, quítala aquí: no se borra ningún dato.</span>
         <button class="btn" data-a="cn-cortina-quita">Quitar la cortina…</button></div>`:''}
       <details class="plegable" style="margin-top:12px" data-tg="copiaInfo"${ui.copiaInfo||_almacen.estado==='no'?' open':''}><summary>dónde se guarda todo esto y qué lo borra</summary>
       <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
@@ -26509,14 +26542,14 @@ function act(a,el){
     case 'hab-si':{const h=habPorId(el.dataset.id);if(!h)break;
       /* tres «sí» seguidos: ya sale solo y deja hueco */
       if(!Array.isArray(h.si))h.si=[];h.si.push({f:iso(new Date()),v:el.dataset.v==='1'});
-      const u=h.si.slice(-3);if(u.length===3&&u.every(function(x){return x.v;})){habFaseA(h,'solo');flash(h.nombre+' ya te sale solo: queda un hueco');}
+      const u=h.si.slice(-3);if(u.length===3&&u.every(function(x){return x.v;})){habFaseA(h,'solo');flash(habN(h)+' ya te sale solo: queda un hueco');}
       else flash(el.dataset.v==='1'?'apuntado: '+u.filter(function(x){return x.v;}).length+' de 3':'vale: en 14 días te lo vuelvo a preguntar');
       save();render();break;}
     case 'hab-sigue':{const h=habPorId(el.dataset.id);if(!h)break;
       /* «ha vuelto a costar» con 3 en marcha: pasa a esperar turno (antes no cambiaba nada y la
          pregunta volvía cada día) */
       if(el.dataset.v==='1')h.soloVisto=iso(new Date());
-      else{h.si=[];if(!habFaseA(h,'marcha')){habFaseA(h,'espera');flash(h.nombre+': espera turno, entra cuando dejes hueco');}}
+      else{h.si=[];if(!habFaseA(h,'marcha')){habFaseA(h,'espera');flash(habN(h)+': espera turno, entra cuando dejes hueco');}}
       save();render();break;}
     case 'hab-prueba':{const h=habPorId(el.dataset.id);if(!h||!h.prueba)break;
       if(el.dataset.v!=='1'){h.ancla=Object.assign({},h.prueba.prev.ancla||{});h.min=h.prueba.prev.min||'';flash('vuelto a lo de antes');}else flash('te quedas con el cambio');
@@ -26752,9 +26785,9 @@ function act(a,el){
       const fase=habEnMarcha().length>=3?'espera':'marcha';
       habitosS().items.push({id:uid('hb'),nombre:p.nombre,icono:p.icono,color:p.color,dow:[0,1,2,3,4,5,6],creado:iso(new Date()),noEn:p.noEn.slice(),auto:p.auto,
         min:p.min||'',ancla:Object.assign({},p.ancla||{}),obst:'',plan:'',porQue:'',fase:fase,inicio:fase==='marcha'?iso(new Date()):''});
-      save();flash('hábito «'+p.nombre+'» añadido');render();break;}
+      save();flash(fase==='espera'?'Ya tienes 3 en marcha; «'+p.nombre+'» espera su turno':'hábito «'+p.nombre+'» añadido');render();break;}
     case 'hab-noen':{const h=habPorId(el.dataset.id);if(!h)break;
-      h.noEn=(h.noEn||[]).concat([el.dataset.t]);save();flash('«'+h.nombre+'» ya no se pide los días de '+diaTipoInfo(el.dataset.t)[1].toLowerCase());render();break;}
+      h.noEn=(h.noEn||[]).concat([el.dataset.t]);save();flash('«'+habN(h)+'» ya no se pide los días de '+diaTipoInfo(el.dataset.t)[1].toLowerCase());render();break;}
     case 'hab-tip-no':{ui.habTipNo=ui.habTipNo||{};ui.habTipNo[el.dataset.id+'|'+el.dataset.t]=1;render();break;}
     case 'rut-tipo':ui.rutTipo=el.dataset.t;render();break;
     case 'rut-add':{const t=ui.rutTipo||diaTipo(iso(new Date())),h=((document.getElementById('rutH')||{}).value||'').trim(),
@@ -26960,10 +26993,11 @@ function act(a,el){
       const v=el.dataset.v;if(v==='x'){P.t=P.t.slice(0,-1);render();break;}
       if(P.t.length>=4)break;P.t+=v;if(P.t.length<4){render();break;}
       render();cnPinSigue(P);break;}
+    case 'cn-privado-quita':cnPrivadoQuita();break;
     case 'cn-pin-nuevo':ui.cnPin={modo:'nuevo',t:''};render();break;
     case 'cn-pin-cambia':ui.cnPin={modo:'actual',t:''};render();break;
     case 'cn-pin-x':ui.cnPin=null;render();break;
-    case 'cn-cortina-quita':confirmar('¿Quitar la cortina del 4:20? Quedará abierto para quien coja el móvil. No se borra ningún dato.','Sí, quitarla').then(function(ok){
+    case 'cn-cortina-quita':confirmar('¿Quitar la cortina con PIN? Quedará abierto para quien coja el móvil. No se borra ningún dato.','Sí, quitarla').then(function(ok){
       if(!ok)return;delete consumoS().priv.pin;ui.cnAbierto=false;ui.cnPin=null;save();flash('Cortina quitada: tus datos siguen ahí');render();});break;
     case 'cn-desc':{const p=consumoS().plan;if(cnDesc()&&!cnDesc().fin)break;const m=el.dataset.v==='mitad',d=iso(addDays(new Date(),-14));
       const n14=consumoS().ses.filter(function(x){return x.fecha>=d&&x.fecha<iso(new Date());}).length;
@@ -27465,7 +27499,7 @@ function act(a,el){
       confirmar('¿Quitar «'+b.titulo+'» de tus objetivos?').then(function(ok){if(!ok)return;
         estS().libros=librosS().filter(function(x){return x.id!==b.id;});save();render();});break;}
     case 'lloret-diario':{if(!store.lloret)store.lloret={};store.lloret.diario=!lloretCfg().diario;ui.hoyIt=null;ui.hoySel=null;save();render();
-      flash(store.lloret.diario?'Lloretazo cada noche (menos las de guardia)':'El Lloretazo ya no sale solo: ponlo con el 🌿 los días que vayas');break;}
+      flash(cnOculta(store.lloret.diario?'Lloretazo cada noche (menos las de guardia)':'El Lloretazo ya no sale solo: ponlo con el 🌿 los días que vayas'));break;}
     case 'lloret':{const k=el.dataset.k||fechaHoy();flash(lloretPoner(k),6000);ui.hoyIt=null;ui.hoySel=null;render();break;}
     case 'ent-min':{const g=gymS();g.minSemana=Math.max(0,Math.min(7,entrenoCfg().min+(+el.dataset.d||0)));save();render();
       const s=entrenoSemana(iso(new Date()));flash(g.minSemana?('mínimo '+g.minSemana+' por semana'+(s&&s.faltan?(' · esta semana solo caben '+s.total):'')):'sin mínimo semanal');break;}
@@ -29540,7 +29574,9 @@ document.addEventListener('change',e=>{
     case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
     case 'cn-ventana':{const p=consumoS().plan;p.ventana=/^\d{2}:\d{2}$/.test(el.value||'')?el.value:'';save();render();break;}
     case 'cn-guardia':{consumoS().plan.guardia=!!el.checked;save();render();break;}
-    case 'cn-priv':{const pv=consumoS().priv;pv[el.dataset.k==='fueraCopia'?'fueraCopia':'oculto']=!!el.checked;save();render();break;}
+    case 'cn-priv':{const pv=consumoS().priv;
+      if(el.dataset.k==='privado'){if(el.checked)cnPrivadoPon(true,true);else cnPrivadoQuita();break;}
+      pv[el.dataset.k==='fueraCopia'?'fueraCopia':'oculto']=!!el.checked;save();render();break;}
     case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
     case 'fe-campo':{flash(feCampo(el.dataset.key,el.dataset.id,el.dataset.k,el.value));ui.feCorr=true;render();break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
@@ -30120,7 +30156,7 @@ pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espaci
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
 Object.assign(window.PG,{recetarioTodo,recetarioCarga,recReventados,plmReglas,plmOllaMax,plmOllas,recPuede,snNocheEventos,mananaTramos,MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
-  cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
+  cnTapado,cnPin,cnOculta,cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */

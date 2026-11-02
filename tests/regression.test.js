@@ -17313,6 +17313,193 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       claro.contraste >= 4.5 && claro.borde === claro.tc && parseFloat(claro.anchoBorde) >= 4 && osc.color === osc.tc, JSON.stringify({ claro, osc }));
   }
 
+  // ===== C6 · «PRIVADO», HÁBITOS Y «ESPERAN TURNO» (510-519) =====
+  // prepara: un día de trabajo con Lloretazo puesto, tres hábitos (uno de 4:20 que se marca solo), sin PIN y sin «Privado»
+  const c6Prepara = () => page.evaluate(() => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)),
+      SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren/i.test(x.name || ''))[0];
+    if (!window.__copiaC6) window.__copiaC6 = JSON.parse(JSON.stringify(P.store));
+    for (let i = -3; i <= 3; i++) P.setDayOverride(d(i), SH.id, '');
+    P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} });
+    P.store.habitos = { items: [['Agua 2 L', '💧', ''], ['Día sin 4:20', '🌿', 'sin420'], ['Estirar', '🧘', '']].map((n, i) => ({ id: 'hbc6' + i, nombre: n[0], icono: n[1], color: '#38bdf8',
+      dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: [], auto: n[2], min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' })), registro: {} };
+    const c = P.consumoS(); delete c.priv.pin; c.priv.privado = false; c.priv.oculto = false;
+    P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = Object.assign({}, P.store.lloret, { diario: false, salta: {} }); P.lloretPoner(d(0));
+    P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.cnVista = ''; P.ui.habVista = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); });
+  const c6Suelta = () => page.evaluate(() => { const P = window.PG; if (window.__copiaC6) { P.store = window.__copiaC6; delete window.__copiaC6; } P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.habEd = null; P.ui.tab = 'hoy'; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+  const c6Ve = (tab, extra) => page.evaluate(([tab, extra]) => { const P = window.PG; P.ui.tab = tab; P.ui.cnAbierto = false; P.ui.cnPin = null; Object.assign(P.ui, extra || {}); P.render(); }, [tab, extra]);
+  // todo lo que se ve o se lee en pantalla: texto, aria-label, title y el aviso de abajo
+  const c6Texto = () => page.evaluate(() => { const m = document.getElementById('main'); return (m.innerText + ' ' + [...m.querySelectorAll('[aria-label],[title]')].map((e) => (e.getAttribute('aria-label') || '') + ' ' + (e.getAttribute('title') || '')).join(' ') + ' ' + ((document.querySelector('#flash') || {}).textContent || '')); });
+  const c6Plan = () => c6Ve('consumo', { cnVista: 'plan' });
+  const c6Priv = () => page.evaluate(() => window.PG.consumoS().priv.privado === true);
+  const c6Pin = async (d) => { for (const c of d) await page.click('[data-a="cn-pin"][data-v="' + c + '"]'); await page.waitForTimeout(300); };
+  const REVELA = /lloretazo|4:20|🌿 ✓|día sin 4/i;
+
+  // 510) C6 · «PRIVADO» SIN PIN TAPA 4:20 EN HOY: con el interruptor de 4:20 → Plan puesto y sin PIN, Hoy (texto, aria-label y títulos), los hábitos y el aviso no nombran «Lloretazo» ni «4:20»; el hábito sale como «Plan privado». Antes de ponerlo sí salían.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await page.waitForTimeout(250);
+    const antes = await c6Texto();
+    await c6Plan(); await page.waitForTimeout(150);
+    const swTxt = await page.evaluate(() => (document.querySelector('#main .cnprivsw') || {}).innerText || '');
+    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
+    const f = await page.evaluate(() => ({ t: (document.querySelector('#flash') || {}).textContent || '', und: !!document.querySelector('#flash [data-a="deshacer"]') }));
+    const st = await page.evaluate(() => { const c = window.PG.consumoS(); return { priv: c.priv.privado === true, pin: !!c.priv.pin, tapado: window.PG.cnTapado(), pedir: window.PG.cnPin() }; });
+    await c6Ve('hoy'); await page.waitForTimeout(250);
+    const hoy = await c6Texto();
+    const tira = await page.evaluate(() => [...document.querySelectorAll('#main .habtira-b')].map((b) => b.textContent + '|' + b.getAttribute('aria-label')).join(' ; '));
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('510 Privado sin PIN · con el interruptor puesto (y sin PIN) Hoy no nombra «Lloretazo» ni «4:20» (texto, aria-label, títulos), el hábito sale «Plan privado» y avisa con «Deshacer»; sin Privado sí salían',
+      REVELA.test(antes) && /Privado/.test(swTxt) && /Privado puesto/.test(f.t) && f.und && st.priv && !st.pin && st.tapado && !st.pedir && !REVELA.test(hoy) && /Plan privado/.test(tira) && !/4:20/.test(tira), JSON.stringify({ antes: antes.slice(0, 200), swTxt, f, st, hoy: hoy.slice(0, 300), tira }));
+  }
+
+  // 511) C6 · «DESHACER» Y EL INTERRUPTOR QUITAN «PRIVADO» SIN PIN: recién puesto, «Deshacer» lo quita; luego se pone otra vez y el mismo interruptor lo quita; Hoy vuelve a nombrar el Lloretazo.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await c6Plan(); await page.waitForTimeout(150);
+    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(200);
+    const puesto = await c6Priv();
+    await page.click('#flash [data-a="deshacer"]'); await page.waitForTimeout(250);
+    const trasDeshacer = await c6Priv(); const flash1 = await page.evaluate(() => (document.querySelector('#flash') || {}).textContent || '');
+    await c6Ve('hoy'); await page.waitForTimeout(200); const hoyVuelve = await c6Texto();
+    await c6Plan(); await page.waitForTimeout(150);
+    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(200);
+    const otraVez = await c6Priv();
+    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
+    const trasInterruptor = await c6Priv(); const marcado = await page.$eval('#main input[data-a="cn-priv"][data-k="privado"]', (i) => i.checked);
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('511 Privado · «Deshacer» (unos segundos) y el interruptor lo quitan sin PIN, y Hoy vuelve a nombrar el Lloretazo',
+      puesto && !trasDeshacer && /Privado quitado/.test(flash1) && /Lloretazo/.test(hoyVuelve) && otraVez && !trasInterruptor && !marcado, JSON.stringify({ puesto, trasDeshacer, flash1, otraVez, trasInterruptor, marcado }));
+  }
+
+  // 512) C6 · LA BANDA «QUITAR PRIVADO»: con Privado y sin PIN, entrar en 4:20 no pide nada, enseña todo y una banda fija «Quitar privado» que lo quita de un toque.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    await c6Ve('consumo', { cnVista: '' }); await page.waitForTimeout(250);
+    const a = await page.evaluate(() => ({ banda: (document.querySelector('#main .cnbanda') || {}).innerText || '', pad: document.querySelectorAll('#main .cnpin, [data-a="cn-pin"]').length, vistas: document.querySelectorAll('#main .cnvis button').length, apunta: document.querySelectorAll('#main [data-a="cn-add"]').length,
+      h: Math.round((document.querySelector('#main .cnbanda [data-a="cn-privado-quita"]') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height) }));
+    await page.click('#main [data-a="cn-privado-quita"]'); await page.waitForTimeout(250);
+    const b = await page.evaluate(() => ({ priv: window.PG.consumoS().priv.privado === true, banda: document.querySelectorAll('#main .cnbanda').length, flash: (document.querySelector('#flash') || {}).textContent || '' }));
+    await c6Ve('hoy'); await page.waitForTimeout(200); const hoy = await c6Texto();
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('512 Privado · sin PIN entrar en 4:20 no pide PIN y trae la banda «Privado está activado» con «Quitar privado» (≥44 px) que lo quita; Hoy vuelve a nombrar el Lloretazo',
+      /Privado está activado/.test(a.banda) && /Quitar privado/.test(a.banda) && a.pad === 0 && a.vistas === 4 && a.apunta >= 1 && a.h >= 44 && !b.priv && b.banda === 0 && /Privado quitado/.test(b.flash) && /Lloretazo/.test(hoy), JSON.stringify({ a, b }));
+  }
+
+  // 513) C6 · CON PIN PUESTO: «Privado» + PIN. Salir y entrar pide el PIN; dentro, «Quitar privado» lo pide otra vez (uno malo no lo quita, el bueno sí) y el PIN sigue puesto. «Deshacer» recién puesto no lo pide.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await c6Plan(); await page.waitForTimeout(150);
+    await page.click('[data-a="cn-pin-nuevo"]'); await page.waitForTimeout(150); await c6Pin('1234'); await c6Pin('1234');
+    await page.evaluate(() => { window.PG.ui.cnVista = 'plan'; window.PG.render(); }); await page.waitForTimeout(150);
+    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
+    const conPin = await page.evaluate(() => ({ priv: window.PG.consumoS().priv.privado === true, pin: window.PG.cnPin() }));
+    await page.click('#flash [data-a="deshacer"]'); await page.waitForTimeout(250);
+    const deshaceSinPin = !(await c6Priv()) && (await page.$$('[data-a="cn-pin"]')).length === 0;
+    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
+    await c6Ve('hoy'); await c6Ve('consumo', { cnVista: '' }); await page.waitForTimeout(250);
+    const pideEntrar = await page.evaluate(() => ({ pad: document.querySelectorAll('[data-a="cn-pin"]').length, t: (document.querySelector('.cnpt') || {}).textContent || '', banda: document.querySelectorAll('#main .cnbanda').length }));
+    await c6Pin('1234'); await page.waitForTimeout(200);
+    const dentro = await page.evaluate(() => ({ banda: document.querySelectorAll('#main .cnbanda').length, pad: document.querySelectorAll('[data-a="cn-pin"]').length }));
+    await page.click('#main [data-a="cn-privado-quita"]'); await page.waitForTimeout(250);
+    const pideQuitar = await page.evaluate(() => ({ t: (document.querySelector('.cnpt') || {}).textContent || '', pad: document.querySelectorAll('[data-a="cn-pin"]').length, priv: window.PG.consumoS().priv.privado === true }));
+    await c6Pin('9999'); const malo = await c6Priv();
+    await c6Pin('1234'); await page.waitForTimeout(250);
+    const fin = await page.evaluate(() => ({ priv: window.PG.consumoS().priv.privado === true, pin: window.PG.cnPin(), banda: document.querySelectorAll('#main .cnbanda').length }));
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('513 Privado con PIN · poner Privado, entrar pide el PIN y «Quitar privado» lo pide otra vez (el malo no lo quita, el bueno sí); el PIN sigue puesto; «Deshacer» recién puesto no lo pide',
+      conPin.priv && conPin.pin && deshaceSinPin && pideEntrar.pad > 0 && /entrar/.test(pideEntrar.t) && pideEntrar.banda === 0 && dentro.banda === 1 && dentro.pad === 0 && /quitar/i.test(pideQuitar.t) && pideQuitar.pad > 0 && pideQuitar.priv && malo && !fin.priv && fin.pin && fin.banda === 0, JSON.stringify({ conPin, deshaceSinPin, pideEntrar, dentro, pideQuitar, malo, fin }));
+  }
+
+  // 514) C6 · EL CAMPO NUEVO Y SU SANEADO: «privado» es un campo añadido (no una migración): una copia vieja sin él carga como no privado, solo un verdadero se conserva, y el PIN se sanea aparte. Y «Privado» no pide un PIN que no existe.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara();
+    const r = await page.evaluate(() => { const P = window.PG, base = () => { const o = JSON.parse(JSON.stringify(P.store)); o.consumo = P.consumoS ? JSON.parse(JSON.stringify(P.consumoS())) : {}; return o; },
+      con = (pv) => { const o = base(); o.consumo.priv = pv; return P.normalize(o).consumo.priv; };
+      return { viejo: con({ oculto: true, fueraCopia: false }), si: con({ privado: true }), texto: con({ privado: 'sí' }), uno: con({ privado: 1 }), basura: con({ privado: true, pin: { s: 'x', h: 'y' } }) }; });
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    await c6Ve('consumo', { cnVista: 'plan' }); await page.waitForTimeout(250);
+    const s = await page.evaluate(() => ({ tapado: window.PG.cnTapado(), pin: window.PG.cnPin(), pad: document.querySelectorAll('[data-a="cn-pin"]').length, nuevo: document.querySelectorAll('[data-a="cn-pin-nuevo"]').length, txt: (document.getElementById('main').innerText || '') }));
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('514 Privado · campo añadido con su saneado en la carga (solo «true» vale; el PIN malo se tira) y sin PIN no se pide ninguno; el texto es honesto: «tapa … no cifra»',
+      r.viejo.privado === false && r.viejo.oculto === true && r.si.privado === true && r.texto.privado === false && r.uno.privado === false && r.basura.privado === true && !r.basura.pin
+      && s.tapado && !s.pin && s.pad === 0 && s.nuevo === 1 && /Tapa 4:20 en Hoy, en Más y en los avisos\. No cifra tus datos/.test(s.txt), JSON.stringify({ r, s: { ...s, txt: s.txt.slice(0, 200) } }));
+  }
+
+  // 515) C6 · HÁBITOS Y AVISOS TAPADOS: con Privado, la pantalla de Hábitos, su hoja, «Experimentos» y «Tu semana» no nombran el 4:20 ni el Lloretazo (el hábito sale «Plan privado»); sin Privado sí.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara();
+    await c6Ve('habitos', { habVista: '' }); await page.waitForTimeout(200); const antes = await c6Texto();
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    await c6Ve('habitos', { habVista: '' }); await page.waitForTimeout(200); const lista = await c6Texto();
+    await page.click('#main [data-a="hab-ed"][data-id="hbc61"]'); await page.waitForTimeout(250);
+    const hoja = await page.evaluate(() => (document.querySelector('.hhd') || {}).innerText || '');
+    const hojaTodo = await page.evaluate(() => [...document.querySelectorAll('.hhab .hchs button')].map((b) => b.textContent).join(' '));
+    await page.evaluate(() => { window.PG.ui.habEd = null; }); await c6Ve('habitos', { habVista: 'exp' }); await page.waitForTimeout(200); const exp = await c6Texto();
+    await c6Ve('habitos', { habVista: 'rev' }); await page.waitForTimeout(200); const rev = await c6Texto();
+    const intenciones = await page.evaluate(() => { const P = window.PG; return JSON.stringify(P.asistTarjetaHab ? [] : []); });
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('515 Privado · Hábitos (lista, hoja, Experimentos y Tu semana) no nombran el 4:20 ni el Lloretazo y el hábito sale «Plan privado»; sin Privado sí lo nombraban',
+      /4:20/.test(antes) && !REVELA.test(lista) && /Plan privado/.test(lista) && /Plan privado/.test(hoja) && !REVELA.test(hoja + hojaTodo) && !REVELA.test(exp) && !/sesión antes|ganas/i.test(exp) && !REVELA.test(rev) && !/con sesión/i.test(rev), JSON.stringify({ lista: lista.slice(0, 250), hoja, hojaTodo, exp: exp.slice(0, 250), rev: rev.slice(0, 250), intenciones }));
+  }
+
+  // 516) C6 · «ESPERAN TURNO»: con 3 hábitos en marcha las plantillas siguen a la vista; tocar una la manda a «Esperan turno», lo dice y no pasa de 3 en marcha.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara();
+    await c6Ve('habitos', { habVista: '' }); await page.waitForTimeout(250);
+    const a = await page.evaluate(() => ({ plant: [...document.querySelectorAll('#main .habplant [data-a="hab-preset"]')].map((b) => b.textContent.trim()), aviso: (document.querySelector('#main .habplant p') || {}).textContent || '', espera: document.body.innerText.includes('ESPERAN TURNO') }));
+    await page.click('#main .habplant [data-a="hab-preset"]'); await page.waitForTimeout(250);
+    const b = await page.evaluate(() => { const P = window.PG, it = P.store.habitos.items; return { n: it.length, marcha: P.habEnMarcha().length, fase: it[it.length - 1].fase, nombre: it[it.length - 1].nombre, flash: (document.querySelector('#flash') || {}).textContent || '',
+      cap: document.body.innerText.includes('ESPERAN TURNO'), enEspera: [...document.querySelectorAll('#main .hlin b')].map((x) => x.textContent), btn: document.querySelectorAll('#main .acap + .alst .hlin [data-a="hab-fase"]').length }; });
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('516 Hábitos · con 3 en marcha las plantillas se ven y la que tocas va a «Esperan turno» («Ya tienes 3 en marcha; … espera su turno»), sin pasar de 3 en marcha',
+      a.plant.length >= 2 && /3 en marcha/.test(a.aviso) && !a.espera && b.n === 4 && b.marcha === 3 && b.fase === 'espera' && /Ya tienes 3 en marcha; «/.test(b.flash) && /espera su turno/.test(b.flash) && b.cap && b.enEspera.indexOf(b.nombre) >= 0 && b.btn === 0, JSON.stringify({ a, b }));
+  }
+
+  // 517) C6 · PLANTILLAS SIEMPRE A LA VISTA: con un hábito (y hueco) las plantillas siguen en la lista (sin repetir la que ya tienes) y tocar una la pone en marcha el día 1.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await page.evaluate(() => { const P = window.PG; P.store.habitos.items = P.store.habitos.items.slice(0, 1); P.save(); });
+    await c6Ve('habitos', { habVista: '' }); await page.waitForTimeout(250);
+    const a = await page.evaluate(() => ({ plant: [...document.querySelectorAll('#main .habplant [data-a="hab-preset"]')].map((b) => b.textContent.trim()), aviso3: /3 en marcha/.test((document.querySelector('#main .habplant') || {}).innerText || '') }));
+    await page.click('#main .habplant [data-a="hab-preset"]'); await page.waitForTimeout(250);
+    const b = await page.evaluate(() => { const P = window.PG, it = P.store.habitos.items, u = it[it.length - 1]; return { n: it.length, fase: u.fase, inicio: u.inicio === P.iso(new Date()), flash: (document.querySelector('#flash') || {}).textContent || '', plant: document.querySelectorAll('#main .habplant [data-a="hab-preset"]').length }; });
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('517 Hábitos · con un hábito las plantillas siguen a la vista (sin la que ya tienes) y tocar una la pone en marcha hoy',
+      a.plant.length === 4 && !a.plant.some((t) => /Agua/.test(t)) && !a.aviso3 && b.n === 2 && b.fase === 'marcha' && b.inicio && /añadido/.test(b.flash) && b.plant === 3, JSON.stringify({ a, b }));
+  }
+
+  // 518) C6 · EVENTOS, MES Y COMER TAPADOS: con Privado el evento del Lloretazo sale «Plan privado» en la lista de Eventos, en el Mes y en el aviso de «poner el 🌿»; el guardado no cambia (al quitar Privado vuelve el nombre).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    await c6Ve('eventos', { evVista: '' }); await page.waitForTimeout(250); const ev = await c6Texto();
+    await c6Ve('month'); await page.waitForTimeout(250); const mes = await c6Texto();
+    const guardado = await page.evaluate(() => window.PG.eventosS().filter((e) => e.lloret).map((e) => e.titulo));
+    const flash = await page.evaluate(() => { const P = window.PG; const t = P.lloretPoner(P.iso(new Date())); P.lloretPoner(P.iso(new Date())); return t; });
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = false; window.PG.save(); });
+    await c6Ve('eventos', { evVista: '' }); await page.waitForTimeout(200); const evSin = await c6Texto();
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('518 Privado · Eventos y Mes nombran el Lloretazo como «Plan privado» y el aviso de quitarlo no dice «Lloretazo»; lo guardado no cambia y sin Privado vuelve a salir',
+      !REVELA.test(ev) && /Plan privado/.test(ev) && !/lloretazo/i.test(mes) && guardado.length === 1 && /Lloretazo/.test(guardado[0]) && !/lloretazo/i.test(flash) && /Lloretazo/.test(evSin), JSON.stringify({ ev: ev.slice(0, 200), mes: /lloretazo/i.test(mes), guardado, flash, evSin: evSin.slice(0, 120) }));
+  }
+
+  // 519) C6 · LA CUENTA ATRÁS SE QUEDA Y EL CAJÓN DICE «PRIVADO»: con Privado «Sal al Lloret» sigue en la cadena de la noche (es el sitio), el cajón «Más» dice «Privado» sin 4:20 y el conductor no fuma.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    const r = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), C = P.nocheCadena(k, 12 * 60); return { ir: C && C.hitos ? C.hitos.map((h) => h.cartel).join('|') : JSON.stringify(Object.keys(C || {})), fuma: P.conductorEscenas(k).fumar }; });
+    await c6Ve('hoy'); await page.waitForTimeout(150); await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(250);
+    const cajon = await page.evaluate(() => (document.querySelector('#drawer') || {}).innerText || '');
+    await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(150);
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('519 Privado · la cuenta atrás «Sal al Lloret» se queda (es el sitio), el cajón «Más» dice «Privado» sin 4:20 y el conductor no fuma',
+      /Sal al Lloret/.test(r.ir) && r.fuma === false && /Privado/.test(cajon) && !/4:20|Lloretazo/.test(cajon), JSON.stringify({ r, cajon: cajon.slice(0, 200) }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
