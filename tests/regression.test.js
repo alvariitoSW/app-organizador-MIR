@@ -8318,7 +8318,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const hoyToca = msgs.some((m) => m.tipo === 'aviso' && /Hoy toca/.test(m.titulo));
       // modo sencillo: sin las cifras de la semana ni «cuántas te quedaban»
       g.modo = 'sencillo'; P.ui.gymPanel = ''; P.render();
-      const kpiS = !!document.querySelector('#main .gkpi') || !document.querySelector('#main .glam');   // las cifras de la semana ya no existen; y la lámina sigue
+      const kpiS = !!document.querySelector('#main .gkpi');   // las cifras de la semana ya no existen (C2: y la portada con rutinas lleva la cinta, no el dibujo grande)
       P.empezarRutina('r212'); const rirS = !!document.querySelector('#main .grir');
       g.modo = 'completo'; P.render(); const rirC = !!document.querySelector('#main .grir');
       // libras: se ve y se escribe en libras, se guarda en kilos
@@ -12844,9 +12844,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.save(); P.ui.tab = 'hoy'; P.render(); });
     await page.click('#tabs [data-a="tab"][data-t="gym"]'); await page.waitForTimeout(300);
     const r = {}, clic = async (sel) => { const el = await page.$(sel); if (el) { await el.click(); await page.waitForTimeout(250); } return !!el; };
-    r.a = await page.evaluate(() => { const c = document.querySelector('#main .glam [data-a="gym-panel"][data-p="regreso"]'), l = document.querySelector('#main .glisto');
+    r.a = await page.evaluate(() => { const c = document.querySelector('#main [data-a="gym-panel"][data-p="regreso"]'), l = document.querySelector('#main .glisto');
       return { hay: !!c, sem: c ? c.getAttribute('aria-label') : '', on: c ? c.textContent : '', listo: l ? l.textContent : '', vieja: !!document.querySelector('#main .gvuelta') }; });
-    await clic('#main .glam [data-a="gym-panel"][data-p="regreso"]');
+    await clic('#main [data-a="gym-panel"][data-p="regreso"]');
     r.b = { filas: await page.evaluate(() => document.querySelectorAll('#main .gvtab tr').length - 1) };
     await clic('#main [data-a="regreso-ritmo"][data-v="suave"]');
     Object.assign(r.b, await page.evaluate(() => ({ filasSuave: document.querySelectorAll('#main .gvtab tr').length - 1, pct: (document.querySelector('#main .gvtab tr.on') || {}).textContent || '' })));
@@ -12860,7 +12860,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { sesion: true, ex, kg, ref: ref.kg, pct: v.pct, esperado: P.redondeaEj(ex, ref.kg * v.pct / 100), filas: filas.join(',') }; });
     await page.evaluate(() => { const P = window.PG; if (P.ui.gymSesionActiva) P.descartarSesion(); P.ui.tab = 'gym'; P.ui.gymPanel = 'regreso'; P.render(); });
     await clic('#main [data-a="regreso-quitar"]');
-    r.d = await page.evaluate(() => ({ tarjeta: !!document.querySelector('#main .glam [data-p="regreso"]'), pr: window.PG.progresionDe('Press banca (barra)', 4, 8).cl }));
+    r.d = await page.evaluate(() => ({ tarjeta: !!document.querySelector('#main [data-p="regreso"]'), pr: window.PG.progresionDe('Press banca (barra)', 4, 8).cl }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia323; delete window.__copia323; P.save(); P.ui.gymPanel = ''; P.render(); });
     await page.setViewportSize(vp323);
     check('tras 8 semanas sin entrenar, la lámina de Entreno dice la semana 1 de 8 al 35 % (sin tarjeta aparte) y el «listo» no dice 100 %',
@@ -13897,7 +13897,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const tabla = () => page.evaluate(() => ({ filas: document.querySelectorAll('#main .gvtab tr').length - 1, pcts: [...document.querySelectorAll('#main .gvtab tr td:nth-child(4)')].map((t) => t.textContent.replace(/\D/g, '')).join(','),
       ahora: ((document.querySelector('#main .gvtab tr.on') || {}).textContent || '') }));
     const r = {};
-    await clic('#main .glam [data-a="gym-panel"][data-p="regreso"]'); r.a = await tabla();
+    await clic('#main [data-a="gym-panel"][data-p="regreso"]'); r.a = await tabla();
     r.a.guardado = await page.evaluate(() => { const v = window.PG.gymS().regreso; return { ini: v.ini, paso: v.paso }; });
     await clic('#main [data-a="regreso-ritmo"][data-v="rapido"]'); r.b = await tabla();
     r.b.ini = await page.evaluate(() => window.PG.gymS().regreso.ini);
@@ -13987,7 +13987,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       delete g.lamina; delete g.hora; g.rutinas = [{ id: 'r353', nombre: 'Torso 353', dias: [], ejercicios: [{ ex: 'Press banca (barra)', series: 3, reps: 8, rmax: 10 }] }];
       const hoy = P.iso(new Date()), sh = (c) => P.store.shifts.find((s) => s.code === c).id;
       window.__ov353 = (P.store.rotation.daySet || {})[hoy];
-      P.setDayOverride(hoy, sh('G'), ''); P.gymForzar()[hoy] = false; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.tab = 'gym'; P.save(); P.render(); });
+      P.setDayOverride(hoy, sh('G'), ''); P.gymForzar()[hoy] = false; P.ui.gymPanel = ''; P.ui.gymDate = ''; P.ui.gymLam = true; P.ui.tab = 'gym'; P.save(); P.render(); });
     await page.waitForTimeout(250);
     const txt = () => page.evaluate(() => { const c = document.querySelector('.glam'); return { t: c ? c.querySelector('svg').textContent : '', ses: c ? c.querySelectorAll('[data-a="ses-empezar"]').length : -1 }; });
     const r = {};
@@ -13998,7 +13998,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.c = await page.evaluate(() => [...document.querySelectorAll('.glam [role="button"]')].map((e) => { const q = e.getBoundingClientRect(); return Math.round(q.width) + 'x' + Math.round(q.height); }));
     await page.click('.glam [data-a="gym-panel"][data-p="peso"]'); await page.waitForTimeout(250);
     r.d = await page.evaluate(() => window.PG.ui.gymPanel);
-    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.store = window.__copia353; delete window.__copia353; delete window.__ov353; P.save(); P.ui.gymPanel = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.store = window.__copia353; delete window.__copia353; delete window.__ov353; P.ui.gymLam = false; P.save(); P.ui.gymPanel = ''; P.render(); });
     await page.setViewportSize(vp353);
     check('con hoy de guardia la lámina dice «Hoy no: guardia» y no ofrece empezar sesión', /Hoy no: guardia/.test(r.a.t) && r.a.ses === 0, JSON.stringify(r.a));
     check('quitada la guardia y con entreno hoy, la lámina dice lugar y hora de la franja y su zona lleva a la sesión', r.b.t.indexOf(r.b.esp) >= 0 && !/Hoy no/.test(r.b.t) && r.b.ses === 1, JSON.stringify(r.b));
@@ -14071,19 +14071,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         g.sesiones.push({ id: 's356' + k, fecha: k, rutinaId: 'r356', rpe: 7 }); }
       P.ui.tab = 'gym'; P.save(); P.render(); });
     await page.waitForTimeout(300);
-    const portada = () => page.evaluate(() => ({ lamina: !!document.querySelector('#main .glam'), semana: !!document.querySelector('#main .gsem, #main .gsc, #main .gkpi'),
+    const portada = () => page.evaluate(() => ({ lamina: !!document.querySelector('#main .gcinta'), semana: !!document.querySelector('#main .gsem, #main .gsc, #main .gkpi'),
       vuelta: !!document.querySelector('#main .gvuelta'), texto: /Esta semana|Tu vuelta al gimnasio|TU VUELTA AL GIMNASIO/.test(document.querySelector('#main').textContent),
       rutinas: document.querySelectorAll('#main .grt').length, hero: !!document.querySelector('#main .ghero2') }));
     const r = {}; r.a = await portada();
-    const t = await page.$('#main .glam [data-a="gym-panel"][data-p="regreso"]'); if (t) { await t.click(); await page.waitForTimeout(250); }
+    const t = await page.$('#main [data-a="gym-panel"][data-p="regreso"]'); if (t) { await t.click(); await page.waitForTimeout(250); }
     r.b = await page.evaluate(() => ({ panel: window.PG.ui.gymPanel, filas: document.querySelectorAll('#main .gvtab tr').length - 1 }));
     const v = await page.$('#main .volver[data-a="gym-panel"]'); if (v) { await v.click(); await page.waitForTimeout(250); }
     r.c = await portada();
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia356; delete window.__copia356; P.save(); P.ui.gymPanel = ''; P.render(); });
     await page.setViewportSize(vp356);
-    check('la portada de Entreno ya no trae «Esta semana» ni «Tu vuelta al gimnasio»: queda la lámina, la tarjeta grande y las rutinas',
+    check('la portada de Entreno ya no trae «Esta semana» ni «Tu vuelta al gimnasio»: queda la cinta, la tarjeta grande y las rutinas',
       r.a.lamina && !r.a.semana && !r.a.vuelta && !r.a.texto && r.a.hero && r.a.rutinas === 1, JSON.stringify(r.a));
-    check('tocar la vuelta de la lámina abre el plan entero (8 semanas) y al volver la portada sigue sin la tarjeta vieja',
+    check('tocar la vuelta de la cinta abre el plan entero (8 semanas) y al volver la portada sigue sin la tarjeta vieja',
       !!t && r.b.panel === 'regreso' && r.b.filas === 8 && !!v && r.c.lamina && !r.c.vuelta && !r.c.texto, JSON.stringify([r.b, r.c]));
   }
   // 357) EL MÍNIMO SEMANAL SIGUE A UN TOQUE Y SE VE EL BLOQUE, EN CADENA (a 412×915): (a) la portada trae la fila «N hechos · mín. M ·
@@ -14105,7 +14105,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia357; delete window.__copia357; P.save(); P.ui.gymPanel = ''; P.render(); });
     await page.setViewportSize(vp357);
     check('la portada trae la fila de la semana con el mínimo y el bloque (o la descarga), sin la tarjeta «Esta semana»',
-      r.a.hay && !r.a.tarjeta && /hechos/.test(r.a.txt) && /mín\. 2/.test(r.a.txt) && /bloque · sem \d+\/\d+|descarga/.test(r.a.txt), JSON.stringify(r.a));
+      r.a.hay && !r.a.tarjeta && /Semana \d+ de \d+ · \d+ entrenos?|descarga/.test(r.a.txt) && /mín\. 2/.test(r.a.txt), JSON.stringify(r.a));
     check('esa fila abre «Tu semana de entreno», el «+» sube el mínimo y la fila lo refleja al volver',
       r.b.panel === 'plan' && r.b.mas && r.b.min === 2 && r.c.min === 3 && /mín\. 3/.test(r.c.txt), JSON.stringify([r.b, r.c]));
   }
@@ -14125,7 +14125,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.b = await page.evaluate(() => ({ hero: (document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent, seguir: !!document.querySelector('#main .ghero2 [data-p="vivo"]'),
       viejas: !!document.querySelector('#main .gsem, #main .gvuelta, #main .gkpi'), fila: !!document.querySelector('#main .gsemcfg[data-p="plan"]') }));
     const antes = await page.evaluate(() => window.PG.ui.gymDate || '');
-    const d = await page.$('#main .glam .gdia:not([aria-current])'); if (d) { await d.click(); await page.waitForTimeout(250); }
+    const d = await page.$('#main .gcinta .gcd:not([aria-current])'); if (d) { await d.click(); await page.waitForTimeout(250); }
     r.c = await page.evaluate((a) => ({ cambia: (window.PG.ui.gymDate || '') !== a && !!window.PG.ui.gymDate, sesion: !!window.PG.ui.gymSesionActiva, hero: (document.querySelector('#main .ghero2 .k') || { textContent: '' }).textContent }), antes);
     const f = await page.$('#main .gsemcfg[data-p="plan"]'); if (f) { await f.click(); await page.waitForTimeout(250); }
     r.d = await page.evaluate(() => window.PG.ui.gymPanel);
@@ -16625,6 +16625,136 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('449g Mes · «otro mes» cabe entero (≥44 px de alto, sin cortar), elegir enero del año que viene lleva a enero y «hoy» vuelve al mes de hoy',
       !!R.boton && R.boton.txt === 'otro mes' && R.boton.cabe && R.boton.alto >= 44 && R.boton.dentro && R.boton.campoTapa &&
       new RegExp('enero de ' + y).test(R.tras) && R.vuelve.indexOf(R.mesHoy) >= 0, JSON.stringify(R));
+  }
+
+  // 460) C2 · APUNTAR EN MENOS TOQUES, DINERO (a 412×915): la tarjeta Tu mes trae «＋ Gasto» (≥56 px, dentro de 412) que abre la hoja de siempre con
+  // el día de hoy y, desde la segunda vez, la última categoría ya elegida («la última vez fue …»); al guardar, el gasto está y el «Acabas» baja.
+  // Cae con el botón de Tu mes quitado, o con la hoja sin recordar la categoría.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { const P = window.PG; window.__copia460 = JSON.parse(JSON.stringify(P.store));
+      const a = P.store.ahorro || (P.store.ahorro = {}); a.real = []; delete P.dineroS().ultCat;
+      const hoy = new Date();
+      [[2, 640, 280, 160], [1, 640, 290, 410], [0, 640, 312, 186]].forEach((x) => {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - x[0], x[0] ? 15 : 1, 12), mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        a.real.push({ fuente: 'Fintonic', fecha: P.iso(d), hora: '', mes: mk, banco: 3000, ingresos: 2700, gastos: x[1] + x[2] + x[3], cats: { 'Alquiler y casa': x[1], 'Supermercado': x[2], 'Restaurantes': x[3] } }); });
+      P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.dinMes = ''; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const num = (t) => parseInt(String(t).replace(/[^\d−-]/g, '').replace('−', '-'), 10);
+    const R = {};
+    R.btn = await page.evaluate(() => { const b = document.querySelector('#main .tm-hero .tm-mas'); if (!b) return null; const r = b.getBoundingClientRect(); return { txt: b.textContent.trim(), alto: Math.round(r.height), dentro: r.left >= 0 && r.right <= 412, arriba: r.top < 400 }; });
+    R.cuenta = await page.evaluate(() => (document.querySelector('#main .tm-cadena') || { innerText: '' }).innerText.replace(/\s+/g, ' ') + '|' + ((document.querySelector('#main .tm-libre') || { innerText: '' }).innerText));
+    R.acabas0 = num(await page.$eval('#main .tm-fi.fin b', (e) => e.textContent));
+    await page.click('#main .tm-hero .tm-mas'); await page.waitForTimeout(300);
+    R.hoja1 = await page.evaluate(() => ({ fecha: document.getElementById('mPgFecha').value, cat: document.getElementById('mPgCat').value, etq: document.querySelector('#modal').innerText }));
+    R.hoy = await page.evaluate(() => window.PG.iso(new Date()));
+    await page.fill('#mPgImporte', '900'); await page.selectOption('#mPgCat', 'compra');
+    await page.click('[data-a="m-save"]'); await page.waitForTimeout(350);
+    R.guardado = await page.evaluate(() => { const p = window.PG.dineroS().pagos; const x = p[p.length - 1]; return { n: p.length, importe: x && x.importe, cat: x && x.cat, fecha: x && x.fecha, ult: window.PG.dineroS().ultCat }; });
+    R.acabas1 = num(await page.$eval('#main .tm-fi.fin b', (e) => e.textContent));
+    await page.click('#main .tm-hero .tm-mas'); await page.waitForTimeout(300);
+    R.hoja2 = await page.evaluate(() => ({ cat: document.getElementById('mPgCat').value, etq: document.querySelector('#modal').innerText.replace(/\s+/g, ' ') }));
+    await page.click('[data-a="m-cancel"]'); await page.waitForTimeout(200);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia460; P.ui.dinTab = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('460 Dinero · «＋ Gasto» (≥56 px, dentro de 412) abre la hoja con hoy; tras guardar 900 € en «compra» el Acabas baja, y la segunda vez la hoja trae «compra» y «la última vez fue»',
+      !!R.btn && /＋ Gasto/.test(R.btn.txt) && R.btn.alto >= 56 && R.btn.dentro && R.btn.arriba && /Empiezas/.test(R.cuenta) && /Fijos/.test(R.cuenta) && /Acabas/.test(R.cuenta) && /€\/día/.test(R.cuenta) &&
+      R.hoja1.fecha === R.hoy && !/la última vez/.test(R.hoja1.etq) && R.guardado.importe === 900 && R.guardado.cat === 'compra' && R.guardado.ult === 'compra' && R.guardado.fecha === R.hoy &&
+      R.acabas1 < R.acabas0 && R.hoja2.cat === 'compra' && /la última vez fue «compra»/i.test(R.hoja2.etq), JSON.stringify(R));
+  }
+
+  // 461) C2 · «＋ SERIE» EN ENTRENO LIBRE (a 412×915): con 6 ejercicios en el registro, «＋ serie» enseña los 5 últimos con «la última vez: 60 kg × 8 · hace 6 días»;
+  // elegir uno deja kg y reps puestos, +2,5 sube el peso y «Guardar serie» apunta esa serie. Cae con el «＋ serie» quitado o con el guardado distinto del de «apuntar serie».
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia461 = JSON.parse(JSON.stringify(P.store));
+      g.rutinas.length = 0; g.registro.length = 0;
+      g.rutinas.push({ id: 'rt-461', nombre: 'Torso 461', notas: '', dias: ['__ninguno__'], ejercicios: [{ ex: 'Press banca', series: 3, reps: 8 }] });
+      const dm = (n) => P.iso(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - n));
+      [['Sentadilla', 80, 6, 9], ['Press banca', 60, 8, 6], ['Remo con barra', 50, 10, 6], ['Peso muerto rumano', 70, 8, 8], ['Press militar', 35, 8, 8], ['Curl de bíceps', 20, 12, 7]].forEach((x, i) => {
+        g.registro.push({ id: 'gs461' + i, fecha: dm(x[3]), ex: x[0], kg: x[1], reps: x[2], rpe: null, nota: '', ts: i, sesionId: null }); });
+      P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.ui.gymSesionActiva = null; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const R = {};
+    R.antes = await page.evaluate(() => window.PG.gymS().registro.length);
+    R.btn = await page.evaluate(() => { const b = document.querySelector('#main [data-a="gym-serie"]'); return b ? { txt: b.textContent.trim(), alto: Math.round(b.getBoundingClientRect().height) } : null; });
+    await page.click('#main [data-a="gym-serie"]'); await page.waitForTimeout(300);
+    R.lista = await page.$$eval('#modal [data-a="serie-elige"]', (b) => b.map((x) => x.innerText.replace(/\s+/g, ' ')));
+    await page.click('#modal [data-a="serie-elige"][data-n="Press banca"]'); await page.waitForTimeout(150);
+    R.ini = await page.evaluate(() => ({ kg: document.getElementById('serieKg').textContent, reps: document.getElementById('serieReps').textContent }));
+    await page.click('#modal [data-a="serie-paso"][data-k="kg"][data-d="2.5"]');
+    await page.click('#modal [data-a="serie-paso"][data-k="reps"][data-d="1"]');
+    R.mod = await page.evaluate(() => ({ kg: document.getElementById('serieKg').textContent, reps: document.getElementById('serieReps').textContent, guardar: (document.querySelector('#modal [data-a="serie-guardar"]') || { textContent: '' }).textContent }));
+    await page.click('#modal [data-a="serie-guardar"]'); await page.waitForTimeout(300);
+    R.fin = await page.evaluate(() => { const r = window.PG.gymS().registro, x = r[r.length - 1]; return { n: r.length, ex: x.ex, kg: x.kg, reps: x.reps, fecha: x.fecha, hoy: window.PG.iso(new Date()), cerrado: !document.getElementById('overlay').classList.contains('on') }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia461; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('461 Entreno · «＋ serie» enseña los 5 últimos ejercicios con la última vez; elegir Press banca, +2,5 kg y +1 rep y «Guardar serie» apunta 62,5 kg × 9',
+      !!R.btn && /＋ serie/.test(R.btn.txt) && R.btn.alto >= 44 && R.lista.length === 5 && !R.lista.some((t) => /Sentadilla/.test(t)) && R.lista.some((t) => /Press banca.*la última vez: 60 kg × 8 · hace 6 días/.test(t)) &&
+      R.ini.kg === '60 kg' && R.ini.reps === '8 reps' && R.mod.kg === '62,5 kg' && R.mod.reps === '9 reps' && R.mod.guardar === 'Guardar serie' &&
+      R.fin.n === R.antes + 1 && R.fin.ex === 'Press banca' && R.fin.kg === 62.5 && R.fin.reps === 9 && R.fin.fecha === R.fin.hoy && R.fin.cerrado, JSON.stringify(R));
+  }
+
+  // 462) C2 · PORTADA DE ENTRENO CON CINTA (a 412×915): con rutina, el dibujo grande se va y queda una cinta L–D de 56 px con «Empezar» a la vista (sin desplazar);
+  // con sesión empezada sale «▶ Seguir»; tras guardia «Vienes de guardia» va por encima de «Empezar 25 min» y no se empuja la rutina; sin rutina vuelve el dibujo grande con
+  // el plan recomendado («Usar este plan»); «Explícamelo» trae el dibujo grande a petición. Cae con la lámina otra vez arriba de todo.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    const monta = (rutinas, turno) => page.evaluate(([rutinas, turno]) => { const P = window.PG, g = P.gymS(), hoy = P.iso(new Date());
+      if (!window.__copia462) window.__copia462 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, turno, ''); g.sesiones = []; g.cardio = []; g.registro = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymDescansa = ''; P.ui.gymDate = null; P.ui.gymLam = false;
+      g.rutinas = rutinas ? [{ id: 'r462', nombre: 'Torso 462', dias: ['sh-t'], ejercicios: [{ ex: 'Press banca', series: 3, reps: 8 }] }] : [];
+      P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); }, [rutinas, turno]);
+    const pos = (sel) => page.evaluate((q) => { const e = document.querySelector(q); if (!e) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), h: Math.round(r.height), w: Math.round(r.width) }; }, sel);
+    const R = {};
+    await monta(true, 'sh-t'); await page.waitForTimeout(250);
+    R.emp = await pos('#main .ghero2 [data-a="ses-empezar"]'); R.cinta = await pos('#main .gcinta');
+    R.dias = await page.$$eval('#main .gcinta .gcd', (b) => b.map((x) => Math.round(x.getBoundingClientRect().height)));
+    R.lam = await page.evaluate(() => !!document.querySelector('#main .glam'));
+    R.rot = await page.evaluate(() => (document.querySelector('#main .gsemcfg') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim());
+    await page.click('#main .ghero2 [data-a="ses-empezar"]'); await page.waitForTimeout(300);
+    await page.evaluate(() => { window.PG.ui.gymPanel = ''; window.PG.render(); }); await page.waitForTimeout(200);
+    R.seg = await page.evaluate(() => { const b = document.querySelector('#main .ghero2 [data-a="gym-panel"][data-p="vivo"]'); return { txt: b ? b.textContent.trim() : '', empezar: !!document.querySelector('#main .ghero2 [data-a="ses-empezar"]') }; });
+    R.segPos = await pos('#main .ghero2 [data-a="gym-panel"][data-p="vivo"]');
+    await monta(true, 'sh-s'); await page.waitForTimeout(250);
+    R.gua = await page.evaluate(() => { const g = document.querySelector('#main .gsal'); if (!g) return null; const f = g.querySelector('.gfrase'), b = g.querySelector('[data-a="ses-empezar"]');
+      return { frase: f ? f.textContent : '', ft: f ? Math.round(f.getBoundingClientRect().top) : 0, bt: b ? Math.round(b.getBoundingClientRect().top) : 0, btxt: b ? b.textContent : '', n: document.querySelectorAll('#main [data-a="ses-empezar"]').length }; });
+    await monta(false, 'sh-t'); await page.waitForTimeout(250);
+    R.vac = { lam: await pos('#main .glam'), cinta: await pos('#main .gcinta'), plan: await pos('#main [data-a="plan-crear"]'), txt: await page.evaluate(() => (document.querySelector('#main .gplanrec') || { textContent: '' }).textContent), expl: await page.evaluate(() => !!document.querySelector('#main [data-a="lam-tour"]')) };
+    await monta(true, 'sh-t'); await page.waitForTimeout(200);
+    await page.click('#main [data-a="lam-abrir"]'); await page.waitForTimeout(300);
+    R.expl = { lam: !!(await pos('#main .glam')), cinta: !!(await pos('#main .gcinta')) };
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia462; window.__copia462 = null; P.ui.gymLam = false; P.ui.gymSesionActiva = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('462 Entreno · con rutina: cinta de 56 px y «Empezar» a la vista sin dibujo grande; con sesión «▶ Seguir»; tras guardia «Vienes de guardia» arriba de «Empezar 25 min»; sin rutina dibujo + «Usar este plan»; «Explícamelo» trae el dibujo',
+      !!R.emp && R.emp.bottom <= 915 && R.emp.top > R.cinta.bottom && R.cinta.w <= 412 && R.dias.length === 7 && R.dias.every((h) => h >= 56) && R.cinta.h <= 60 && !R.lam &&
+      R.seg.txt === '▶ Seguir' && !R.seg.empezar && R.segPos.bottom <= 915 &&
+      !!R.gua && /Vienes de guardia/.test(R.gua.frase) && R.gua.ft < R.gua.bt && /Empezar 25 min/.test(R.gua.btxt) && R.gua.n === 1 &&
+      !!R.vac.lam && !R.vac.cinta && !!R.vac.plan && R.vac.plan.bottom <= 915 && /Plan recomendado/.test(R.vac.txt) && R.vac.expl && R.expl.lam && !R.expl.cinta, JSON.stringify(R));
+  }
+
+  // 463) C2 · RÓTULO DE LA SEMANA (a 412×915): «Semana 1 de 5 · 0 entrenos» y, tras apuntar una serie, «1 entreno» (singular); tocar el rótulo abre «Tu semana de entreno»
+  // (donde sigue el mínimo, antes el ⚙). Cae con el rótulo de antes («N hechos · bloque · sem 1/5 ⚙»).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(), hoy = P.iso(new Date()); window.__copia463 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.registro = []; g.bloqueDesde = P.iso(P.mondayOf(new Date())); P.ui.gymSesionActiva = null; P.ui.gymLam = false;
+      g.rutinas = [{ id: 'r463', nombre: 'Torso 463', dias: ['sh-t'], ejercicios: [{ ex: 'Press banca', series: 3, reps: 8 }] }]; P.ui.tab = 'gym'; P.ui.gymPanel = ''; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const rot = () => page.evaluate(() => { const b = document.querySelector('#main .gsemcfg'); return b ? { t: b.querySelector('b').textContent.replace(/\s+/g, ' ').trim(), alto: Math.round(b.getBoundingClientRect().height), ancho: document.documentElement.scrollWidth } : null; });
+    const R = {}; R.a = await rot();
+    await page.evaluate(() => { const P = window.PG; P.addSet(P.iso(new Date()), { ex: 'Press banca', kg: 50, reps: 8 }); P.render(); }); await page.waitForTimeout(200);
+    R.b = await rot();
+    await page.click('#main .gsemcfg'); await page.waitForTimeout(300);
+    R.plan = await page.evaluate(() => window.PG.ui.gymPanel);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia463; P.ui.gymPanel = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('463 Entreno · el rótulo dice «Semana 1 de 5 · 0 entrenos», con una serie «1 entreno», cabe en 412 (≥44 px) y sigue abriendo «Tu semana de entreno»',
+      !!R.a && R.a.t === 'Semana 1 de 5 · 0 entrenos' && R.b.t === 'Semana 1 de 5 · 1 entreno' && R.a.alto >= 44 && R.a.ancho <= 412 && R.plan === 'plan', JSON.stringify(R));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
