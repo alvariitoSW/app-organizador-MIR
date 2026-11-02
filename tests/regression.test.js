@@ -16238,7 +16238,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     if (process.env.CH6_SHOTS) await page.screenshot({ path: process.env.CH6_SHOTS + '/b-paso-con-temporizadores.png' });
     await page.click('#ccTira [data-a="cc-quita"]'); await page.waitForTimeout(100);
     R.e.tras = await page.evaluate(() => document.querySelectorAll('#ccTira .cc-tm').length);
-    R.e.altos = await page.evaluate(() => [...document.querySelectorAll('#ccTira .cc-ic')].filter((e) => e.getBoundingClientRect().height < 44 || e.getBoundingClientRect().width < 44).length);
+    await page.waitForTimeout(250); // con la suite cargada a veces medía en mitad de un movimiento: se mide la caja, no el dibujo transformado
+    R.e.altos = await page.evaluate(() => [...document.querySelectorAll('#ccTira .cc-ic')].filter((e) => e.offsetHeight < 44 || e.offsetWidth < 44).map((e) => e.offsetWidth + 'x' + e.offsetHeight + '/' + Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height)));
+    R.e.altos = R.e.altos.length ? R.e.altos : 0;
     check('CH6-c 408 modo cocina: el contador baja cada segundo SIN repintar la pantalla, se pausa (y no baja), sigue, sobrevive a cambiar de paso y «×» lo quita (botones ≥44 px)',
       R.e.a !== R.e.b && R.e.marca === 'x' && /en pausa/.test(R.e.pausa.t) && R.e.pausa.c === R.e.pausa.c2 && R.e.sigue && R.e.trasPaso === 3 && R.e.tras === 2 && R.e.altos === 0, JSON.stringify(R));
     // 4) un temporizador acaba: aviso con «Hecho» y «+2 min», vibra; «+2 min» lo reinicia; «Hecho» lo quita

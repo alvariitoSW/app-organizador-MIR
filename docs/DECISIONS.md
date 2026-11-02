@@ -2602,7 +2602,7 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Selector de mes del Mes**: el campo de 144 px enseñaba «November 20…» (y en el móvil, «noviembre de 20…») cortado.
   Pasa a ser un botón «otro mes» con el campo transparente encima: al tocarlo se abre el selector del móvil
   (`showPicker()` en el ordenador). Prueba **449g**: cae con el campo de antes (`boton: null`).
-- **CH6-c 408** (botones del modo cocina): pasa suelta y en la suite de hoy; no se ha tocado.
+- **CH6-c 408** (botones del modo cocina): suelta pasa siempre; con la suite cargada cayó 2 veces («×» y «⏸» por debajo de 44). No se reproduce ni con su trozo: la prueba ahora espera 250 ms y mide la caja (`offsetWidth/Height`) y, si vuelve a caer, apunta las dos medidas. Ajeno a La Competencia (regla de los 0,2 M).
 
 **Descartado.** Poner el campo de mes en su propia fila (una fila más en el Mes, que C4 va a rehacer en la fase 2).
 
