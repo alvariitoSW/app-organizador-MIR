@@ -12487,6 +12487,13 @@ function nutSemHTML(hoyK){
       t('🍫','chocolate',W.choco+' de '+W.tope+' esta sem.',W.choco>W.tope?'mal':(W.choco===W.tope?'ojo':'bien'))+
       t('☕','desayuno',W.conLog?(W.cafe?'solo café '+W.cafe+' de '+W.conLog:'con algo más ✓'):'—',W.cafe>W.conLog/2?'mal':(W.cafe?'ojo':'bien'))+'</div>'+
     (domingo?'<button class="btn p nscierra" data-a="food-vista" data-v="nutri">Hoy se cierra la semana · tu informe ›</button>':'')+'</div>';}
+function nutSemPlegHTML(hoyK){
+  const obj=kcalObj(),T=obj?nutTecho(hoyK):null,q=T?Math.round(T.techo-foodTotals(hoyK).kcal):null;
+  return cmPlegHTML('sem',false,'📅','Tu semana',q==null?'nutricionista':(q>0?'hoy te quedan '+fmtMil(q)+' kcal':'has llegado a tu techo de hoy'),nutSemHTML(hoyK));}
+function nutLloretPlegHTML(k){
+  const h=nutLloretHTML(k);if(!h)return '';
+  const p=lloretPlan(k),m=new Date().getHours()*60+new Date().getMinutes();
+  return cmPlegHTML('ll',m>=14*60,'🌿','Hoy hay Lloret · '+hm(p.de),'cena hecha antes de salir y kit para la vuelta',h);}
 function nutChocoAvisoHTML(fr,ctx){
   /* al ir a apuntar chocolate: cuántas veces van esta semana frente al tope, y el kit para cambiarlo */
   if(ctx!=='fr'||!fr||!NUT_CHOCO.test([fr.txt||''].concat((fr.items||[]).map(function(x){const a=x.id&&alimById(x.id);return a?a.n:'';})).join(' ')))return '';
@@ -14101,6 +14108,9 @@ function vitParadaHTML(dk,esHoy){
   return '<button class="cjvit" data-a="food-vista" data-v="vitaminas" aria-label="vitaminas y minerales, % diario"><span class="vh">cierre</span>'+
     '<span class="vcu"><span class="vfila"><b>💊 Vitaminas de '+(esHoy?'hoy':'ese día')+'</b><span class="sp"></span><span class="mini">ver ›</span></span>'+
     '<span class="mini">'+(bajos.length?bajos.map(function(x){return '<span class="'+(x.p<50?'lo':'')+'">'+esc(x.n)+' '+x.p+' %</span>';}).join(' · '):'aún sin datos: apunta algo de la tabla y salen')+'</span></span></button>';}
+function vitPlegHTML(dk,esHoy){
+  const bajos=vitDatos(dk).filter(function(x){return x.tiene;}).sort(function(a,b){return a.p-b.p;}).slice(0,1);
+  return cmPlegHTML('vit',false,'💊','Vitaminas de '+(esHoy?'hoy':'ese día'),bajos.length?esc(bajos[0].n)+' '+bajos[0].p+' %':'aún sin datos',vitParadaHTML(dk,esHoy),'cmvit');}
 function renderFoodVitaminas(){
   const c=foodCtx(),sel=c.sel,hoy=sel===iso(new Date()),datos=vitDatos(sel),media=vitMedia(sel),sug=vitSugerencia(sel,datos);
   const conDato=datos.filter(function(x){return x.tiene;});
@@ -15343,7 +15353,7 @@ function cjeComidaHTML(r,k,sig){
     :(st==='on'?'<button class="cjq on" data-a="cje-ok" data-p="'+r.p+'"'+K+' aria-label="quitar lo apuntado en '+r.lbl.toLowerCase()+'">✓</button>'
       :'<button class="cjq otro" data-a="cje-mom" data-p="'+r.p+'"'+K+' aria-label="ver '+r.lbl.toLowerCase()+'">✓</button>');
   const S=cjeSuma(r.e),pk=d&&!d.fuera&&!d.nada?Math.round((+d.kcal||0)*num(r.pl[0].portions,1)):0;
-  const sub=st==='otro'&&d&&!d.nada&&!d.fuera?'en vez de <s>'+esc(cjeNomPlan(d))+'</s>'+(cocinadoNev().some(function(c){return c.dishId===d.id;})?' · <span class="tpv">🥡 te queda el táper</span>':''):'';
+  const sub=st==='otro'&&d&&!d.nada&&!d.fuera?'Tocaban '+esc(cjeNomPlan(d))+' · lo cambiaste'+(cocinadoNev().some(function(c){return c.dishId===d.id;})?' · <span class="tpv">🥡 te queda el táper</span>':''):'';
   /* LO SIGUIENTE vive en la línea, en el sitio de su momento: con plan, «✓ Hecho»; sin plan, lo de siempre a esta hora */
   const rec=sig&&st==='no'&&!(d&&!d.nada)?fraseRecientes(1,cjeMom(r.p)[2])[0]:null,nom=rec?rec.nombre:(r.e.length?r.e.map(function(x){return x.nombre;}).join(' + '):(d?cjeNomPlan(d):'sin plan · toca para apuntar'));
   const sb=sig?'<div class="cjsigb">'+(d&&!d.nada?'<button class="btn p" data-a="cje-ok" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':(rec?'<button class="btn p" data-a="cje-siempre" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':''))+
@@ -16160,8 +16170,8 @@ function renderComerEje(){
         '<button class="cji" data-a="food-next"'+(esHoy?' disabled':'')+' aria-label="día siguiente">›</button></div>'+
       cjeAhoraHTML(dk,esHoy,ft)+(esHoy?antojoCardHTML(dk):'')+
       '<div class="card cjml">'+cjeComidas(dk).map(function(r){return cjeComidaHTML(r,dk,sg&&sg.p===r.p);}).join('')+
-        '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button>'+vitParadaHTML(dk,esHoy)+'</div>'+
-      (esHoy?nutSemHTML(hoyK)+nutLloretHTML(hoyK):'')+
+        '<button class="cjmas" data-a="cje-mom" data-p="merienda" data-k="'+dk+'">＋ picoteo o algo más</button>'+vitPlegHTML(dk,esHoy)+'</div>'+
+      (esHoy?nutSemPlegHTML(hoyK)+nutLloretPlegHTML(hoyK):'')+
       (tar.length?'<div class="cap">PARA HACER HOY</div><div class="cjtodo">'+tar.map(function(o){
         return '<button class="cjtd" data-a="cje-hoja" data-v="'+o.v+'"><span class="e">'+o.e+'</span><span class="tx"><b>'+esc(o.t)+'</b><span>'+esc(o.s)+'</span></span>'+gymIco('chevron','gico sm')+'</button>';}).join('')+'</div>':'')+
       (esHoy?montar:'')+nutHoyHTML(dk,esHoy)+
@@ -16188,7 +16198,22 @@ function cjeAhoraHTML(dk,esHoy,ft){
   /* «AHORA» de la línea del día: la hora, el día (con guardia si la hay) y kcal/P/HC/G frente al objetivo */
   const n=new Date(),dd=parseDate(dk),g=cjeDia(dk).guardia;
   return '<div class="card cjahora"><div class="row"><b>'+(esHoy?'Ahora · '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' · ':'')+
-    DIA3[dd.getDay()]+' '+dd.getDate()+'</b><span class="sp"></span>'+(g?'<span class="mini">guardia</span>':'')+'</div>'+cjeMacrosHTML(ft,esHoy)+'</div>';}
+    DIA3[dd.getDay()]+' '+dd.getDate()+'</b><span class="sp"></span>'+(g?'<span class="mini">guardia</span>':'')+'</div>'+cjeMargenHTML(dk,ft,esHoy)+cjeMacrosHTML(ft,esHoy)+'</div>';}
+function cjeMargenHTML(dk,ft,esHoy){
+  /* C5: lo que QUEDA hoy, kcal y proteína al mismo tamaño. Pasado el techo no se pone en rojo ni en negativo:
+     «Has llegado a tu techo de hoy». El techo es el que ya calcula nutTecho (trabajo, guardia, saliente) */
+  const obj=kcalObj();if(!obj)return '';
+  const T=nutTecho(dk),techo=T?T.techo:obj,ob=objetivoMacros(),po=(esHoy&&protHoyObj())||ob.prot||0;
+  const mk=Math.round(techo-(+ft.kcal||0)),mp=Math.round(po-(+ft.prot||0));
+  return '<div class="cjmarg" role="group" aria-label="lo que queda hoy">'+
+    '<span class="cjmk'+(mk>0?'':' tope')+'">'+(mk>0?'<b>'+fmtMil(mk)+' kcal</b><small>de margen hoy</small>':'<b>Has llegado a tu techo de hoy</b><small>'+fmtMil(techo)+' kcal</small>')+'</span>'+
+    (po?'<span class="cjmk'+(mp>0?'':' tope')+'">'+(mp>0?'<b>'+fmtMil(mp)+' g</b><small>de proteína por tomar</small>':'<b>Proteína cubierta</b><small>'+fmtMil(po)+' g</small>')+'</span>':'')+'</div>';}
+function cmPleg(id,def){const o=(ui.cmPl||{})[id];return o==null?def:!!o;}
+function cmPlegHTML(id,def,ico,tit,res,cuerpo,cls){
+  /* C5: una fila que abre y cierra con un toque; el cuerpo sigue en la página (oculto) para no perder nada */
+  const ab=cmPleg(id,def);
+  return '<button class="cmplh'+(cls?' '+cls:'')+'" data-a="cm-pleg" data-v="'+id+'" aria-expanded="'+(ab?'true':'false')+'"><span class="e">'+ico+'</span><span class="t"><b>'+tit+'</b>'+(res?'<small>'+res+'</small>':'')+'</span><span class="chev" aria-hidden="true">'+(ab?'⌃':'⌄')+'</span></button>'+
+    '<div class="cmplb"'+(ab?'':' hidden')+'>'+cuerpo+'</div>';}
 function momentoEscribir(){
   /* «¿Qué has comido?» abre en el momento que la línea llama LO SIGUIENTE (por la tarde, la cena), no en el del reloj */
   const sg=cjeSiguiente(iso(new Date()));return sg?sg.p:momentoAhora();}
@@ -26709,6 +26734,7 @@ function act(a,el){
       l.splice(+el.dataset.i,1);r[t]=l;save();render();break;}
     case 'rut-reset':{const t=ui.rutTipo||diaTipo(iso(new Date()));if(store.rutinas)delete store.rutinas[t];save();render();break;}
     case 'cje-ver-compra':{const e=document.querySelector('#main .cs-compra');if(e)e.scrollIntoView({behavior:'smooth',block:'start'});break;}
+    case 'cm-pleg':{const id=el.dataset.v,cur=cmPleg(id,id==='ll'&&(new Date().getHours()>=14));(ui.cmPl||(ui.cmPl={}))[id]=!cur;render();break;}
     case 'comer-modo':case 'cje-tab':ui.tab='food';ui.foodVista='eje';ui.cjeTab=/^(sem|casa)$/.test(el.dataset.v)?el.dataset.v:'';ui.cjeHoja=null;ui.plM=null;weekDate=mondayOf(new Date());render();window.scrollTo(0,0);break;
     /* SEMANA: la hoja del hueco (escribir lo que sea, un plato tuyo, táper, fuera u hospital) */
     case 'cs-hueco':{const k=el.dataset.k,c=el.dataset.c==='comida'?'comida':'cena',cel=sbCelda(k,c),it=cel&&cel.items[0],d=it&&it.kind!=='txt'?dishById(it.id):null;

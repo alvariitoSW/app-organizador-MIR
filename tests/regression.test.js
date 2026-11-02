@@ -67,6 +67,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // de la página se congela en el día 15 del mes en curso a las 12:00 (o en la fecha de PRUEBAS_HOY=AAAA-MM-DD, para probar
   // cualquier día), y sueltaHoy() lo devuelve. Mismo patrón que las pruebas 75, 221 y 263.
   // (con miercoles = true se corre al miércoles de esa semana: hay pruebas que necesitan días pasados Y por venir en la semana)
+  // C5: «Hoy hay Lloret», vitaminas y «Tu semana» van plegados; las pruebas viejas los abren con el toque de siempre (si siguen cerrados)
+  const abrePleg = async (id) => { const c = await page.$('#main .cmplh[data-v="' + id + '"][aria-expanded="false"]'); if (c) { await c.click(); await page.waitForTimeout(150); } };
   const fijaHoy = async (h = 12, mi = 0, miercoles = false) => {
     const e = (process.env.PRUEBAS_HOY || '').match(/^(\d{4})-(\d\d)-(\d\d)$/), n = new Date();
     const f = e ? [+e[1], +e[2] - 1, +e[3]] : [n.getFullYear(), n.getMonth(), 15];
@@ -9490,7 +9492,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.cjeHoja = null; P.render(); });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia239; P.save(); P.ui.cjeHoja = null; P.ui.cjeTab = ''; P.ui.frPos = ''; P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
     check('Hoy: «para hacer hoy» pide cocinar la tanda de hoy; lo apuntado manda (✓ azul «en vez de» el plan) y lo no apuntado sale en gris con ○',
-      hoy.todo.some((t) => /Cocina Lentejas/.test(t)) && /otro/.test(hoy.comida.q) && hoy.comida.n === 'Comí fuera' && /en vez de Lentejas/.test(hoy.comida.pl) &&
+      hoy.todo.some((t) => /Cocina Lentejas/.test(t)) && /otro/.test(hoy.comida.q) && hoy.comida.n === 'Comí fuera' && /Tocaban Lentejas.*lo cambiaste/.test(hoy.comida.pl) &&
       hoy.cena.q === 'cjq' && hoy.cena.plan, JSON.stringify(hoy));
     check('la hoja de una comida apunta la frase en ESA comida; «no he desayunado» la cierra; el total abre el día por comidas y ‹ va a ayer',
       /Cena/.test(titulo) && cena.p === 1 && cena.items === 1 && sinPlan && nada && dia.filas >= 6 && /Total/.test(dia.total) && ayer, JSON.stringify({ titulo, cena, sinPlan, nada, dia, ayer }));
@@ -12678,6 +12680,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     if (await page.$('#main [data-a="cje-tab"][data-v="hoy"]')) { await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(200); }
     // tolerante: con el código de antes estos botones no existen y la prueba tiene que CAER, no colgarse
     const toca319 = async (sel) => { const e = await page.$(sel); if (e) { await e.click(); await page.waitForTimeout(250); } };
+    await abrePleg('sem');
     await toca319('#main .nsem [data-a="food-vista"][data-v="nutri"]');
     await toca319('#main [data-a="nut-sem"][data-d="-1"]');
     const lee = () => page.evaluate(() => { const t = (s) => [...document.querySelectorAll('#main .ninf.' + s + ' p')].map((x) => x.textContent);
@@ -13673,8 +13676,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.ui.foodVista = 'eje'; P.ui.foodBusca = ''; P.render(); });
     await page.waitForTimeout(200);
     r.b = await page.evaluate(() => ({ txt: ((document.querySelector('#main .cjvit .vcu > .mini') || {}).textContent || ''), n: document.querySelectorAll('#main .cjvit .vcu > .mini > span').length,
-      ultima: !!document.querySelector('#main .cjml > .cjvit:last-child') }));
-    await page.click('#main .cjvit'); await page.waitForTimeout(250);
+      ultima: !!document.querySelector('#main .cjml > .cmplb > .cjvit:last-child') }));
+    await abrePleg('vit'); await page.click('#main .cjvit'); await page.waitForTimeout(250);
     r.c = await page.evaluate(() => ({ vista: window.PG.ui.foodVista, tit: (document.querySelector('#main .subtit') || {}).textContent || '',
       filas: Array.prototype.map.call(document.querySelectorAll('#main .femic.vit'), (f) => ({ k: f.dataset.k, p: (f.querySelector('b') || {}).textContent || '', sd: (f.querySelector('em') || {}).textContent || '', barra: !!f.querySelector('.t i') })),
       sug: (document.querySelector('#main .vitsug') || {}).textContent || '', cuerpo: document.getElementById('main').textContent }));
@@ -13799,7 +13802,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.food.log[P.iso(new Date())] = [{ id: 'x338', nombre: 'zumo', kcal: 100, prot: 1, carb: 20, gresa: 0, mi: { vc: 5 } }];
       P.ui.cjeHoja = null; P.ui.plM = null; P.ui.tpVista = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.foodDate = ''; P.save(); P.render(); });
     await page.waitForTimeout(200);
-    await page.click('#main .cjvit'); await page.waitForTimeout(250);
+    await abrePleg('vit'); await page.click('#main .cjvit'); await page.waitForTimeout(250);
     r.a = await page.evaluate(() => ({ vista: window.PG.ui.foodVista, modos: document.getElementById('calModes').hidden || !/Nevera|Compra/.test(document.getElementById('calModes').textContent),
       sug: ((document.querySelector('#main .vitsug b') || {}).textContent || '') }));
     await page.click('#main .subcab [data-a="food-vista"]'); await page.waitForTimeout(250);
@@ -15404,9 +15407,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.cjeHoja = null; P.ui.plM = null; P.ui.tpVista = ''; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.foodDate = P.iso(P.addDays(new Date(), -1)); P.save(); P.render(); });
     await page.waitForTimeout(200);
     const lee = () => page.evaluate(() => (document.querySelector('#main .vitsug') || {}).textContent || '');
-    await page.click('#main .cjvit'); await page.waitForTimeout(250); r.a = await lee();
+    await abrePleg('vit'); await page.click('#main .cjvit'); await page.waitForTimeout(250); r.a = await lee();
     await page.click('#main .subcab [data-a="food-vista"]'); await page.waitForTimeout(250);
-    await page.click('#main .cjvit'); await page.waitForTimeout(250); r.b = await lee();
+    await abrePleg('vit'); await page.click('#main .cjvit'); await page.waitForTimeout(250); r.b = await lee();
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia396a')); localStorage.removeItem('__copia396a'); P.ui.foodDate = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     const ok = (t) => /Una ración de [^()]+ \(\d+ g\)/.test(t) && !/100 g de/.test(t) && !/\bajo\b/i.test(t) && (+((/te sube un (\d+) %/.exec(t) || [])[1]) >= 10);
     check('396a Vitaminas · la sugerencia es «una ración de X (N g)» que sube ≥10 %, no «100 g de ajo» (el ajo, con 5 g, se salta aunque esté en la nevera); igual al volver a abrirla',
@@ -17146,6 +17149,62 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const R = { claro, osc };
     check('496 Mes · en claro «20 Urg» y «12 UMI» pasan de 4,5:1; en oscuro siguen en #e5484d y #3b82f6',
       claro.urg.c >= 4.5 && claro.umi.c >= 4.5 && osc.urg.col === 'rgb(229, 72, 77)' && osc.umi.col === 'rgb(59, 130, 246)', JSON.stringify(R));
+  }
+
+  // 500) C5 (pruebas 500 a 503 en un bloque) · COMER, HOY (a 412×915). Cada prueba cae con su cambio revertido (sin cjeMargenHTML, sin cmPlegHTML, con el <s> de «en vez de», sin el color claro de la tira).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    const prep = (kcal, prot, extra) => page.evaluate(([kc, pr, ex]) => { const P = window.PG; if (!window.__copia500) window.__copia500 = JSON.stringify(P.store);
+      P.food().objetivo = { kcal: 2150, prot: 150 }; P.food().diasEsp = {};
+      const k = P.iso(new Date()); P.store.food.log[k] = kc ? [{ id: 'f500', p: 'comida', nombre: 'Comida 500', kcal: kc, prot: pr, carb: 50, gresa: 10, rac: 1 }] : [];
+      if (ex) ex(P, k);
+      P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.ui.cmPl = {}; P.save(); P.render(); }, [kcal, prot, null]);
+    // prueba 500: el margen: kcal y proteína al mismo tamaño; pasado el techo, «Has llegado a tu techo de hoy», sin negativos y sin rojo
+    await prep(800, 40); await page.waitForTimeout(250);
+    const m1 = await page.evaluate(() => { const b = [...document.querySelectorAll('#main .cjahora .cjmarg .cjmk b')]; return { n: b.length, t: b.map((x) => x.textContent), fs: b.map((x) => getComputedStyle(x).fontSize) }; });
+    await prep(2600, 160); await page.waitForTimeout(250);
+    const m2 = await page.evaluate(() => { const c = document.querySelector('#main .cjahora .cjmarg'); const b = c ? [...c.querySelectorAll('.cjmk b')] : [];
+      const rojo = (el) => { const m = /rgb\((\d+), (\d+), (\d+)/.exec(getComputedStyle(el).color) || []; return +m[1] > 150 && +m[2] < 100 && +m[3] < 120; };
+      return { t: c ? c.innerText.replace(/\s+/g, ' ') : '', rojo: b.some(rojo) || (c ? rojo(c) : true), neg: c ? /[-−]\d/.test(c.innerText) : true }; });
+    check('500 Comer · «1.350 kcal de margen» y «110 g de proteína por tomar» al mismo tamaño; pasado el techo, «Has llegado a tu techo de hoy», sin negativos ni rojo',
+      m1.n === 2 && /margen/.test(JSON.stringify(m1.t)) === false && /1\.350 kcal/.test(m1.t[0]) && /110 g/.test(m1.t[1]) && m1.fs[0] === m1.fs[1] &&
+      /Has llegado a tu techo de hoy/.test(m2.t) && /Proteína cubierta/.test(m2.t) && !m2.rojo && !m2.neg, JSON.stringify({ m1, m2 }));
+    // prueba 501: plegables: Lloret, vitaminas y «Tu semana» cerrados antes de las 14:00; un toque abre y otro cierra; desde las 14:00 el Lloret sale abierto
+    await prep(800, 40, null);
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); if (!P.lloretDe(k)) P.lloretPoner(k); P.render(); });
+    await page.waitForTimeout(250);
+    const vis = (sel) => page.evaluate((s) => { const e = document.querySelector(s); return !!e && e.getBoundingClientRect().height > 0; }, sel);
+    const f1 = { ll: await vis('#main .nll'), vit: await vis('#main .cjvit'), sem: await vis('#main .nsem'), cab: await page.evaluate(() => [...document.querySelectorAll('#main .cmplh')].map((x) => x.dataset.v).join(',')) };
+    await page.click('#main .cmplh[data-v="sem"]'); await page.waitForTimeout(200);
+    const f2 = await vis('#main .nsem');
+    await page.click('#main .cmplh[data-v="vit"]'); await page.waitForTimeout(200);
+    const f3 = await vis('#main .cjvit');
+    await page.click('#main .cmplh[data-v="sem"]'); await page.waitForTimeout(200);
+    const f4 = await vis('#main .nsem');
+    await fijaHoy(15, 0, true); await page.evaluate(() => { const P = window.PG; P.ui.cmPl = {}; P.render(); }); await page.waitForTimeout(250);
+    const f5 = await vis('#main .nll');
+    check('501 Comer · «Hoy hay Lloret», vitaminas y «Tu semana» van plegados a las 12:00 y se abren y cierran a un toque; desde las 14:00 el Lloret sale abierto',
+      !f1.ll && !f1.vit && !f1.sem && /ll/.test(f1.cab) && /vit/.test(f1.cab) && /sem/.test(f1.cab) && f2 && f3 && !f4 && f5, JSON.stringify({ f1, f2, f3, f4, f5 }));
+    await fijaHoy(12, 0, true);
+    // prueba 502: lo que tocaba y cambiaste: «Tocaban X · lo cambiaste» en gris, sin <s>
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.store.dishes.push({ id: 'd502', name: 'Lentejas 502', icon: '🍲', portions: 1, kcal: 500, prot: 30 });
+      P.setDayOverride(k, 'sh-l', ''); P.store.semBase = { on: true, d: {} }; P.store.food.cocinado = []; P.store.food.tandasHechas = {};
+      P.sbPoner(k, 'desayuno', P.dishNada().id); P.sbPoner(k, 'comida', 'd502'); P.sbPoner(k, 'cena', 'd502'); P.store.food.log[k] = [{ id: 'f502', p: 'comida', nombre: 'Bocata 502', kcal: 540, prot: 25, carb: 50, gresa: 10, rac: 1 }];
+      P.ui.cmPl = {}; P.render(); });
+    await page.waitForTimeout(250);
+    await page.click('#main [data-a="cje-tab"][data-v="sem"]'); await page.waitForTimeout(150); await page.click('#main [data-a="cje-tab"][data-v="hoy"]'); await page.waitForTimeout(250);
+    const o = await page.evaluate(() => { const pl = document.querySelector('#main .cjmm[data-p="comida"] .pl'); return pl ? { t: pl.textContent, s: pl.querySelectorAll('s,del').length, td: getComputedStyle(pl).textDecorationLine } : null; });
+    check('502 Comer · lo cambiado dice «Tocaban Lentejas 502 · lo cambiaste», sin tachar', !!o && /Tocaban Lentejas 502 · lo cambiaste/.test(o.t) && o.s === 0 && !/line-through/.test(o.td), JSON.stringify(o));
+    // prueba 503: las letras L M M J V S D de Plan: ≥4,5:1 en claro y el oscuro sin tocar (#8fa6c6)
+    const cont = await page.evaluate(() => { const rgb = (c) => (/rgba?\((\d+), (\d+), (\d+)/.exec(c) || []).slice(1, 4).map(Number);
+      const L = (c) => { const v = rgb(c).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+      const medir = () => { const b = document.querySelector('#main .cjs7 b'); const f = b.parentElement; const a = L(getComputedStyle(b).color), z = L(getComputedStyle(f).backgroundColor); return { cr: (Math.max(a, z) + 0.05) / (Math.min(a, z) + 0.05), col: getComputedStyle(b).color, px: parseFloat(getComputedStyle(b).fontSize) }; };
+      const dark = document.documentElement.classList.contains('dark'); document.documentElement.classList.remove('dark'); const claro = medir();
+      document.documentElement.classList.add('dark'); const osc = medir(); if (!dark) document.documentElement.classList.remove('dark'); return { claro, osc }; });
+    check('503 Comer · las letras de la tira de días miden ≥4,5:1 en claro (13 px) y en oscuro siguen en #8fa6c6', cont.claro.cr >= 4.5 && cont.claro.px >= 13 && cont.osc.col === 'rgb(143, 166, 198)', JSON.stringify(cont));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia500); window.__copia500 = null; P.ui.cmPl = {}; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
