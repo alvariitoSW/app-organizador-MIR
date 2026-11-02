@@ -27,6 +27,22 @@ Nada en marcha. Lo siguiente: Sueño de un toque (S1, maqueta).
 | S3 | Cierre: verificador 412×915, suite, sella, main | arreglo | sonnet | ~0,3 M |
 
 
+### «La Competencia»: superar a la rival (Consejo, 2026-11-02) · acta `consejo/2026-11-02-competencia.md` · **espera al usuario**
+
+[v3-competencia] Sobre `docs/informe-competencia-2026-11.md`. Cada propuesta del informe tiene su dictamen en el acta. Sin aprobar:
+presupuesto, estilo e importar planning (3 preguntas del acta). Va **después** de «Sueño de un toque», que suma la fila 2 (víspera
+de guardia con «Avisarme», +0,3 M) si el usuario dice que sí. Propuesta de Hacienda: sin Consejo por tanda (cada una va directa a su ficha).
+
+| # | Tanda | Filas del informe | Sesiones | Presupuesto |
+|---|---|---|---|---|
+| C1 | Letra y calma: un escalón de letra por script con excepciones + contraste; avisos de Hoy de uno en uno | 4, 16 | 4 | ~2,8 M |
+| C2 | Apuntar en menos toques: «+» en Tu mes con la última categoría; «＋ serie» con la última vez; «Empezar» arriba; plan recomendado visible; rótulo de semana | 3, 11, 12, 19 (parte), F1 | 4 | ~2,8 M |
+| C3 | Hoy en una pantalla: tarjeta «Ahora» (con salida de guardia, energía y conducir); tira de hábitos | 5, 10 | 4 | ~2,9 M |
+| C4 | Mes y guardias: un contador; cabecera plegada; pincel visible; puerta y vista previa del planning (pegar y .ics); un «atrás» en Ajustes | 6, 9, X1, 8, F6 | 4 | ~3,0 M |
+| C5 | Comer: lo que queda hoy (margen, sin culpa); Hoy de Comer plegado; invitación a la semana; «en vez de» reescrito | 13, 14, 15, X2 | 4 | ~2,7 M |
+| C6 | Hábitos, 4:20 y Estudio: plantillas siempre; obstáculos al final; «Privado» tapa también sin PIN (`/revisa-seguridad`); «Cómo me afecta» en una frase; HUD vacío plegado | 18, F5, 20, F4, F3, X4 | 5 | ~3,2 M |
+| C7 | Más adelante (opcional): asistente de turno, foto del cuadrante, caja de frase, copiar o guardar rutina, «Empieza» de Estudio, pasillos | 7, 8 foto, 17, 19 resto, F2, X3 | ~12 | ~9 M |
+
 ### «La Gran Ley» (todo lo pendiente) · Consejo 2026-10-30 · acta `consejo/2026-10-30.md`
 
 [v3-gran-ley] «todas las mejoras de bitácora y todo lo que quedaba por hacer quiero que se haga ya» (2026-10-30).
