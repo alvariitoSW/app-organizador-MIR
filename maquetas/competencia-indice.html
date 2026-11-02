@@ -1,0 +1,42 @@
+<title>Maquetas de La Competencia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Índice sobrio de dos columnas que se apilan en el móvil; piel de la app (cian de acción, granate solo para guardia) */
+:root{--bg:#eef2f9;--card:#fff;--ink:#0d1729;--ink2:#4a5d7a;--line:#c9d5e8;--acc:#0e7490;--guard:#9f1239;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#070b14;--card:#111a2b;--ink:#e9f2ff;--ink2:#9fb3d1;--line:#26354f;--acc:#38e1ff;--guard:#fb7185;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#070b14;--card:#111a2b;--ink:#e9f2ff;--ink2:#9fb3d1;--line:#26354f;--acc:#38e1ff;--guard:#fb7185;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.w{max-width:860px;margin:0 auto;display:grid;gap:18px}
+h1{font-size:24px;margin:0;text-wrap:balance}h2{font-size:18px;margin:0 0 4px}h3{font-size:15px;margin:12px 0 4px}
+p{margin:0;color:var(--ink2)}
+.dos{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:8px;min-width:0}
+a.b{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:13px;background:var(--acc);color:var(--bg);font-weight:800;text-decoration:none}
+a.b:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+ol{margin:0;padding-left:20px;display:grid;gap:4px}li{color:var(--ink)}li span{color:var(--ink2)}
+.rec{font-weight:700;color:var(--acc)}
+.nota{font-size:14px;color:var(--ink2);border-left:3px solid var(--guard);padding-left:10px}
+</style>
+<div class="w">
+<header style="display:grid;gap:6px">
+<h1>Maquetas de La Competencia</h1>
+<p>Las 7 tandas de las fases 1 y 2 en dos maquetas. Cada pantalla sale como es ahora y como quedaría, a 412×915 (tu móvil). Abajo de cada tanda hay hasta 3 preguntas, con la opción que te recomiendo marcada.</p>
+</header>
+<div class="dos">
+<section class="c"><h2>Maqueta A</h2><p>Sueño de un toque y víspera · C1 Letra y calma · C2 Apuntar en menos toques · C3 Hoy en una pantalla</p><a class="b" href="competencia-a.html">Abrir la maqueta A</a></section>
+<section class="c"><h2>Maqueta B</h2><p>C4 Mes y guardias · C4b Foto del cuadrante · C5 Comer · C6 Hábitos, 4:20 y Estudio</p><a class="b" href="competencia-b.html">Abrir la maqueta B</a></section>
+</div>
+<section class="c">
+<h2>Lo que más cambia, en cifras</h2>
+<ol>
+<li>Hoy: de 3,4 pantallas a 2,1; lo esencial cabe en la primera</li>
+<li>Apuntar un gasto: de 7 toques a 4</li>
+<li>Una serie suelta en Entreno: de 5-6 toques y teclear a 3</li>
+<li>El Mes entero sin desplazar (de 1,29 pantallas a 1,03)</li>
+<li>Importar el planning: de 7 toques a 3</li>
+<li>Hoy de Comer: de 2,96 pantallas a 1,85, sin borrar nada</li>
+<li>Con «Privado», sin PIN, «Lloretazo» deja de verse en Hoy (de 4 veces a 0)</li>
+</ol>
+</section>
+<p class="nota">Para contestar basta con escribir las letras, por ejemplo «S1 AAA, C1 BAA…», o «todas las recomendadas» y lo que quieras cambiar.</p>
+</div>
