@@ -2653,3 +2653,12 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Descartado:** una tarjeta «Comida de hoy» nueva (es de C5; la comida sigue en la cadena y la cabina); tocar `avisoCola()`; tira con desplazamiento lateral.
 **Supuestos:** la tira es por orden de la lista (un hábito hecho no sale de la tira, para poder desmarcarlo); la frase omite «Luego» si lo siguiente cae dentro del turno actual; el aviso de no conducir sale solo en guardia/saliente con energía baja.
 **Pruebas:** 480-485. Cae con X revertido: 480-484 sin `hoyAhoraHTML`/`habTiraHTML`/`.hoybusfuera`; 485 sin la regla `html:not(.dark) .hoyest`. Pruebas viejas cambiadas por decisión: 275 («Para hoy» ya no falta con el conductor: queda encima del dibujo). Las 79 y 83 caen también solas en el código sin tocar (dependen de pruebas anteriores): ajenas.
+
+## 2026-11-02 · La Competencia · C4b Foto del cuadrante
+**Elegido (opciones recomendadas):**
+- Las celdas dudosas se quedan como estaban y se avisa («N días sin cambiar»); cada duda abre una hoja con el recorte y Guardia / Saliente / Trabajo / Libre / «Dejarlo como estaba».
+- La foto solo vive en memoria (`ui.foto`, `window._fotoLienzo`) mientras corriges; se suelta al seguir, cancelar o salir de la pantalla (hook en `render()`). Nunca a store, localStorage ni red.
+- La primera vez tocas tu nombre en la cabecera; se guarda solo cómo se escribe (`store.planFoto.nombre`, normalizado) y se busca por nombre aunque la columna cambie de sitio («No soy yo» lo olvida).
+**Descartado:** PDF/Excel; una vista por persona; subir la foto a ningún servidor; tocar `sw.js`.
+**Supuestos:** el cuadrante es una fila por día y una columna por persona (como la maqueta); Trabajo (T) se manda a la vista previa como día libre con la palabra «trabajo» (la app no tiene otro tipo); una letra doblada («Ss», fallo medido del lector) cuenta como esa letra; un día que no sube respecto al anterior (el lector se come cifras: «10» → «1») es una duda sin día; si no se ve el mes, se usa el actual y se dice; los días con duda no se mandan, así que no tocan lo que había. Probado con un cuadrante inventado limpio, no con fotos de papel reales: el lector pierde el guion de «R-A» y con rejilla dibujada lee peor (medido); con cuadrículas reales puede fallar y la salida es «Pegar el texto».
+**Pruebas:** 520-529 (un bloque; 528 usa el lector real). Cae con X revertido: con `fotoSuelta` vacío la 525/523 no pasan (la suite del bloque se cuelga en la 524). Viejas: 54 y 491-495 sin cambios.
