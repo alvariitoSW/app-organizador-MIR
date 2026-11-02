@@ -16,8 +16,7 @@ Todo vive en `.claude/plan-socialista/`:
 |---|---|---|
 | `preferencias.md` | Las 4 partes: fuentes, destino, largo máximo, cuándo parar o callar | **Solo el usuario.** Tú lo lees y no lo tocas |
 | `marcadores.json` | Hasta dónde has leído cada fuente | Tú, al final (paso 8) |
-| `registro.md` | Encargos aparcados, supuestos sin confirmar y lo ya contado, con su id | Tú, al final (paso 8); el usuario puede tachar a mano |
-| `sesiones/<fecha>.md` | Cómo fue cada arranque: qué se leyó, qué falló, qué se dijo | Tú, al final (paso 8) |
+| `registro.md` | Encargos aparcados abiertos y «Para recordarte», con su id (lo cerrado va a `archivo/`) | Tú, al final (paso 8); el usuario puede tachar a mano |
 | `plan-v3.md` | El tablero de la 3.0: en marcha, por hacer (en orden), ideas, hecho | Tú, al cerrar cada tarea y cuando el usuario dice algo nuevo (`/bitacora`) |
 | `gastos.md` | Lo que costó cada tarea y el presupuesto de la siguiente de su tipo | Tú, al cerrar cada tarea (`node tools/gasto.mjs --apunta …`) |
 
@@ -61,9 +60,8 @@ Los hace el ayudante `parte` (o tú, si no está).
      resultado y commit. Pages no se puede abrir desde el contenedor; el run es la prueba.
    - **El sello:** si hay código en `main` posterior al último `version.json` (el mismo criterio que
      `.claude/hooks/sella-antes-de-main.sh`): el móvil no se actualizaría.
-   - **Supuestos sin confirmar:** los «Supuestos» de las entradas nuevas de `docs/DECISIONS.md` (desde
-     la línea del marcador) más los que siguen abiertos en `registro.md`. Uno se cierra cuando el
-     usuario contesta que vale o que no; si no vale, pasa a ser un encargo.
+   - (Los supuestos ya no se cuentan en el parte: la cola se retiró el 02/11/2026. Van al final de cada
+     respuesta y en `docs/DECISIONS.md`; lo que importa se pregunta en el momento.)
    - **Encargos aparcados:** la sección del mismo nombre en `registro.md`. Uno se cierra cuando se hace
      (se ve en los commits) o el usuario lo descarta.
    - **GitHub:** issues y PRs abiertos (`gh api "repos/alvariitoSW/app-organizador-MIR/issues?state=open"`).
@@ -75,8 +73,8 @@ Los hace el ayudante `parte` (o tú, si no está).
    parte como «no he podido mirar X».
 
 4. **Elegir lo accionable.** Entra en el parte solo lo que pide hacer algo o saberlo para decidir:
-   un despliegue rojo o sin sellar, la rama sin pasar a `main`, un supuesto que el usuario no ha
-   confirmado, un pendiente que sigue abierto, un issue nuevo. Lo que ya está en el registro **y no
+   un despliegue rojo o sin sellar, la rama sin pasar a `main`, un pendiente que sigue abierto, un
+   issue nuevo. Lo que ya está en el registro **y no
    ha cambiado** no se repite.
 
 5. **Comprobar en vivo lo que vas a contar.** Justo antes de escribir, vuelve a mirar el estado de
@@ -85,8 +83,7 @@ Los hace el ayudante `parte` (o tú, si no está).
 
 6. **Redactar dentro del largo máximo** de las preferencias. En español, sin jerga, cada línea con
    su enlace o su archivo (`archivo:línea`, o el enlace al run). En el orden de las preferencias:
-   lo que bloquea → los supuestos que esperan su «vale/no vale» → lo aparcado → una línea de lo que
-   va bien. Siempre que haya plan 3.0, una línea con **la siguiente tarea y su presupuesto** («Lo siguiente:
+   lo que bloquea → lo aparcado → una línea de lo que va bien. Siempre que haya plan 3.0, una línea con **la siguiente tarea y su presupuesto** («Lo siguiente:
    Comer ordenado · maqueta · ~1,2 M en sonnet») y, si hay tarea medida nueva, **una línea de gasto**: lo que
    costó frente a su presupuesto y lo que más gastó («La última: 1,4 M de 1,2 M; el 60 % las capturas»).
    Si se propone trabajo, cierra con **«Gasto»**: el presupuesto de su tipo (`gastos.md`; sin medida todavía,
@@ -102,11 +99,8 @@ Los hace el ayudante `parte` (o tú, si no está).
 8. **Guardar marcadores, registro y sesión.** Solo después de entregar el parte:
    - `marcadores.json`: avanza solo los de las fuentes que se leyeron bien (`gastosFila`: cuántas filas
      tiene ya «Tareas medidas»).
-   - `registro.md`: añade lo contado (con id estable, p. ej. `run-<id>`, `sup-<fecha>-<tema>`,
-     `aparc-<tema>`, `issue-<n>`), pasa los supuestos nuevos a «Supuestos sin confirmar» y cierra
-     los supuestos y aparcados ya resueltos. Si el usuario contestó a un supuesto en esta sesión,
-     apúntalo («vale» o «no vale → aparcado»).
-   - `sesiones/<AAAA-MM-DD>.md`: fuentes leídas, huecos, lo que se dijo y lo que se calló.
+   - `registro.md`: añade lo nuevo con id estable (`aparc-<tema>`, `issue-<n>`) y mueve lo ya resuelto a
+     `archivo/` (en las listas activas solo queda lo abierto). Sin notas en `sesiones/` (retiradas el 02/11/2026).
    - Commit solo de `.claude/plan-socialista/` en la rama de trabajo y `git push -u origin <rama>`. No toca
      código, así que no hace falta sellar ni pasar por la suite.
 

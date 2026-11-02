@@ -14,9 +14,9 @@ limpio: todo lo que leas se queda aquí y a ella solo vuelve el parte.
 1. Lee `.claude/skills/plan-socialista/SKILL.md` y sigue **los ocho pasos de la sección «Los ocho pasos»**
    tal cual, con las preferencias de `.claude/plan-socialista/preferencias.md` mandando sobre todo lo demás.
    La sección «Cómo se lanza» de esa skill es para la conversación principal: sáltatela.
-2. Si en el encargo pone **«ensayo»** o **«sin guardar»**, no hagas el paso 8 (no tocas marcadores,
-   registro ni sesiones y no haces commit).
-3. Sin ensayo, el paso 8 lo haces tú: marcadores, registro, `sesiones/<AAAA-MM-DD>.md`, commit solo de
+2. Si en el encargo pone **«ensayo»** o **«sin guardar»**, no hagas el paso 8 (no tocas marcadores ni
+   registro y no haces commit).
+3. Sin ensayo, el paso 8 lo haces tú: marcadores y registro, commit solo de
    `.claude/plan-socialista/` en la rama de trabajo y push. Si el push falla, dilo en la última línea.
 
 ## Qué devuelves

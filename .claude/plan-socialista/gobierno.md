@@ -29,71 +29,43 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
 
 ## El Consejo de Ministros
 
-- **Cuándo:** cuando hay asuntos que decidir antes de construir (como mucho una vez al día) o cuando el usuario lo
-  convoca. Una reunión = una sesión.
+- **Cuándo:** antes de una tanda de **~2 M o más**, o cuando algo **cambia lo que ve** el usuario, o cuando él lo
+  convoca (como mucho una vez al día). Lo demás lo decide la ficha (`/ficha-de-tarea`). Una reunión = una sesión.
 - **Dictámenes** (≤15 líneas por asunto, con su voto): Interior, Justicia, Bienestar y el ministerio del asunto (y
   Ciencia si toca). Para ahorrar, **un mismo agente da dos dictámenes** (p. ej. Economía + Bienestar en uno, Interior +
   Justicia en otro); Hacienda y Transportes los da quien preside. Antes de los dictámenes, un ayudante barato hace el
-  **mapa** de lo que ya hay (así nadie relee `app.js`).
+  **mapa** de lo que ya hay (así nadie relee `app.js`); quien preside lee cabeceras y trozos, no archivos enteros.
 - **Gasto de una reunión: ≤0,6 M** equivalentes (cifra de `gastos.md`). Si se va a pasar, quien preside para y lo dice.
-- **Aprueba sin pasar por el usuario:** el orden de las tareas, cómo se parte una tarea, qué ayudante y qué modelo,
-  qué se estudia y las dudas técnicas, **dentro del presupuesto que apruebe el usuario**. Lo acordado entra en
-  `plan-v3.md` con «(Consejo, fecha)».
-- **Reservado al gobierno central (el usuario):**
-  1. el presupuesto total de una tanda;
-  2. **lo que cambia lo que ve** en la app (elige entre maquetas: `CLAUDE.md`, «rediseños: maquetas primero»);
-  3. la arquitectura y los datos: sin build, `localStorage` en el móvil, nada que salga de él;
-  4. quitar algo que ya usa, y pasar a `main`.
-  En esos asuntos el Consejo **estudia y recomienda** (con opciones concretas, como mucho 3 preguntas).
-- **Delegación del 28/10/2026 · reforma de Dinero (D1-D6).** El usuario: «mi potestad en esto la tiene el consejo de
-  ministros, que actúe». Para esta tanda, el Consejo decide también lo reservado: el presupuesto, qué se quita de la
-  Dinero actual (con migración, sin perder datos guardados), lo que cambia lo que ve (dentro del diseño ya elegido:
-  La Laurisilva + el puesto 3 + Compras R2-C) y **pasar a `main`**. No cambia el cómo: suite completa en verde,
-  `npm run sella` + `version.json`, pruebas encadenadas que caen al revertir, privacidad y Actions en `success`.
-  Cada decisión que antes era del usuario va al acta con «(Consejo por delegación)». Se acaba al cerrar la D6.
-- **Delegación del 29/10/2026 · «Ley de La Noche» (N0-N3).** El usuario: «lo de que tengo que decidir yo, que lo
-  decida el congreso, y apruebo todo lo que digan, adelante con el proyecto». Para esta tanda el Consejo decide también
-  lo reservado: el presupuesto (~4,5 M), las tres preguntas del acta `consejo/2026-10-29.md`, **la maqueta que se
-  construye** (lo que cambia lo que ve), qué se quita de Hoy (lo que la cuenta atrás sustituye, sin borrar datos) y
-  **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
-  que caen al revertir, privacidad y Actions en `success`. Cada sesión nueva de la tanda se titula
-  **«Ley de La Noche · N<n> · <qué>»** para que el usuario sepa de dónde viene. En el acta, «(Consejo por delegación)».
-  Se acaba al cerrar la N3. **Cerrada el 29/10/2026** (N3 en `main`): lo reservado vuelve al usuario.
-- **Delegación del 29/10/2026 · «La Reforma» (R1-R10).** El usuario aprueba ~15 M y que el Consejo decida lo reservado:
-  **las maquetas que se construyen** (R2, R5, R9), qué se quita (sin borrar datos) y **pasar a `main`**. Ya decidido por
-  él: Bosque y Ahorro **se juntan del todo** en una pestaña; las recetas llevan botón **Compartir** (lo manda él, imagen o
-  texto, sin datos personales). No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas
-  encadenadas que caen al revertir, privacidad y Actions en `success`. En el acta, «(Consejo por delegación)». Se acaba
-  al cerrar la R10.
-- **Delegación del 30/10/2026 · «La Gran Ley» (G1-G13).** El usuario: «todas las mejoras de bitácora y todo lo que
-  quedaba por hacer quiero que se haga ya, y que se active todo el mecanismo legislativo». Absorbe la de La Reforma.
-  El Consejo decide el presupuesto (~20 M), **las maquetas que se construyen** (G2, G6, G9, G12), qué se quita (sin
-  borrar datos) y **pasar a `main`**. Quedan fuera (regla 3, arquitectura y datos): red externa, la clave del 4:20,
-  Gmail, un «sin pantallas» que no se pueda quitar y la hora del parte; van como preguntas (acta `consejo/2026-10-30.md`).
-  No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas que caen al
-  revertir, privacidad y Actions en `success`. Sesiones «Gran Ley · G<n> · …». Se acaba al cerrar la G13.
-- **Delegación del 30/10/2026 · «Los Remates» (L1-L5).** El usuario: «lo apruebo todo y le cedo al gobierno la decisión de
-  aprobar o repetir o cancelar las pruebas, pero lo quiero todo terminado». Aprueba ~4,8 M y que el Consejo decida lo
-  reservado: qué entra en la maqueta L2 y cuál se construye, los 4 supuestos por revisar, repetir o cancelar la L5, y
-  **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
-  que caen al revertir, privacidad y Actions en `success`. En el acta, «(Consejo por delegación)». Se acaba al cerrar la L5. **Cerrada el 30/10/2026** (main 42b230d): lo reservado vuelve al usuario.
-- **Delegación del 30/10/2026 · «El Cierre» (C1-C4).** El usuario: «hazlo tú mejor, cierra esta sesión y abre otra con lo
-  que has dicho y terminamos de una vez ya la app entera». Aprueba ~3,5 M y que el Consejo decida lo reservado: la maqueta
-  de iconos que se construye, cómo siguen las horas de comer a guardias y salientes, qué se quita (sin borrar datos) y
-  **pasar a `main`**. No cambia el cómo: suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas
-  que caen al revertir, privacidad y Actions en `success`. En el acta, «(Consejo por delegación)». Se acaba al cerrar la C4.
-- **Delegación del 30/10/2026 · «El Chef» (CH1-CH11).** El usuario: «apruebo absolutamente todo, adelante» (acta
-  `consejo/2026-10-30-chef.md`). Aprueba ~10 M (El Chef I ~6,9 M + El Chef II ~2,7 M) y las tres recomendaciones: cambio
-  sin gluten automático y visible con deshacer + «Mis marcas seguras»; la semana reserva siempre el táper de la guardia.
-  El Consejo decide lo reservado: **la maqueta CH3** (lo que cambia lo que ve), qué se quita (sin borrar datos) y **pasar a
-  `main`** (El Chef I al cerrar la CH8, El Chef II en la CH11). No cambia el cómo: suite completa en verde, `npm run sella` +
-  `version.json`, pruebas encadenadas que caen al revertir, privacidad y Actions en `success`. Sesiones «El Chef · CH<n> ·
-  …». En el acta, «(Consejo por delegación)». Se acaba al cerrar la CH11.
-- **Delegación del 31/10/2026 · «Las Mañanas» (LM1-LM5).** El usuario: «la 1, la 2 y la 3» (las tres recomendadas del
-  acta `consejo/2026-10-31-mananas.md`). Aprueba ~4,2 M y que el Consejo decida **la maqueta LM1**, qué se quita (sin
-  borrar datos) y **pasar a `main`** (en la LM5). No cambia el cómo: suite completa en verde, `npm run sella` +
-  `version.json`, pruebas encadenadas que caen al revertir, privacidad (`/revisa-seguridad`) y Actions en `success`.
-  Sesiones «Las Mañanas · LM<n> · …». En el acta, «(Consejo por delegación)». Se acaba al cerrar la LM5; luego, El Chef CH4.
+
+### Lista cerrada (Consejo del 02/11/2026, aprobada por el usuario)
+
+Sustituye a las delegaciones por tanda (las antiguas, en `archivo/delegaciones-hasta-2026-11-02.md`).
+
+**El Consejo aprueba solo**, dentro del presupuesto que apruebe el usuario:
+1. el orden de las tareas y cómo se parte cada una;
+2. qué ayudante y qué modelo;
+3. qué se estudia y las dudas técnicas;
+4. arreglos de fallos **sin cambio visible**, con su prueba encadenada;
+5. completar una pantalla o maqueta cuyo diseño el usuario ya eligió, sin cambiar lo aprobado;
+6. **pasar a `main`** lo que el usuario ya aprobó, si se cumple la lista «Terminado» de `CLAUDE.md` y el cambio no toca
+   nada de lo de abajo. Se le avisa después con el run de Actions. Si Actions falla, se revierte primero
+   (`git revert`, nunca `--force`) y se le cuenta después.
+
+**Le llega siempre al usuario** (el Consejo estudia y recomienda, con opciones concretas, como mucho 3 preguntas):
+1. el presupuesto total de una tanda;
+2. **lo que cambia lo que ve**: elegir maqueta, textos nuevos, mover algo;
+3. **quitar algo que ya usa**;
+4. la arquitectura y los datos: sin build, `localStorage` en el móvil, nada que salga de él;
+5. cualquier red nueva (`fetch`), dependencia o servicio externo; tocar el service worker, el token de Google o la
+   privacidad (con `/revisa-seguridad`);
+6. borrar, migrar o renombrar datos guardados;
+7. cambiar las propias reglas: `CLAUDE.md`, `gobierno.md`, `preferencias.md`, hooks o permisos;
+8. cualquier excepción a la lista «Terminado» (saltarse una prueba, desactivar un hook).
+
+Si el usuario delega algo de esta segunda lista para una tanda concreta, se apunta aquí en una línea con la fecha y
+se borra al cerrar la tanda.
+
+- Lo acordado entra en `plan-v3.md` con «(Consejo, fecha)».
 - Si los ministerios no se ponen de acuerdo, decide quien preside y el acta lo dice; el usuario puede reabrirlo.
 - **Comparecer:** si una tarea va a pasarse más de un 25 % de su presupuesto, quien la dirige para y lo explica en
   una línea antes de seguir.
@@ -101,9 +73,3 @@ petición del usuario el 28/10/2026. Cada pieza del trabajo tiene un papel y una
 ## El acta
 
 En `.claude/plan-socialista/consejo/AAAA-MM-DD.md` (formato en su `LEEME.md`). El traspaso de la sesión la enlaza.
-- **Delegación del 01/11/2026 · «El Lanzador» (K1-K3).** El usuario aprobó ~2,6 M «y que elija el Consejo». Para esta
-  tanda el Consejo decide también la maqueta que se construye (lo que cambia lo que ve) y **pasar a `main`**. La
-  arquitectura ya la decidió el usuario (lanzadora Android en `android/`, web sin build, Brave). No cambia el cómo:
-  suite completa en verde, `npm run sella` + `version.json`, pruebas encadenadas que caen al revertir, privacidad
-  (sin INTERNET en la APK, `#` y no `?`), `/revisa-seguridad` y Actions en `success`. Sesiones tituladas
-  **«El Lanzador · K<n> · <qué>»**. En el acta, «(Consejo por delegación)». Se acaba al cerrar la K3.

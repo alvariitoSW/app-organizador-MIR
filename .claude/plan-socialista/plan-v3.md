@@ -12,36 +12,20 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Gran Ley está hecha (G1-G12 en main; G13 a medias).** «Los Remates» también (main 42b230d, 30/10). «El Cierre» también (C1-C4, 30/10): iconos en la mañana y el cajón, horas de comer que siguen a la guardia. **El plan está terminado.**
+Nada en marcha. Lo siguiente: Sueño de un toque (S1, maqueta).
 
 ## Por hacer
 
-### «El Cierre» (lo último del plan) · **HECHA · 30/10** · delegada el 2026-10-30 · sesión «El Cierre · iconos y horas de comer»
+### «Sueño de un toque» (opción B del Consejo 02/11) · aprobada por el usuario el 02/11/2026
 
-[v3-cierre] «terminamos de una vez ya la app entera» (2026-10-30). **Aprobada por delegación**: ~3,5 M; el Consejo elige
-la maqueta, decide y pasa a `main`.
-
-| # | Sesión | Tipo | Quién hace qué | Presupuesto |
-|---|---|---|---|---|
-| ~~C1~~ | ✅ Maqueta de iconos: `ico()` (fig/iconos.js) en la barra de abajo y en la tabla `ICO` de Hoy (~10 iconos), con el muestrario de `design/arte/direccion/iconos/` y la letra nueva de los Remates; el Consejo elige [aparc-arte-iconos] | maqueta | sonnet | ~0,9 M |
-| ~~C2~~ | ✅ Construir los iconos (sin romper las pruebas que buscan emoji: cambiarlas solo en el icono) | construir | sonnet con ficha | ~1,0 M |
-| ~~C3~~ | ✅ Horas de comer que siguen a guardias y salientes (desayuno, comida, cena según jornada/guardia/saliente que ya conoce la app) [v3-horas-guardia] | construir | sonnet con ficha | ~1,0 M |
-| ~~C4~~ | ✅ Cierre: verificador a 412×915, suite completa, sella, main, Actions | arreglo | sonnet | ~0,6 M |
-
-### «Los Remates» (lo que quedaba aparcado) · Consejo 2026-10-30 (3.ª) · acta `consejo/2026-10-30-3.md`
-
-[v3-remates] «que me digan cómo lo van a solucionar; lo que quede por aprobar, que lo debatan en sesión» (2026-10-30).
-**HECHA · main 42b230d · 30/10** (aprobada por delegación: ~4,8 M, L2 entera, supuestos decididos en el acta). Sesiones «Remates · L<n> · …».
+[v3-sueno-un-toque] El usuario: «sí a todo» (acta `consejo/2026-11-02.md`, asunto 4, opción B). Al despertar, una fila bajo el cartel La Noche en los 4 modos: «Anoche 23:40–7:10 · 7 h 30 · ✓ Vale · cambiar», con las horas de «He vuelto» y «En pie» (hoy se guardan aparte y no rellenan la noche: `lloret.vuelta`, `manana[fecha].pie`); después, opcional, 3 caras de cómo amanece. Tramos, KSS y móvil quedan dentro de «cambiar» (sin borrar datos). El cartel gana una línea por día: víspera «Debes X h · cama HH:MM», saliente «Siesta 90 min antes de las 15:00» (de las 3 órdenes que ya existen). La vista Sueño queda para consultar (Mejorar, Datos, Ciencia plegados) y se quita la fila «Te faltan N noches». Cierra [aparc-sueno-sitio] si se aprueba.
 
 | # | Sesión | Tipo | Quién hace qué | Presupuesto |
 |---|---|---|---|---|
-| ~~L1~~ | ✅ 396a-f · Arreglos: «100 g de ajo» → ración real [aparc-vit-b6-ajo]; Fintonic presupuesto y miles [aparc-fin-presupuesto]; noches sin dato de la barrita de Sueño como botón, 7 noches [aparc-sueno-noche-olvidada] | arreglo | sonnet con ficha | ~1,4 M |
-| ~~L2~~ | ✅ `maquetas/remates.html` · Maqueta: letra ≥11 px y botones 44 px [aparc-rotulos-10px] [aparc-entreno-letra]; línea «Te faltan N noches» en Hoy [aparc-sueno-sitio]; viaje a mano + enlaces [v3-viajes]; casilla «minutos de móvil» [enc-bienestar-digital] — lo que apruebe el usuario | maqueta | sonnet | ~0,9 M |
-| ~~L3~~ | ✅ 397a-d · Construir lo aprobado en L2 (y ninguna letra del 4:20 bajo 11 px) | construir | sonnet con ficha | ~1,5 M |
-| ~~L4~~ | ✅ registro al día · Supuestos: ratificar 18, revisar 4 (r5-comer, r4-fintonic, comer-reloj1, nutri) | arreglo | haiku/sonnet | ~0,3 M |
-| ~~L5~~ | ✅ 3 min 58 s, 5 trozos y `tests/siembra-70.js` · Suite con siembra, tope 1 sesión, meta 3,5-4 min [aparc-suite-siembra] | herramientas | opus | ~0,7 M |
+| S1 | Maqueta (2-3 pantallas: mañana con la fila, víspera, saliente) — **la elige el usuario** | maqueta | sonnet, sin concurso | ~0,5 M |
+| S2 | Construir con ficha + prueba encadenada («He vuelto» + «En pie» → «Vale» → noche guardada) | construir | sonnet con ficha | ~0,9 M |
+| S3 | Cierre: verificador 412×915, suite, sella, main | arreglo | sonnet | ~0,3 M |
 
-Vigilar sin sesión: [aparc-reloj-324] [aparc-lloret-suite]. Aplazado hasta después de L3: [aparc-arte-iconos]. Descartado: leer el uso de pantalla automáticamente (una web no puede).
 
 ### «La Gran Ley» (todo lo pendiente) · Consejo 2026-10-30 · acta `consejo/2026-10-30.md`
 
@@ -103,31 +87,6 @@ De dónde sale el ahorro:
   se pueden abrir directamente en sonnet.
 - Pruebas solo las tuyas mientras se trabaja; la suite completa una vez, al final, con el `verificador`.
 
-### Tanda La Vuelta (Entreno + objetivo de peso) · Consejo 2026-10-28 · acta `consejo/2026-10-28-deporte.md`
-
-| # | Sesión | Tareas | Tipo | Quién hace qué | Presupuesto |
-|---|---|---|---|---|---|
-| ~~V0~~ | ✅ Concurso «La Vuelta» hecho: jurado 1.º La Sobremesa (10), luego Reloj de Sol, Tortuga y Sofá (9) · 2.ª ronda (6 sonnet, explicación en 45 s, bases `consejo/2026-10-28-la-vuelta-ronda2.md`) · **espera tus notas** · 3,9 M + ~2,4 M | [v3-vuelta-maqueta] | maqueta | escuelas sonnet/haiku; jurado haiku a ciegas | ~3,2 M |
-| ~~V1~~ | ✅ main 3170dc0 · Entreno: franja fija 15:00-16:00 entre semana (`gymHoraDe`, `ENT_HORAS`), parque el finde con rutina sin material de openGym, sesión mínima de 25 min, guardia/saliente sin fallo; la vuelta al 35 % +10/semana (`REGRESO_RITMO`, sin romper un plan en curso) y racha por semanas | [v3-entreno-franja] + [v3-vuelta-35] | construir | sonnet con ficha; `verificador` | ~1,8 M |
-| ~~V2~~ | ✅ main 3170dc0 · objetivo de peso + **dos dibujos (Teide y Bancales) en Ajustes** · V1+V2 ~3,7 M · Comer: objetivo de peso (kg y fecha, 0,5 kg/sem por defecto, tope 1 %/sem, suelo basal y 1.500 kcal, media de 7 días, sin sumar kcal del entreno) atado al plan semanal; gráfica del peso; `/revisa-seguridad` | [v3-peso-objetivo] | construir | sonnet con ficha; `verificador` | ~1,0 M |
-
-Orden (Consejo, 2026-10-28): V0 → el usuario elige → **S3b** (ya aprobada) → V1 → V2. [aparc-comida-entreno] se cierra en V1
-(con entreno a las 15:00 la comida de después pasa a ~16:30). V1 es el primer trozo de [v3-entrenador].
-
-### Tanda «Ley de La Noche» (los tiempos del día: Lloret, cama, despertar y salir) · Consejo 2026-10-29 · acta `consejo/2026-10-29.md`
-
-[v3-calendario-sueno] «mejorar la parte principal del calendario… me estoy yendo al Lloret a fumar tarde, me acuesto
-tarde y me cuesta despertarme a las 6:45, llego tarde al curro; que la app me ayude con los tiempos» (2026-10-29).
-**Aprobada por delegación** (29/10): arriba (c), cama (b) 15 min cada 3 días, avisos (a) alarmas del móvil; ~4,5 M;
-el Consejo elige la maqueta y pasa a main. Sesiones tituladas «Ley de La Noche · N<n> · …». Va antes de [v3-coach].
-
-| # | Sesión | Tipo | Quién hace qué | Presupuesto |
-|---|---|---|---|---|
-| ~~N0~~ | ✅ 29/10 · gana **A · El cartel** (`maquetas/la-noche-a-cartel.html`, acta «N0 · la maqueta elegida») · Maquetas de arriba de Hoy (próxima hora + cadena Lloret → casa → cama → despertador → bus) en Conductor y en lista; «He vuelto» / «He llegado»; pantalla de alarmas del móvil · sin concurso | maqueta | opus dirige, sonnet maqueta; `verificador` | ~1,5 M |
-| N1 | Construir la cuenta atrás (un componente para los 4 modos; sustituye a `horasSuenoHTML` y `suenoHoyCardHTML`) | construir | sonnet con ficha | ~1,2 M |
-| N2 | Medir y avisar: vuelta del Lloret, llegada al trabajo, 3 diferencias de la semana, alarmas, `.ics` opcional apagado | construir | sonnet con ficha; haiku textos y pruebas | ~1,2 M |
-| N3 | Cierre: suite, sella, main, capturas a 412×915 | arreglo | sonnet | ~0,6 M |
-
 ### Tanda «La Reforma» (Dinero, Comer y Entreno) · Consejo 2026-10-29 (2.ª) · acta `consejo/2026-10-29-2.md`
 
 [v3-reforma] «nueva reforma y hacerla ya»: fijos más bonitos y «te queda», gasto grande frente al ahorro, Fintonic
@@ -149,52 +108,6 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | R10 | Construir Entreno: 12 dibujos, un toque por serie, «prueba +2,5 kg», récord (absorbe el primer trozo de [v3-entrenador]) | construir | haiku dibujos, sonnet obra | ~2,0 M |
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
-
-### Tanda «Las Mañanas» · el móvil y la hora de salir (pedida el 31/10, **antes** que la CH4 de El Chef) · Consejo 2026-10-31 · acta `consejo/2026-10-31-mananas.md` · **aprobada** (31/10: ~4,2 M, delegada; 1a · 2a · 3a) · LM1 ✅ (31/10, maqueta, rama) · LM2 ✅ (31/10, rama, 9a292ca + 5a1a25c) · LM3 ✅ (31/10, rama, 9fb82c8 + bdf18b5 + de257e7) · LM4 ✅ (31/10, rama, 075d319 + 4fd2da1) · LM5 ✅ (31/10, **en `main` cfc43b6**) · **hecha** · siguiente: El Chef CH4
-
-[v3-movil-mananas] «Conectarla con Bienestar digital para que vea el uso del móvil y me ayude; últimamente necesito 1 h
-para salir de casa y en parte es por el móvil.» Ya hay «minutos de móvil» a mano (L3). Una web no puede leer el uso sola.
-Caminos: (1) medir las mañanas desde la regleta + modo concentración de Android (recomendado); (2) captura de Bienestar
-digital leída en el móvil; (3) app de automatización que pase el uso con «compartir»; (4) app nativa (regla 3, del
-usuario). Orden: El Chef CH3 (maqueta, en marcha) → **Consejo de Las Mañanas y sus tareas** → El Chef CH4 en adelante.
-
-**Acordado (Consejo, 2026-10-31):** medir la mañana con 3 toques («En pie», «Vestido», «He salido») y una frase semanal
-de lo que más se estira dentro de «📊 Tu semana»; al salir, «📱 ¿Móvil esta mañana?» de un toque; 2 alarmas de mitad de
-mañana (Reloj o `.ics` apagado); guía de Android como extra. MacroDroid no lee el uso, pero sirve para una **pausa** de
-5 s antes de abrir una app (lo único con pruebas). La captura con el OCR que ya hay, solo si la pide. App nativa: no.
-Se guarda solo números y etiquetas suyas; nada de imágenes. Pendiente del usuario: presupuesto, camino del móvil y cuánto se guarda.
-
-| Clave | Qué | Tipo | Quién | Presupuesto |
-|---|---|---|---|---|
-| LM1 ✅ | Maqueta sin concurso (7 pantallas a 412×915, `maquetas/las-mananas.html`, aprobada por el Consejo) | maqueta | opus dirige, sonnet; `verificador` | ~0,9 M |
-| LM2 | Marcas + hoja del móvil + `normalize` + solape «Vestirse»/«Salir de casa» | construir | sonnet con ficha | ~0,9 M |
-| LM3 | «Tu semana» con tramos y frase + 2 alarmas + guía de Android | construir | sonnet con ficha; haiku textos | ~0,9 M |
-| LM4 ✅ | Pausa `?pausa=` + recuento + guía MacroDroid (según pregunta 2) · hecha 31/10 en la rama (075d319 + 4fd2da1), 1,0 M | construir | sonnet con ficha | ~0,9 M |
-| LM5 ✅ | Cierre: verificador, `/revisa-seguridad`, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
-| LM6 | (Condicional) «Subir captura» con el OCR local | construir | sonnet con ficha | ~0,9 M |
-
-Total ~4,2 M (LM1-LM5). Orden: LM1 ✅ → LM2 ✅ → LM3 ✅ → LM4 ✅ → LM5 ✅ (→ LM6 si la pide) → El Chef CH4.
-
-### Tanda «El Chef» (Consejo, 2026-10-30 · acta `consejo/2026-10-30-chef.md`) · **aprobada** (30/10: ~10 M, delegación al Consejo; 1a · 2a · 3a) · CH1 ✅ (30/10, rama) · CH2 ✅ (30/10, rama) · CH3 ✅ (31/10, maqueta, rama) · CH4 ✅ (01/11, rama: 60 platos, 61/61) · CH5 ✅ (01/11, rama `de794f7`: recetario navegable + «Tu cocina») · CH6 ✅ (01/11, rama `4f2fdcc`: modo cocina, prueba 408) · CH7 ✅ · CH8 ✅ · CH9 ✅ (341 platos) · CH10 ✅ · CH10b ✅ · CH11 ✅ (01/11, `main`) · **tanda cerrada**
-
-Recetario sin gluten (España, Italia, Grecia, Mediterráneo), semana con esos platos, modo cocina que enseña, compra, y
-la app que sigue a su cocina («la continuidad»: hoy micro + vitro pequeña, sin horno ni freidora de aire). Maqueta
-general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a `main` al cerrar la CH8) · **El Chef II** = CH9-CH11 (~2,7 M).
-
-| Clave | Qué | Tipo | Quién | Presupuesto |
-|---|---|---|---|---|
-| ~~CH1~~ ✅ 30/10 (rama, 1,3 M; ficha `fichas/chef.md`) | Ficha, esquema del JSON (equipo, cocina, dificultad, días, por qué, error, `tmp`), `tests/recetario.test.js`, alimentos que faltan, catálogo corregido y ampliado | datos | sonnet con ficha | ~0,7 M |
-| CH2 ✅ | «A la compra» desde la receta → compra de la semana (pasillos, sin gluten, «ya lo tengo») | construir | sonnet con ficha | ~0,9 M |
-| CH3 | Maqueta corta: modo cocina, «Tu cocina», filtro Cocina, «Estoy reventado», aviso «Cambiado» de TikTok | maqueta | opus + sonnet | ~0,6 M |
-| CH4 | Primeros ~60 platos enteros, para micro + vitro | datos | sonnet (+ haiku en arreglos) | ~0,6 M |
-| CH5 | Recetario navegable (JSON de carga perezosa en `sw.js`, filtros) + «Tu cocina» ampliando `cocinaPref` | construir | sonnet con ficha | ~0,9 M |
-| CH6 | Modo cocina: temporizadores, pantalla encendida, «tenlo a mano», por qué, conservación | construir | sonnet con ficha | ~0,9 M |
-| CH7 | Semana con el recetario + reglas de Sanidad + 1 fuego / ≤6 raciones por olla + «Estoy reventado» | construir | sonnet con ficha | ~0,9 M |
-| CH8 | TikTok → sin gluten al importar + «Mis marcas seguras» (según la respuesta) | construir | sonnet con ficha | ~0,9 M |
-| CH9 | Resto del catálogo entero (~270 platos), por lotes | datos | sonnet ×5 | ~1,5 M |
-| CH10 | Ruta de 8 técnicas + «Ahora puedes hacer N platos más» al ganar horno | construir | sonnet con ficha | ~0,6 M |
-| CH10b | **Pulido de toda la app** con las skills de `emilkowalski/skills` (MIT; pedido el 31/10): `mobile-native` (falta `100dvh`, `@media (hover: hover)` y repasar inputs ≥16 px), `animation-performance` y `review-animations` (curvas ease-out, `:active` con `scale(0.97)`, solo transform/opacity, `prefers-reduced-motion`). Se instalan en `.claude/skills/` solo esas 3 (texto, sin código). `verificador` mide antes y después a 412×915 | arreglo | sonnet con ficha | ~0,9 M |
-| CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 
 ### «El Lanzador» (la app Android que lee el uso del móvil) · Consejo 2026-11-01 · acta `consejo/2026-11-01.md` · **aprobada** (01/11: Brave, lanzadora C, todo plegado, ~2,6 M, delegación al Consejo) · **K1 hecha** (01/11, main 09c5151, run 41337590763 success; antes se arreglaron 8 pruebas que dependían de la fecha) · siguiente: **K2**
 
@@ -231,6 +144,9 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+- [v3-mananas] «Las Mañanas» LM1-LM5 · 31/10 · main cfc43b6 (marcas «En pie»/«Vestido», hoja del móvil, «Tu semana», pausa con recuento; LM6 condicional sin hacer)
+- [v3-chef] «El Chef» CH1-CH11 · 30/10-01/11 · main (recetario sin gluten de 341 platos, modo cocina, semana y compra con el recetario, pulido CH10b)
 
 - [v3-cierre] El Cierre C1-C4: iconos dibujados en los pasos de la mañana y el cajón «Más» (ducha y camiseta nuevos), horas de comer que siguen a la guardia y al saliente · pruebas 398-399 · 2026-10-30
 

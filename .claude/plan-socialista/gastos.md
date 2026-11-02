@@ -19,19 +19,17 @@ El presupuesto de la siguiente tarea de un tipo es el **90 % de la última medid
 empezar la tarea y a cada ayudante en su encargo («para en ~N pasos y entrega lo que tengas»). Si se pasa, el
 traspaso explica por qué.
 
-| Tipo | Modelo | Última medida | Presupuesto siguiente | De qué tarea |
-|---|---|---|---|---|
-| herramientas | opus | 439 k (26 pasos) | ~395 k | v3-plan-global (2026-10-27) |
-| arreglo | sonnet | D1 0,93 M · D6 3,1 M (quitar mucho) · R4 1,0 M sin parte · pruebas de fecha + paso a main 0,62 M (opus, 46 pasos) | ~0,9 M uno pequeño con ficha y captura · ~0,55 M arreglar pruebas y pasar a main · quitar código: en la misma D que lo sustituye | dinero D1/D6 (2026-10-28) |
-| maqueta | opus + sonnet (+ haiku jurado) | R1 3,0 M con concurso · R5 1,0 M sin concurso (92 pasos, parte y salud incluidos) · chef-ch3 0,7 M completando otra (10 pantallas) · mananas-lm1 0,46 M sin concurso (7 pantallas, 26 pasos) | ~2,7 M con concurso · ~0,5 M sin él si el acta ya fija las pantallas · ~0,7 M si solo completa otra (encargo entero al sonnet de una vez; el verificador, una pasada + un repaso corto) | mananas-lm1 (2026-10-31) |
-| construir | opus + haiku | 2,3 M (99 pasos) | ~2,1 M | v3-lector (2026-10-28) |
-| construir (pantalla con maqueta) | sonnet | D3 1,8 M · D4 1,3 M · D5 0,86 M | ~0,9 M con ficha y líneas exactas | dinero D3-D5 (2026-10-28) |
-| construir (Reforma, ficha + 1 constructor) | opus + sonnet | 3,6 M (178 pasos; obra 1,7 M, principal 1,6 M, verificador 0,18 M, parte 0,07 M) | ~3,2 M (90 %); sin el lío de main a mitad, ~2,5 M | reforma-r6-compra-congelador (2026-10-30) |
-| construir | opus + sonnet | 3,1 M (190 pasos, 4 ayudantes de obra) | ~2,8 M (la S3b) | v3-comer-reloj-1 (2026-10-28) |
-| construir | opus + sonnet | 12,1 M (402 pasos, S3b: 4 historias + quitar pestañas) | ~2,8 M por historia mediana; una tanda como la S3b, ~10,9 M (mejor partirla) | v3-comer-reloj-s2 (2026-10-28) |
-| datos (recetario, El Chef) | sonnet escribe, opus dirige | CH4 1,8 M por 60 platos (~0,23 M cada lote de 15 + ~0,7 M el principal; previsto 0,6 M) | CH9 (~280 platos): ~0,2 M por lote de 15 con script de una vez; el principal solo lanza y sube (medir tras cada lote) | chef-ch4 (2026-11-01) |
-| estudio | — | sin medir | — | — |
-| parte (/plan-socialista) | — | sin medir | — | — |
+Una cifra por tipo (simplificada el 02/11/2026, Consejo asunto 3). El detalle de cada medida está en «Tareas medidas».
+
+| Tipo | Presupuesto siguiente | Cómo (lo que lo hace posible) | De qué medida |
+|---|---|---|---|
+| estudio (Consejo) | **~0,6 M** | mapa en sonnet con ≤12 búsquedas + 2 dictámenes; quien preside lee cabeceras, no archivos enteros | consejo-gobierno 0,77 M (02/11) · media de 8: 0,79 M |
+| maqueta | **~0,5 M** | sin concurso, con las pantallas ya fijadas en el acta; un encargo al sonnet y una pasada del verificador (con concurso: ~2,7 M) | mananas-lm1 0,46 M (31/10) |
+| construir | **~1,2 M** | ficha con líneas exactas y qué se quita + un constructor sonnet con todas las condiciones + verificador | mananas-lm2/lm3 1,2 M · chef-ch5 1,3 M |
+| arreglo | **~0,5 M** | sitio ya localizado: sin ayudantes; cierre con verificador, suite, sella y main | mananas-lm5 0,43 M · suite-fecha-fija 0,62 M |
+| datos | **~0,2 M por lote de 15** | script de una vez por lote, sin releer el JSON; el principal solo lanza y sube | chef-ch4 (01/11) |
+| herramientas | **~0,4 M** | sin ayudantes, sin releer skills enteras | v3-plan-global 0,44 M (27/10) |
+| parte | sin medir | — | — |
 
 ## Tareas medidas
 
@@ -81,6 +79,7 @@ traspaso explica por qué.
 | 2026-11-01 | lanzador-k1 | construir | opus-5-5 + sonnet-5-5 | 4 | 102 | **1,7 M** | Construir K1 Lanzador web (48 %) | maqueta a mano + un constructor sonnet con la especificación cerrada + una pasada del verificador; la suite completa la corrió el constructor una vez |
 | 2026-11-01 | suite-fecha-fija-y-k1-a-main | arreglo | opus-5-5 + sonnet-5-5 | 1 | 46 | **621 k** | sesión principal (91 %) | 8 pruebas dependían de la fecha (6 ocultas tras el corte del trozo 4) · ahorro: fijaHoy/FECHA_FIJA para las que miren el día de la semana o el mes |
 | 2026-11-02 | consejo-gobierno | estudio | opus-5-5 + sonnet-5-5 | 3 | 37 | **770 k** | sesión principal (48 %) | Consejo sobre gobierno + sueño: mapa sonnet, 2 dictámenes (sonnet, opus); presidencia leyó gastos/gobierno/parte enteros · ahorro: leer cabeceras, no archivos enteros |
+| 2026-11-02 | consejo-gobierno-aplica | herramientas | opus-5-5 + sonnet-5-5 | 4 | 78 | **1,6 M** | sesión principal (59 %) | sí a todo: lista cerrada, Terminado + 3 hooks, poda de registro/plan/sesiones; un sonnet limpió registro y plan · incluye el Consejo (misma sesión) |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |

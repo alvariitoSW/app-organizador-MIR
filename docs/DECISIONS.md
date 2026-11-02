@@ -2547,3 +2547,32 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
 **Supuestos**
 - Las raciones de `PED_ING`/`PED_TIPO` son estimaciones de restaurante (p. ej. hamburguesa con bacon 850 kcal, patatas 320, batido grande 650); se afinan con lo que el usuario corrija.
 - Solo se ha probado con capturas de Glovo; Uber Eats y Just Eat siguen el mismo patrón (nombre, cantidad, precio), pero no se han visto.
+
+## 2026-11-02 · Consejo sobre el gobierno del repositorio (aplicado: puntos 1-3; el 4 al plan)
+
+Acta `.claude/plan-socialista/consejo/2026-11-02.md`. El usuario: «sí a todo».
+
+**Elegido.**
+- **1 · Lista cerrada** en `gobierno.md`: lo que el Consejo aprueba solo (orden, reparto, modelos, arreglos sin cambio
+  visible, completar un diseño ya elegido y pasar a `main` lo aprobado si se cumple «Terminado») y lo que le llega
+  siempre al usuario (8 puntos: los 4 de antes + red/dependencias/privacidad, datos guardados, las propias reglas,
+  excepciones a «Terminado»). Las 9 delegaciones por tanda, a `archivo/delegaciones-hasta-2026-11-02.md`.
+- **2 · «Terminado»** (7 puntos) en `CLAUDE.md`, con 3 hooks: `main-al-dia` (no deja lanzar la suite completa con
+  `main` por delante), `sella-antes-de-main` ahora exige una suite completa en verde sobre el mismo código (huella
+  `.claude/.suite-verde` que escribe `tools/pruebas-corto.sh` con `tools/huella-codigo.sh`), `fecha-en-pruebas` (avisa
+  de `new Date()`/`Date.now()` añadidos en `tests/` sin `fijaHoy`). La rama pasa a ser «la que asigna la sesión» en
+  `CLAUDE.md`, `cierra-y-despliega` y `preferencias.md`; fuera el `Co-Authored-By` fijo de la skill.
+- **3 · Poda:** cola de supuestos retirada (46 al archivo), notas `sesiones/` retiradas (a `archivo/sesiones/`),
+  `registro.md` solo con lo abierto (46 KB → 8 KB), «Por hacer» de `plan-v3.md` sin tandas hechas, presupuestos de
+  `gastos.md` en una cifra por tipo, el parte sin supuestos. El Consejo, solo para tandas de ~2 M o más o cuando
+  cambia lo que ve. Se mantienen hooks, `gasto.mjs`, fichas y verificador.
+- **4 · Sueño, opción B** → `plan-v3.md` «Sueño de un toque» [v3-sueno-un-toque], primera de «Por hacer»: S1 maqueta
+  (la elige el usuario), S2 construir, S3 cierre (~1,7 M).
+
+**Descartado.** Sueño A (no da nada a cambio de apuntar) y C (demasiado de golpe; se decide tras 2-3 semanas con B).
+Mover filas viejas de «Tareas medidas» a otro archivo (rompería el marcador `gastosFila` del parte).
+
+**Supuestos.** La huella de la suite cubre `app.js`, `sw.js`, `index.html`, `styles.css`, `fig/` y `tests/`; el sello
+y los `.md` no la cambian. `main-al-dia` no bloquea sin red. En la limpieza se cerraron [enc-mananas] y [enc-chef]
+(estaban hechas) y quedan en «Por hacer» La Gran Ley (G13 a medias), Tanda Comer (S6-S7) y La Reforma (R7-R10), que
+quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.

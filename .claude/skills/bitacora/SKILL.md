@@ -13,10 +13,9 @@ El plan de la 3.0 arriba y tres listas debajo, y nada más. Sin buscarle el enfo
 |---|---|
 | **0. El plan 3.0** | `.claude/plan-socialista/plan-v3.md`: «En marcha», las 3 primeras de «Por hacer» (la primera es la siguiente) y cuántas ideas hay. Con el **presupuesto** de su tipo de `gastos.md` («Presupuestos vigentes») si ya hay medida. |
 | **1. Lo hecho** | `.claude/plan-socialista/registro.md`: lo marcado «HECHA» o «desplegado» y la sección «Contado» (lo que tenga estado `hecha`/`success`). Los títulos `## …` de `docs/DECISIONS.md` (cada uno es una tanda, con su fecha). |
-| **2. Lo que falta pulir en la app** | En `registro.md`: los `[aparc-…]` abiertos y los «Siguen por hacer» de los encargos en marcha; los «Supuestos sin confirmar» (en una sola línea: cuántos y el más reciente). |
+| **2. Lo que falta pulir en la app** | En `registro.md`: los `[aparc-…]` abiertos y los «Siguen por hacer» de los encargos en marcha |
 | **3. Lo que dijiste que hay que hacer** | En `registro.md`: «A futuro (sin fecha)», los `[enc-…]` que no estén hechos (en `Contado`, los que digan `propuesto`) y la sección **«Para recordarte»**. Lo de la 3.0 ya sale en la lista 0: no se repite. |
 
-Lee también la nota de sesión más reciente de `.claude/plan-socialista/sesiones/` por si quedó algo dicho que no pasó al registro; si lo hay, añádelo al registro (paso de abajo) antes de contarlo.
 
 ## Cómo se entrega
 

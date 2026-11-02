@@ -43,19 +43,21 @@ Nunca metas identificadores de modelo en el repositorio.
 
 Cierra siempre con:
 
-```
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-Claude-Session: <la URL de esta sesión>
-```
+las líneas de atribución que te dé la sesión (`Co-Authored-By` y `Claude-Session`), tal cual.
+Ninguna fija en esta skill: cambian con cada sesión.
 
 ## 4. A la rama, y de ahí a main
 
 ```bash
-git push -u origin claude/app-main-branch-bnim1i
-git checkout main && git merge --ff-only claude/app-main-branch-bnim1i
-git push origin main
-git checkout claude/app-main-branch-bnim1i
+RAMA=$(git branch --show-current)          # la que te asigna la sesión
+git fetch origin main && git merge origin/main   # main al día (si trae algo: suite completa otra vez)
+git push -u origin "$RAMA"
+git push origin HEAD:main
 ```
+
+El hook `sella-antes-de-main` no deja subir código sin sello ni sin una suite completa en verde sobre ese mismo
+código; el hook `main-al-dia` no deja lanzar la suite completa con `main` por delante. Antes de subir, repasa la
+lista «Terminado» de `CLAUDE.md` (7 puntos).
 
 Si el push falla por red, reintenta con espera creciente (2 s, 4 s, 8 s, 16 s).
 
@@ -87,14 +89,13 @@ quede escrito en `.claude/plan-socialista/`, que lee `/plan-socialista`. Antes d
 1. **`registro.md` → «Encargos aparcados»:** cierra el encargo de esta tarea (con el commit de `main`
    y la fecha) y apunta, con id estable (`aparc-<tema>`), lo que quedó a medias o lo que el usuario
    pidió para después. Una línea por cosa, con el archivo o la entrada de DECISIONS donde está el detalle.
-2. **`registro.md` → «Supuestos sin confirmar»:** los supuestos que le dijiste en esta tarea y no ha
-   contestado (`sup-<fecha>-<tema>`). No dependas de que el parte los saque de DECISIONS: si el marcador
-   de DECISIONS ya pasó de esa línea, se perderían.
+2. **Supuestos:** ya van al final de tu respuesta y en `docs/DECISIONS.md`; no se copian al registro (cola
+   retirada el 02/11/2026). Si uno cambia lo que ve o sus datos, pregúntaselo en el momento.
 3. **`plan-v3.md`:** la tarea pasa de «En marcha» a «Hecha» (con commit de `main` y fecha), lo que quedó a
    medias o salió nuevo va a «Ideas», y la siguiente de «Por hacer» queda la primera.
 4. **El gasto** (skill `plan-socialista`, «Gastos»): `node tools/gasto.mjs --apunta <id> --tipo <tipo> --nota
    "…"`, actualiza «Presupuestos vigentes» en `gastos.md` y dile al usuario en una línea lo que costó.
-5. **`sesiones/<AAAA-MM-DD>.md`:** qué se hizo, qué se desplegó (commit y run), lo que costó y qué queda.
+5. (Ya no hay notas en `sesiones/`: retiradas el 02/11/2026. El traspaso es el registro + el plan.)
 6. Commit de `.claude/plan-socialista/` en la rama y push (no toca código: sin suite ni sello).
 7. Última línea al usuario: **«Para lo siguiente, abre una sesión nueva y escribe `/plan-socialista`».**
 
