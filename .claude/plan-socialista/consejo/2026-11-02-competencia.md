@@ -150,3 +150,7 @@ Además: si le parece bien, el informe y este acta pasan a `main` (solo document
 ## Gasto de la reunión
 
 **929 k** (`gasto.mjs`: 38 pasos, 3 ayudantes; principal 49 %). Se pasó del tope de 0,6 M: el informe íntegro lo leyeron tres (presidencia y dos dictámenes), como pidió el usuario, y la presidencia leyó `gastos.md` y `plan-v3.md` por trozos largos. Ahorro para la próxima: la tabla de dictámenes la escribe un solo agente y la presidencia solo suma.
+
+## Lo que decidió el usuario (02/11/2026)
+
+1-a (C1-C6, ~17,7 M, sin Consejo por tanda) · 2-a (la cara se queda) · 3-b (foto del cuadrante: pasa de C7 a **C4b**, +2,5 M, detrás de C4). Lo que no se hace va a Ideas como «algún día, sin prisa» `[v3-competencia-algun-dia]`. Presupuesto aprobado: **~20,2 M** nuevos (C1-C6 + C4b + 0,3 de la víspera en Sueño).

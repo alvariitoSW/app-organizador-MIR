@@ -27,7 +27,7 @@ Nada en marcha. Lo siguiente: Sueño de un toque (S1, maqueta).
 | S3 | Cierre: verificador 412×915, suite, sella, main | arreglo | sonnet | ~0,3 M |
 
 
-### «La Competencia»: superar a la rival (Consejo, 2026-11-02) · acta `consejo/2026-11-02-competencia.md` · **espera al usuario**
+### «La Competencia»: superar a la rival (Consejo, 2026-11-02) · acta `consejo/2026-11-02-competencia.md` · **aprobada por el usuario el 02/11** (1-a: C1-C6 ~17,7 M sin Consejo por tanda · 2-a: la cara de la app se queda, se copia orden y tamaño · 3-b: foto del cuadrante sí, C4b)
 
 [v3-competencia] Sobre `docs/informe-competencia-2026-11.md`. Cada propuesta del informe tiene su dictamen en el acta. Sin aprobar:
 presupuesto, estilo e importar planning (3 preguntas del acta). Va **después** de «Sueño de un toque», que suma la fila 2 (víspera
@@ -39,9 +39,10 @@ de guardia con «Avisarme», +0,3 M) si el usuario dice que sí. Propuesta de Ha
 | C2 | Apuntar en menos toques: «+» en Tu mes con la última categoría; «＋ serie» con la última vez; «Empezar» arriba; plan recomendado visible; rótulo de semana | 3, 11, 12, 19 (parte), F1 | 4 | ~2,8 M |
 | C3 | Hoy en una pantalla: tarjeta «Ahora» (con salida de guardia, energía y conducir); tira de hábitos | 5, 10 | 4 | ~2,9 M |
 | C4 | Mes y guardias: un contador; cabecera plegada; pincel visible; puerta y vista previa del planning (pegar y .ics); un «atrás» en Ajustes | 6, 9, X1, 8, F6 | 4 | ~3,0 M |
+| C4b | Foto del cuadrante con el lector local (Tesseract de `vendor/ocr`), sobre la vista previa de C4; la foto no se guarda ni sale del móvil | 8 (foto) | 2 | ~2,5 M |
 | C5 | Comer: lo que queda hoy (margen, sin culpa); Hoy de Comer plegado; invitación a la semana; «en vez de» reescrito | 13, 14, 15, X2 | 4 | ~2,7 M |
 | C6 | Hábitos, 4:20 y Estudio: plantillas siempre; obstáculos al final; «Privado» tapa también sin PIN (`/revisa-seguridad`); «Cómo me afecta» en una frase; HUD vacío plegado | 18, F5, 20, F4, F3, X4 | 5 | ~3,2 M |
-| C7 | Más adelante (opcional): asistente de turno, foto del cuadrante, caja de frase, copiar o guardar rutina, «Empieza» de Estudio, pasillos | 7, 8 foto, 17, 19 resto, F2, X3 | ~12 | ~9 M |
+| C7 | Más adelante (opcional): asistente de turno, foto del cuadrante, caja de frase, copiar o guardar rutina, «Empieza» de Estudio, pasillos | 7, 17, 19 resto, F2, X3 | ~10 | ~6,5 M |
 
 ### «La Gran Ley» (todo lo pendiente) · Consejo 2026-10-30 · acta `consejo/2026-10-30.md`
 
@@ -145,6 +146,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
+- [v3-competencia-algun-dia] (02/11, «algún día, sin prisa») Lo que el Consejo de La Competencia dejó fuera: importar el planning en PDF y Excel (librería nueva y tocar `sw.js`: decide el usuario), deslizar para cambiar de día, «+» flotante, widget de inicio y récords en gráfico. Acta `consejo/2026-11-02-competencia.md`.
 - [v3-mapa-comidas] (2026-10-30) Un mapamundi tipo Google Maps que vea dónde estoy ahora, poder decir «en este sitio he comido aquí» y guardar una foto de lo que he comido (de vacaciones o al salir de trabajar). A futuro. Ojo, regla 3: la ubicación y las fotos se quedan en el móvil (IndexedDB, no localStorage); los mosaicos del mapa (OpenStreetMap) se piden por red y dejan ver por dónde andas, así que decide el usuario.
 - (de la S3b) «pizza barbacoa 3 porciones» sin coma no la entiende; la sugerencia de vitaminas sin nevera propone el alimento más rico (p. ej. chocolate negro): afinar · DECISIONS «El Comer del reloj, sesión 2»
 - ~~(→ El Cierre C3) [v3-horas-guardia]~~ ✅ hecho 30/10 · Que las horas de comer (desayuno 9:00, cena 21:30…) sigan a guardias y salientes (Consejo 30/10, 3.ª)
