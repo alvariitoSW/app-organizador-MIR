@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Competencia · fase 1** (02/11): maquetas de las fases 1 y 2 **hechas y aprobadas** por el usuario (02/11: `maquetas/competencia-a.html` y `competencia-b.html`, opciones recomendadas). **Siguiente:** el Consejo aprueba cómo se construye, `encargos/competencia-construir.md` (sesión nueva, `/plan-socialista`); luego los pasos 2-5 de `encargos/competencia-fase-1.md`.
+**La Competencia · fase 1** (02/11): maquetas de las fases 1 y 2 **hechas y aprobadas** por el usuario (02/11: `maquetas/competencia-a.html` y `competencia-b.html`, opciones recomendadas). **Cómo se construye (Consejo, 2026-11-02, acta `consejo/2026-11-02-competencia-construir.md`):** (S1 ∥ C2) → C1 sola → (C3 ∥ C4 ∥ C5) → (C6 ∥ C4b); pruebas 450-459 S1 · 460 C2 · 470 C1 · 480 C3 · 490 C4 · 500 C5 · 510 C6 · 520 C4b; fase 1 ~6,1 M. Espera 2 respuestas del usuario (S1: «Te faltan N noches» y el texto de la víspera); luego los pasos 2-5 de `encargos/competencia-fase-1.md`.
 
 ## Por hacer
 
