@@ -2625,3 +2625,13 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Descartado:** otra hoja de gasto; copiar mi último entreno y guardar como rutina (tanda 7); tocar «Vienes de guardia» (solo queda por encima de «Empezar»).
 **Supuestos:** la vuelta tras un parón (antes una parte del dibujo grande) pasa a un botón bajo la cinta «Tu vuelta · semana N de M · al X %»; «Explícamelo» es un enlace al final de la portada; «＋ serie» sale también en el día libre con rutinas; el día de la serie es el elegido en la portada.
 **Pruebas:** 460-463. Cae con X revertido: 460 sin la pastilla `.tm-mas` o sin recordar la categoría; 462 con el dibujo grande otra vez arriba (la cinta no existe). Pruebas viejas cambiadas por decisión: 212 (ya no hay lámina que buscar), 353 (abre el dibujo con `gymLam`), 356/357/358 (cinta en vez de lámina; rótulo nuevo), 323/350 (la vuelta se busca sin `.glam`).
+
+## 2026-11-02 · La Competencia · C5 Comer
+**Elegido (opciones recomendadas):**
+- Comer · Hoy: bajo «Ahora» sale «N kcal de margen hoy» y «N g de proteína por tomar» al mismo tamaño (`cjeMargenHTML`, techo de `nutTecho`, sin tocar su cálculo). Pasado el techo: «Has llegado a tu techo de hoy» (sin negativos, color de tinta, nunca rojo); proteína cumplida: «Proteína cubierta». Sin objetivo no sale.
+- Se pliegan a un toque (`cmPlegHTML`, `ui.cmPl`, acción `cm-pleg`): «Hoy hay Lloret» (abierto desde las 14:00), vitaminas y «Tu semana» (cerrados). El cuerpo sigue en el DOM con `hidden`.
+- «en vez de <s>X</s>» pasa a «Tocaban X · lo cambiaste» (gris, sin tachar).
+- Letras L M X J V S D de la tira (`.cjs7 b`): en claro #4f6180 (5,3:1 sobre la casilla; antes 4,44:1); el oscuro no cambia.
+**Descartado:** tocar texto libre, kit de vuelta, cena antes de salir, tandas, objetivo/techo, «¿Me la propones?».
+**Supuestos:** el margen va como fila propia sobre los cuatro recuadros (llevas/objetivo se quedan); el resumen de «Tu semana» dice cuántas kcal quedan; el estado plegado no se guarda entre sesiones.
+**Pruebas:** 500-503 (un bloque). Cae con X revertido: con app.js y styles.css de antes la 500 cae y la 501 revienta al no existir `.cmplh`. Viejas cambiadas por decisión: 239 (espera «Tocaban … lo cambiaste»); 319, 334, 338, 396 abren antes el plegable (`abrePleg`); 334 busca `.cjvit` dentro de `.cmplb`.

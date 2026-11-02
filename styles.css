@@ -2784,7 +2784,6 @@ details.cnci p{margin:0 12px 10px;font-size:var(--suelo);line-height:1.5}details
 .cjrac button:disabled{opacity:.35}
 .cjrac b{min-width:18px;text-align:center;font-size:15px}
 .cjfilt{margin:10px 0 4px}
-.cjpl{display:flex;align-items:center;gap:12px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
 .cjpl .e{font-size:22px}.cjpl .n{flex:1;min-width:0}
 .cjpl .n b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cjpl .n span{font-size:var(--suelo);color:var(--ink2)}
@@ -4374,3 +4373,16 @@ html.dark .tm-bt.p.tm-gbtn{background:var(--card);color:var(--ink);border-color:
 /* SUELO-SMALL: <small> hereda el 83 % del padre; con suelo. Las excepciones lo conservan. */
 small{font-size:max(.83em,var(--suelo))}
 :where(.dbox,.carrilbox,.snord,.snreloj,.manana,.cal.ext) small{font-size:.83em}
+
+/* ===== C5 Comer: lo que queda hoy, plegables, «lo cambiaste» ===== */
+.cjmarg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 8px}
+.cjmk{display:flex;flex-direction:column;gap:2px;min-width:0;padding:8px 10px;border-radius:var(--r-12);background:var(--superficie-2);box-shadow:inset 0 0 0 1px var(--borde)}
+.cjmk b{font-size:var(--t-20);line-height:1.15;font-variant-numeric:tabular-nums}
+.cjmk small{font-size:var(--suelo);color:var(--ink2);font-weight:700}
+.cjmk.tope b{font-size:var(--t-16);color:var(--ink)}
+.cmplh{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--toque);margin:0 0 8px;padding:8px 14px;border:0;border-radius:var(--r-12);background:var(--card);box-shadow:inset 0 0 0 1px var(--borde);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.cmplh .e{flex:none}.cmplh .t{flex:1;min-width:0;display:flex;flex-direction:column}.cmplh .t b{font-size:var(--t-16)}
+.cmplh .t small{font-size:var(--suelo);color:var(--ink2);font-weight:600}.cmplh .chev{flex:none;color:var(--ink2);font-weight:800}
+.cmplh.cmvit{margin:0;border-radius:0;box-shadow:none;background:none;border-top:1px dashed var(--line);padding:8px 0}
+.cmplb[hidden]{display:none!important}
+html:not(.dark) .cjs7 b{color:#4f6180}
