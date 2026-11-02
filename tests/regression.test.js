@@ -14189,7 +14189,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('a las 7:17 la pieza dice «Bus en 18 min · sal de casa a las 07:31» y trae el botón «he salido»',
       r.f.arriba && /Bus/.test(r.f.txt) && /en 18 min/.test(r.f.txt) && /sal de casa a las 07:31/.test(r.f.txt) && r.fBoton, JSON.stringify([r.f, r.fBoton]));
   }
-  // 360) LA NOCHE · «🏠 He vuelto» (N2, 412×915, hoy = jue 29/10/2026 21:30): botón → hoja con la hora → −5 → Guardar apunta store.lloret.vuelta[hoy],
+  // 360) LA NOCHE · «He vuelto» (N2, 412×915, hoy = jue 29/10/2026 21:30): botón → hoja con la hora → −5 → Guardar apunta store.lloret.vuelta[hoy],
   // el cartel deja de pedir «Vete del Lloret», la cadena dice «✓ Volviste…» y el dato sobrevive a normalize. Fija: no había forma de decir que ya estabas en casa.
   {
     const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
@@ -14232,14 +14232,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.e = await lee();
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
     await page.setViewportSize(vp36);
-    check('360 a las 21:30 «🏠 He vuelto» abre la hoja con 21:30; −5 la deja en 21:25; Guardar apunta store.lloret.vuelta[hoy] y el cartel deja de pedir «Vete del Lloret»',
+    check('360 a las 21:30 «He vuelto» abre la hoja con 21:30; −5 la deja en 21:25; Guardar apunta store.lloret.vuelta[hoy] y el cartel deja de pedir «Vete del Lloret»',
       /He vuelto/.test(r.a.boton) && r.a.botonK === 'vuelta' && r.pronto.boton === '' && /Vete del Lloret · 21:45/.test(r.a.txt) && r.b.hora === '21:30' && /He vuelto/.test(r.b.hoja) && r.b.altoH >= 44 && !!r.b.aria && r.c.hora === '21:25'
       && r.vuelta[0] === '21:25' && r.vuelta[1] === '21:25' && r.d.hoja === '' && !/Vete del Lloret/.test(r.d.txt) && r.d.boton === '', JSON.stringify([r.a, r.pronto, r.b, r.c, r.d, r.vuelta]));
     check('360 el cartel de las 21:30 no contradice la hora de irse: «Vete del Lloret · 21:45 … empieza a despedirte a las 21:35»',
       /Vete del Lloret · 21:45/.test(r.a.txt) && /empieza a despedirte a las 21:35/.test(r.a.txt) && !/lo último allí/.test(r.a.txt), r.a.txt);
     check('360 con la vuelta apuntada la cadena desplegada dice «✓ Volviste a las 21:25» y no lista el hito de vete', /✓ Volviste a las 21:25/.test(r.e.txt) && !/Vete del Lloret/.test(r.e.txt), JSON.stringify(r.e));
   }
-  // 361) LA NOCHE · «🏢 He llegado» (viernes 7:58, día de bus): botón → hoja → Guardar apunta store.manana[hoy].llego (sin salio) y sobrevive a normalize.
+  // 361) LA NOCHE · «He llegado» (viernes 7:58, día de bus): botón → hoja → Guardar apunta store.manana[hoy].llego (sin salio) y sobrevive a normalize.
   // Fija: normalize borraba las entradas de manana sin salio ni eur.
   {
     const vp36 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
@@ -14281,9 +14281,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(150); s.d = await lee();
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia36; delete window.__copia36; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.save(); P.render(); window.Date = window.__origDate36; });
     await page.setViewportSize(vp36);
-    check('361 a las 7:58 «🚪 He salido» (mayúscula) es el principal y «🏢 He llegado» va de segundo, ≥44 px; al guardar la llegada «He salido» desaparece',
-      s.ba.sali === '🚪 He salido' && s.ba.saliP && !s.ba.vivoP && s.ba.vivoAlto >= 44 && s.bc.sali === '', JSON.stringify([s.ba, s.bc]));
-    check('361 el viernes a las 7:58 «🏢 He llegado» → Guardar apunta store.manana[hoy].llego (sin salio), sobrevive a normalize y la cadena dice «✓ Llegaste a las 07:58»',
+    check('361 a las 7:58 «He salido» (mayúscula) es el principal y «He llegado» va de segundo, ≥44 px; al guardar la llegada «He salido» desaparece',
+      s.ba.sali === 'He salido' && s.ba.saliP && !s.ba.vivoP && s.ba.vivoAlto >= 44 && s.bc.sali === '', JSON.stringify([s.ba, s.bc]));
+    check('361 el viernes a las 7:58 «He llegado» → Guardar apunta store.manana[hoy].llego (sin salio), sobrevive a normalize y la cadena dice «✓ Llegaste a las 07:58»',
       /He llegado/.test(s.a.boton) && s.a.botonK === 'llego' && /He llegado/.test(s.b.hoja) && s.b.hora === '07:58' && s.c.hoja === '' && s.c.boton === '' && s.m[0] === '{"llego":"07:58"}' && s.m[1] === '{"llego":"07:58"}' && /✓ Llegaste a las 07:58/.test(s.d.txt), JSON.stringify([s.a, s.b, s.c, s.m, s.d]));
   }
   // 362) LA NOCHE · pantallas: desplegar → «⏰ Alarmas del móvil» (vete, cama, sal con hora) → «Ya las he puesto» vuelve a Hoy; «📊 Tu semana» con 3 filas en minutos, sin rojo.
@@ -15507,33 +15507,37 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 12 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
     await page.setViewportSize(vp);
   }
-  // (b) sueño en Hoy: la fila de «te faltan N noches» sale en los 4 modos solo el día de hoy y abre la hoja de la noche más reciente sin anotar
+  // (b) sueño en Hoy (S1: antes había una fila «Te faltan N noches»; ya no): con «He vuelto» y «En pie» dados sale la fila «Anoche … Vale · cambiar · otras noches»
+  // en los 4 modos; «otras noches» abre la vista Sueño y «cambiar» abre la hoja de la noche de siempre
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
     await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia397b', JSON.stringify(P.store));
-      const sr = P.store.suenoReal = {}, hoy = new Date(); sr[P.iso(P.addDays(hoy, -2))] = { h: 7, guardia: false };
+      const hoy = new Date(), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end)[0];
+      for (let i = -3; i <= 1; i++) P.setDayOverride(P.iso(P.addDays(hoy, i)), SH.id, '');
+      const sr = P.store.suenoReal = {}; sr[P.iso(P.addDays(hoy, -2))] = { h: 7, guardia: false };
+      P.store.lloret = { diario: true, vuelta: { [P.iso(P.addDays(hoy, -1))]: '23:40' } }; P.store.manana = { [P.iso(hoy)]: { pie: '07:10' } };
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.save(); P.render(); });
     const r = { modos: {} };
     r.hoyK = await page.evaluate(() => window.PG.iso(new Date()));
     for (const m of ['bus', 'est', 'reloj', 'linea']) {
       await page.click('#main [data-a="hoy-modo"][data-v="' + m + '"]'); await page.waitForTimeout(300);
-      r.modos[m] = await page.evaluate(() => { const f = document.querySelectorAll('#main .snfalta'), e = f[0], seg = document.querySelector('#main .hoyseg');
-        return { n: f.length, h: e ? Math.round(e.getBoundingClientRect().height) : 0, w: e ? Math.round(e.getBoundingClientRect().width) : 0, txt: e ? e.innerText.replace(/\s+/g, ' ') : '',
-          bajoCab: !!(e && seg && (seg.compareDocumentPosition(e) & 4)), dos: document.querySelectorAll('#main .nanoche').length }; });
+      r.modos[m] = await page.evaluate(() => { const f = document.querySelectorAll('#main .nanoche'), e = f[0], seg = document.querySelector('#main .hoyseg');
+        return { falta: document.querySelectorAll('#main .snfalta').length, n: f.length, txt: e ? e.innerText.replace(/\s+/g, ' ') : '',
+          botones: e ? [...e.querySelectorAll('button')].map((b) => Math.round(b.getBoundingClientRect().height)) : [], bajoCab: !!(e && seg && (seg.compareDocumentPosition(e) & 4)), ancho: document.documentElement.scrollWidth }; });
     }
     await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(300);
-    await page.click('#main .snfalta'); await page.waitForTimeout(250);
+    await page.click('#main .nanoche [data-a="sn-abrir"]'); await page.waitForTimeout(250);
+    r.otras = await page.evaluate(() => ({ vista: window.PG.ui.hoyVista, txt: (document.querySelector('#main') || {}).innerText.slice(0, 200) }));
+    await page.evaluate(() => { const P = window.PG; P.ui.hoyVista = ''; P.render(); }); await page.waitForTimeout(250);
+    await page.click('#main .nanoche [data-a="sn-hoja"]'); await page.waitForTimeout(250);
     r.hoja = await page.evaluate(() => ({ k: window.PG.ui.snHoja, hoja: !!document.querySelector('.hoja') }));
     await page.click('.hoja [data-a="sn-tguardar"]'); await page.waitForTimeout(250);
-    r.tras = await page.evaluate(() => { const e = document.querySelector('#main .snfalta'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; });
-    await page.click('#main [data-a="dia-prev"]'); await page.waitForTimeout(250);
-    r.ayer = await page.$$eval('#main .snfalta', (b) => b.length);
-    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397b')); localStorage.removeItem('__copia397b'); P.ui.snHoja = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
-    await page.click('#main [data-a="dia-hoy"]').catch(() => {});
+    r.tras = await page.evaluate(() => ({ fila: document.querySelectorAll('#main .nanoche').length, falta: document.querySelectorAll('#main .snfalta').length }));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397b')); localStorage.removeItem('__copia397b'); P.ui.snHoja = ''; P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
-    const ok = Object.values(r.modos).every((x) => x.n === 1 && x.h >= 44 && x.w >= 340 && /Te faltan 2 noches/.test(x.txt) && x.bajoCab && x.dos === 0);
-    check('397b Sueño en Hoy · con 2 noches sin anotar sale UNA fila «Te faltan 2 noches · anotar» (44 px, ancho completo, bajo la cabecera) en los 4 modos; abre la hoja de anoche, al guardar pasa a «Te falta 1 noche» y en el día de ayer no sale',
-      ok && r.hoja.hoja && r.hoja.k === r.hoyK && /Te falta 1 noche/.test(r.tras) && r.ayer === 0, JSON.stringify(r));
+    const ok = Object.values(r.modos).every((x) => x.falta === 0 && x.n === 1 && /Anoche 23:40–7:10 · 7 h 30/.test(x.txt) && /Vale/.test(x.txt) && /cambiar/.test(x.txt) && /otras noches/.test(x.txt) && x.botones.every((h) => h >= 44) && x.bajoCab && x.ancho <= 412);
+    check('397b Sueño en Hoy · ya no sale «Te faltan N noches»; con «He vuelto» y «En pie» dados sale UNA fila «Anoche … Vale · cambiar · otras noches» (≥44 px) en los 4 modos; «otras noches» abre Sueño, «cambiar» abre la hoja de hoy y al guardar la fila se va',
+      ok && r.otras.vista === 'sueno' && r.hoja.hoja && r.hoja.k === r.hoyK && r.tras.fila === 0 && r.tras.falta === 0, JSON.stringify(r));
   }
   // (c) vuelo en el modo viaje: la cuenta «sal de casa» rellena la salida y sale en Hoy con los enlaces fuera de la app
   {
@@ -15580,7 +15584,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.save(); P.render(); });
     const r = {};
     await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250);
-    await page.click('#main .snfalta'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="hoy-modo"][data-v="reloj"]'); await page.waitForTimeout(250);
+    await page.click('#main .snbtn'); await page.waitForTimeout(250);
     r.campo = await page.$$eval('.hoja [data-a="sn-movil"]', (b) => b.length);
     r.chips = await page.$$eval('.hoja [data-a="sn-movil-chip"]', (b) => b.map((x) => x.innerText + ':' + Math.round(x.getBoundingClientRect().height)));
     await page.fill('.hoja [data-a="sn-movil"]', '90'); await page.keyboard.press('Tab'); await page.waitForTimeout(150);
@@ -15678,7 +15683,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.hayPlato && r.hayAbre && r.hayCompra && r.sinGluten && !r.sinCruda && r.cebolla && r.nPasillos >= 2 && !r.aMano && r.marcada, JSON.stringify(r));
   }
 
-  // 401) LAS MAÑANAS · LM2: «🧍 En pie» y «👕 Vestido» en la noche (marcar, desmarcar, sobrevivir a normalize).
+  // 401) LAS MAÑANAS · LM2: «En pie» y «Vestido» en la noche (marcar, desmarcar, sobrevivir a normalize).
   {
     const vp40 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
     const pon = (h, m, dia) => page.evaluate(([h, m, dia]) => { const Orig = window.__origDate40 || Date; window.__origDate40 = Orig;
@@ -15714,10 +15719,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click(sel + '[data-k="pie"]'); await page.waitForTimeout(150); R.a5 = await fichas();
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
     await page.setViewportSize(vp40);
-    check('401 06:50 «🧍 En pie» → ✓ y 06:50 y store pie; 07:12 «👕 Vestido» → vestido y «He salido» pasa a principal; sobrevive a normalize; otro toque en En pie lo desmarca',
-      R.a0.pie.p && !R.a0.vestido.p && R.a0.sali.txt === '🚪 He salido' && R.a0.pie.alto >= 44 && R.a0.vestido.alto >= 44 && R.a0.sali.alto >= 44 && /Un toque cada uno\. Ducha y café van dentro\./.test(R.a0.mini) &&
-      R.a1.pie.txt === '🧍 En pie ✓06:50' && R.a1.pie.on === 'true' && R.a1.man === '{"pie":"06:50"}' && R.a2.vestido.p && !R.a2.sali.p &&
-      R.a3.vestido.txt === '👕 Vestido ✓07:12' && R.a3.sali.p && R.a3.man === '{"pie":"06:50","vestido":"07:12"}' && R.a4 === '{"pie":"06:50","vestido":"07:12"}' &&
+    check('401 06:50 «En pie» → ✓ y 06:50 y store pie; 07:12 «Vestido» → vestido y «He salido» pasa a principal; sobrevive a normalize; otro toque en En pie lo desmarca',
+      R.a0.pie.p && !R.a0.vestido.p && R.a0.sali.txt === 'He salido' && R.a0.pie.alto >= 44 && R.a0.vestido.alto >= 44 && R.a0.sali.alto >= 44 && /Un toque cada uno\. Ducha y café van dentro\./.test(R.a0.mini) &&
+      R.a1.pie.txt === 'En pie ✓06:50' && R.a1.pie.on === 'true' && R.a1.man === '{"pie":"06:50"}' && R.a2.vestido.p && !R.a2.sali.p &&
+      R.a3.vestido.txt === 'Vestido ✓07:12' && R.a3.sali.p && R.a3.man === '{"pie":"06:50","vestido":"07:12"}' && R.a4 === '{"pie":"06:50","vestido":"07:12"}' &&
       R.a5.pie.on === 'false' && R.a5.man === '{"vestido":"07:12"}', JSON.stringify([R.a0, R.a1, R.a2, R.a3, R.a4, R.a5]));
   }
   // 402) LAS MAÑANAS · LM2: «He salido» abre «¿Móvil esta mañana?»; guardar, «Ahora no», la copia sin etiquetas, deshacer y las medias a 90 días.
@@ -15770,7 +15775,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store = JSON.parse(JSON.stringify(P.store)); return JSON.stringify([P.store.manana['2026-07-01'], P.store.manana['2026-06-30'] || null, P.store.mananaMedias['2026-07']]); });
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia40; delete window.__copia40; P.ui.nocheAbierta = false; P.ui.mananaMovil = null; P.ui.diaHoy = ''; P.save(); P.render(); window.Date = window.__origDate40; });
     await page.setViewportSize(vp40);
-    check('402 «🚪 He salido» abre «¿Móvil esta mañana?» con Guardar apagado y minutos de ≥56 px; con 15, Noticias, Pódcast y Mensajes elegidos la 4.ª etiqueta no entra',
+    check('402 «He salido» abre «¿Móvil esta mañana?» con Guardar apagado y minutos de ≥56 px; con 15, Noticias, Pódcast y Mensajes elegidos la 4.ª etiqueta no entra',
       R.b1 && /Saliste a las 07:33/.test(R.b1.txt) && /¿Móvil esta mañana\?/.test(R.b1.txt) && R.b1.guardarOff && R.b1.altoMin >= 56 &&
       R.b2.on.join('|') === '15|Noticias|Mensajes|Pódcast' && R.b2.tags.indexOf('Pódcast') >= 0 && R.b2.tags.indexOf('Cuarta') < 0, JSON.stringify([R.b1, R.b2]));
     check('402c Guardar (tras quitar Mensajes) escribe movil:15 y con [Noticias, Pódcast] y cierra la hoja; la copia no lleva con ni «Pódcast» pero sí el número; deshacer quita la salida y el móvil',
@@ -16603,6 +16608,136 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('449-f tras recargar, ONLYFAN sale «como la última vez» (sin la Fanta) y «calcular de nuevo» lo olvida', R.memo.modo === 'memo' && R.memo.kcal === 1070 && R.memo.tag && R.olvida.modo === 'tipo' && R.olvida.memo === 0, JSON.stringify([R.memo, R.olvida]));
   }
 
+  // 450) LA COMPETENCIA (450-459, un solo bloque: comparten la siembra) · S1 «Sueño de un toque + víspera» (412×915, hoy fijo a las 07:30). Bajo el cartel de La Noche, al despertar, una fila
+  // «Anoche 23:40–7:30 · 7 h 50 · Vale · cambiar · otras noches» con las horas que ya diste («He vuelto» y «En pie»): «Vale» guarda la noche en
+  // suenoReal; luego las 3 caras (Roto · Normal · Fresco) con «Saltar». Se quita «Te faltan N noches». La víspera de guardia el cartel dice
+  // «Faltan X h Y en tus 3 últimas noches · cama HH:MM» y debajo cama · último café · siesta con «Avisarme»; el día de guardia la línea es la siesta.
+  {
+    const vp450 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(7, 30);
+    await page.evaluate(() => { window.__copia450 = JSON.parse(JSON.stringify(window.PG.store)); });
+    // siembra: días de trabajo alrededor de hoy (despertador 06:45, bus), guardias en los desplazamientos de cfg.g, la vuelta de anoche, «En pie» de hoy y noches apuntadas
+    const siembra450 = (cfg) => page.evaluate((cfg) => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia450));
+      const hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end)[0], GU = P.store.shifts.filter(P.isGuardia)[0];
+      P.store.rotation.mode = 'date'; P.store.rotation.dayRhythm = P.store.rotation.dayRhythm || {};
+      for (let i = -14; i <= 4; i++) { P.setDayOverride(d(i), SH.id, ''); P.store.rotation.dayRhythm[d(i)] = { wake: '06:45' }; }
+      (cfg.g || []).forEach((i) => P.setDayOverride(d(i), GU.id, 'urg'));
+      P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, avisos: {}, sim: {} }, cfg.sueno || {});
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.suenoReal = {}; P.store.manana = {}; P.store.lloret = { diario: true };
+      if (cfg.vuelta) P.store.lloret.vuelta = { [d(-1)]: cfg.vuelta };
+      if (cfg.pie) P.store.manana[d(0)] = { pie: cfg.pie };
+      Object.keys(cfg.noches || {}).forEach((i) => { P.store.suenoReal[d(+i)] = { h: cfg.noches[i], guardia: false }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.snHoja = ''; P.save(); P.render();
+      return { hoy: d(0), man: d(1) }; }, cfg);
+    const lee450 = () => page.evaluate(() => { const P = window.PG, q = (s) => document.querySelector('#main ' + s), t = (e) => e ? e.innerText.replace(/\s+/g, ' ').trim() : '', k = P.iso(new Date());
+      const l4 = q('.ncartel .l4'), sr = P.suenoReal(k);
+      return { fila: t(q('.nanoche')), caras: q('.ncaras') ? [...document.querySelectorAll('#main .ncara')].map((b) => t(b)) : [], carasTxt: t(q('.ncaras')), falta: document.querySelectorAll('#main .snfalta').length,
+        l4: t(l4), l4Color: l4 ? getComputedStyle(l4).color : '', vis: t(q('.nvis')), avisa: q('[data-a="sn-avisa3"]') ? t(q('[data-a="sn-avisa3"]')) : '', cartel: t(q('.ncartel')), sr: sr ? JSON.stringify(sr) : '',
+        altoBot: [...document.querySelectorAll('#main .nanoche button, #main .ncaras button, #main .nvis button')].map((b) => Math.round(b.getBoundingClientRect().height)), ancho: document.documentElement.scrollWidth,
+        btnSnbtn: q('.snbtn') ? t(q('.snbtn')) : '' }; });
+    const restaura450 = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia450)); P.ui.snHoja = ''; P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
+    const rojo = (c) => { const m = /rgba?\((\d+), (\d+), (\d+)/.exec(c || ''); return !m || (+m[1] - +m[2] > 60 && +m[1] - +m[3] > 60); };
+
+    // 450) «He vuelto» (guardado) + «En pie» (botón de verdad) → fila «Anoche …» → «Vale» → la noche queda en suenoReal con esas horas
+    const s1 = await siembra450({ vuelta: '23:40' }); await page.waitForTimeout(250);
+    const a0 = await lee450();
+    await page.click('#main [data-a="manana-marca"][data-k="pie"]'); await page.waitForTimeout(250);
+    const a1 = await lee450();
+    await page.click('#main .nanoche [data-a="anoche-vale"]'); await page.waitForTimeout(250);
+    const a2 = await lee450();
+    const sr450 = await page.evaluate((k) => JSON.stringify(window.PG.suenoReal(k)), s1.hoy);
+    check('450 sin «En pie» no hay fila «Anoche»; al dar «En pie» (07:30) sale «Anoche 23:40–7:30 · 7 h 50 · Vale · cambiar · otras noches» y «Vale» guarda la noche en suenoReal (acostar 23:40, desp 07:30, 7,83 h, no guardia)',
+      a0.fila === '' && /^Anoche 23:40–7:30 · 7 h 50 Vale cambiar otras noches$/.test(a1.fila) && a1.altoBot.every((h) => h >= 44) && a1.ancho <= 412 &&
+      /"acostar":"23:40"/.test(sr450) && /"desp":"07:30"/.test(sr450) && /"h":7\.83/.test(sr450) && /"guardia":false/.test(sr450) && /Anoche guardada/.test(a2.fila) && /7 h 50/.test(a2.fila), JSON.stringify([a0, a1, a2, sr450]));
+
+    // 451) tras «Vale», las 3 caras: elegir «Fresco» la guarda y las caras se van; la noche sigue (y se ve en el botón de la noche del Reloj)
+    const c0 = a2;
+    await page.click('#main .ncaras [data-a="anoche-cara"][data-v="fresco"]'); await page.waitForTimeout(250);
+    const c1 = await lee450();
+    await page.click('#main [data-a="hoy-modo"][data-v="reloj"]'); await page.waitForTimeout(250);
+    const c2 = await lee450();
+    check('451 tras «Vale» salen Roto · Normal · Fresco con «Saltar»; tocar «Fresco» las quita, guarda amanece=fresco y la noche sigue (7 h 50 en el botón de la noche)',
+      JSON.stringify(c0.caras) === '["Roto","Normal","Fresco"]' && /Saltar/.test(c0.carasTxt) && c0.altoBot.every((h) => h >= 44) && c1.caras.length === 0 && c1.fila === '' && /"amanece":"fresco"/.test(c1.sr) && /"acostar":"23:40"/.test(c1.sr) &&
+      /Anoche: 7h50/.test(c2.btnSnbtn), JSON.stringify([c0, c1, c2]));
+    await restaura450();
+
+    // 452) lo mismo pero «Saltar»: un toque, desaparece, sin nota ni racha y la noche (con sus horas) sigue guardada
+    await siembra450({ vuelta: '23:40', pie: '07:10' }); await page.waitForTimeout(250);
+    await page.click('#main .nanoche [data-a="anoche-vale"]'); await page.waitForTimeout(250);
+    const d1 = await lee450();
+    await page.click('#main .ncaras [data-a="anoche-saltar"]'); await page.waitForTimeout(250);
+    const d2 = await lee450();
+    const d3 = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), r = P.suenoReal(k); P.store = JSON.parse(JSON.stringify(P.store)); const ok = P.suenoReal(k);
+      return { h: r.h, acostar: r.acostar, desp: r.desp, kss: r.kss, amanece: r.amanece, notas: Object.keys(r).filter((x) => /nota|racha/i.test(x)).length, sigue: !!ok && ok.h === r.h }; });
+    check('452 «Saltar» quita las caras con un toque: sin nota ni racha, la noche (23:40–7:10, 7 h 30) sigue guardada y no vuelven a salir',
+      /Anoche guardada/.test(d1.fila) && d1.caras.length === 3 && d2.caras.length === 0 && d2.fila === '' && d3.h === 7.5 && d3.acostar === '23:40' && d3.desp === '07:10' && d3.kss === 0 && d3.amanece === 'no' && d3.notas === 0 && d3.sigue, JSON.stringify([d1, d2, d3]));
+    await restaura450();
+
+    // 453) «cambiar» abre la hoja de la noche de siempre (tramos, KSS, móvil) y «otras noches» abre la vista Sueño; ya no existe «Te faltan N noches» en ningún modo
+    await siembra450({ vuelta: '23:40', pie: '07:10', noches: { '-2': 7 } }); await page.waitForTimeout(250);
+    const e0 = {};
+    for (const m of ['bus', 'est', 'reloj', 'linea']) { await page.click('#main [data-a="hoy-modo"][data-v="' + m + '"]'); await page.waitForTimeout(250); const x = await lee450(); e0[m] = [x.falta, /^Anoche 23:40–7:10 · 7 h 30 Vale cambiar otras noches$/.test(x.fila)]; }
+    await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250);
+    await page.click('#main .nanoche [data-a="sn-hoja"]'); await page.waitForTimeout(250);
+    const e1 = await page.evaluate(() => ({ k: window.PG.ui.snHoja, hoja: !!document.querySelector('.hoja'), tramos: !!document.querySelector('.hoja #snTramos'), kss: !!document.querySelector('.hoja [data-a="sn-kss"]'), movil: !!document.querySelector('.hoja [data-a="sn-movil"]') }));
+    await page.evaluate(() => { const P = window.PG; P.ui.snHoja = ''; P.ui.snTr = null; P.render(); }); await page.waitForTimeout(250);
+    const e2sin = await page.evaluate(() => window.PG.suenoReal(window.PG.iso(new Date())));
+    await page.click('#main .nanoche [data-a="sn-abrir"]'); await page.waitForTimeout(250);
+    const e2 = await page.evaluate(() => ({ vista: window.PG.ui.hoyVista, siete: document.querySelectorAll('#main .sn3').length }));
+    check('453 sin «Te faltan N noches» en los 4 modos (con la fila «Anoche» en cada uno); «cambiar» abre la hoja de hoy con tramos, KSS y móvil sin guardar nada; «otras noches» abre Sueño (7 noches tocables)',
+      Object.values(e0).every((x) => x[0] === 0 && x[1]) && e1.k === s1.hoy && e1.hoja && e1.tramos && e1.kss && e1.movil && e2sin === null && e2.vista === 'sueno' && e2.siete === 7, JSON.stringify([e0, e1, e2sin, e2]));
+    await restaura450();
+
+    // 454) víspera con 3 noches exactas (7 h + 7 h + 7 h 50 de 8 h objetivo: faltan 2 h 10): el cartel dice la línea exacta, sin rojo, y debajo cama · café · siesta
+    await siembra450({ g: [1], noches: { '-2': 7, '-1': 7, '0': 7 + 50 / 60 } }); await page.waitForTimeout(250);
+    const f0 = await lee450();
+    check('454 la víspera de guardia el cartel dice «Faltan 2 h 10 en tus 3 últimas noches · cama HH:MM» (sin rojo, sin «deber») y debajo salen «Mañana tienes guardia» con las tres órdenes (cama · último café · siesta)',
+      /^Faltan 2 h 10 en tus 3 últimas noches · cama \d\d:\d\d$/.test(f0.l4) && !rojo(f0.l4Color) && !/debes|deuda|recuper/i.test(f0.cartel + f0.vis) && /MAÑANA TIENES GUARDIA/.test(f0.vis) && /[Ss]iesta/.test(f0.vis) && /[Úú]ltimo café/.test(f0.vis) &&
+      f0.altoBot.every((h) => h >= 44) && f0.ancho <= 412, JSON.stringify(f0));
+
+    // 455) «Avisarme» (la misma de la vista Sueño): guarda los avisos de esa guardia y el botón pasa a «Te aviso a esas horas · quitar»; otro toque los quita
+    const G455 = s1.man;
+    await page.click('#main .nvis [data-a="sn-avisa3"]'); await page.waitForTimeout(300);
+    const g1 = await page.evaluate((G) => ({ av: Object.keys((window.PG.store.sueno.avisos || {})[G] || {}), btn: document.querySelector('#main [data-a="sn-avisa3"]').innerText.replace(/\s+/g, ' ') }), G455);
+    await page.click('#main .nvis [data-a="sn-avisa3"]'); await page.waitForTimeout(300);
+    const g2 = await page.evaluate((G) => ({ av: Object.keys((window.PG.store.sueno.avisos || {})[G] || {}), btn: document.querySelector('#main [data-a="sn-avisa3"]').innerText.replace(/\s+/g, ' ') }), G455);
+    check('455 «Avisarme a esas horas» en Hoy guarda los avisos de la guardia de mañana (≥2) y pasa a «Te aviso a esas horas · quitar»; otro toque los quita y vuelve a «Avisarme»',
+      /Avisarme/.test(f0.avisa) && g1.av.length >= 2 && /Te aviso a esas horas/.test(g1.btn) && g2.av.length === 0 && /Avisarme/.test(g2.btn), JSON.stringify([f0.avisa, g1, g2]));
+    await restaura450();
+
+    // 456) víspera sin falta (3 noches de 8 h) o sin noches apuntadas: solo «cama HH:MM»
+    await siembra450({ g: [1], noches: { '-2': 8, '-1': 8, '0': 8 } }); await page.waitForTimeout(250);
+    const h0 = await lee450();
+    await siembra450({ g: [1] }); await page.waitForTimeout(250);
+    const h1 = await lee450();
+    check('456 la víspera sin nada que falta (3 noches de 8 h) o sin noches apuntadas, la línea del cartel es solo «cama HH:MM» y las tres órdenes siguen debajo',
+      /^cama \d\d:\d\d$/.test(h0.l4) && /^cama \d\d:\d\d$/.test(h1.l4) && /Avisarme/.test(h0.avisa) && /Avisarme/.test(h1.avisa), JSON.stringify([h0.l4, h1.l4, h0.avisa]));
+    await restaura450();
+
+    // 457) día de guardia: la línea del cartel es la siesta (primera de las tres órdenes) y el aviso de no conducir sigue a la vista; sin fila «Anoche»
+    await siembra450({ g: [0], vuelta: '23:40', pie: '07:10', noches: { '-2': 5, '-1': 5 }, sueno: { conduce: true } }); await page.waitForTimeout(250);
+    const i0 = await lee450();
+    check('457 el día de guardia la línea del cartel es la primera de las tres órdenes (la siesta, o «Entra descansado» si no hace falta; con su hora), «HOY TIENES GUARDIA» con las tres órdenes y el aviso de conducir (orden «Al salir…» / «antes de conducir») a la vista; no sale «Faltan … últimas noches»',
+      i0.vis.indexOf(i0.l4.split(' · ')[0]) > 0 && /\d:\d\d$/.test(i0.l4) && !/Faltan/.test(i0.l4) && /HOY TIENES GUARDIA/.test(i0.vis) && /conduc/.test(i0.vis) && i0.ancho <= 412, JSON.stringify(i0));
+    await restaura450();
+
+    // 458) tras la guardia (saliente) no sale la fila «Anoche»: queda «¿Cuánto dormiste en la guardia?» en el botón de la noche
+    await siembra450({ g: [-1], vuelta: '23:40', pie: '07:10' }); await page.waitForTimeout(250);
+    await page.click('#main [data-a="hoy-modo"][data-v="reloj"]'); await page.waitForTimeout(250);
+    const j0 = await lee450();
+    check('458 el día después de la guardia no sale la fila «Anoche» (aunque haya «He vuelto» y «En pie»); sigue «¿Cuánto dormiste en la guardia?»',
+      j0.fila === '' && !/Vale/.test(j0.cartel) && /¿Cuánto dormiste en la guardia\?/.test(j0.btnSnbtn), JSON.stringify(j0));
+    await restaura450();
+
+    // 459) los botones de la mañana sin emoji: En pie · Vestido · He salido
+    await siembra450({}); await page.waitForTimeout(250);
+    const k0 = await page.evaluate(() => [...document.querySelectorAll('#main .nmarcas button')].map((b) => b.innerText.replace(/\s+/g, ' ').trim()));
+    check('459 los botones de la mañana ya no llevan emoji: «En pie», «Vestido», «He salido»', JSON.stringify(k0) === '["En pie","Vestido","He salido"]', JSON.stringify(k0));
+    await restaura450();
+    await page.evaluate(() => { delete window.__copia450; });
+    await sueltaHoy(); await page.setViewportSize(vp450);
+  }
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

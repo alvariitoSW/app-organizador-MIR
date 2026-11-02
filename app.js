@@ -1005,6 +1005,7 @@ function normalize(o){
     if(+x.kss>=1&&+x.kss<=9)sr[k].kss=Math.round(+x.kss);
     if(x.movilMin!=null&&x.movilMin!==''&&isFinite(+x.movilMin)&&+x.movilMin>=0)sr[k].movilMin=Math.min(1440,Math.round(+x.movilMin));   /* K1: antes se perdía al recargar */
     if(+x.kssTarde>=1&&+x.kssTarde<=9)sr[k].kssTarde=Math.round(+x.kssTarde);
+    if(/^(pend|roto|normal|fresco|no)$/.test(x.amanece))sr[k].amanece=x.amanece;   /* S1: las caras tras «Vale» */
     if(x.kssH!=null&&+x.kssH>=0&&+x.kssH<=23)sr[k].kssH=Math.round(+x.kssH);
     if(Array.isArray(x.tramos))sr[k].tramos=x.tramos.filter(function(t){return Array.isArray(t)&&+t[1]>+t[0]&&+t[0]>=18&&+t[1]<=42;}).slice(0,12)
       .map(function(t){return [Math.round(+t[0]*60)/60,Math.round(+t[1]*60)/60,t[2]?1:0];});});o.suenoReal=sr;}   /* al minuto: a cuartos, 12:10 volvía como 12:15 */
@@ -5899,9 +5900,9 @@ function hoyQuedaHTML(it,key,n){
 function nocheHTML(key,esHoy){
   if(!esHoy)return mananaHTML(key,false);
   const C=nocheCadena(key,hoyNow(true));if(!C)return '';
-  const g=C.g,abierta=!!ui.nocheAbierta,P=C.pend;
+  const g=C.g,abierta=!!ui.nocheAbierta,P=C.pend,VG=nocheVisperaDe(key);
   const cartel='<div class="ncartel nled" role="status"><div class="l1">'+(g.ico||'')+' '+(g.h?esc(g.h.cartel):'')+(g.hora?' · '+esc(g.hora):'')+'</div>'+
-    '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div></div>';
+    '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div>'+(VG.l4?'<div class="l4">'+esc(VG.l4)+'</div>':'')+'</div>';
   const m=mananaDe(key),h=hoyNow(true)/60;
   /* ya en el trabajo («He llegado» guardado) no se ofrece «He salido» */
   let sali='';
@@ -5911,13 +5912,13 @@ function nocheHTML(key,esHoy){
     const pr=!dm.pie&&vs&&h<vs.h?'pie':!dm.vestido&&h<m.plan?'vestido':'sali';
     const ficha=function(k,txt){const on=dm[k];
       return '<button class="btn '+(on?'hecho':pr===k?'p':'s')+'" data-a="manana-marca" data-k="'+k+'" data-key="'+esc(key)+'" aria-pressed="'+(on?'true':'false')+'"><span>'+txt+(on?' ✓':'')+'</span>'+(on?'<small>'+esc(on)+'</small>':'')+'</button>';};
-    sali='<div class="nmarcas">'+ficha('pie','🧍 En pie')+ficha('vestido','👕 Vestido')+
-      '<button class="btn '+(pr==='sali'?'p':'s')+' nsali" data-a="manana-sali" data-key="'+esc(key)+'">🚪 He salido</button></div>'+
+    sali='<div class="nmarcas">'+ficha('pie','En pie')+ficha('vestido','Vestido')+
+      '<button class="btn '+(pr==='sali'?'p':'s')+' nsali" data-a="manana-sali" data-key="'+esc(key)+'">He salido</button></div>'+
       '<p class="mini">Un toque cada uno. Ducha y café van dentro.</p>';}
   /* el botón vivo: «He vuelto» cerca de la hora de irte del Lloret, «He llegado» cerca de la de llegar al trabajo */
   const hv=C.hitos.filter(function(x){return x.id==='vete';})[0],hl=C.hitos.filter(function(x){return x.id==='llegar';})[0];
-  const viv=hv&&!C.vuelta&&C.now>=hv.hora-20&&C.now<hv.hora+120?['vuelta','🏠 He vuelto']:
-    (hl&&!C.llego&&C.now>=hl.hora-25&&C.now<hl.hora+90?['llego','🏢 He llegado']:null);
+  const viv=hv&&!C.vuelta&&C.now>=hv.hora-20&&C.now<hv.hora+120?['vuelta','He vuelto']:
+    (hl&&!C.llego&&C.now>=hl.hora-25&&C.now<hl.hora+90?['llego','He llegado']:null);
   /* con «He salido» a la vista, «He llegado» va de segundo (no dos botones principales apilados) */
   const vivo=viv?'<button class="btn '+(sali?'s nvivo n2':'p nvivo')+'" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
   let pie='';
@@ -5928,7 +5929,50 @@ function nocheHTML(key,esHoy){
       '<div class="row nvistas"><button class="btn s" data-a="noche-vista" data-v="alarmas">⏰ Alarmas del móvil</button><button class="btn s" data-a="noche-vista" data-v="semana">📊 Tu semana</button></div></div>'+mananaHTML(key,true);
   else if(P.length>1)pie='<button class="nchips" data-a="noche-plegar" aria-expanded="false" aria-controls="nocheCad" title="ver lo que falta">'+
     P.slice(1,5).map(function(x){return '<span class="nchip">'+x.ico+' '+hm(x.hora)+(x.id==='desp'?' <small>fijo</small>':'')+'</span>';}).join('')+'<span class="nmas">▾</span></button>';
-  return '<div class="noche">'+cartel+sali+vivo+pie+'</div>'+nocheSugHTML(key);}
+  return '<div class="noche">'+cartel+sali+anocheHTML(key)+vivo+pie+'</div>'+VG.html+nocheSugHTML(key);}
+/* ---------- S1 · Sueño de un toque ----------
+   Las horas de anoche ya las has dado sin querer: «He vuelto» (store.lloret.vuelta[ayer]) y «En pie» (store.manana[hoy].pie).
+   Con ellas, «Vale» guarda la noche en suenoReal (la misma forma que la hoja de la noche: snTGuardar). Pura: no escribe. */
+function anocheDatos(key){
+  if(salidaDeGuardia(key))return null;   /* tras la guardia sigue su camino: «¿Cuánto dormiste en la guardia?» */
+  const ant=iso(addDays(parseDate(key),-1)),a=mins((((store.lloret||{}).vuelta||{})[ant])||''),b=mins((((store.manana||{})[key])||{}).pie||'');
+  if(a==null||b==null)return null;
+  let ah=a/60;if(ah<18)ah+=24;let bh=b/60+24;if(bh<=ah)bh+=24;
+  const dur=Math.round((bh-ah)*60);
+  if(dur<60||dur>16*60||bh>42)return null;
+  return {acostar:hm(a),desp:hm(b),ah:ah,bh:bh,min:dur};}
+const CARAS_AMANECE=[['roto','Roto','M10.5 22 Q16 17.5 21.5 22'],['normal','Normal','M11 21H21'],['fresco','Fresco','M10.5 19.5 Q16 25 21.5 19.5']];
+function anocheHTML(key){
+  const r=suenoReal(key),enlaces=function(){return '<div class="nalinks"><button class="lnk" data-a="sn-hoja" data-k="'+esc(key)+'">cambiar</button>'+
+    '<button class="lnk" data-a="sn-abrir">otras noches</button></div>';};
+  if(r){
+    if(r.amanece!=='pend'||r.guardia)return '';
+    return '<div class="nanoche ok" role="group" aria-label="Anoche guardada"><div class="t"><small>Anoche guardada</small><b>✓ '+esc(nocheFalta(Math.round(suenoTotal(r)*60)))+
+      (r.acostar&&r.desp?' · '+esc(hCortaHM(r.acostar)+'–'+hCortaHM(r.desp)):'')+'</b></div>'+enlaces()+'</div>'+
+      '<div class="ncaras" role="group" aria-label="¿Cómo amaneces?"><div class="cap">¿CÓMO AMANECES? (SI QUIERES)</div><div class="ncaras3">'+
+      CARAS_AMANECE.map(function(c){return '<button class="ncara" data-a="anoche-cara" data-v="'+c[0]+'"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'+
+        '<circle cx="16" cy="16" r="13"/><circle cx="11.5" cy="13" r="1.1" fill="currentColor"/><circle cx="20.5" cy="13" r="1.1" fill="currentColor"/><path d="'+c[2]+'"/></svg>'+c[1]+'</button>';}).join('')+'</div>'+
+      '<div class="ncarasp"><span class="mini">Un toque y desaparece. Sin nota, sin racha.</span><button class="lnk" data-a="anoche-saltar">Saltar</button></div></div>';}
+  const D=anocheDatos(key);if(!D)return '';
+  return '<div class="nanoche" role="group" aria-label="Anoche"><div class="t"><small>Anoche</small><b>'+esc(hCortaHM(D.acostar)+'–'+hCortaHM(D.desp)+' · '+nocheFalta(D.min))+'</b></div>'+
+    '<button class="btn p" data-a="anoche-vale">Vale</button>'+enlaces()+'</div>';}
+/* «Vale»: guarda la noche con las horas de «He vuelto» y «En pie», en suenoReal y con la misma forma que snTGuardar (tramo, acostar, desp).
+   Deja amanece:'pend' para que salgan las caras; el desvelo pendiente del modo noche no se pierde. */
+function anocheVale(key){
+  const D=anocheDatos(key);if(!D||suenoReal(key))return false;
+  const x={h:Math.round(D.min)/60,rt:0,guardia:false,ratos:false,siesta:0,kss:0,tramos:[[D.ah,D.bh,0]],mal:false,dde:'',da:'',acostar:D.acostar,desp:D.desp,amanece:'pend'};
+  const dv=snDesveloPend(key);if(dv){x.mal=true;x.dde=dv.dde;x.da=dv.da;delete store.sueno.desvelos[key];}
+  suenoRealS()[key]=x;save();return true;}
+/* La víspera y el día de guardia: una línea más en el cartel y, debajo, las tres órdenes con «Avisarme» (snOrdenesHTML, la de Sueño).
+   Víspera: «Faltan X h Y en tus 3 últimas noches · cama HH:MM» (sin rojo ni «deber»); día de guardia: la primera orden, la siesta. */
+function nocheVisperaDe(key){
+  const G=snOrdenesDe(key);if(!G)return {l4:'',html:''};
+  const vis=G!==key;let l4='';
+  if(vis){
+    const st=suenoEstado(key),c=suenoCfg(),sum=st.tres.reduce(function(t,x){return t+(x.n?x.n.h:0);},0),falta=Math.round((st.n*c.min-sum)*60);
+    l4=(st.n&&falta>0?'Faltan '+nocheFalta(falta)+' en '+(st.n===1?'tu última noche':'tus '+st.n+' últimas noches')+' · ':'')+'cama '+snCamaDe(key);}
+  else{const o=snOrdenes(G,false)[0];if(o)l4=o.t+' · '+o.h;}
+  return {l4:l4,html:'<div class="nvis"><div class="dsucap">'+(vis?'MAÑANA TIENES GUARDIA':'HOY TIENES GUARDIA')+'</div>'+snOrdenesHTML(G,vis)+'</div>'};}
 function nocheSugHTML(key){
   const s=nocheSugerencia(key);if(!s)return '';
   return '<div class="nsug" role="group" aria-label="Sugerencia de hora de cama">💡 Llevas 3 noches cerca de las '+hm(s.de)+'. ¿Probamos a la cama a las <b>'+hm(s.a)+'</b> desde hoy?'+
@@ -6084,11 +6128,10 @@ function hoyDiaHTML(key,inf,esHoy){
     return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   const sn=esHoy?snBotonHTML(key,'margin:0 0 10px'):'';
-  const fa=esHoy?suenoFaltaHTML(key):'';
-  if(m==='linea')return seg+nocheHTML(key,esHoy)+fa+sn+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
-  if(m==='bus')return seg+nocheHTML(key,esHoy)+fa+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
+  if(m==='linea')return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
+  if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+hoyBusHTML(key,inf,esHoy);
   const it=hoyItems(key,inf);
-  return seg+nocheHTML(key,esHoy)+fa+sn+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
+  return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
 /* ===================== HOY DESDE EL ASIENTO DEL CONDUCTOR =====================
    fig/conductor.js dibuja el día como una ruta (ver su cabecera). Se pinta DENTRO de Hoy: el mismo
@@ -7523,11 +7566,6 @@ function suenoHoyCardHTML(){
     /* con algo ya apuntado el botón no se va: tras la guardia se duerme otra vez al llegar a casa */
     snBotonHTML(hoyK,'margin-top:8px')+
   '</div>';}
-/* Remates L3: si faltan noches de las 3 últimas (hasta anoche), una fila de 44 px bajo la cabecera de Hoy; abre la hoja de la más reciente sin anotar */
-function suenoFaltaHTML(hoyK){
-  const f=[];for(let i=0;i<3;i++){const k=iso(addDays(parseDate(hoyK),-i));if(!suenoReal(k))f.push(k);}
-  if(!f.length)return '';
-  return '<button class="snfalta" data-a="sn-hoja" data-k="'+esc(f[0])+'"><span aria-hidden="true">🛌</span><b>'+(f.length===1?'Te falta 1 noche':'Te faltan '+f.length+' noches')+'</b><u>anotar</u></button>';}
 function snBotonHTML(hoyK,estilo){
   /* «Anotar anoche» / «✎ Anoche: 7 h · cambiar o añadir»: abre la hoja de la noche (suenoHojaHTML). Lo usan Sueño
      y las vistas Reloj y Línea de Hoy, donde antes solo salía dentro del cartel de la noche desplegado */
@@ -7669,6 +7707,7 @@ function snTGuardar(){
   if(snDesveloPend(k))delete store.sueno.desvelos[k];
   if(T.kss&&T.kssH!=null)x.kssH=T.kssH;else if(T.kss&&r0.kss===T.kss&&r0.kssH!=null)x.kssH=r0.kssH;
   if(r0.kssTarde)x.kssTarde=r0.kssTarde;
+  if(r0.amanece)x.amanece=r0.amanece;   /* S1: lo de las caras no se pierde al editar la noche */
   if(T.mov!=null)x.movilMin=T.mov;
   suenoRealS()[k]=x;if(asistS().checkins[k])asistS().checkins[k].kss=0;   /* el KSS vive ya en la noche */
   ui.snTr=null;save();
@@ -27223,6 +27262,8 @@ function act(a,el){
     case 'sn-vista':if(_pvt){pvtCorta(_pvt);_pvt=null;}ui.snVista=el.dataset.v||'';ui.snHoja='';render();window.scrollTo(0,0);break;
     case 'pant-resp':{const k=el.dataset.k;if(!/^\d{4}-\d{2}-\d{2}$/.test(k||''))break;pantS().resp[k]=el.dataset.v==='si'?'si':'no';if(pantS().auto)delete pantS().auto[k];save();render();break;}
     case 'pant-guia-cierra':pantS().guia=true;save();render();break;
+    case 'anoche-vale':{const k=fechaHoy();if(anocheVale(k)){render();flash('Apuntado: '+nocheFalta(Math.round(suenoTotal(suenoReal(k))*60))+' dormidas');}break;}
+    case 'anoche-cara':case 'anoche-saltar':{const r=suenoReal(fechaHoy());if(!r)break;r.amanece=a==='anoche-saltar'?'no':(/^(roto|normal|fresco)$/.test(el.dataset.v)?el.dataset.v:'no');save();render();break;}
     case 'sn-hoja':{const k=el.dataset.k||iso(new Date());if(k>iso(new Date()))break;ui.snHoja=k;ui.snTr=null;render();break;}
     case 'hoy-informe':{ui.tab='hoy';ui.hoyVista='informe';ui.infLun=el.dataset.sem==='pasada'?'':iso(mondayOf(new Date()));render();window.scrollTo(0,0);break;}
     case 'hoy-informe-cerrar':ui.hoyVista='';render();window.scrollTo(0,0);break;

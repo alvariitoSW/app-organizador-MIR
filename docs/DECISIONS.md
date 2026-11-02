@@ -3,6 +3,23 @@
 Qué se eligió, qué se consideró y se descartó, y por qué. Una entrada por tarea, la más reciente
 arriba. Lo lleva la habilidad `tarea-a-fondo`.
 
+## 2026-11-02 · La Competencia · S1 Sueño de un toque
+
+**Elegido:** (1) Bajo el cartel de La Noche (los 4 modos de Hoy), con «He vuelto» (`store.lloret.vuelta[ayer]`) y «En pie» (`store.manana[hoy].pie`) dados, sale
+la fila «Anoche 23:40–7:10 · 7 h 30 · Vale · cambiar · otras noches» (`anocheHTML`/`anocheDatos`, app.js). «Vale» (`anocheVale`) guarda la noche en `suenoReal`
+con la misma forma que `snTGuardar` (h, acostar, desp, tramo, kss 0) y `amanece:'pend'`; tras «Vale» salen las 3 caras Roto · Normal · Fresco con «Saltar»
+(`amanece` = roto|normal|fresco|no; sin nota ni racha; el KSS queda dentro de «cambiar»; `snTGuardar` y el normalize conservan el campo). Tras guardia
+(`salidaDeGuardia`) la fila no sale. (2) Se quita «Te faltan N noches» (`suenoFaltaHTML`, `.snfalta`); «otras noches» abre la vista Sueño (`sn-abrir`).
+(3) Víspera: línea `l4` en el cartel «Faltan X h Y en tus 3 últimas noches · cama HH:MM» (cifra de `suenoEstado`, sumando las horas exactas; sin falta o sin noches, solo
+«cama HH:MM»; sin rojo) y debajo `snOrdenesHTML` (con su «Avisarme», `sn-avisa3`) sin duplicar lógica. Día de guardia: la línea es la primera orden. (4) Botones de la mañana
+sin emoji (En pie, Vestido, He salido, He vuelto, He llegado). Pruebas 450-459 (un bloque); **cae con `app.js` revertido** (la 450 no encuentra `.nanoche [data-a="anoche-vale"]`).
+Pruebas viejas cambiadas: 397b (ya no hay `.snfalta`: ahora comprueba la fila «Anoche», «otras noches» y «cambiar»), 397d (abre la hoja con el botón de la noche del Reloj),
+360/361/401/402 (texto sin emoji).
+**Descartado:** caras dentro de «cambiar» o ninguna; solo la línea de texto sin las tres horas; dejar «Te faltan N noches» (con 2 o más, o como antes); la palabra «Debes» (el usuario pidió «Faltan … en tus 3 últimas noches»).
+**Supuestos:** la hora de cama de la fila es la de «He vuelto» (no hay otra marca real de cama), así que sin «He vuelto» no sale la fila (se anota por «otras noches» / hoja); la
+duración es la diferencia simple cama→en pie; la fila «Anoche guardada» + caras desaparece al elegir o «Saltar»; las caras no cambian el KSS; en día de guardia la primera orden puede ser «Entra descansado» si no hace falta siesta.
+La 397d falla en lunes por sí sola (la semana del informe cambia; ajeno a S1).
+
 ## 2026-10-30 · El Cierre · horas de comer que siguen a la guardia (Consejo por delegación)
 
 **Elegido:** `cjeHoraMom` (app.js) lee lo que la app ya sabe: `cjeDia(k)` (guardia / trabajo), `salidaDeGuardia(k)` (el relevo del día
