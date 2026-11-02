@@ -3328,6 +3328,14 @@ button.tpchip{cursor:pointer;min-height:32px;font-weight:700;color:var(--ink2)}
 .r1g .r1t{color:var(--muted);font-weight:600}.r1g .r1n{font-size:17px}
 .r1g .r1p{padding:1px 7px;border-radius:999px;background:var(--chip,rgba(127,127,127,.12))}.r1g .r1p b{font-size:14px}
 .r1g .r1p.urg b{color:#e5484d}.r1g .r1p.umi b{color:#3b82f6}
+/* tema claro: el rojo y el azul de las pastillas «Urg» y «UMI» eran de oscuro (3,4:1 y 3,2:1); aquí pasan de 4,5:1 */
+html:not(.dark) .r1g .r1p.urg b{color:#b91c1c}html:not(.dark) .r1g .r1p.umi b{color:#1d4ed8}
+/* C4: la cuenta única de guardias del Mes y el botón de pegar */
+.mesgl{max-width:420px;margin:2px 0 6px;font-size:var(--t-14)}
+.mesgl .mesgc{margin:0;font-weight:600}.mesgl .mesgc b{font-variant-numeric:tabular-nums}
+.mesgl .mini{margin:4px 0 8px;color:var(--ink2)}
+.mesgl .btn{width:100%;min-height:var(--toque)}
+.pegar-copiado{width:100%;min-height:var(--toque-grande,56px);margin-bottom:var(--e-8,8px)}
 .r1g .r1d{display:flex;flex-wrap:wrap;gap:4px 12px;padding:0 10px 8px;font-variant-numeric:tabular-nums}
 .r1g .r1d i{font-style:normal;color:var(--muted);margin-right:4px}.r1g .r1d small{color:var(--muted)}
 .r1v{max-width:420px;margin:-2px 0 6px;padding:5px 10px;font-size:var(--suelo);color:var(--muted)}.r1v b{color:var(--ink);font-size:14px}.r1v.pasa b{color:#e5484d}

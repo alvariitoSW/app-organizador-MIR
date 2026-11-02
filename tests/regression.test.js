@@ -11423,8 +11423,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.meta.pulsarVisto = t.pv; P.store.meta.pulsarDesde = t.pd; P.ui.mesHoja = false; P.ui.mesLey = false; delete P.__t277; P.save(); P.render(); });
     check('Mes pinta cada día entero con el color de su tipo y escribe la hora de la guardia («15→8»)',
       r.a.celdas >= 28 && r.a.conColor === r.a.celdas && /→/.test(r.a.guardia) && /mt-guardia/.test(r.a.guardiaCls), JSON.stringify(r.a));
-    check('el carné del abono dice las guardias hechas del cupo, las horas y los findes, y tocarlo abre la hoja del mes con «Este mes»',
-      /guardias hechas/.test(r.b.carne) && /h de servicio/.test(r.b.carne) && r.b.hoja && r.b.estemes && r.b.cupo >= 0, JSON.stringify(r.b));
+    check('el carné del abono dice el cupo de guardias, las horas y los findes, y tocarlo abre la hoja del mes con «Este mes»',
+      /cupo de \d+ guardias/.test(r.b.carne) && /h de servicio/.test(r.b.carne) && r.b.hoja && r.b.estemes && r.b.cupo >= 0, JSON.stringify(r.b));
     check('subir el cupo en la hoja del mes cambia la cifra del carné al cerrarla', !r.c.hoja && r.c.cupo === Math.min(15, r.b.cupo + 1), JSON.stringify(r.c));
     check('«+ vacaciones» desde la hoja del mes la cierra y deja puesto el modo de marcar en la cuadrícula', !r.d.hoja && r.d.modo === 'vac', JSON.stringify(r.d));
     check('Mes son 35 casillas desde la semana de hoy, sin la semana pasada, y la casilla mide lo que su contenido sin estirar la cuadrícula',
@@ -17005,6 +17005,147 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     let salida = ''; try { salida = require('child_process').execFileSync('node', ['tools/suelo-letra.mjs', '--seco'], { cwd: require('path').resolve(__dirname, '..'), encoding: 'utf8' }); } catch (e) { salida = String(e); }
     check('474 Letra · el script del suelo en seco dice 0 cambios en styles.css y 0 en app.js', /styles\.css: 0 tamaños cambiados · app\.js: 0 tamaños cambiados/.test(salida), salida.slice(-300));
+  }
+
+  // 490) C4 · UNA SOLA CUENTA DE GUARDIAS EN EL MES (a 412×915, con hoy fijo el día 15): con cinco guardias puestas (dos antes de hoy, tres desde hoy), el Mes dice
+  // «Guardias de <mes>: 2 hechas · 3 por hacer · 5 en total»; el carné ya no cuenta «hechas de cupo» (dice su cupo) y tocarlo abre la hoja del mes con la MISMA cuenta.
+  // Cae con la frase quitada, o con el carné contando otra vez «N de M guardias hechas», o con la hoja con su propia cuenta («hecha de»).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    const ini = await page.evaluate(() => { const P = window.PG; window.__copia490 = JSON.parse(JSON.stringify(P.store));
+      P.store.patterns = [{ name: 'T490', days: ['L', 'L', 'L', 'L', 'L', 'L', 'L'] }]; P.store.rotation.mode = 'date'; P.store.rotation.index = 0; P.store.rotation.shiftByDay = {};
+      const h = new Date(), y = h.getFullYear(), m = h.getMonth(); P.store.rotation.anchor = P.iso(P.mondayOf(new Date(y, m, 1, 12)));
+      const k = (d) => P.iso(new Date(y, m, d, 12)); [3, 10, 17, 22, 28].forEach((d) => P.setDayOverride(k(d), 'sh-g', 'urg'));
+      P.ui.tab = 'month'; P.ui.calMode = 'month'; P.ui.mesHoja = false; P.ui.monSel = ''; P.ui.mesModo = null; P.monthDate = new Date(y, m, 1); P.save(); P.render(); return { mes: new Date(y, m, 1).toLocaleDateString('es-ES', { month: 'long' }) }; });
+    await page.waitForTimeout(250);
+    const R = {};
+    R.linea = await page.evaluate(() => (document.querySelector('#main .mesgl') || { innerText: '' }).innerText.replace(/\s+/g, ' ').trim());
+    R.boton = await page.evaluate(() => !!document.querySelector('#main .mesgl [data-a="datos-vista"]'));
+    R.carne = await page.evaluate(() => (document.querySelector('#main .carne') || { getAttribute: () => '' }).getAttribute('aria-label') || '');
+    await page.click('#main .carne'); await page.waitForTimeout(300);
+    R.hoja = await page.evaluate(() => (document.querySelector('#hojaDia .mesgu .cap') || { innerText: '' }).innerText.replace(/\s+/g, ' ').trim());
+    await page.evaluate(() => { const b = document.querySelector('[data-a="hoja-cerrar"]'); if (b) b.click(); }); await page.waitForTimeout(200);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia490; P.ui.mesHoja = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('490 Mes · «Guardias de <mes>: 2 hechas · 3 por hacer · 5 en total» (sin botón), el carné dice su cupo y no «hechas», y la hoja del mes repite la misma cuenta',
+      R.linea === 'Guardias de ' + ini.mes + ': 2 hechas · 3 por hacer · 5 en total' && !R.boton && /cupo de \d+ guardias/.test(R.carne) && !/guardias hechas/.test(R.carne) &&
+      /GUARDIAS DE/.test(R.hoja) && /2 hechas · 3 por hacer · 5 en total/.test(R.hoja) && !/hechas? de \d/.test(R.hoja), JSON.stringify(R));
+  }
+
+  // 491) C4 · EN PLANTILLA, 0 Y POR QUÉ (a 412×915): sin guardias con fecha y la semana en modo plantilla, el Mes marca «0 hechas · 0 por hacer · 0 en total», dice
+  // «modo plantilla» y su único botón «Poner mis guardias» lleva a la pantalla de importar el planning, con «Pegar lo copiado» a la vista. Cae sin el botón o sin el motivo.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { const P = window.PG; window.__copia491 = JSON.parse(JSON.stringify(P.store));
+      P.store.patterns = [{ name: 'T491', days: ['L', 'L', 'L', 'L', 'L', 'L', 'L'] }]; P.store.rotation.mode = 'template'; P.store.rotation.shiftByDay = {};
+      const h = new Date(); P.monthDate = new Date(h.getFullYear(), h.getMonth(), 1);
+      P.ui.tab = 'month'; P.ui.calMode = 'month'; P.ui.mesHoja = false; P.ui.monSel = ''; P.ui.mesModo = null; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const R = {};
+    R.linea = await page.evaluate(() => (document.querySelector('#main .mesgl') || { innerText: '' }).innerText.replace(/\s+/g, ' ').trim());
+    R.btn = await page.evaluate(() => { const b = document.querySelector('#main .mesgl [data-a="datos-vista"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { txt: b.textContent.trim(), alto: Math.round(r.height), dentro: r.left >= 0 && r.right <= 412 }; });
+    await page.click('#main .mesgl [data-a="datos-vista"]'); await page.waitForTimeout(300);
+    R.pant = await page.evaluate(() => ({ tab: window.PG.ui.tab, vista: window.PG.ui.datosVista, pegar: (document.querySelector('#main [data-a="plan-pegar"]') || { textContent: '' }).textContent.trim(), caja: !!document.getElementById('pasteBox') }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia491; P.ui.tab = 'hoy'; P.ui.datosVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('491 Mes · en plantilla marca «0 hechas · 0 por hacer · 0 en total», dice por qué y «Poner mis guardias» (≥44 px) abre Importar planning con «Pegar lo copiado»',
+      /: 0 hechas · 0 por hacer · 0 en total Marca 0 porque tu semana está en modo plantilla/.test(R.linea) && !!R.btn && R.btn.txt === 'Poner mis guardias' && R.btn.alto >= 44 && R.btn.dentro &&
+      R.pant.tab === 'data' && R.pant.vista === 'planning' && /Pegar lo copiado/.test(R.pant.pegar) && R.pant.caja, JSON.stringify(R));
+  }
+
+  // 492) C4 · «PEGAR LO COPIADO» (a 412×915): con el portapapeles permitido y un cuadrante copiado, un toque lo pone en la caja y abre la vista previa de siempre
+  // («Leídas N líneas…»), lista para «Aplicar al planning»; sin tocar nada del planning hasta entonces. Cae si el botón no lee el portapapeles o no abre la vista previa.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    const TXT = '3 nov · G 24h 08:00-08:00 guardia\n4 nov · S 09:00-13:00 saliente\n5 nov · L libre\n6 nov · L libre\n7 nov · L libre\n8 nov · L libre\n9 nov · L libre';
+    await page.evaluate(() => { const P = window.PG; window.__copia492 = JSON.parse(JSON.stringify(P.store)); window._draftInfo = null; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.render(); });
+    await gotoTab('data', 'planning'); await page.waitForTimeout(200);
+    await page.evaluate((t) => navigator.clipboard.writeText(t), TXT);
+    const antes = await page.evaluate(() => JSON.stringify(window.PG.store.patterns));
+    await page.click('#main [data-a="plan-pegar"]'); await page.waitForTimeout(500);
+    const R = await page.evaluate(() => ({ caja: document.getElementById('pasteBox').value, out: document.getElementById('draftOut').textContent, aplicar: !document.getElementById('applyBtn').disabled, msg: document.getElementById('draftMsg').textContent, igual: JSON.stringify(window.PG.store.patterns) }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia492; window._draftInfo = null; P.ui.tab = 'hoy'; P.ui.datosVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('492 Importar planning · «Pegar lo copiado» pone el cuadrante copiado en la caja, abre la vista previa («Leídas N líneas»), deja «Aplicar al planning» listo y no toca el planning',
+      R.caja === TXT && /Leídas \d+ líneas · [1-9]\d* días/.test(R.out) && R.aplicar && /listas para aplicar/.test(R.msg) && R.igual === antes, JSON.stringify(R));
+  }
+
+  // 493) C4 · SI EL MÓVIL NO DEJA LEER LO COPIADO (a 412×915): «Pegar lo copiado» avisa, deja la caja de texto abierta y con el cursor, y lo que pegues a mano a ella
+  // lleva a la MISMA vista previa con «Analizar». Cae si el rechazo del portapapeles se queda mudo o si la caja no recibe el foco.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const TXT = '3 nov · G 24h 08:00-08:00 guardia\n4 nov · S 09:00-13:00 saliente\n5 nov · L libre';
+    await page.evaluate(() => { const P = window.PG; window.__copia493 = JSON.parse(JSON.stringify(P.store)); window._draftInfo = null; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.render(); });
+    await gotoTab('data', 'planning'); await page.waitForTimeout(200);
+    await page.evaluate(() => { Object.defineProperty(navigator, 'clipboard', { value: { readText: () => Promise.reject(new Error('NotAllowedError')) }, configurable: true }); });
+    await page.click('#main [data-a="plan-pegar"]'); await page.waitForTimeout(400);
+    const R = { aviso: await page.evaluate(() => (document.getElementById('flash') || { textContent: '' }).textContent), foco: await page.evaluate(() => document.activeElement && document.activeElement.id), visible: await page.evaluate(() => { const r = document.getElementById('pasteBox').getBoundingClientRect(); return r.height > 60 && r.width > 200; }), sinVista: await page.evaluate(() => document.getElementById('draftOut').style.display !== 'block') };
+    await page.fill('#pasteBox', TXT); await page.click('[data-a="draft"]'); await page.waitForTimeout(400);
+    R.vista = await page.evaluate(() => ({ out: document.getElementById('draftOut').textContent, aplicar: !document.getElementById('applyBtn').disabled }));
+    await page.evaluate(() => { delete navigator.clipboard; const P = window.PG; P.store = window.__copia493; window._draftInfo = null; P.ui.tab = 'hoy'; P.ui.datosVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('493 Importar planning · si el móvil no deja leer lo copiado, avisa y deja la caja abierta con el cursor; pegar a mano y «Analizar» abre la misma vista previa',
+      /no me deja leer lo copiado/.test(R.aviso) && R.foco === 'pasteBox' && R.visible && R.sinVista && /Leídas \d+ líneas/.test(R.vista.out) && R.vista.aplicar, JSON.stringify(R));
+  }
+
+  // 494) C4 · LA PUERTA PARA C4b: planningVistaPrevia(texto) —lo que usará la foto del cuadrante— abre Importar planning desde donde estés (aquí, el Mes), pone el texto
+  // en la caja y abre la vista previa. Cae si la función no abre la pantalla o no analiza.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia494 = JSON.parse(JSON.stringify(P.store)); window._draftInfo = null; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.ui.datosVista = ''; P.render(); });
+    const R = await page.evaluate(() => { const P = window.PG, t = '3 nov · G 24h 08:00-08:00 guardia\n4 nov · S 09:00-13:00 saliente\n5 nov · L libre';
+      const info = P.planningVistaPrevia(t);
+      return { tab: P.ui.tab, vista: P.ui.datosVista, caja: (document.getElementById('pasteBox') || {}).value === t, out: (document.getElementById('draftOut') || { textContent: '' }).textContent, dias: info && info.dias }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia494; window._draftInfo = null; P.ui.tab = 'hoy'; P.ui.datosVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('494 Importar planning · planningVistaPrevia(texto) abre la pantalla desde el Mes, pone el texto en la caja y abre la vista previa',
+      R.tab === 'data' && R.vista === 'planning' && R.caja && /Leídas \d+ líneas/.test(R.out) && R.dias > 0, JSON.stringify(R));
+  }
+
+  // 495) C4 · UN SOLO «ATRÁS» EN AJUSTES (a 412×915): en la portada de Ajustes sigue el «‹ atrás» de la cabecera; al abrir una pantalla (Mi rutina) la cabecera lo esconde y
+  // queda «‹ Ajustes» (≥44 px), que devuelve a la portada y trae de vuelta el de la cabecera. Cae con el de la cabecera visible dentro de la pantalla.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; P.ui.navHist = []; P.ui.tab = 'dinero'; P.render(); });
+    await gotoTab('ajustes'); await page.waitForTimeout(200);
+    const vis = () => page.evaluate(() => { const b = document.getElementById('navAtras'); return !!b && !b.hidden && getComputedStyle(b).display !== 'none'; });
+    const R = { portada: await vis() };
+    await page.click('#main [data-a="aju-vista"][data-v="rutina"]'); await page.waitForTimeout(250);
+    R.dentro = { cabecera: await vis(), volver: await page.evaluate(() => [...document.querySelectorAll('#main .volver')].map((b) => ({ t: b.textContent.trim(), alto: Math.round(b.getBoundingClientRect().height) }))) };
+    await page.click('#main .subcab .volver'); await page.waitForTimeout(250);
+    R.vuelta = { cabecera: await vis(), puertas: await page.evaluate(() => document.querySelectorAll('#main [data-a="aju-vista"]').length) };
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); });
+    await page.setViewportSize(vp);
+    check('495 Ajustes · la cabecera enseña «‹ atrás» solo en la portada; dentro de una pantalla queda un único «‹ Ajustes» y al volver reaparece',
+      R.portada && !R.dentro.cabecera && R.dentro.volver.length === 1 && /Ajustes$/.test(R.dentro.volver[0].t) && R.dentro.volver[0].alto >= 44 && R.vuelta.cabecera && R.vuelta.puertas > 3, JSON.stringify(R));
+  }
+
+  // 496) C4 · LAS PASTILLAS «Urg» Y «UMI» DEL MES, EN CLARO Y EN OSCURO: en claro su cifra pasa de 4,5:1 sobre la pastilla (antes 3,4 y 3,2); en oscuro siguen siendo el rojo y el azul de siempre.
+  // Cae con el CSS de claro quitado (rojo #e5484d / azul #3b82f6 sobre blanco).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const eraOsc = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.render();
+      const d = document.createElement('div'); d.id = 'sonda496'; d.className = 'card';
+      d.innerHTML = '<details class="r1g" open><summary><span class="r1t">🩺 R1 <span class="r1l">9/20</span> · quedan</span><b class="r1n">32</b><span class="r1p urg"><b>20</b> Urg</span><span class="r1p umi"><b>12</b> UMI</span></summary></details>';
+      document.getElementById('main').appendChild(d); });
+    const med = () => page.evaluate(() => {
+      const num = (c) => (c.match(/[\d.]+/g) || []).map(Number);
+      const lumi = (c) => { const [r, g, b] = num(c).slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const fondo = (el) => { let bg = [0, 0, 0], nodos = []; for (let e = el; e; e = e.parentElement) nodos.unshift(e);
+        nodos.forEach((e) => { const c = num(getComputedStyle(e).backgroundColor); if (c.length >= 3) { const a = c.length > 3 ? c[3] : 1; if (a > 0) bg = [0, 1, 2].map((i) => c[i] * a + bg[i] * (1 - a)); } }); return 'rgb(' + bg.join(',') + ')'; };
+      const una = (sel) => { const b = document.querySelector('#sonda496 ' + sel + ' b'), col = getComputedStyle(b).color, l1 = lumi(col), l2 = lumi(fondo(b)); return { col, c: (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05) }; };
+      return { urg: una('.r1p.urg'), umi: una('.r1p.umi') }; });
+    await page.evaluate(() => document.documentElement.classList.remove('dark')); const claro = await med();
+    await page.evaluate(() => document.documentElement.classList.add('dark')); const osc = await med();
+    await page.evaluate((o) => { document.documentElement.classList.toggle('dark', o); const s = document.getElementById('sonda496'); if (s) s.remove(); const P = window.PG; P.ui.tab = 'hoy'; P.render(); }, eraOsc);
+    await page.setViewportSize(vp);
+    const R = { claro, osc };
+    check('496 Mes · en claro «20 Urg» y «12 UMI» pasan de 4,5:1; en oscuro siguen en #e5484d y #3b82f6',
+      claro.urg.c >= 4.5 && claro.umi.c >= 4.5 && osc.urg.col === 'rgb(229, 72, 77)' && osc.umi.col === 'rgb(59, 130, 246)', JSON.stringify(R));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

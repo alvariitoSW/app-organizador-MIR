@@ -9138,13 +9138,13 @@ function calFigMonta(){
 function mesAbono(y,mo,list,svc){
   /* LAS HORAS DE SERVICIO SON SOLO TRABAJO: la guardia desde que entras (la jornada de ese día incluida) hasta que
      sales, y la jornada de los días de trabajo. Saliente, vacaciones, festivos y libres no suman nada */
-  const hoyK=iso(new Date()),fest=((store.ahorro||{}).festivos)||[];let hechas=0,hs=0,fs=0;
+  const hoyK=iso(new Date()),fest=((store.ahorro||{}).festivos)||[];let hechas=0,total=0,hs=0,fs=0;
   list.forEach(function(d,i){const t=mesTipoDia(d);
-    if(t==='guardia'){if(d.key<hoyK)hechas++;const g=guardiaHoras(d.key,d.guard);
+    if(t==='guardia'){total++;if(d.key<hoyK)hechas++;const g=guardiaHoras(d.key,d.guard);
       if(g){const a=mins(g.desde||g.guardia),b=mins(g.sale);if(a!=null&&b!=null)hs+=(b<=a?b+1440:b)-a;}}
     else if(d.jor&&!/^(libre|vac|saliente)$/.test(t)&&fest.indexOf(d.key)<0){const a=mins(d.jor.start),b=mins(d.jor.end);if(a!=null&&b!=null&&b>a)hs+=b-a;}
     if(d.date.getDay()===6&&list[i+1]){const t2=mesTipoDia(list[i+1]);if(/^(libre|vac)$/.test(t)&&/^(libre|vac)$/.test(t2))fs++;}});
-  return {hechas:hechas,cupo:svc.guardias||0,h:Math.round(hs/60),findes:fs,mes:MON[mo].toUpperCase()};}
+  return {hechas:hechas,porHacer:total-hechas,total:total,cupo:svc.guardias||0,h:Math.round(hs/60),findes:fs,mes:MON[mo].toUpperCase()};}
 /* EL CARNÉ DE ABONO (design/calendario-propuestas/carne.mjs → fig/calendario.js): la tarjeta con el mes y el
    servicio grabados, las tres cifras del abono y la regla del mes con la aguja de hoy. Tocarlo abre la hoja
    del mes, que es lo que antes era la tarjeta «Este mes» debajo del calendario. */
@@ -9159,29 +9159,38 @@ function mesCarneHTML(a,y,mo,svc){
   let svg=window.CalFig.carne;
   if(!_carnePos){const m=/data-pos="([^"]*)"/.exec(svg);_carnePos=m?m[1].split(';').map(function(x){return x.split(',').map(Number);}):[];}
   svg=rr(svg,'mes','ABONO · '+MONTH_FULL[mo].toUpperCase()+' '+y);svg=rr(svg,'sub',sub);
-  svg=rr(svg,'c0',a.hechas+'/'+a.cupo);svg=rr(svg,'l0','GUARDIAS');svg=rr(svg,'c1',a.h+' h');svg=rr(svg,'l1','SERVICIO');
+  svg=rr(svg,'c0',String(a.cupo));svg=rr(svg,'l0','CUPO');svg=rr(svg,'c1',a.h+' h');svg=rr(svg,'l1','SERVICIO');
   svg=rr(svg,'c2',String(a.findes));svg=rr(svg,'l2',a.findes===1?'FINDE':'FINDES');svg=rr(svg,'ult',String(dias));
   const pos=_carnePos[Math.max(1,Math.min(31,dia))-1]||[0,0];
   svg=svg.replace(/<g data-r="aguja" data-pos="[^"]*">/,'<g data-r="aguja" transform="translate('+pos[0]+' '+pos[1]+')"'+(dia?'':' style="display:none"')+'>');
-  const lab='Abono de '+MONTH_FULL[mo]+': '+a.hechas+' de '+a.cupo+' guardias hechas, '+a.h+' h de servicio, '+a.findes+' finde'+(a.findes===1?'':'s')+' libre'+(a.findes===1?'':'s')+'. Toca para ver y cambiar el mes.';
+  const lab='Abono de '+MONTH_FULL[mo]+': cupo de '+a.cupo+' guardias, '+a.h+' h de servicio, '+a.findes+' finde'+(a.findes===1?'':'s')+' libre'+(a.findes===1?'':'s')+'. Toca para ver y cambiar el mes.';
   return '<button class="carne cf" data-a="mes-hoja" aria-label="'+esc(lab)+'" title="'+esc(lab)+'">'+svg+'</button>';}
 function hojaMesHTML(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),list=monthDays(y,mo);
   return hojaMarco('hoja-cerrar','',MONTH_FULL[mo]+' '+y,'<h3 class="sh">🗓️ '+esc(MONTH_FULL[mo])+' '+y+'</h3>'+mesGuardiasHTML(y,mo,list)+mesResumenHTML(y,mo,list,svc,g));}
+/* LA CUENTA DE GUARDIAS DEL MES, UNA SOLA: «2 hechas · 3 por hacer · 5 en total» (hecha = antes de hoy). La usan la frase del Mes y la
+   hoja del mes; el carné ya no cuenta hechas/cupo (eran tres cuentas distintas para lo mismo) */
+function mesGuardiasCuentaTxt(a){
+  return '<b>'+a.hechas+'</b> '+(a.hechas===1?'hecha':'hechas')+' · <b>'+a.porHacer+'</b> por hacer · <b>'+a.total+'</b> en total';}
+function mesGuardiasLineaHTML(mo,a,svc){
+  let porque='';
+  if(!a.total){porque=store.rotation.mode!=='date'?'Marca 0 porque tu semana está en modo plantilla y aún no hay guardias con fecha.':'Marca 0 porque aún no has puesto guardias con fecha este mes.';
+    if(svc.guardias)porque+=' Tu servicio pide '+svc.guardias+'.';}
+  return '<div class="mesgl"><p class="mesgc">Guardias de '+esc(MONTH_FULL[mo])+': '+mesGuardiasCuentaTxt(a)+'</p>'+
+    (porque?'<p class="mini">'+esc(porque)+'</p><button class="btn p" data-a="datos-vista" data-v="planning">Poner mis guardias</button>':'')+'</div>';}
 /* LAS GUARDIAS DEL MES, UNA POR LÍNEA: «¿qué guardias has hecho en octubre y qué días?» (lo preguntan en secretaría).
    Con su día, su tipo, sus horas y si ya está hecha; se puede enseñar tal cual */
 function mesGuardiasHTML(y,mo,list){
   const hoyK=iso(new Date()),gs=list.filter(function(d){return mesTipoDia(d)==='guardia';});
   if(!gs.length)return '';
   const hechas=gs.filter(function(d){return d.key<hoyK;}).length;
-  return '<div class="card mesgu"><div class="cap">GUARDIAS DE '+esc(MONTH_FULL[mo].toUpperCase())+' · '+hechas+' hecha'+(hechas===1?'':'s')+' de '+gs.length+'</div>'+
+  return '<div class="card mesgu"><div class="cap">GUARDIAS DE '+esc(MONTH_FULL[mo].toUpperCase())+' · '+mesGuardiasCuentaTxt({hechas:hechas,porHacer:gs.length-hechas,total:gs.length})+'</div>'+
     gs.map(function(d){const g=guardiaHoras(d.key,d.guard),dt=d.date,est=d.key<hoyK?'✓ hecha':d.key===hoyK?'hoy':'por hacer';
       return '<div class="mgfila'+(d.key<hoyK?' ok':'')+'"><b>'+DIA3[dt.getDay()]+' '+dt.getDate()+'</b><span>'+esc(g&&g.tipo&&g.tipo.label||'Guardia')+
         (g?' · '+hCorta(g.guardia)+'→'+hCorta(g.sale):'')+'</span><i>'+est+'</i></div>';}).join('')+'</div>';}
 function mesAbonoHTML(a,mo){
   return '<div class="abono"><div class="t">ABONO DE '+esc(MONTH_FULL[mo].toUpperCase())+'</div><div class="nums">'+
-    '<div><b>'+a.hechas+' <small>de</small> '+a.cupo+'</b><small>guardias hechas</small><span class="agujeros">'+
-      Array.from({length:Math.min(12,a.cupo)},function(_,i){return '<i class="'+(i<a.hechas?'p':'')+'"></i>';}).join('')+'</span></div>'+
+    '<div><b>'+a.cupo+'</b><small>de cupo</small></div>'+
     '<div><b>'+a.h+' h</b><small>de servicio</small></div><div><b>'+a.findes+'</b><small>finde'+(a.findes===1?'':'s')+' libre'+(a.findes===1?'':'s')+'</small></div></div></div>';}
 function renderMonth(){
   const y=monthDate.getFullYear(),mo=monthDate.getMonth(),svc=monthService(y,mo),g=guardCount(y,mo),minS=suenoCfg().min;
@@ -9313,7 +9322,7 @@ function renderMonth(){
              cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
         <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada color" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
-      ${mesCarneHTML(abono,y,mo,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
+      ${mesCarneHTML(abono,y,mo,svc)}${mesGuardiasLineaHTML(mo,abono,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
       ${rejilla.oculto?'<button class="btn s mesatras" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+' del 1 al '+rejilla.oculto+' de '+MONTH_FULL[mo]+'</button>':''}
       <div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · la línea amarilla es la frontera entre meses'+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
@@ -25169,7 +25178,8 @@ function renderAjustes(){
 function renderData(){
   const v=ui.datosVista||'';
   if(v==='planning'){cfgPantalla('\ud83d\uddc2 Mi planning',`<div class="card">
-      <p class="note">Pega aquí las líneas del mes, tal cual: <i>1 ago G 08:00-08:00</i>. Reconoce día+mes, tipo de día (guardia/saliente/fuerza/libre/descanso/asuntos propios/vacante/noche) y horarios, agrupa por semanas y genera las semanas tipo —incluida la variante de 1 y 2 guardias— con sus horarios puestos en los turnos.</p>
+      <button class="btn p pegar-copiado" data-a="plan-pegar">📋 Pegar lo copiado</button>
+      <p class="note">Copia el cuadrante donde te lo hayan mandado y toca el botón; o pega aquí las líneas del mes, tal cual: <i>1 ago G 08:00-08:00</i>. Reconoce día+mes, tipo de día (guardia/saliente/fuerza/libre/descanso/asuntos propios/vacante/noche) y horarios, agrupa por semanas y genera las semanas tipo —incluida la variante de 1 y 2 guardias— con sus horarios puestos en los turnos.</p>
       <textarea id="pasteBox" rows="12" placeholder="1 ago · G 24h 08:00-08:00 guardia destino Sur&#10;2 ago · S 09:00-13:00 saliente&#10;3 ago · L libre&#10;4 ago · F fuerza 18:00&#10;5 ago · L asuntos propios&#10;6 ago · G 24h 08:00-08:00&#10;7 ago · S 09:00-13:00"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="draft">Analizar</button>
       <button class="btn" data-a="draft-apply" disabled id="applyBtn">Aplicar al planning</button>
@@ -25245,6 +25255,26 @@ function mapCodes(v){
     const code=m[0].trim().toUpperCase(),name=m.slice(1).join('=').trim();
     return code&&name?{code:code.charAt(0).toUpperCase(),name:name}:null;}).filter(Boolean);
 }
+/* IMPORTAR EL PLANNING, la vista previa de siempre. planningAnaliza(texto) lee el texto de la caja y enseña lo que va a pasar (sin
+   tocar nada hasta «Aplicar al planning»). planningVistaPrevia(texto) es la PUERTA para quien tenga un texto en la mano (lo copiado,
+   y C4b con lo que lea de la foto): abre la pantalla, lo pone en la caja y abre la vista previa. */
+function planningAnaliza(t){
+  window._draftExtras=mapCodes($('#codeMap').value);window._draftInfo=parsePlanning(t,window._draftExtras);
+  window._draftExtrasInfo=parseRhythmText(t);window._draftServices=parseServicesText(t).months;
+  showDraft(window._draftInfo);return window._draftInfo;}
+function planningVistaPrevia(texto){
+  const t=String(texto==null?'':texto);
+  if(ui.tab!=='data'||ui.datosVista!=='planning'){ui.tab='data';ui.datosVista='planning';window._draftInfo=null;render();window.scrollTo(0,0);}
+  const pb=$('#pasteBox');if(pb)pb.value=t;
+  return planningAnaliza(t);}
+/* «Pegar lo copiado»: lee el portapapeles; si el móvil no deja (o está vacío), la caja de texto ya está abierta para pegar a mano */
+function planningPegar(){
+  const caja=function(msg){const pb=$('#pasteBox');if(pb){pb.focus();}flash(msg,4500);};
+  if(!navigator.clipboard||!navigator.clipboard.readText){caja('El móvil no me deja leer lo copiado: pégalo en la caja de abajo');return;}
+  navigator.clipboard.readText().then(function(t){
+    if(!String(t||'').trim()){caja('Lo copiado está vacío: cópialo antes o pégalo en la caja de abajo');return;}
+    planningVistaPrevia(t);flash('Pegado: mira qué cambia y, si es esto, «Aplicar al planning»',4500);
+  },function(){caja('El móvil no me deja leer lo copiado: pégalo en la caja de abajo');});}
 function showDraft(info){
   const out=$('#draftOut');out.style.display='block';
   const sb=$('#semBtn');
@@ -25464,7 +25494,7 @@ function navTras(){
   const ahora=Date.now();
   if(j!==ui._navGuardJ||ahora-(ui._navGuardT||0)>60e3){
     try{localStorage.setItem(NAV_KEY,'{"v":'+j+',"t":'+ahora+'}');ui._navGuardJ=j;ui._navGuardT=ahora;}catch(e){}}
-  const b=document.getElementById('navAtras');if(b)b.hidden=!navPuedeVolver();}
+  const b=document.getElementById('navAtras');if(b)b.hidden=!navPuedeVolver()||!!document.querySelector('#main .subcab .volver[data-a="aju-vista"]');}   /* dentro de Ajustes manda «‹ Ajustes»: un solo «atrás» a la vista (el del móvil sigue valiendo) */
 /* «atrás» sube de nivel, no deshace pasos: «si navego mucho no me lleva al menú anterior sino a lo
    último que estaba haciendo». (1) una hoja abierta se cierra; (2) en una sub‑pantalla, a su madre
    (lo mismo que su «‹ volver»); (3) en la portada de una sección, a la sección anterior en la que
@@ -26210,10 +26240,8 @@ function act(a,el){
     case 'reset':confirmar('¿Sustituir todo por el ejemplo por defecto?').then(function(ok){
       if(!ok)return;reemplazarDatos(DEFAULTS(),'antes de restaurar','Ejemplo restaurado (tienes una copia de antes en «Datos»)');});break;
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
-    case 'draft':{const t=$('#pasteBox').value||'';
-      window._draftExtras=mapCodes($('#codeMap').value);window._draftInfo=parsePlanning(t,window._draftExtras);
-      window._draftExtrasInfo=parseRhythmText(t);window._draftServices=parseServicesText(t).months;
-      showDraft(window._draftInfo);break;}
+    case 'draft':planningAnaliza($('#pasteBox').value||'');break;
+    case 'plan-pegar':planningPegar();break;
     case 'rhythm':{const t=$('#rhythmBox').value||'';
       window._rhythmInfo=parseRhythmText(t);window._rhythmServices=parseServicesText(t).months;
       window._rhythmVac=parseVacacionesText(t).ranges;
@@ -29903,7 +29931,7 @@ window.PG={pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantalla
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
-  parsePlanning,parseSemanales,applyParse,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
+  parsePlanning,planningVistaPrevia,mesGuardiasLineaHTML,parseSemanales,applyParse,dishKeywords,matchDish,togglePicker,dayPicker,defaultTime,toText,
   sleepHours,fmtHM,toMin,dayInfo,dayOverride,setDayOverride,rhythmOf,sleepOf,diaLaborableCerca,monthDays,monthService,setMonthService,
   guardCount,distributeGuardias,syncToRotation,quickBreakfast,RKEYS,necesidadSemana,
   dineroS,gastosFijos,gastosDeFecha,gastoPagado,mesDinero,addGasto,delGasto,addPago,delPago,pagarGasto,eur,
