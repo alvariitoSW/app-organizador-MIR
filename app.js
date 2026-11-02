@@ -2259,7 +2259,7 @@ function renderSemanaBase(){
     '<div class="subcab"><button class="btn s volver" data-a="types-vista" data-v="montar">'+gymIco('atras','gico sm')+' Montar</button>'+
       '<h2 class="subtit">Semana base</h2><span class="tag b2">L–D</span></div>'+
     '<div class="card">'+
-      '<div class="row" style="align-items:baseline"><b style="font-size:13px">kcal por día</b><span class="sp"></span>'+
+      '<div class="row" style="align-items:baseline"><b style="font-size:var(--suelo)">kcal por día</b><span class="sp"></span>'+
         '<span class="mini">'+(ob.kcal?('objetivo '+fmtMil(ob.kcal)+' · '):'')+'media <b style="color:var(--ink)">'+fmtMil(media)+'</b></span></div>'+
       '<div class="sbg" role="table" aria-label="Semana base: qué comes cada día">'+
         '<div class="sbbar">'+barras+linea+'</div>'+
@@ -3793,12 +3793,12 @@ function renderFueraMenu(){
         return '<div class="fslot"><div class="row"><span class="em">'+esc(it.e)+'</span><span class="nm"><b>'+esc(it.n)+'</b><span>extra</span></span>'+
           '<b class="k">'+it.kcal+'</b><button class="btn s" data-a="fuera-extra-del" data-j="'+j+'" aria-label="quitar">×</button></div></div>';}).join('')+
       '<div class="chips" style="margin-top:10px">'+
-        (postres.length?('<label class="chipx" style="gap:4px">+ postre<select data-a="fuera-extra" style="width:110px;padding:2px 4px;font-size:12px">'+
+        (postres.length?('<label class="chipx" style="gap:4px">+ postre<select data-a="fuera-extra" style="width:110px;padding:2px 4px;font-size:var(--suelo)">'+
           '<option value="">elige…</option>'+postres.map(function(p){const it=fueraItem(r.c.id,p);return '<option value="'+esc(p)+'">'+esc(it.n)+' · '+it.kcal+'</option>';}).join('')+'</select></label>'):'')+
         (fueraItem(r.c.id,'salsa')?'<button class="chipx" data-a="fuera-extra-b" data-o="salsa">+ salsa</button>':'')+
         '<button class="chipx'+(n===2?' on':'')+'" data-a="fuera-n">'+(n===2?'2 menús ✓':'2 menús')+'</button></div>'+
       '<div class="chips" style="margin-top:8px">'+FOOD_POS.slice(0,3).concat(['otro']).map(function(p){
-        if(p==='otro')return '<label class="chipx" style="gap:4px">otro<select data-a="food-pos" style="width:96px;padding:2px 4px;font-size:12px">'+posOptions(pos)+'</select></label>';
+        if(p==='otro')return '<label class="chipx" style="gap:4px">otro<select data-a="food-pos" style="width:96px;padding:2px 4px;font-size:var(--suelo)">'+posOptions(pos)+'</select></label>';
         return '<button class="chipx'+(pos===p?' on':'')+'" data-a="food-pos-b" data-p="'+p+'">'+esc(p)+'</button>';}).join('')+'</div>'+
       '<button class="btn p gbig" style="margin-top:13px" data-a="fuera-menu-apuntar" data-key="'+esc(sel)+'">apuntar '+(n===2?'2 menús':'menú')+' · '+tot.kcal+' kcal</button>'+
       '<button class="btn s" style="margin-top:8px" data-a="fuera-guardar">♡ guardar este menú tal cual</button>'+
@@ -4860,7 +4860,7 @@ function paraHoyItems(key){
   const ck=function(a,attrs,on,lab){return {a:a,ds:dsDe(attrs),on:!!on,lab:lab};};
   const ir=function(a,attrs,t){return {a:a,ds:dsDe(attrs),t:t};};
   const s=entrenoSemana(key);
-  if(s&&s.min&&s.conflicto)f.push({av:1,ico:'⚠',t:'Esta semana '+(s.faltan?('solo caben '+s.total+' de '+s.min+' entrenos'):('solo '+s.fuerza+' días de fuerza')),sub:entrenoPorQue(s),acc:ir('tab',' data-t="gym"','ver ›')});
+  if(s&&s.min&&s.conflicto&&avisoCola()==='av-entreno')f.push({no:'av-entreno',av:1,ico:'⚠',t:'Esta semana '+(s.faltan?('solo caben '+s.total+' de '+s.min+' entrenos'):('solo '+s.fuerza+' días de fuerza')),sub:entrenoPorQue(s),acc:ir('tab',' data-t="gym"','ver ›')});
   const tn=notasDeHoy();tn.tarde.concat(tn.hoy).forEach(function(x){const tarde=tn.tarde.indexOf(x)>=0;
     f.push({av:tarde,ico:'📝',t:x.txt.split('\n')[0],sub:tarde?'se te pasó: '+fechaCorta(x.fecha):'nota',hecho:!!x.hecha,
       ck:ck('nota-hecha',' data-id="'+x.id+'"',x.hecha,'marcar hecha'),acc:ir('nota-abrir',' data-id="'+x.id+'"','abrir')});});
@@ -4869,7 +4869,7 @@ function paraHoyItems(key){
     f.push({av:1,ico:dinCatIco(g.cat),t:g.nombre+' · '+eur(g.importe),sub:'toca pagar hoy',ck:ck('dinero-pagar',' data-id="'+esc(g.id)+'"',false,'marcar como pagado '+g.nombre)});});
   /* LA COPIA, A LA VISTA. Solo había un aviso que salía un momento a los 13 días: nunca se había hecho
      ninguna y todo vive solo en el móvil. Cada 7 días, aquí, con el botón que la manda a Drive */
-  if(key===iso(new Date())){const db=diasDesdeBackup();if(db===null||db>=avisoBackupD())f.push({av:1,ico:'💾',t:'Guarda una copia fuera del móvil',
+  if(key===iso(new Date())){const db=diasDesdeBackup();if((db===null||db>=avisoBackupD())&&avisoCola()==='av-copia')f.push({no:'av-copia',av:1,ico:'💾',t:'Guarda una copia fuera del móvil',
     sub:db===null?'nunca has guardado ninguna: si se borra el móvil, se pierde todo':'la última, hace '+db+' días',acc:ir('copia-compartir','','guardar ›')});}
   const tc=tocaComprar();if(tc.toca){const cd=compraDatos();if(cd.total)f.push({ico:'🛒',t:'Hacer la compra',sub:cd.total+' cosas por coger'+(tc.primera?'':' · hace '+tc.dias+' d'),acc:ir('tab',' data-t="shop"','lista ›')});}
   if(store.estudio&&estS().temas.length){const t=estTocaHoy(key);if(t.length)f.push({ico:'📚',t:'Repasar '+t.length+' tema'+(t.length===1?'':'s'),sub:t.slice(0,2).map(function(x){return x.nombre;}).join(', '),acc:ir('ir-tab',' data-t="estudio"','ver ›')});}
@@ -4887,7 +4887,7 @@ function paraHoyHTML(key){
   const attrs=function(ds){return Object.keys(ds||{}).map(function(k){return ' data-'+k+'="'+esc(ds[k])+'"';}).join('');};
   f.forEach(function(x){
     if(x.ck)x.ck='<button class="tick phck'+(x.ck.on?' on':'')+'" data-a="'+x.ck.a+'"'+attrs(x.ck.ds)+' aria-pressed="'+x.ck.on+'" aria-label="'+esc(x.ck.lab)+'">✓</button>';
-    if(x.acc)x.acc='<button class="btn s" data-a="'+x.acc.a+'"'+attrs(x.acc.ds)+'>'+x.acc.t+'</button>';});
+    if(x.acc)x.acc='<button class="btn s" data-a="'+x.acc.a+'"'+attrs(x.acc.ds)+'>'+x.acc.t+'</button>'+(x.no?ahoraNoBtn(x.no):'');});
   const marcables=f.filter(function(x){return x.ck;}),hechos=marcables.filter(function(x){return x.hecho;}).length;
   f.sort(function(a,b){return (a.hecho?1:0)-(b.hecho?1:0)||(b.av?1:0)-(a.av?1:0);});
   return '<div class="card parahoy'+(f.some(function(x){return x.av&&!x.hecho;})?' avisa':'')+'"><h2>✅ Para hoy'+(marcables.length?'<span class="mini" style="margin-left:auto;font-weight:400">'+hechos+' de '+marcables.length+'</span>':'')+'</h2>'+
@@ -5459,12 +5459,37 @@ function hoyKey(){
   if(_hoyTick!==_renderTick){_hoyKey=iso(new Date());_hoyTick=_renderTick;}
   return _hoyKey;}
 function isToday(key){return !!key&&key===hoyKey();}
-function modoAvisoHTML(){
+/* LOS AVISOS DE MANTENIMIENTO DE HOY, DE UNO EN UNO (C1). Los de protección (guardia, saliente, no conducir, choque,
+   sin pantallas, 4:20 «mañana guardia») no pasan por aquí: siempre a la vista. Los de mantenimiento salen como mucho
+   uno a la vez, en este orden; «Ahora no» (asist-sil) lo aparta 14 días y al repintar sale el siguiente. */
+const COLA_AVISOS=['av-modo','av-copia','din-fin','hab','av-entreno','cama','av-semana','din','cn'];
+let _colaTick=-1,_colaK='',_colaV='';
+function avisoCola(){
+  const hoyK=iso(new Date());
+  if(_colaTick===_renderTick&&_colaK===hoyK)return _colaV;
+  const A=asistS(),sil=function(id){return !!(A.sil[id]&&A.sil[id]>=hoyK);};
+  const hay={
+    'av-modo':function(){return store.rotation.mode!=='date';},
+    'av-copia':function(){const db=diasDesdeBackup();return db===null||db>=avisoBackupD();},
+    'din-fin':function(){return !!dinAsis(true,['din-fin']);},
+    'hab':function(){return !!asistTarjeta(hoyK);},
+    'av-entreno':function(){const s=entrenoSemana(hoyK);return !!(s&&s.min&&s.conflicto);},
+    'cama':function(){return !!nocheSugerencia(hoyK);},
+    'av-semana':function(){const w=new Date().getDay();return w===1||w===2;},
+    'din':function(){return !!dinAsis(true);},
+    'cn':function(){if(cnTapado())return false;const c=cnTarjeta(hoyK);return !!c&&c.id!=='guardia';}};
+  let v='';
+  for(let i=0;i<COLA_AVISOS.length;i++){const id=COLA_AVISOS[i];if(sil(id))continue;
+    let ok=false;try{ok=hay[id]();}catch(e){}if(ok){v=id;break;}}
+  _colaTick=_renderTick;_colaK=hoyK;_colaV=v;return v;}
+function ahoraNoBtn(id){return '<button class="btn s" data-a="asist-sil" data-id="'+id+'" aria-label="Ahora no (vuelve en 14 días)">Ahora no</button>';}
+function modoAvisoHTML(enHoy){
   /* aviso de modo compartido (informe, decisión B): Mes y Hoy siempre usan fecha real; si "Semana"
      está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
   if(store.rotation.mode==='date')return '';
+  if(enHoy&&avisoCola()!=='av-modo')return '';
   /* margen arriba y abajo: en Hoy va justo debajo de «＋ añadir» y sin él los dos botones se tocaban */
-  return '<div class="row mini" style="gap:8px;margin:10px 0"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button></div>';
+  return '<div class="row mini" style="gap:8px;margin:10px 0"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button>'+(enHoy?ahoraNoBtn('av-modo'):'')+'</div>';
 }
 function daySleepLineHTML(dateStr,inf){
   const sl=sleepOf(dateStr,inf),nt=nightOf(dateStr,sl),today=isToday(dateStr),r=suenoReal(dateStr);
@@ -5975,6 +6000,7 @@ function nocheVisperaDe(key){
   return {l4:l4,html:'<div class="nvis"><div class="dsucap">'+(vis?'MAÑANA TIENES GUARDIA':'HOY TIENES GUARDIA')+'</div>'+snOrdenesHTML(G,vis)+'</div>'};}
 function nocheSugHTML(key){
   const s=nocheSugerencia(key);if(!s)return '';
+  if(avisoCola()!=='cama')return '';
   return '<div class="nsug" role="group" aria-label="Sugerencia de hora de cama">💡 Llevas 3 noches cerca de las '+hm(s.de)+'. ¿Probamos a la cama a las <b>'+hm(s.a)+'</b> desde hoy?'+
     '<div class="row"><button class="btn s p" data-a="noche-sug-si">Vale, '+hm(s.a)+'</button><button class="btn s" data-a="noche-sug-no">Aún no</button></div></div>';}
 /* La hoja de «He vuelto» / «He llegado»: la hora de ahora ya puesta, −5 / +5 y Guardar. No se guarda nada hasta Guardar. */
@@ -8173,8 +8199,9 @@ function renderInforme(){
 function informeTocaHTML(){
   /* los lunes y martes, el informe de la semana que acaba de terminar */
   const dw=new Date().getDay();if(dw!==1&&dw!==2)return '';
-  return '<button class="card infpuerta" data-a="hoy-informe" data-sem="pasada"><span>📊</span><span class="t"><b>Tu semana pasada</b>'+
-    '<span class="mini">sueño, dieta, hábitos, estudio, entreno y ahorro</span></span><span class="mini">›</span></button>';}
+  if(avisoCola()!=='av-semana')return '';
+  return '<div class="infwrap">'+'<button class="card infpuerta" data-a="hoy-informe" data-sem="pasada"><span>📊</span><span class="t"><b>Tu semana pasada</b>'+
+    '<span class="mini">sueño, dieta, hábitos, estudio, entreno y ahorro</span></span><span class="mini">›</span></button>'+ahoraNoBtn('av-semana')+'</div>';}
 /* ===================== estudio: objetivos de libro y tu HUD =====================
    «Quiero estudiar tal libro, que tiene tantas páginas y capítulos; si al día estudio x horas, en
    x tiempo lo termino.» Cada libro dice por qué página vas, qué toca hoy, cuándo terminas al ritmo
@@ -8457,7 +8484,7 @@ function renderHoy(){
         esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">🌿'+(lloretDe(hoy)?' ✓':'')+'</button>'+
       '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
     '</div>'+
-    modoAvisoHTML()+mvBandaHTML()+
+    modoAvisoHTML(true)+mvBandaHTML()+
     '<div class="row" style="gap:8px;align-items:center"><div class="hoyest" style="color:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+
     (guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div><span class="sp"></span>'+entrenoContadorHTML(hoy)+'</div>'+
     /* EL DÍA COMO CARRIL, en el sitio donde estaban la barra horizontal y la lista de horas. Es
@@ -8601,7 +8628,7 @@ function semanaConfigHTML(){
       (r.mode==='template'
         ?('<select id="patSel" data-a="pat-sel" style="max-width:260px">'+store.patterns.map(function(p,i){
             return '<option value="'+p.id+'" '+(i===r.pattern?'selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>')
-        :('<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)">lunes de ref.'+
+        :('<label style="display:flex;align-items:center;gap:6px;font-size:var(--suelo);color:var(--ink2)">lunes de ref.'+
           '<input type="date" value="'+esc(r.anchor||'')+'" data-a="rot-anchor" style="width:145px"></label>'+
           '<button class="btn s" data-a="today">hoy</button>'))+
       '<span class="sp"></span>'+
@@ -8729,7 +8756,7 @@ function vacRangeRow(v,ix){
   let a=parseDate(v.start),b=parseDate(v.end);
   if(a&&b&&b<a){const t=a;a=b;b=t;}   /* datos antiguos guardados al revés: se muestran ya girados */
   const n=(a&&b)?Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000)+1:0;
-  return '<div class="row" style="padding:5px 0;border-top:1px dashed var(--line);font-size:13px">'+
+  return '<div class="row" style="padding:5px 0;border-top:1px dashed var(--line);font-size:var(--suelo)">'+
     '<b style="min-width:150px">'+(a?a.getDate()+' '+MON[a.getMonth()]:'?')+' → '+(b?b.getDate()+' '+MON[b.getMonth()]:'?')+'</b>'+
     '<span class="mini">'+n+' día(s)'+(v.label?' · '+esc(v.label):'')+'</span>'+
     '<span class="sp"></span><button class="btn s" data-a="vac-del" data-ix="'+ix+'">quitar</button></div>';}
@@ -13468,7 +13495,7 @@ function renderFoodCantidad(){
         '</select></label>'):'')+
       ((ui.foodDest||'hoy')!=='hoy'?'':'<div class="chips" style="margin-top:12px">'+FOOD_POS.slice(0,3).concat(['otro']).map(function(p){
         const act=(ui.foodPos||momentoAhora());
-        if(p==='otro')return '<label class="chipx" style="gap:4px">otro<select data-a="food-pos" style="width:96px;padding:2px 4px;font-size:12px">'+
+        if(p==='otro')return '<label class="chipx" style="gap:4px">otro<select data-a="food-pos" style="width:96px;padding:2px 4px;font-size:var(--suelo)">'+
           posOptions(act)+'</select></label>';
         return '<button class="chipx'+(act===p?' on':'')+'" data-a="food-pos-b" data-p="'+p+'">'+esc(p)+'</button>';}).join('')+
       '</div>')+
@@ -14154,7 +14181,7 @@ function renderFoodAdd(){
         '<label class="fld">&nbsp;<span class="row" style="gap:6px">'+
         '<button class="btn s" data-a="scan-go">buscar el código</button>'+
         '<button class="btn s" data-a="scan-find">buscar por nombre</button></span></label></div>'+
-      '<label class="fld" style="margin-top:6px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">'+
+      '<label class="fld" style="margin-top:6px;flex-direction:row;align-items:center;gap:6px;font-size:var(--suelo);text-transform:none;font-weight:400">'+
         '<input type="checkbox" id="scanMerc" data-a="scan-solo-merc" style="width:auto" '+(ui.scanSoloMercadona?'checked':'')+'>'+
         '<span>🛒 solo Mercadona (Hacendado, Deliplus…)</span></label>'+
       '<p id="scanOut">'+esc(ui.scanMsg||'')+'</p>'+scanPendHTML()+
@@ -14460,7 +14487,7 @@ function renderAlimFicha(){
       '<div class="chips">'+raciones.map(function(v){
         return '<button class="chipx'+(v===g?' on':'')+'" data-a="alim-g" data-n="'+v+'">'+v+' '+uniDe(a)+'</button>';}).join('')+
         '<label class="chipx" style="gap:4px">otra<input type="number" min="1" max="2000" step="5" value="'+g+
-          '" data-a="alim-g-f" style="width:58px;padding:2px 4px;font-size:12px"></label>'+
+          '" data-a="alim-g-f" style="width:58px;padding:2px 4px;font-size:var(--suelo)"></label>'+
       '</div>'+
       '<div class="tot">'+
         '<div><b>'+p.kcal+'</b><span>kcal</span></div>'+
@@ -18991,7 +19018,7 @@ function informeEntrenoHTML(lk){
   if(!recs.length)recs.push('Semana equilibrada: sigue igual.');
   const pos=ac?Math.max(0,Math.min(100,(ac.r-0.4)/1.4*100)):null;
   return '<div class="card infent"><h2>💪 Entreno</h2>'+
-    '<div class="row"><b style="font-size:13px">Carga</b><span class="sp"></span><span class="mini">esfuerzo × minutos</span></div>'+
+    '<div class="row"><b style="font-size:var(--suelo)">Carga</b><span class="sp"></span><span class="mini">esfuerzo × minutos</span></div>'+
     '<div class="gbars" style="height:70px">'+sem.map(function(x,i){return '<div class="'+(x.g>=3?'gu':'')+'" style="height:'+Math.max(4,Math.round(x.c/mx*100))+'%'+(i===3?';background:var(--brand2);opacity:1':'')+'"><span>'+x.c+'</span></div>';}).join('')+'</div>'+
     '<div class="gbarsx">'+sem.map(function(x,i){return '<span>'+(i===3?'esta':('−'+(3-i)))+(x.g?(' · '+x.g+'G'):'')+'</span>';}).join('')+'</div>'+
     (ac?('<div class="gacwr"><i style="left:'+pos+'%"></i></div><div class="gacwrx"><span>poco</span><span>0,8–1,3 seguro</span><span>1,5 riesgo</span></div>'+
@@ -19853,11 +19880,12 @@ function asistTarjetaHab(k){return reglasDe(HAB_R,k,true,false);}
 function cnTarjeta(k){return reglasDe(CN_R,k,true,true);}
 function asistHoyHTML(k){
   /* en Hoy: el check-in (si falta) y una tarjeta por asistente (hábitos, dinero y 4:20) si hay algo que decir */
-  const t=asistTarjeta(k),hoyK=k===iso(new Date()),d=hoyK?dinAsis(true):null,c=hoyK&&!cnTapado()?cnTarjeta(k):null,hh=new Date().getHours();
+  const q=avisoCola(),t=q==='hab'?asistTarjeta(k):null,hoyK=k===iso(new Date()),d=hoyK&&(q==='din'||q==='din-fin')?dinAsis(true,q==='din-fin'?['din-fin']:null):null,
+    cg=hoyK&&!cnTapado()?cnTarjeta(k):null,c=cg&&(cg.id==='guardia'||q==='cn')?cg:null,hh=new Date().getHours();
   const ck=hh>=5&&hoyModo()!=='bus'?asistCheckinHTML(k):'';   /* con el conductor, el check-in es la radio */
   if(!ck&&!t&&!d&&!c)return '';
   /* la primera abierta; las otras, en una línea que se abre al tocar (eran 482 px entre las tres) */
-  return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din',true):'')+(c?asistTjHTML(c,'cn',true):'')+'</div>';}
+  return '<div class="card asist">'+ck+(t?asistTjHTML(t):'')+(d?asistTjHTML(d,'din'):'')+(c?asistTjHTML(c,'cn',q==='cn'?false:true):'')+'</div>';}
 /* ---------- la semana: cinco números, un cruce y una propuesta ---------- */
 function ventana(fin,dias){
   /* lo de una ventana de días que acaba en «fin»: Tu semana (7) y los objetivos (28) leen lo mismo */
@@ -21971,7 +21999,7 @@ function renderCfg(){
         return `<label class="semdia"><span>${DSEM[di]}</span>
           <select data-a="pat-day" data-id="${p.id}" data-d="${di}" style="border-color:${s?s.color:'var(--line)'}">${store.shifts.map(x=>`<option value="${esc(x.code)}" ${x.code===c?'selected':''}>${esc(x.code)}</option>`).join('')}</select>
           <b style="color:${s?s.color:'var(--ink2)'}">${s?esc(s.icon):'·'}</b></label>`;}).join('')}</div>
-      <input value="${esc(p.note||'')}" placeholder="nota (cuándo usas esta semana)" data-a="pat-note" data-id="${p.id}" style="margin-top:8px;font-size:12px">
+      <input value="${esc(p.note||'')}" placeholder="nota (cuándo usas esta semana)" data-a="pat-note" data-id="${p.id}" style="margin-top:8px;font-size:var(--suelo)">
     </details>`}).join('');
   /* mismas horas, pero cada tipo de día en su bloque con las etiquetas visibles al lado de cada hora */
   /* Esto era UNA pantalla de 7 005 px —7,7 pantallas de móvil— con 126 campos seguidos: los seis
@@ -23269,7 +23297,7 @@ function asistTjHTML(t,cls,plegable){
     '<span class="ico">'+esc(t.ico)+'</span><span class="t"><b>'+esc(t.t)+'</b><small>'+esc(t.txt)+'</small></span><span class="ch">›</span></button></div>';
   return '<div class="astj'+(cls?' '+cls:'')+'"><div class="row"><span class="ico">'+esc(t.ico)+'</span>'+
       (plegable?'<button class="astj-tit" data-a="asist-abre" data-id="" aria-expanded="true"><b>'+esc(t.t)+'</b></button>':'<b>'+esc(t.t)+'</b>')+'<span class="sp"></span>'+
-      (t.nada?'':'<button class="x" data-a="asist-sil" data-id="'+esc(t.id)+'" aria-label="ahora no (vuelve en 14 días)" title="ahora no">×</button>')+'</div>'+
+      (t.nada?'':'<button class="x" data-a="asist-sil" data-id="'+esc(t.id)+'" aria-label="Ahora no (vuelve en 14 días)">Ahora no</button>')+'</div>'+
     '<p>'+esc(t.txt)+'</p>'+(t.acc.length||!t.nada?'<div class="row asacc">'+t.acc.map(function(a){
       return a[4]==='file'?'<label class="btn '+(a[3]?'p ':'')+'s">'+esc(a[0])+'<input type="file" accept="image/*" multiple data-a="'+a[1]+'" hidden></label>':
         '<button class="btn '+(a[3]?'p ':'')+'s" data-a="'+a[1]+'"'+a[2]+'>'+esc(a[0])+'</button>';}).join('')+
@@ -24515,10 +24543,10 @@ function evFormHTML(ev){
       'Si pones una hora de fin anterior a la de empezar, se entiende que acaba al día siguiente.</p>'+
   '</div>'+
   (f.modo==='fecha'?('<div class="card"><h2>Avisos</h2>'+
-    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:var(--suelo);color:var(--ink2)">'+
       '<input type="checkbox" id="evRec" style="width:auto" '+((ev&&ev.recordatorio)?'checked':'')+'> '+
       '🔔 avisarme (sale en «Hoy» y en «Próximos»)</label>'+
-    '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);margin-top:9px">'+
+    '<label style="display:flex;align-items:center;gap:6px;font-size:var(--suelo);color:var(--ink2);margin-top:9px">'+
       '<input type="checkbox" id="evCuenta" style="width:auto" '+((ev&&ev.cuentaAtras)?'checked':'')+'> '+
       '⏳ mostrar cuenta atrás</label></div>'):'')+
   '<div class="row" style="margin-top:2px">'+
@@ -24900,12 +24928,12 @@ function renderAjustes(){
         <button class="btn s" data-a="cal-descargar">todo junto, en un fichero</button>
         <button class="btn s" data-a="cal-copiar">copiar el .ics</button>
         <button class="btn ${ui.calView?'':'p'} s" data-a="cal-ver">${ui.calView?'ocultar la lista':'ver la lista'}</button></div>
-      <div id="txtIcs" class="mini" style="${ui.calView?'margin-top:8px':'display:none;margin-top:8px'};background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;max-height:200px;overflow:auto;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px">${esc(ui.calTxt||'')}</div>
+      <div id="txtIcs" class="mini" style="${ui.calView?'margin-top:8px':'display:none;margin-top:8px'};background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);border-radius:10px;padding:10px;max-height:200px;overflow:auto;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--suelo)">${esc(ui.calTxt||'')}</div>
       <div class="row" style="margin-top:11px">
         <label class="fld" style="flex:1 1 200px">nombre del cuaderno<input id="calNombre" value="${esc(store.rotation.calNombre||'')}" placeholder="${esc(calNombreTxt(calRangoUI().desde))}"></label>
         <label class="fld" style="flex:0 0 auto;justify-content:flex-end"><button class="btn s" data-a="cal-nombre">poner el nombre</button></label>
       </div>
-      <label class="fld" style="margin-top:8px;flex-direction:row;align-items:center;gap:6px;font-size:12px;text-transform:none;font-weight:400">
+      <label class="fld" style="margin-top:8px;flex-direction:row;align-items:center;gap:6px;font-size:var(--suelo);text-transform:none;font-weight:400">
         <input type="checkbox" id="calOculto" data-a="cal-oculto" style="width:auto" ${store.rotation.calOculto!==false?'checked':''}>
         <span>etiquetarlos (IMPORT_TAG) para poder filtrarlos u ocultarlos luego en Google</span></label>
       ${ui.calView?`<p class="mini" style="margin:9px 0 0">la caja de arriba es el <code>.ics</code> tal cual: si tu editor no lo parte en l\u00edneas de 75, Google no lo traga \u2014 por eso el <i>descargar</i> es el camino normal, y esto solo para copiar y pegar</p>`:''}
@@ -24924,7 +24952,7 @@ function renderAjustes(){
         <span class="sp"></span>
         <button class="btn s" data-a="cal-analizar">Analizar el .ics</button>
         <button class="btn p" data-a="cal-aplicar" id="calApply" ${ui.icsPrev&&ui.icsPrev.ok?'':'disabled'}>Marcar esos días</button>
-        <label class="fld" style="flex:0 0 auto;font-size:11px;text-transform:none"><span class="row" style="gap:5px">
+        <label class="fld" style="flex:0 0 auto;font-size:var(--suelo);text-transform:none"><span class="row" style="gap:5px">
           <input type="checkbox" id="calEncima" data-a="cal-encima" style="width:auto" ${ui.icsEncima?'checked':''}><span>pisar lo que yo puse a mano</span></span></label></div>
       ${ui.icsPrev?icsPreviewHTML(ui.icsPrev):'<div id="calOut" style="display:none"></div>'}
       <details class="plegable" style="margin-top:10px"><summary>traerlo de una URL pública</summary>
@@ -25205,7 +25233,7 @@ function renderData(){
   if(v==='texto')return cfgPantalla('\ud83d\udcc4 Texto para imprimir',`<div class="card">
       <p class="note">La semana vista, con kcal y proteína por comida, y las tandas de cocina. Se pega en cualquier chat.</p>
       <div class="row"><button class="btn" data-a="txt">Generar</button><button class="btn" data-a="txtcopy">Copiar</button></div>
-      <textarea id="txtOut" rows="16" readonly style="margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px"></textarea></div>`);
+      <textarea id="txtOut" rows="16" readonly style="margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--suelo)"></textarea></div>`);
   /* la portada: tu copia arriba, y una puerta por tarea */
   /* sin pantalla elegida, Datos es la lista de Ajustes */
   ui.tab='ajustes';ui.ajuVista='';return renderAjustes();
@@ -28576,7 +28604,7 @@ function calNotas(){
     '<div class="row wrap" style="gap:8px;align-items:center;margin-top:8px">'+
       '<span class="mini">copia estas 4 líneas (en Google no hay interfaz para ellas):</span>'+
       '<span class="sp"></span><button class="btn s" data-a="cal-copiar-url">copiar el bloque</button></div>'+
-    '<textarea id="calUrlTxt" rows="9" readonly style="width:100%;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px">'+
+    '<textarea id="calUrlTxt" rows="9" readonly style="width:100%;margin-top:6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:var(--suelo)">'+
       esc(calUrlBloque(arch,nom))+'</textarea>'+
     li('Y sin la URL','si solo quieres verlo en el móvil: baja el <code>.ics</code> y ábrelo con Google Calendar. No se sincroniza: es una foto del planning en la fecha en que lo descargaste.')+
     li('Ojo con los recordatorios y el color','al descargar, el navegador te abre el fichero: cópialo a la carpeta que sincronices (o vuelve a pulsar <b>descargar</b> desde la pestaña de Google: el navegador no deja escribir en ella).')+
@@ -28972,7 +29000,7 @@ function icsPreviewHTML(p){
   const msjs=(p.avisos&&p.avisos.length)?('<div class="mini" style="margin-top:6px">⚠ '+p.avisos.map(esc).join(' · ')+'</div>'):'';
   return '<div id="calOut" style="background:color-mix(in srgb,var(--card) 55%,var(--bg));border:1px solid var(--line);'+
     'border-radius:10px;padding:10px;margin-top:8px">'+
-    '<div class="row" style="align-items:center"><span class="sp"></span><b style="text-transform:uppercase;font-size:12px">'+
+    '<div class="row" style="align-items:center"><span class="sp"></span><b style="text-transform:uppercase;font-size:var(--suelo)">'+
       esc(p.desde===p.hasta?('Tu calendario · '+p.desde):('Tu calendario · '+p.desde+' → '+p.hasta))+'</b>'+
       '<span class="sp"></span></div>'+
     '<div class="mini" style="text-transform:none">a continuación, lo que se ha entendido de lo que no · '+esc(p.msg||'')+'</div>'+

@@ -996,8 +996,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }));
   check('la portada de Ajustes cabe en una pantalla y es una puerta por tarea',
     // (1160: «Tu sueldo» vive aquí desde que Dinero es un asistente; se toca una vez al año;
-    //  +60: «Mi rutina», que vivía en Semana, desde que Semana se quitó)
-    portadaAjustes.alto < 1220 && portadaAjustes.puertas >= 6, JSON.stringify(portadaAjustes));
+    //  +60: «Mi rutina», que vivía en Semana, desde que Semana se quitó;
+    //  +100: el suelo de letra de 13 px (C1 · Letra y calma) crece cada fila un poco)
+    portadaAjustes.alto < 1320 && portadaAjustes.puertas >= 6, JSON.stringify(portadaAjustes));
 
   // 31) qué día "absorbe" el saliente es configurable (antes, sábado→lunes fijo en el código)
   const saltoTest = await page.evaluate(() => {
@@ -10134,7 +10135,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const Orig = Date, n = new Orig(); const fijo = new Orig(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0).getTime();
       window.__origDate257 = Orig; window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fijo); else super(...a); } static now() { return fijo; } }; });
     // asistente en Hoy: check-in y una sola tarjeta; × la silencia
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
+    // (C1: los avisos de mantenimiento salen de uno en uno; aquí se apartan los de delante para que toque el de hábitos)
+    await page.evaluate(() => { const P = window.PG, s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'av-entreno', 'av-semana'].forEach((id) => { s[id] = f; }); P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); });
     const asist = await page.evaluate(() => ({ check: !!document.querySelector('#main .asist .snkss'), tarjetas: document.querySelectorAll('#main .asist .astj:not(.din):not(.cn)').length, t: ((document.querySelector('#main .astj b') || {}).textContent || '') }));
     pasos.push(await cl('#main .asist [data-a="asist-kss"][data-v="4"]')); pasos.push(await cl('#main .asist [data-a="asist-animo"][data-v="4"]'));
     const ck = await page.evaluate(() => { const k = window.PG.iso(new Date()), c = window.PG.asistS().checkins[k] || {}; return { kss: window.PG.cnKss(k), animo: c.animo, hecho: window.PG.asistHecho(k) }; });
@@ -10477,6 +10479,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.mes = await page.evaluate(() => ({ txt: document.querySelector('#main').innerText.replace(/\s+/g, ' '), cats: document.querySelectorAll('#main .d6cat').length }));
     // la frase del asistente, también en Hoy; y sobrevive a recargar (normalize)
     r.app = await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(P.store)); const b = P.bancoS();
+      // (C1: de uno en uno; se apartan los avisos de delante de dinero para que salga la frase de dinero)
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'av-entreno', 'av-semana'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } }
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.render(); const t = document.querySelector('#main .card.asist .astj.din');
       return { cuentas: b.cuentas.map((c) => c.nombre + ':' + c.rol).join('|'), caps: b.capturas.length, s: JSON.stringify(b.capturas[0] && b.capturas[0].s), din: t ? t.innerText.replace(/\s+/g, ' ') : '' }; });
     // Tu sueldo, en Ajustes, y vuelve a Ajustes
@@ -14155,6 +14159,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {};
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.save(); P.render(); });
     await page.waitForTimeout(300);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), seg = document.querySelector('#main .hoyseg');
@@ -14209,6 +14214,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
@@ -14259,6 +14265,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
@@ -14305,6 +14312,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
@@ -14352,6 +14360,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
@@ -14405,6 +14414,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (opt && opt.semana) for (let i = 0; i < 14; i++) { const k = dia(i), a = i < 7;
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
+      { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
       P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
@@ -14655,7 +14665,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.__copia372 = JSON.parse(JSON.stringify(window.PG.store));
       const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
       a.real = [{ id: 'r372', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e372', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
-      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p9', fecha: '2026-10-10', nombre: 'Compra', importe: 120, cat: 'comida', ts: 2 }];
       P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
       P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
     const lee = () => page.evaluate(() => { const li = [...document.querySelectorAll('#main .tm-ley')].find((l) => /Apartado/.test(l.textContent));
@@ -15502,9 +15512,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { seg: seg, chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), minLetra: Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))), ancho: document.documentElement.scrollWidth };
     });
     await gotoTab('hoy');
-    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 12 px, pestañas y botones de potencia de 44 px y casillas de 16 px en filas de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
-      r.hoyMini === 12 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.seg.length > 0 && r.plan.seg.every((h) => h >= 44) && r.plan.chk.length >= 3 &&
-      r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 12 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
+    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 13 px (suelo C1), pestañas y botones de potencia de 44 px y casillas de 16 px en filas de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
+      r.hoyMini === 13 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.seg.length > 0 && r.plan.seg.every((h) => h >= 44) && r.plan.chk.length >= 3 &&
+      r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 13 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
     await page.setViewportSize(vp);
   }
   // (b) sueño en Hoy (S1: antes había una fila «Te faltan N noches»; ya no): con «He vuelto» y «En pie» dados sale la fila «Anoche … Vale · cambiar · otras noches»
@@ -16891,6 +16901,106 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp); await sueltaHoy();
     check('463 Entreno · el rótulo dice «Semana 1 de 5 · 0 entrenos», con una serie «1 entreno», cabe en 412 (≥44 px) y sigue abriendo «Tu semana de entreno»',
       !!R.a && R.a.t === 'Semana 1 de 5 · 0 entrenos' && R.b.t === 'Semana 1 de 5 · 1 entreno' && R.a.alto >= 44 && R.a.ancho <= 412 && R.plan === 'plan', JSON.stringify(R));
+  }
+
+  // 470) C1 · LETRA Y CALMA, SUELO DE LETRA (412×915): todo el texto visible de Hoy, Mes, Comer y Dinero mide ≥13 px (Dinero ≥14) salvo las casillas del Mes (.dbox),
+  // la línea del día (.carrilbox), SVG y las franjas de guardia/saliente/conducir; y no hay scroll horizontal. Cae con styles.css de antes de tools/suelo-letra.mjs.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { window.__copia470 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const mide = (min) => page.evaluate((min) => { const EX = '.dbox,.carrilbox,svg,.snord,.snreloj,.manana,.cal.ext', mal = [];
+      const w = document.createTreeWalker(document.querySelector('#main'), NodeFilter.SHOW_TEXT);
+      while (w.nextNode()) { const n = w.currentNode, t = n.textContent.trim(); if (!t) continue; const e = n.parentElement; if (!e || e.closest(EX) || e.closest('script,style,option')) continue;
+        const r = e.getBoundingClientRect(), cs = getComputedStyle(e); if (r.width < 1 || r.height < 1 || cs.visibility === 'hidden' || cs.display === 'none') continue;
+        const px = parseFloat(cs.fontSize); if (px < min - 0.01) mal.push(e.tagName + '.' + (e.className || '') + ' ' + px + ' «' + t.slice(0, 24) + '»'); }
+      return { n: mal.length, mal: mal.slice(0, 8), ancho: document.documentElement.scrollWidth }; }, min);
+    const vista = async (tab, extra, min) => { await page.evaluate(([tab, extra]) => { const P = window.PG; P.ui.tab = tab; P.ui.hoyVista = ''; P.ui.hoyModo = 'linea'; P.ui.dineroVista = ''; P.ui.dinTab = extra || ''; P.save(); P.render(); }, [tab, extra]); await page.waitForTimeout(300); return mide(min); };
+    const R = {};
+    R.hoy = await vista('hoy', '', 13); R.mes = await vista('month', '', 13); R.comer = await vista('food', '', 13); R.din = await vista('dinero', 'mes', 14);
+    R.dinGasto = await vista('dinero', 'gastos', 14);
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia470; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('470 Letra · Hoy, Mes y Comer ≥13 px y Dinero ≥14 px (menos las excepciones), sin scroll horizontal a 412',
+      ['hoy', 'mes', 'comer', 'din', 'dinGasto'].every((k) => R[k].n === 0 && R[k].ancho <= 412), JSON.stringify(R));
+  }
+
+  // 471) C1 · AVISOS DE UNO EN UNO: con modo plantilla + copia fuera del móvil + «Tu semana pasada» (lunes) a la vez sale solo el primero (modo plantilla);
+  // «Ahora no» lo quita y sale la copia; otra vez, y sale el informe; luego ninguno; el día 16 sigue apartado (14 días) y el 17 vuelve el primero. Cae sin la cola (avisoCola).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0);
+    const congela = (y, mo, d) => page.evaluate(([y, mo, d]) => { const Orig = window.__origDateFijo, fr = new Orig(y, mo, d, 12, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; window.PG.render(); }, [y, mo, d]);
+    await congela(2026, 10, 2);
+    await page.evaluate(() => { const P = window.PG; window.__copia471 = JSON.parse(JSON.stringify(P.store));
+      P.store.rotation.mode = 'template'; P.store.asist = P.store.asist || {}; P.store.asist.sil = {}; P.store.asist.nunca = {};
+      try { Object.keys(localStorage).filter((k) => /backup/i.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'linea'; P.save(); P.render(); });
+    const ver = () => page.evaluate(() => ({ modo: !!document.querySelector('#main [data-a="mon-sync"]'), copia: !!document.querySelector('#main [data-a="copia-compartir"]'), inf: !!document.querySelector('#main .infpuerta'),
+      no: [...document.querySelectorAll('#main [data-a="asist-sil"]')].map((b) => b.dataset.id + '|' + b.textContent.trim()) }));
+    const R = { seq: [], uno: true }; await page.waitForTimeout(250); R.a = await ver();
+    for (let i = 0; i < 9; i++) { const v = await ver(); if (!v.no.length) break; if (v.no.length !== 1) R.uno = false; R.seq.push(v.no[0]);
+      await page.click('#main [data-a="asist-sil"]'); await page.waitForTimeout(220); }
+    R.d = await ver();
+    await congela(2026, 10, 16); R.e = await ver();
+    await congela(2026, 10, 17); R.f = await ver();
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia471; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    const solo = (o, k) => ['modo', 'copia', 'inf'].every((x) => o[x] === (x === k));
+    check('471 Avisos · de uno en uno: modo plantilla → «Ahora no» → copia → «Ahora no» → informe → «Ahora no» → ninguno; el día 16 sigue apartado y el 17 vuelve el primero',
+      solo(R.a, 'modo') && R.a.no[0] === 'av-modo|Ahora no' && R.uno && R.seq.length >= 3 && R.seq.indexOf('av-modo|Ahora no') < R.seq.indexOf('av-copia|Ahora no') && R.seq.indexOf('av-copia|Ahora no') < R.seq.indexOf('av-semana|Ahora no') &&
+      R.seq.indexOf('av-semana|Ahora no') >= 0 && !R.d.no.length && !R.d.modo && !R.d.copia && !R.d.inf && !R.e.no.length && !R.e.modo && !R.e.copia && !R.e.inf && R.f.no[0] === 'av-modo|Ahora no', JSON.stringify(R));
+  }
+
+  // 472) C1 · LOS P0 NO SE PLIEGAN: la víspera de guardia, con otros avisos de mantenimiento pendientes, «Avisarme» (órdenes de guardia) sigue a la vista junto a UN solo aviso de mantenimiento.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0);
+    await page.evaluate(() => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end)[0], GU = P.store.shifts.filter(P.isGuardia)[0];
+      window.__copia472 = JSON.parse(JSON.stringify(P.store));
+      P.store.asist = P.store.asist || {}; P.store.asist.sil = {}; P.store.asist.nunca = {};
+      try { Object.keys(localStorage).filter((k) => /backup/i.test(k)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+      for (let i = -3; i <= 2; i++) P.setDayOverride(d(i), SH.id, ''); P.setDayOverride(d(1), GU.id, 'urg');
+      P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} }); P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'linea'; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const R = await page.evaluate(() => ({ avisarme: !!document.querySelector('#main [data-a="sn-avisa3"]'), snord: !!document.querySelector('#main .snord'), modo: !!document.querySelector('#main [data-a="mon-sync"]'),
+      copia: !!document.querySelector('#main [data-a="copia-compartir"]'), nAhoraNo: document.querySelectorAll('#main [data-a="asist-sil"]').length }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia472; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('472 Avisos · la víspera de guardia «Avisarme» sigue a la vista y de mantenimiento sale solo uno (modo plantilla, no la copia)', R.avisarme && R.snord && R.modo && !R.copia && R.nAhoraNo === 1, JSON.stringify(R));
+  }
+
+  // 473) C1 · CONTRASTE EN OSCURO: «ahorras» (verde) mide ≥4,5:1 sobre su fondo en oscuro y sigue #15803d en claro; la tarjeta «Apuntar gasto grande» deja de ser clara en oscuro (borde cian).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { const Orig = window.__origDateFijo, fr = new Orig(2026, 9, 29, 10, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; });
+    await page.evaluate(() => { const P = window.PG; window.__copia473 = JSON.parse(JSON.stringify(P.store)); const a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r473', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }, { id: 'r473b', mes: '2026-09', fecha: '2026-09-28', gastos: 300, cats: {} }, { id: 'r473c', mes: '2026-08', fecha: '2026-08-28', gastos: 280, cats: {} }]; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e473', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = [];
+      P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000; P.ui.tmFijos = false; P.ui.tmGrande = null; });
+    const med = () => page.evaluate(() => { const lum = (c) => { const m = c.match(/[\d.]+/g).map(Number).slice(0, 3).map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+      const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+      const fondo = (e) => { for (; e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; if (b && !/rgba\(0, 0, 0, 0\)/.test(b) && b !== 'transparent') return b; } return 'rgb(255,255,255)'; };
+      const a = document.querySelector('#main .tm-a:not(.mal)'), g = document.querySelector('#main .tm-gbtn');
+      return { a: a ? { col: getComputedStyle(a).color, c: cr(getComputedStyle(a).color, fondo(a)) } : null, g: g ? { bg: getComputedStyle(g).backgroundColor, lum: lum(getComputedStyle(g).backgroundColor), borde: getComputedStyle(g).borderTopColor } : null }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    await page.waitForTimeout(300);
+    const R = {}; const eraOsc = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+    await page.evaluate(() => { document.documentElement.classList.remove('dark'); }); R.claro = await med();
+    await page.evaluate(() => { document.documentElement.classList.add('dark'); }); R.osc = await med();
+    await page.evaluate((o) => { document.documentElement.classList.toggle('dark', o); const P = window.PG; P.store = window.__copia473; P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.save(); P.render(); }, eraOsc);
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('473 Contraste · en oscuro «ahorras» ≥4,5:1 (#4ade80) y «Apuntar gasto grande» oscura con borde cian; en claro el verde sigue #15803d',
+      !!R.osc.a && R.osc.a.c >= 4.5 && R.osc.a.col === 'rgb(74, 222, 128)' && !!R.osc.g && R.osc.g.lum < 0.2 && R.osc.g.borde === 'rgb(34, 211, 238)' && !!R.claro.a && R.claro.a.col === 'rgb(21, 128, 61)', JSON.stringify(R));
+  }
+
+  // 474) C1 · EL SCRIPT ES REPETIBLE: tools/suelo-letra.mjs en seco sobre el código ya procesado no cambia nada (0 tamaños en styles.css y en app.js). Cae si alguien mete un px suelto por debajo del suelo.
+  {
+    let salida = ''; try { salida = require('child_process').execFileSync('node', ['tools/suelo-letra.mjs', '--seco'], { cwd: require('path').resolve(__dirname, '..'), encoding: 'utf8' }); } catch (e) { salida = String(e); }
+    check('474 Letra · el script del suelo en seco dice 0 cambios en styles.css y 0 en app.js', /styles\.css: 0 tamaños cambiados · app\.js: 0 tamaños cambiados/.test(salida), salida.slice(-300));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
