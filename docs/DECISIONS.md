@@ -2643,3 +2643,12 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Descartado:** tocar texto libre, kit de vuelta, cena antes de salir, tandas, objetivo/techo, «¿Me la propones?».
 **Supuestos:** el margen va como fila propia sobre los cuatro recuadros (llevas/objetivo se quedan); el resumen de «Tu semana» dice cuántas kcal quedan; el estado plegado no se guarda entre sesiones.
 **Pruebas:** 500-503 (un bloque). Cae con X revertido: con app.js y styles.css de antes la 500 cae y la 501 revienta al no existir `.cmplh`. Viejas cambiadas por decisión: 239 (espera «Tocaban … lo cambiaste»); 319, 334, 338, 396 abren antes el plegable (`abrePleg`); 334 busca `.cjvit` dentro de `.cmplb`.
+
+## 2026-11-02 · La Competencia · C4b Foto del cuadrante
+**Elegido (opciones recomendadas):**
+- Las celdas dudosas se quedan como estaban y se avisa («N días sin cambiar»); cada duda abre una hoja con el recorte y Guardia / Saliente / Trabajo / Libre / «Dejarlo como estaba».
+- La foto solo vive en memoria (`ui.foto`, `window._fotoLienzo`) mientras corriges; se suelta al seguir, cancelar o salir de la pantalla (hook en `render()`). Nunca a store, localStorage ni red.
+- La primera vez tocas tu nombre en la cabecera; se guarda solo cómo se escribe (`store.planFoto.nombre`, normalizado) y se busca por nombre aunque la columna cambie de sitio («No soy yo» lo olvida).
+**Descartado:** PDF/Excel; una vista por persona; subir la foto a ningún servidor; tocar `sw.js`.
+**Supuestos:** el cuadrante es una fila por día y una columna por persona (como la maqueta); Trabajo (T) se manda a la vista previa como día libre con la palabra «trabajo» (la app no tiene otro tipo); una letra doblada («Ss», fallo medido del lector) cuenta como esa letra; un día que no sube respecto al anterior (el lector se come cifras: «10» → «1») es una duda sin día; si no se ve el mes, se usa el actual y se dice; los días con duda no se mandan, así que no tocan lo que había. Probado con un cuadrante inventado limpio, no con fotos de papel reales: el lector pierde el guion de «R-A» y con rejilla dibujada lee peor (medido); con cuadrículas reales puede fallar y la salida es «Pegar el texto».
+**Pruebas:** 520-529 (un bloque; 528 usa el lector real). Cae con X revertido: con `fotoSuelta` vacío la 525/523 no pasan (la suite del bloque se cuelga en la 524). Viejas: 54 y 491-495 sin cambios.

@@ -25202,8 +25202,10 @@ function renderAjustes(){
    \u2014que es lo \u00fanico urgente de esta pantalla\u2014 y una pantalla por tarea. */
 function renderData(){
   const v=ui.datosVista||'';
+  if(v==='planfoto'){fotoVista();return;}
   if(v==='planning'){cfgPantalla('\ud83d\uddc2 Mi planning',`<div class="card">
       <button class="btn p pegar-copiado" data-a="plan-pegar">📋 Pegar lo copiado</button>
+      <button class="btn pegar-copiado" data-a="datos-vista" data-v="planfoto">📷 Foto del cuadrante</button>
       <p class="note">Copia el cuadrante donde te lo hayan mandado y toca el botón; o pega aquí las líneas del mes, tal cual: <i>1 ago G 08:00-08:00</i>. Reconoce día+mes, tipo de día (guardia/saliente/fuerza/libre/descanso/asuntos propios/vacante/noche) y horarios, agrupa por semanas y genera las semanas tipo —incluida la variante de 1 y 2 guardias— con sus horarios puestos en los turnos.</p>
       <textarea id="pasteBox" rows="12" placeholder="1 ago · G 24h 08:00-08:00 guardia destino Sur&#10;2 ago · S 09:00-13:00 saliente&#10;3 ago · L libre&#10;4 ago · F fuerza 18:00&#10;5 ago · L asuntos propios&#10;6 ago · G 24h 08:00-08:00&#10;7 ago · S 09:00-13:00"></textarea>
       <div class="row" style="margin-top:8px"><button class="btn p" data-a="draft">Analizar</button>
@@ -25300,6 +25302,113 @@ function planningPegar(){
     if(!String(t||'').trim()){caja('Lo copiado está vacío: cópialo antes o pégalo en la caja de abajo');return;}
     planningVistaPrevia(t);flash('Pegado: mira qué cambia y, si es esto, «Aplicar al planning»',4500);
   },function(){caja('El móvil no me deja leer lo copiado: pégalo en la caja de abajo');});}
+/* FOTO DEL CUADRANTE (C4b), una puerta más de la vista previa de siempre. foto → texto con el lector local (ocrListo, vendor/ocr; no sale del
+   móvil) → fotoAnaliza() saca la fila de tus días → planningVistaPrevia(texto). Reglas elegidas: (1) lo que no se lee bien (una celda dudosa) se queda
+   como estaba y se dice; (2) la foto vive SOLO en memoria (window._fotoLienzo / ui.foto) mientras corriges y se suelta al seguir, cancelar o salir:
+   nunca a store, localStorage ni red; (3) la primera vez tocas tu nombre en la cabecera y se recuerda cómo se escribe (store.planFoto.nombre), no la foto.
+   El cuadrante que entiende: una fila por día («3 G T T») y una columna por persona bajo una cabecera («Día R-A R-B R-C»). fotoLee se puede sustituir
+   (las pruebas simulan la lectura). */
+function fotoNorm(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function fotoDist(a,b){const m=[];for(let i=0;i<=a.length;i++){m[i]=[i];}for(let j=1;j<=b.length;j++)m[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return m[a.length][b.length];}
+function fotoMismo(a,b){return !!a&&!!b&&(a===b||(a.length>=4&&b.length>=4&&fotoDist(a,b)<=1));}
+function fotoAnaliza(lin){
+  const L=(lin||[]).map(function(l){return {t:String(l.t||'').replace(/[|\[\]_]+/g,' ').replace(/\s+/g,' ').trim(),b:l.b};}).filter(function(l){return l.t;});
+  const todo=L.map(function(l){return l.t.toLowerCase();}).join(' ');let mes=-1;
+  MONTH_FULL.forEach(function(n,i){if(mes<0&&todo.indexOf(n)>=0)mes=i;});
+  const filas=[];let primera=-1;
+  L.forEach(function(l,i){const m=/^(\d{1,2})\s+(.+)$/.exec(l.t);
+    if(m&&+m[1]>=1&&+m[1]<=31){if(primera<0)primera=i;filas.push({d:+m[1],cel:m[2].split(' '),b:l.b});}});
+  let cab=[],cabB=null;
+  for(let i=0;i<(primera<0?L.length:primera);i++){const t=L[i].t;
+    if(MONTH_FULL.some(function(n){return t.toLowerCase().indexOf(n)>=0;})||/\b\d{4}\b/.test(t))continue;
+    const ps=t.split(' ').filter(function(p){return !/^(d[ií]as?|fecha)$/i.test(p);});
+    if(ps.length>=2&&ps.every(function(p){return /[a-zA-Z]/.test(p);})){cab=ps;cabB=L[i].b;break;}}
+  const ay=/\b(20\d\d)\b/.exec(todo);
+  return {mes:mes,anio:ay?+ay[1]:0,cab:cab,cabB:cabB,filas:filas};}
+function fotoCuenta(col){
+  /* tus días: lo que se lee exacto (G S T L F) cuenta; cualquier otra cosa es una duda y NO se toca */
+  const f=ui.foto,an=f.an;let tope=0;f.col=col;f.dias=[];f.dudas=[];
+  an.filas.forEach(function(r){
+    /* el lector a veces se come una cifra («10» → «1») o dobla una letra («S» → «Ss»): una letra doblada es esa letra; un día que no sube
+       respecto al anterior no se puede fiar de su fecha y se queda como duda sin día */
+    const c0=r.cel.length===an.cab.length?String(r.cel[col]).trim().toUpperCase():null,c=c0&&/^([GSTLF])\1$/.test(c0)?c0.charAt(0):c0;
+    if(r.d<=tope){f.dudas.push({d:r.d,leido:c0!=null?c0:r.cel.join(' '),b:r.b,res:'',sinDia:true});return;}
+    tope=r.d;
+    if(c&&/^[GSTLF]$/.test(c))f.dias.push({d:r.d,c:c});
+    else f.dudas.push({d:r.d,leido:c0!=null?c0:r.cel.join(' '),b:r.b,res:''});});
+  f.abierta=-1;f.fase='revisa';}
+function fotoSigue(){
+  const f=ui.foto;f.an=fotoAnaliza(f.lineas);const an=f.an;
+  if(!an.cab.length||!an.filas.length){f.fase='error';
+    f.msg=!an.filas.length?'No he leído ningún día en la foto.':'No he encontrado los nombres de las columnas en la foto.';return;}
+  const yo=(store.planFoto&&store.planFoto.nombre)||'';
+  const col=yo?an.cab.findIndex(function(n){return fotoMismo(fotoNorm(n),yo);}):-1;
+  if(col<0){f.fase='nombre';return;}
+  fotoCuenta(col);}
+function fotoLeeReal(file){
+  const base=new URL('vendor/ocr/',location.href).href;let worker=null,lienzo=null;
+  const fin=function(){if(worker)worker.terminate().catch(function(){});};
+  return ocrPrepara(file).then(function(c){lienzo=c;return ocrListo();})
+    .then(function(T){return T.createWorker('spa',1,{workerPath:base+'worker.min.js',corePath:base+'tesseract-core-lstm.wasm.js',langPath:base.replace(/\/$/,''),gzip:true});})
+    .then(function(w){worker=w;return w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'}).then(function(){return w.recognize(lienzo,{},{text:true,blocks:true});});})
+    .then(function(r){fin();const ls=[];(r.data.blocks||[]).forEach(function(b){(b.paragraphs||[]).forEach(function(p){(p.lines||[]).forEach(function(l){ls.push(l);});});});
+      return {lineas:ls.map(function(l){return {t:String(l.text||'').replace(/\n/g,' ').trim(),b:[l.bbox.x0,l.bbox.y0,l.bbox.x1,l.bbox.y1]};}),lienzo:lienzo};},
+      function(e){fin();throw e;});}
+function fotoLee(file){return fotoLeeReal(file);}
+function fotoSuelta(){ui.foto=null;window._fotoLienzo=null;}
+function fotoElegida(file){
+  if(!file)return;fotoSuelta();const id=Date.now()+Math.random();
+  ui.foto={id:id,fase:'lee'};render();window.scrollTo(0,0);
+  Promise.resolve().then(function(){return window.fotoLee(file);}).then(function(r){
+    if(!ui.foto||ui.foto.id!==id)return;
+    window._fotoLienzo=r.lienzo||null;ui.foto.lineas=r.lineas||[];fotoSigue();render();fotoPintaCortes();
+  },function(e){if(!ui.foto||ui.foto.id!==id)return;ui.foto.fase='error';ui.foto.msg='No he podido leer la foto ('+((e&&e.message)||'error')+').';render();});}
+function fotoPintaCortes(){
+  /* el recorte «así sale en tu foto»: de la imagen en memoria, nunca de un archivo */
+  const f=ui.foto,L=window._fotoLienzo;if(!f||!L)return;
+  document.querySelectorAll('#main canvas[data-corte]').forEach(function(cv){
+    const b=cv.dataset.corte==='cab'?f.an.cabB:(f.dudas[+cv.dataset.corte]||{}).b;if(!b)return;
+    const x0=Math.max(0,b[0]-12),y0=Math.max(0,b[1]-10),w=Math.min(L.width-x0,b[2]-b[0]+24),h=Math.min(L.height-y0,b[3]-b[1]+20);
+    if(w<=0||h<=0)return;const k=Math.min(1,340/w);cv.width=Math.round(w*k);cv.height=Math.round(h*k);
+    cv.getContext('2d').drawImage(L,x0,y0,w,h,0,0,cv.width,cv.height);});}
+const FOTO_COD={G:'Guardia',S:'Saliente',T:'Trabajo',L:'Libre'};
+function fotoTexto(){
+  const f=ui.foto,an=f.an,mes=an.mes>=0?an.mes:new Date().getMonth(),out=[];
+  const pal={G:'G guardia',S:'S saliente',L:'L libre',F:'F fuerza',T:'L trabajo'};
+  f.dias.concat(f.dudas.filter(function(d){return FOTO_COD[d.res];}).map(function(d){return {d:d.d,c:d.res};}))
+    .sort(function(a,b){return a.d-b.d;}).forEach(function(x){out.push(x.d+' '+MON[mes]+' · '+pal[x.c]);});
+  return out.join('\n');}
+function fotoVista(){
+  const f=ui.foto||{fase:'elige'},volver='<button class="btn s volver" data-a="foto-cancela">'+gymIco('atras','gico sm')+' Importar planning</button>';
+  let cuerpo='';
+  const priv='<div class="card foto-priv"><b>La foto no sale de tu móvil.</b><div class="mini">Se lee aquí, sin conexión. En cuanto sigues o cancelas, se descarta: no se guarda en la app ni se envía a ningún sitio.</div></div>';
+  if(f.fase==='elige')cuerpo=
+    '<div class="card"><p class="note">Haz una foto al cuadrante del mes o elige una que ya tengas. Se ve mejor con el papel recto y sin reflejos.</p>'+
+    '<label class="btn p foto-btn">Hacer foto<input id="fotoCam" type="file" accept="image/*" capture="environment" data-a="foto-cuad" hidden></label>'+
+    '<label class="btn foto-btn">Elegir de la galería<input id="fotoGal" type="file" accept="image/*" data-a="foto-cuad" hidden></label></div>'+priv+
+    '<p class="mini">Después verás qué días cambian y podrás corregir lo que no se lea bien. PDF y Excel no entran: copia el texto y pégalo.</p>';
+  else if(f.fase==='lee')cuerpo='<div class="card"><p class="note foto-lee" role="status">Leyendo el cuadrante en tu móvil… puede tardar unos segundos la primera vez.</p><div class="foto-barra"><i></i></div>'+
+    '<button class="btn foto-btn" data-a="foto-cancela">Cancelar</button></div>'+priv;
+  else if(f.fase==='error')cuerpo='<div class="card"><p class="note foto-msg">'+esc(f.msg||'')+'</p><p class="mini">Prueba con otra foto más recta y con más luz, o copia el texto del cuadrante y pégalo.</p>'+
+    '<button class="btn p foto-btn" data-a="foto-otra">Probar con otra foto</button><button class="btn foto-btn" data-a="foto-cancela">Pegar el texto</button></div>';
+  else if(f.fase==='nombre')cuerpo='<div class="card"><p class="note"><b>¿Cuál eres tú?</b> Toca tu nombre como sale en la foto. Solo la primera vez: la app recuerda cómo se escribe, no la foto.</p>'+
+    '<canvas data-corte="cab" class="foto-corte" aria-label="La cabecera como sale en tu foto"></canvas>'+
+    f.an.cab.map(function(n,i){return '<button class="btn foto-btn foto-yo" data-a="foto-yo" data-v="'+i+'">'+esc(n)+'</button>';}).join('')+'</div>';
+  else{
+    const n=f.dias.length,m=f.dudas.filter(function(d){return !FOTO_COD[d.res]&&d.res!=='-';}).length,sin=f.dudas.filter(function(d){return !FOTO_COD[d.res];}).length;
+    const mi=f.an.mes>=0?f.an.mes:new Date().getMonth(),mes=f.an.mes>=0?MONTH_FULL[mi]:MONTH_FULL[mi]+' (no vi el mes en la foto)';
+    cuerpo='<div class="card"><h2 class="foto-res">Leídos '+n+' días · '+m+' duda'+(m===1?'':'s')+'</h2><p class="mini">'+esc(mes)+'</p>'+
+      (f.dudas.length?'<p class="note foto-aviso" role="status">⚠ No he podido leer '+f.dudas.length+' día'+(f.dudas.length===1?'':'s')+'. Tócalos y dime qué son. Los que no elijas se quedan como estaban en tu planning.</p>':'')+
+      f.dudas.map(function(d,i){const ab=f.abierta===i,r=FOTO_COD[d.res]||(d.res==='-'?'como estaba':'');
+        const dia=['dom','lun','mar','mié','jue','vie','sáb'][new Date(f.an.anio||new Date().getFullYear(),mi,d.d).getDay()]+' '+d.d;
+        return '<div class="foto-duda'+(ab?' abierta':'')+'"><button class="foto-fila" data-a="foto-duda" data-v="'+i+'"><b>'+(d.sinDia?'Día «'+d.d+'» que no cuadra':dia)+'</b><span>'+(r?esc(r):'Duda · he leído «'+esc(d.leido)+'»')+'</span><u>'+(ab?'Cerrar':'Elegir')+'</u></button>'+
+          (ab?'<div class="foto-hoja"><div class="mini">Así sale en tu foto</div><canvas data-corte="'+i+'" class="foto-corte"></canvas>'+(d.sinDia?'<div class="mini">No me fío de la fecha de esta fila: míralo en tu planning.</div>':'<div class="mini">¿Qué es este día?</div><div class="foto-cuatro">'+
+            ['G','S','T','L'].map(function(c){return '<button class="btn foto-op" data-a="foto-res" data-v="'+i+'" data-c="'+c+'">'+FOTO_COD[c]+'</button>';}).join('')+'</div>')+
+            '<button class="btn s foto-btn" data-a="foto-res" data-v="'+i+'" data-c="-">Dejarlo como estaba</button></div>':'')+'</div>';}).join('')+
+      '<button class="btn p foto-btn" data-a="foto-ver">Ver qué cambia</button><button class="btn s foto-btn" data-a="foto-nombre-otro">No soy yo: elegir mi nombre</button></div>'+
+      (sin?'<p class="mini">'+sin+' día'+(sin===1?'':'s')+' sin cambiar si sigues ahora.</p>':'');}
+  $('#main').innerHTML='<div class="grid foto-pant"><div class="subcab">'+volver+'<h2 class="subtit">Foto del cuadrante</h2></div>'+cuerpo+'</div>';}
 function showDraft(info){
   const out=$('#draftOut');out.style.display='block';
   const sb=$('#semBtn');
@@ -25488,6 +25597,7 @@ function render(){
   }catch(e0){}
   /* cualquier repintado (también salir de Entreno) para el recorrido de 45 s de la lámina: ningún temporizador sobrevive */
   if(_lamT)lamParar();
+  if(ui.foto&&!(ui.tab==='data'&&ui.datosVista==='planfoto'))fotoSuelta();   /* la foto del cuadrante no sobrevive a salir de su pantalla */
   _pintando=true;
   try{renderNow();_pintando=false;trasPintar();try{navTras();}catch(e5){}try{cocinaLuz();}catch(e6){}}catch(e){_pintando=false;
     console.warn('fallo al pintar la vista',e);
@@ -26267,6 +26377,16 @@ function act(a,el){
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
     case 'draft':planningAnaliza($('#pasteBox').value||'');break;
     case 'plan-pegar':planningPegar();break;
+    case 'foto-cancela':fotoSuelta();ui.datosVista='planning';render();window.scrollTo(0,0);break;
+    case 'foto-otra':fotoSuelta();render();break;
+    case 'foto-yo':{const f=ui.foto;if(!f||!f.an)break;const i=+el.dataset.v;store.planFoto={nombre:fotoNorm(f.an.cab[i])};save();fotoCuenta(i);render();fotoPintaCortes();break;}
+    case 'foto-nombre-otro':{const f=ui.foto;if(!f)break;store.planFoto={nombre:''};save();f.fase='nombre';render();fotoPintaCortes();break;}
+    case 'foto-duda':{const f=ui.foto;if(!f)break;const i=+el.dataset.v;f.abierta=f.abierta===i?-1:i;render();fotoPintaCortes();break;}
+    case 'foto-res':{const f=ui.foto;if(!f)break;f.dudas[+el.dataset.v].res=el.dataset.c;f.abierta=-1;render();break;}
+    case 'foto-ver':{const f=ui.foto;if(!f||!f.dias)break;const txt=fotoTexto(),sin=f.dudas.filter(function(d){return !FOTO_COD[d.res];}).length;
+      fotoSuelta();planningVistaPrevia(txt);
+      const o=$('#draftOut');if(o&&sin)o.textContent='Foto del cuadrante: '+sin+' día'+(sin===1?'':'s')+' sin cambiar (no se leyeron bien); siguen como estaban.\n\n'+o.textContent;
+      flash(sin?sin+' día'+(sin===1?'':'s')+' sin cambiar: siguen como estaban':'Mira qué cambia y, si es esto, «Aplicar al planning»',4500);break;}
     case 'rhythm':{const t=$('#rhythmBox').value||'';
       window._rhythmInfo=parseRhythmText(t);window._rhythmServices=parseServicesText(t).months;
       window._rhythmVac=parseVacacionesText(t).ranges;
@@ -29404,6 +29524,7 @@ document.addEventListener('toggle',function(e){const d=e.target;if(d&&d.dataset&
 document.addEventListener('change',e=>{
   const el=e.target;const a=el.dataset&&el.dataset.a;if(!a||el.closest('#modal'))return;
   switch(a){
+    case 'foto-cuad':{const f0=el.files&&el.files[0];if(f0)fotoElegida(f0);el.value='';break;}
     case 'fin-fotos':{const fs=el.files;if(fs&&fs.length){ui.tab='dinero';finLeer(fs);}break;}
     case 'dinero-f':render();break;
     case 'mv-salida-fecha':case 'mv-salida-hora':{const v=store.modoViaje;if(!v)break;if(!v.salida)v.salida={fecha:v.ida,hora:''};

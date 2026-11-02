@@ -17207,6 +17207,164 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
+  // 520) C4b · FOTO DEL CUADRANTE. El cuadrante es INVENTADO y se dibuja aquí, en un canvas (columnas «R-A», «R-B», «R-C»; nadie real). Salvo la 528, que pasa por el lector
+  // de verdad, la lectura se simula (window.fotoLee) devolviendo las líneas que el lector habría sacado. Se restaura window.fotoLee, el store y la vista.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => {
+      const P = window.PG; window.__copia520 = JSON.stringify(P.store); window.__fotoLee520 = window.fotoLee; window._draftInfo = null; P.store.planFoto = { nombre: '' };
+      // el cuadrante inventado: devuelve {blob, lineas, lienzo}; orden = columnas en el orden en que salen en la foto
+      window.__cuad520 = async (orden, sinDudas) => {
+        const DIAS = [2, 3, 4, 10, 11, 12, 17, 18, 25, 26];
+        const A = { 2: 'T', 3: 'G', 4: 'S', 10: 'G', 11: 'S', 12: sinDudas ? 'G' : 'G?', 17: 'G', 18: 'S', 25: sinDudas ? 'T' : '~', 26: sinDudas ? 'T' : '~' };
+        const col = { 'R-A': (d) => A[d], 'R-B': (d) => (d === 12 ? 'S' : 'T'), 'R-C': () => 'T' };
+        const c = document.createElement('canvas'); c.width = 520; c.height = 620; const x = c.getContext('2d');
+        x.fillStyle = '#fff'; x.fillRect(0, 0, 520, 620); x.fillStyle = '#111'; x.font = 'bold 30px Arial';
+        const lineas = [{ t: 'noviembre 2026', b: [20, 14, 300, 50] }];
+        const fila = (celdas, i) => { celdas.forEach((t, j) => x.fillText(t, 30 + j * 110, 100 + i * 48)); lineas.push({ t: celdas.join(' '), b: [20, 72 + i * 48, 470, 112 + i * 48] }); };
+        x.fillText('noviembre 2026', 20, 40);
+        fila(['Día'].concat(orden), 0);
+        DIAS.forEach((d, i) => fila([String(d)].concat(orden.map((n) => col[n](d))), i + 1));
+        const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+        return { blob, lineas, lienzo: c };
+      };
+      window.__simula520 = async (orden, sinDudas) => { const q = await window.__cuad520(orden, sinDudas); window.fotoLee = () => Promise.resolve({ lineas: q.lineas, lienzo: q.lienzo }); return q; };
+      window.__reqExt520 = []; });
+    page.on('request', (r) => { if (!/^http:\/\/127\.0\.0\.1:/.test(r.url()) && !/^(data|blob):/.test(r.url())) global.__reqExt520 = (global.__reqExt520 || []).concat(r.url()); });
+    const subeFoto = async (sel) => {
+      const b64 = await page.evaluate(async () => { const q = await window.__cuad520(['R-A', 'R-B', 'R-C']); const a = new Uint8Array(await q.blob.arrayBuffer()); let s = ''; a.forEach((v) => (s += String.fromCharCode(v))); return btoa(s); });
+      await page.setInputFiles(sel, { name: 'cuadrante.png', mimeType: 'image/png', buffer: Buffer.from(b64, 'base64') });
+    };
+
+    // 520) la puerta: desde Importar planning, «📷 Foto del cuadrante» abre la pantalla con «Hacer foto» (56 px, con cámara) y «Elegir de la galería», y la frase de que la foto no sale
+    // del móvil desde el principio; «Importar planning» devuelve a la caja de siempre, con «Pegar lo copiado» intacto. Cae si falta el botón, la frase o la cámara.
+    await gotoTab('data', 'planning'); await page.waitForTimeout(200);
+    const abre = await page.evaluate(() => { const b = document.querySelector('#main [data-a="datos-vista"][data-v="planfoto"]'); return b ? Math.round(b.getBoundingClientRect().height) : 0; });
+    await page.click('#main [data-a="datos-vista"][data-v="planfoto"]'); await page.waitForTimeout(250);
+    const P520 = await page.evaluate(() => { const alto = (e) => (e ? Math.round(e.getBoundingClientRect().height) : 0), m = document.getElementById('main');
+      return { vista: window.PG.ui.datosVista, hacer: alto(document.querySelector('#main label.foto-btn.p')), galeria: alto(document.getElementById('fotoGal').parentElement), cam: document.getElementById('fotoCam').getAttribute('capture'),
+        priv: /La foto no sale de tu móvil/.test(m.textContent) && /se descarta/.test(m.textContent), txt: m.textContent.replace(/\s+/g, ' ').slice(0, 160) }; });
+    await page.click('#main .volver'); await page.waitForTimeout(250);
+    const vuelta = await page.evaluate(() => ({ vista: window.PG.ui.datosVista, pegar: !!document.querySelector('#main [data-a="plan-pegar"]'), caja: !!document.getElementById('pasteBox') }));
+    check('520 Foto del cuadrante · desde Importar planning, «📷 Foto del cuadrante» (≥44 px) abre «Hacer foto» (56 px, con cámara) y «Elegir de la galería», con «La foto no sale de tu móvil»; «Importar planning» vuelve a la caja de siempre',
+      abre >= 44 && P520.vista === 'planfoto' && P520.hacer >= 56 && P520.galeria >= 44 && P520.cam === 'environment' && P520.priv && vuelta.vista === 'planning' && vuelta.pegar && vuelta.caja, JSON.stringify({ abre, P520, vuelta }));
+
+    // 521-523) la primera vez, cadena entera con lectura simulada: subir la foto → «¿Cuál eres tú?» → tocar R-A → «Leídos 7 días · 3 dudas» → abrir la duda del 12 (recorte pintado,
+    // cuatro botones y «Dejarlo como estaba») → elegir «Guardia» → «Ver qué cambia» → la vista previa de C4 con los días leídos y el 12, SIN los dudosos (25 y 26 siguen como estaban) y el aviso.
+    await page.evaluate(async () => { await window.__simula520(['R-A', 'R-B', 'R-C']); });
+    await gotoTab('data', 'planning'); await page.click('#main [data-a="datos-vista"][data-v="planfoto"]'); await page.waitForTimeout(200);
+    const antesPlan = await page.evaluate(() => JSON.stringify(window.PG.store.patterns) + JSON.stringify(window.PG.store.rotation));
+    await subeFoto('#fotoGal'); await page.waitForTimeout(500);
+    const N1 = await page.evaluate(() => ({ t: document.getElementById('main').textContent.replace(/\s+/g, ' '), yo: [...document.querySelectorAll('#main .foto-yo')].map((b) => ({ n: b.textContent.trim(), h: Math.round(b.getBoundingClientRect().height) })), recuerda: window.PG.store.planFoto.nombre }));
+    await page.click('#main .foto-yo[data-v="0"]'); await page.waitForTimeout(250);
+    const N2 = await page.evaluate(() => ({ t: document.getElementById('main').textContent.replace(/\s+/g, ' '), nombre: window.PG.store.planFoto.nombre, lienzo: !!window._fotoLienzo, filas: [...document.querySelectorAll('#main .foto-fila')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()) }));
+    await page.click('#main .foto-fila[data-v="0"]'); await page.waitForTimeout(250);
+    const N3 = await page.evaluate(() => { const cv = document.querySelector('#main canvas[data-corte="0"]'); let px = 0; if (cv && cv.width) { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; for (let i = 0; i < d.length; i += 4) if (d[i] < 128) px++; }
+      return { cv: !!cv, oscuros: px, op: [...document.querySelectorAll('#main .foto-op')].map((b) => ({ n: b.textContent.trim(), h: Math.round(b.getBoundingClientRect().height) })), dejar: !!document.querySelector('#main [data-a="foto-res"][data-c="-"]'), asi: /Así sale en tu foto/.test(document.getElementById('main').textContent) }; });
+    await page.click('#main [data-a="foto-res"][data-v="0"][data-c="G"]'); await page.waitForTimeout(200);
+    const N4 = await page.evaluate(() => ({ filas: [...document.querySelectorAll('#main .foto-fila')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()), cab: (document.querySelector('#main .foto-res') || {}).textContent }));
+    await page.click('#main [data-a="foto-ver"]'); await page.waitForTimeout(500);
+    const N5 = await page.evaluate(() => ({ vista: window.PG.ui.datosVista, caja: document.getElementById('pasteBox').value, out: document.getElementById('draftOut').textContent, aplicar: !document.getElementById('applyBtn').disabled, foto: !!window.PG.ui.foto, lienzo: !!window._fotoLienzo,
+      plan: JSON.stringify(window.PG.store.patterns) + JSON.stringify(window.PG.store.rotation) }));
+    check('521 Foto del cuadrante · la primera vez pide «¿Cuál eres tú?» con los tres nombres de la cabecera (≥44 px); tocar R-A lo recuerda (sin la foto) y cuenta «Leídos 7 días · 3 dudas»',
+      /¿Cuál eres tú\?/.test(N1.t) && N1.yo.map((x) => x.n).join() === 'R-A,R-B,R-C' && N1.yo.every((x) => x.h >= 44) && N1.recuerda === '' && N2.nombre === 'ra' && N2.lienzo && /Leídos 7 días · 3 dudas/.test(N2.t) && N2.filas.length === 3 && /12/.test(N2.filas[0]) && /he leído «G\?»/.test(N2.filas[0]), JSON.stringify({ N1, N2 }));
+    check('522 Foto del cuadrante · la duda del 12 abre «Así sale en tu foto» con el recorte pintado desde la memoria, Guardia / Saliente / Trabajo / Libre (≥44 px) y «Dejarlo como estaba»; elegir Guardia la deja resuelta y quedan 2 dudas',
+      N3.cv && N3.oscuros > 40 && N3.asi && N3.op.map((x) => x.n).join() === 'Guardia,Saliente,Trabajo,Libre' && N3.op.every((x) => x.h >= 44) && N3.dejar && /Guardia/.test(N4.filas[0]) && /2 dudas/.test(N4.cab), JSON.stringify({ N3, N4 }));
+    check('523 Foto del cuadrante · «Ver qué cambia» abre la vista previa de C4 con los días leídos y el 12 elegido, SIN las dos celdas dudosas (25 y 26, que siguen como estaban), con el aviso «2 días sin cambiar», sin tocar el planning y soltando la foto',
+      N5.vista === 'planning' && /3 nov · G guardia/.test(N5.caja) && /12 nov · G guardia/.test(N5.caja) && !/25 nov|26 nov/.test(N5.caja) && N5.caja.split('\n').length === 8 && /Foto del cuadrante: 2 días sin cambiar/.test(N5.out) && /Leídas \d+ líneas/.test(N5.out)
+        && N5.aplicar && N5.plan === antesPlan && !N5.foto && !N5.lienzo, JSON.stringify({ N5: { ...N5, plan: undefined }, igual: N5.plan === antesPlan }));
+
+    // 524) la segunda vez ya sabe quién eres: con las columnas en OTRO orden (R-C, R-A, R-B), la foto va directa a «Leídos…» y el texto es el de la columna R-A (no la de la misma posición).
+    // Cae si recuerda la posición en vez del nombre, o si vuelve a preguntar.
+    await page.evaluate(async () => { await window.__simula520(['R-C', 'R-A', 'R-B'], true); });
+    await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(200);
+    await subeFoto('#fotoCam'); await page.waitForTimeout(500);
+    const S1 = await page.evaluate(() => ({ t: document.getElementById('main').textContent.replace(/\s+/g, ' '), pregunta: /¿Cuál eres tú\?/.test(document.getElementById('main').textContent) }));
+    await page.click('#main [data-a="foto-ver"]'); await page.waitForTimeout(400);
+    const S2 = await page.evaluate(() => ({ caja: document.getElementById('pasteBox').value, out: document.getElementById('draftOut').textContent.slice(0, 60) }));
+    check('524 Foto del cuadrante · la segunda vez no pregunta y busca TU nombre aunque la columna cambie de sitio; sin dudas no hay aviso',
+      !S1.pregunta && /Leídos 10 días · 0 dudas/.test(S1.t) && /3 nov · G guardia/.test(S2.caja) && /4 nov · S saliente/.test(S2.caja) && /25 nov · L trabajo/.test(S2.caja) && !/Foto del cuadrante:/.test(S2.out), JSON.stringify({ S1, S2 }));
+
+    // 525) la foto solo vive en memoria y no sale: tras leer, corregir y seguir NO queda ninguna imagen ni texto de compañeros en localStorage ni en el store, no hubo peticiones fuera del servidor
+    // local, y Cancelar mientras lee suelta la foto aunque la lectura acabe después; salir a Hoy con la foto abierta también la suelta. Cae si se guarda algo de la foto o si la lectura cancelada la devuelve.
+    await page.evaluate(async () => { await window.__simula520(['R-A', 'R-B', 'R-C']); });
+    await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(150);
+    await subeFoto('#fotoGal'); await page.waitForTimeout(400);
+    const M1 = await page.evaluate(() => { let ls = ''; try { for (let i = 0; i < localStorage.length; i++) ls += localStorage.getItem(localStorage.key(i)); } catch (e) {} const st = JSON.stringify(window.PG.store);
+      return { dentro: !!window.PG.ui.foto && !!window._fotoLienzo, ls: /data:image|R-B|R-C|Día R-A/.test(ls), st: /data:image|R-B|R-C|Día R-A/.test(st), nombre: window.PG.store.planFoto }; });
+    await page.evaluate(() => { window.PG.ui.tab = 'hoy'; window.PG.render(); }); await page.waitForTimeout(200);
+    const M2 = await page.evaluate(() => ({ foto: !!window.PG.ui.foto, lienzo: !!window._fotoLienzo }));
+    await page.evaluate(() => { window.__suelta525 = null; window.fotoLee = () => new Promise((ok) => { window.__suelta525 = ok; }); });
+    await gotoTab('data', 'planning'); await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(150);
+    await subeFoto('#fotoGal'); await page.waitForTimeout(200);
+    const C1 = await page.evaluate(() => ({ lee: /Leyendo el cuadrante/.test(document.getElementById('main').textContent), cancelar: !!document.querySelector('#main [data-a="foto-cancela"].foto-btn') }));
+    await page.click('#main .foto-btn[data-a="foto-cancela"]'); await page.waitForTimeout(150);
+    await page.evaluate(async () => { const q = await window.__cuad520(['R-A', 'R-B', 'R-C']); window.__suelta525({ lineas: q.lineas, lienzo: q.lienzo }); }); await page.waitForTimeout(300);
+    const C2 = await page.evaluate(() => ({ vista: window.PG.ui.datosVista, foto: !!window.PG.ui.foto, lienzo: !!window._fotoLienzo, caja: !!document.getElementById('pasteBox') }));
+    check('525 Foto del cuadrante · la foto vive solo en memoria: nada de ella en localStorage ni en el store (solo cómo se escribe tu nombre), ninguna petición fuera del servidor local, y se suelta al salir de la pantalla o al Cancelar aunque la lectura acabe después',
+      M1.dentro && !M1.ls && !M1.st && M1.nombre.nombre === 'ra' && !M2.foto && !M2.lienzo && C1.lee && C1.cancelar && C2.vista === 'planning' && !C2.foto && !C2.lienzo && C2.caja && !(global.__reqExt520 || []).length,
+      JSON.stringify({ M1, M2, C1, C2, ext: global.__reqExt520 || [] }));
+
+    // 526) si no se entiende nada: una foto de la que sale texto sin días (o un fallo del lector) dice qué pasa, ofrece «Probar con otra foto» y «Pegar el texto», y no toca el planning ni deja la foto.
+    await page.evaluate(() => { window.fotoLee = () => Promise.resolve({ lineas: [{ t: 'servilleta con manchas', b: [0, 0, 10, 10] }], lienzo: null }); });
+    await gotoTab('data', 'planning'); await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(150);
+    await subeFoto('#fotoGal'); await page.waitForTimeout(400);
+    const E1 = await page.evaluate(() => ({ t: document.getElementById('main').textContent.replace(/\s+/g, ' '), otra: !!document.querySelector('#main [data-a="foto-otra"]') }));
+    await page.evaluate(() => { window.fotoLee = () => Promise.reject(new Error('no se ha podido cargar el lector')); });
+    await page.click('#main [data-a="foto-otra"]'); await page.waitForTimeout(150); await subeFoto('#fotoGal'); await page.waitForTimeout(400);
+    const E2 = await page.evaluate(() => document.getElementById('main').textContent.replace(/\s+/g, ' '));
+    await page.click('#main .foto-btn[data-a="foto-cancela"]'); await page.waitForTimeout(250);
+    const E3 = await page.evaluate(() => ({ vista: window.PG.ui.datosVista, pegar: !!document.querySelector('#main [data-a="plan-pegar"]'), foto: !!window.PG.ui.foto, plan: JSON.stringify(window.PG.store.patterns) + JSON.stringify(window.PG.store.rotation) }));
+    check('526 Foto del cuadrante · si no se entiende (sin días, o el lector no carga) lo dice, ofrece «Probar con otra foto» y «Pegar el texto» (que vuelve a la caja con «Pegar lo copiado») y no toca el planning',
+      /No he leído ningún día/.test(E1.t) && E1.otra && /No he podido leer la foto \(no se ha podido cargar el lector\)/.test(E2) && E3.vista === 'planning' && E3.pegar && !E3.foto && E3.plan === antesPlan, JSON.stringify({ E1, E2, E3 }));
+
+    // 527) «No soy yo»: desde la revisión, «No soy yo: elegir mi nombre» olvida el nombre y vuelve a preguntar; tocar otro (R-B) cambia lo recordado y el texto sale de esa columna.
+    await page.evaluate(async () => { await window.__simula520(['R-A', 'R-B', 'R-C'], true); });
+    await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(150);
+    await subeFoto('#fotoGal'); await page.waitForTimeout(400);
+    await page.click('#main [data-a="foto-nombre-otro"]'); await page.waitForTimeout(200);
+    const O1 = await page.evaluate(() => ({ pregunta: /¿Cuál eres tú\?/.test(document.getElementById('main').textContent), nombre: window.PG.store.planFoto.nombre }));
+    await page.click('#main .foto-yo[data-v="1"]'); await page.waitForTimeout(250); await page.click('#main [data-a="foto-ver"]'); await page.waitForTimeout(400);
+    const O2 = await page.evaluate(() => ({ nombre: window.PG.store.planFoto.nombre, caja: document.getElementById('pasteBox').value }));
+    check('527 Foto del cuadrante · «No soy yo» vuelve a preguntar, recuerda el nombre nuevo (R-B) y el texto sale de esa columna (el 12 es saliente, no guardia)',
+      O1.pregunta && O1.nombre === '' && O2.nombre === 'rb' && /12 nov · S saliente/.test(O2.caja) && !/G guardia/.test(O2.caja), JSON.stringify({ O1, O2 }));
+
+    // 529) a 412×915, en claro y en oscuro: nada por debajo de 13 px en las fases de la pantalla, sin desplazamiento horizontal y la fila de dudas ≥44 px.
+    await page.evaluate(async () => { window.PG.store.planFoto = { nombre: '' }; await window.__simula520(['R-A', 'R-B', 'R-C']); });
+    await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(150);
+    await subeFoto('#fotoGal'); await page.waitForTimeout(400);
+    const medida = () => page.evaluate(() => { let min = 99, mal = ''; document.querySelectorAll('#main .foto-pant *').forEach((e) => { if (!e.childNodes.length || ![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) return;
+        const px = parseFloat(getComputedStyle(e).fontSize); if (px < min) { min = px; mal = e.className || e.tagName; } });
+      return { min, mal, scroll: document.documentElement.scrollWidth > window.innerWidth + 1 }; });
+    const T = [];
+    for (const oscuro of [false, true]) {
+      await page.evaluate((o) => document.documentElement.classList.toggle('dark', o), oscuro);
+      T.push({ fase: 'nombre', oscuro, ...(await medida()) });
+    }
+    await page.click('#main .foto-yo[data-v="0"]'); await page.waitForTimeout(250); await page.click('#main .foto-fila[data-v="0"]'); await page.waitForTimeout(200);
+    for (const oscuro of [false, true]) { await page.evaluate((o) => document.documentElement.classList.toggle('dark', o), oscuro);
+      T.push({ fase: 'revisa', oscuro, ...(await medida()), fila: await page.evaluate(() => Math.round(document.querySelector('#main .foto-fila').getBoundingClientRect().height)) }); }
+    await page.evaluate(() => { document.documentElement.classList.remove('dark'); });
+    check('529 Foto del cuadrante · a 412×915, en claro y en oscuro, ningún texto de la pantalla baja de 13 px, no hay desplazamiento lateral y las filas de dudas miden ≥44 px',
+      T.length === 4 && T.every((t) => t.min >= 13 && !t.scroll) && T.filter((t) => t.fase === 'revisa').every((t) => t.fila >= 44), JSON.stringify(T));
+
+    // 528) la ÚNICA prueba con el lector de verdad: el cuadrante inventado, dibujado en un canvas, pasa por Tesseract (vendor/ocr, sin red) y debe salir una revisión usable: tu columna
+    // (R-A tocada) con ≥5 días leídos y la duda «G?» del 12 marcada como duda (no como guardia). Cae si el lector no saca la cabecera, los días o la duda.
+    await page.evaluate(() => { window.fotoLee = window.__fotoLee520; window.PG.store.planFoto = { nombre: '' }; });
+    await gotoTab('data', 'planning'); await page.click('#main .pegar-copiado[data-v="planfoto"]'); await page.waitForTimeout(150);
+    await subeFoto('#fotoGal');
+    await page.waitForFunction(() => window.PG.ui.foto && window.PG.ui.foto.fase !== 'lee', null, { timeout: 90000 }).catch(() => {});
+    const L1 = await page.evaluate(() => ({ fase: window.PG.ui.foto && window.PG.ui.foto.fase, cab: window.PG.ui.foto && window.PG.ui.foto.an && window.PG.ui.foto.an.cab, filas: window.PG.ui.foto && window.PG.ui.foto.an && window.PG.ui.foto.an.filas.length }));
+    let L2 = null;
+    if (L1.fase === 'nombre') { await page.click('#main .foto-yo[data-v="0"]'); await page.waitForTimeout(300);
+      L2 = await page.evaluate(() => { const f = window.PG.ui.foto; return { dias: f.dias.map((d) => d.d + d.c).join(' '), dudas: f.dudas.map((d) => d.d + ':' + d.leido).join(' ') }; }); }
+    check('528 Foto del cuadrante · con el lector de verdad (Tesseract local) sobre el cuadrante inventado sale la cabecera, se toca R-A y se leen ≥5 días, con el «G?» del 12 como duda y no como guardia',
+      L1.fase === 'nombre' && L1.cab && L1.cab.length === 3 && L2 && L2.dias.split(' ').length >= 5 && /(^| )12:G\?/.test(L2.dudas) && !/(^| )12G/.test(L2.dias), JSON.stringify({ L1, L2 }));
+
+    await page.evaluate(() => { const P = window.PG; window.fotoLee = window.__fotoLee520; P.store = JSON.parse(window.__copia520); window._draftInfo = null; window._fotoLienzo = null; P.ui.foto = null; P.ui.tab = 'hoy'; P.ui.datosVista = ''; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
