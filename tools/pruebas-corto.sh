@@ -88,4 +88,6 @@ else
   done
 fi
 [ $mal -eq 0 ] && echo "Todo en verde." || echo "Hay fallos. Registro entero: $LOG"
+# Suite COMPLETA en verde: deja la huella del código probado; el hook sella-antes-de-main la exige para subir a main.
+if [ $mal -eq 0 ] && [ $# -eq 0 ] && [ "${#BANCOS[@]}" -ne 1 ]; then tools/huella-codigo.sh > .claude/.suite-verde; fi
 exit $mal

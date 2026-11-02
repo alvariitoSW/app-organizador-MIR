@@ -22,3 +22,5 @@ tests/zz-sueltas.test.js
 # los trozos del banco grande que monta tools/pruebas-reparto.py (se borran solos)
 tests/zz-trozo-*.test.js
 test-results/
+# huella del código de la última suite completa en verde (la exige el hook sella-antes-de-main)
+.claude/.suite-verde
