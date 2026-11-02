@@ -33,6 +33,21 @@ Nada en marcha. Lo siguiente: Sueño de un toque (S1, maqueta).
 presupuesto, estilo e importar planning (3 preguntas del acta). Va **después** de «Sueño de un toque», que suma la fila 2 (víspera
 de guardia con «Avisarme», +0,3 M) si el usuario dice que sí. Propuesta de Hacienda: sin Consejo por tanda (cada una va directa a su ficha).
 
+**Plan en 3 fases y 2-3 días (propuesto el 02/11, espera a que el usuario apruebe el presupuesto).** Cada día, una sesión
+«directora» lanza en paralelo las sesiones de las tandas que viven en zonas distintas del código, cada una con su ficha y su
+bloque de números de prueba reservado (10 por tanda, detrás de los de `main`), y las pasa a `main` de una en una (suite completa,
+sello, Actions). La portada de Hoy va en cadena: Sueño → C1 → C3.
+- **Fase 1 · día 1 · ganar donde la rival gana (~9 M, ~10 sesiones).** Mañana: todas las maquetas de las fases 1 y 2 (0, C1-C6, C4b) en 2
+  sesiones paralelas; el usuario las elige de una sentada (~1 h). Tarde: Sueño + víspera (S2-S3) → C1 Letra y calma (el script de letra
+  primero: las demás tandas ya usan sus variables) ‖ C2 Apuntar en menos toques (Dinero y Entreno).
+- **Fase 2 · día 2 · el resto de la competencia (~12 M, ~15 sesiones).** En paralelo: C3 Hoy (tras C1) ‖ C4 Mes → C4b foto ‖ C5 Comer ‖
+  C6 Hábitos, 4:20 (con `/revisa-seguridad`) y Estudio. A última hora, las maquetas de la fase 3. Al cerrar: el script de letra otra vez
+  sobre lo nuevo y una pasada del verificador por todas las pantallas.
+- **Fase 3 · día 3 · lo de después (~14 M, ~18 sesiones).** K3 (instalar el Lanzador, con el usuario y el móvil) → K4 widget ‖ C7 (asistente
+  de turno, caja de frase, copiar y guardar rutina, «Empieza» de Estudio, pasillos) ‖ deslizar días, «+» flotante y récords en gráfico.
+  **Lo último:** PDF y Excel (librería nueva: decide el usuario antes de empezar).
+- **Total:** ~35 M + ~10 % por trabajar en paralelo = **~38 M previstos, ~50 M como máximo**; ~43 sesiones.
+
 | # | Tanda | Filas del informe | Sesiones | Presupuesto |
 |---|---|---|---|---|
 | C1 | Letra y calma: un escalón de letra por script con excepciones + contraste; avisos de Hoy de uno en uno | 4, 16 | 4 | ~2,8 M |
