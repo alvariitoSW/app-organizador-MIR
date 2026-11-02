@@ -2674,3 +2674,9 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Supuestos:** quitar «Privado» con PIN pide el PIN aunque ya hayas entrado; exportar a .ics/Google Calendar sigue llevando el título real del Lloretazo (acto explícito del usuario, a decidir); fuera de esta tanda quedan de la maqueta C6 «Cómo me afecta» en una frase, Estudio plegado, obstáculos al final y la línea repetida del formulario.
 **Revisión de seguridad (`/revisa-seguridad`):** grep de `Lloretazo|4:20` fuera de la sección sin pasar por `cnOculta`: solo quedan comentarios, constantes cuyo uso pasa por `cnOculta`/`habN`, tarjetas del asistente de 4:20 protegidas por `cnTapado()` (`cnTarjeta`, línea de 4:20 en Tu semana) y los tiempos de comida 14:20. Sin `fetch` nuevo ni telemetría; el campo no sale del móvil (sigue `fueraCopia` para la copia).
 **Pruebas:** 510-519. Cae con X revertido: con `cnTapado()` solo por PIN caen 510, 514, 515, 518, 519; sin el interruptor/banda/`cnPrivadoQuita` caen 511-513; sin `habPlantillasHTML` caen 516-517. Viejas pasadas sin cambios: 47, 47b, 227, 242, 257, 269, 270, 272, 288, 393, 481, 483.
+
+### C6 · arreglo de quien dirige: la 🌿 también se tapa (02/11/2026)
+- **Elegido:** el verificador vio 🌿 con «Privado» puesto en el cartel de la noche de Hoy («Sal al Lloret», «Vete del Lloret») y en la tira de horas. Pasan por `cnOculta('🌿')` (sale 🌙) en `nocheCadena`, la fila del Lloret de Sueño, el plegable «Hoy hay Lloret» de Comer y los iconos del plan de comidas. El texto «Sal al Lloret» se queda (es el sitio).
+- **Descartado:** cambiar el icono del Lloret para todos (la tapa es solo de «Privado»).
+- **Prueba:** 519b (Hoy sin 🌿 con Privado y con 🌿 al quitarlo). **Cae con los `ico:'🌿'` de `nocheCadena` sin `cnOculta`** (comprobado).
+- **Supuestos:** la 🌿 de «Día libre», de alimentos (perejil, albahaca…) y de la sección 4:20 por dentro no delata nada y se queda.

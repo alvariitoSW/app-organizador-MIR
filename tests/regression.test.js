@@ -17658,6 +17658,20 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       /Sal al Lloret/.test(r.ir) && r.fuma === false && /Privado/.test(cajon) && !/4:20|Lloretazo/.test(cajon), JSON.stringify({ r, cajon: cajon.slice(0, 200) }));
   }
 
+  // 519b) C6 · LA HOJA 🌿 TAMBIÉN SE TAPA EN HOY: con Privado, ni el cartel de la noche («Sal al Lloret») ni la tira de horas ni ningún aria-label de Hoy llevan 🌿 (sale 🌙);
+  //       encadenada: al quitar Privado vuelve la 🌿 (la tapa es de Privado, no un cambio de icono). Cae con los ico:'🌿' de nocheCadena sin cnOculta.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await c6Prepara(); await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    const hoja = () => page.evaluate(() => { const m = document.querySelector('#main'); const al = [...m.querySelectorAll('[aria-label],[title]')].map((e) => (e.getAttribute('aria-label') || '') + (e.getAttribute('title') || '')).join(' ');
+      return { hoja: /🌿/u.test(m.innerText + al), luna: /🌙/u.test(m.innerText), lloret: /Sal al Lloret/i.test(m.innerText) }; });
+    await c6Ve('hoy'); await page.waitForTimeout(200); const tapado = await hoja();
+    await page.evaluate(() => { const P = window.PG; P.consumoS().priv.privado = false; P.save(); P.render(); }); await page.waitForTimeout(200); const libre = await hoja();
+    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
+    check('519b Privado · en Hoy no queda ninguna 🌿 (cartel de la noche, tira de horas, aria-label) y «Sal al Lloret» sigue; al quitar Privado vuelve la 🌿',
+      tapado.hoja === false && tapado.luna && tapado.lloret && libre.hoja === true, JSON.stringify({ tapado, libre }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

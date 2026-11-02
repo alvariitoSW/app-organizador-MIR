@@ -6037,7 +6037,7 @@ function nocheAlarmasHTML(){
   const v=g('vete'),s=g('salir'),mg=snMargenLibre();
   return '<div class="grid npant"><div class="subcab"><button class="btn s volver" data-a="noche-vista" data-v="">‹ Hoy</button></div>'+
     '<h2 class="subtit">⏰ Pon estas alarmas en tu Reloj</h2><p class="mini">Así suenan aunque la app esté cerrada. Ponlas una vez con este mismo nombre.</p>'+
-    (v?fila('🌿','Vete del Lloret',v.hora,'todas las noches menos guardia',antCama!=null?antCama-C.cfg.margen-C.cfg.ida:null):'')+
+    (v?fila(cnOculta('🌿'),'Vete del Lloret',v.hora,'todas las noches menos guardia',antCama!=null?antCama-C.cfg.margen-C.cfg.ida:null):'')+
     fila('🛌','A la cama',C.cama,'todas las noches',antCama,C.cama>C.obj?C.obj:null)+
     (s?fila('🚪','Sal de casa',s.hora,'lunes a viernes',null):'')+
     (s?'<div class="nmitad"><div class="row"><span class="cap">DE MITAD DE MAÑANA</span><span class="nnuevo">nuevo</span></div>'+fila('⏳','Quedan 30 min',s.hora-30,'lunes a viernes',null)+fila('⏳','Quedan 10 min',s.hora-10,'lunes a viernes',null)+'</div>'+
@@ -8404,8 +8404,8 @@ function nocheCadena(key,nowMin){
   const obj=b0==null?null:(b0<12*60?b0+1440:b0),cama=obj==null?null:nocheEscalon(obj),c=pl.cfg,H=[];
   const ll=cama!=null&&lloretDe(d)?lloretDe(d):null;
   if(ll){const casa=cama-c.margen,vete=casa-c.ida,ir=mins(ll.hora);
-    H.push({id:'ir',ico:'🌿',hora:ir!=null?ir:pl.de,cartel:'Sal al Lloret',corto:'Ir al Lloret',nota:'a tu hora de siempre'},
-      {id:'vete',ico:'🌿',hora:vete,cartel:'Vete del Lloret',corto:'Vete del Lloret',nota:'a más tardar · empieza a despedirte a las '+hm(vete-10)},
+    H.push({id:'ir',ico:cnOculta('🌿'),hora:ir!=null?ir:pl.de,cartel:'Sal al Lloret',corto:'Ir al Lloret',nota:'a tu hora de siempre'},
+      {id:'vete',ico:cnOculta('🌿'),hora:vete,cartel:'Vete del Lloret',corto:'Vete del Lloret',nota:'a más tardar · empieza a despedirte a las '+hm(vete-10)},
       {id:'casa',ico:'🏠',hora:casa,cartel:'En casa',corto:'En casa',nota:'pantallas fuera: el Lloret ya contó como rato sin pantalla'});}
   if(cama!=null)H.push({id:'cama',ico:'🛌',hora:cama,cartel:'A la cama',corto:'A la cama',
     nota:cama>obj?'paso hacia las '+hm(obj)+' (tu hora: '+fmtHM(suenoCfg().min*60+suenoCfg().latencia)+' antes del despertador)':'para dormir tus '+fmt(suenoCfg().min)+' h antes del despertador'});
@@ -12547,7 +12547,7 @@ function nutSemPlegHTML(hoyK){
 function nutLloretPlegHTML(k){
   const h=nutLloretHTML(k);if(!h)return '';
   const p=lloretPlan(k),m=new Date().getHours()*60+new Date().getMinutes();
-  return cmPlegHTML('ll',m>=14*60,'🌿','Hoy hay Lloret · '+hm(p.de),'cena hecha antes de salir y kit para la vuelta',h);}
+  return cmPlegHTML('ll',m>=14*60,cnOculta('🌿'),'Hoy hay Lloret · '+hm(p.de),'cena hecha antes de salir y kit para la vuelta',h);}
 function nutChocoAvisoHTML(fr,ctx){
   /* al ir a apuntar chocolate: cuántas veces van esta semana frente al tope, y el kit para cambiarlo */
   if(ctx!=='fr'||!fr||!NUT_CHOCO.test([fr.txt||''].concat((fr.items||[]).map(function(x){const a=x.id&&alimById(x.id);return a?a.n:'';})).join(' ')))return '';
@@ -16141,13 +16141,13 @@ function plmCabHTML(M,t){
   return '<div class="subcab"><button class="btn s volver" data-a="'+(M.paso===2?'plm-paso" data-v="1':'plm-cerrar')+'">'+gymIco('atras','gico sm')+(M.paso===2?' Paso 1':' Semana')+'</button>'+
     '<h2 class="subtit" style="flex:1">Montar la semana</h2><span class="mini">'+M.paso+'/2</span></div>'+
     '<div class="plpasos"><i class="on"></i><i class="'+(M.paso===2?'on':'')+'"></i></div><div class="cap">'+t+'</div>';}
-function plmSlotTxt(s){return s.t==='cz'?'🍳':(s.t==='fz'?'🧊':(s.t==='tp'?'♻️':(s.t==='ll'?'🌿':(s.t==='ra'?'⚡':(s.t==='ho'?'🏥':'')))));}
+function plmSlotTxt(s){return s.t==='cz'?'🍳':(s.t==='fz'?'🧊':(s.t==='tp'?'♻️':(s.t==='ll'?cnOculta('🌿'):(s.t==='ra'?'⚡':(s.t==='ho'?'🏥':'')))));}
 function plmPaso1(M){
   const sem=cjeSemana(),R=plmReparto(M),hoyK=iso(new Date());
   if(!sem.some(function(x){return x.key>=hoyK;}))return plmCabHTML(M,'Cuándo cocinas')+
     '<div class="card plpasada"><p style="margin:0 0 10px">Esta semana ya pasó: no hay nada que montar.</p><button class="btn p" data-a="cje-sem" data-d="1" style="width:100%">La semana que viene ›</button></div>';
   const cal='<div class="plcal7">'+sem.map(function(x,i){const si=M.dias.indexOf(i)>=0,pas=x.key<hoyK,puede=plmPuedeCocinar(x);
-      const e=si?'🍳':(x.tipo.guardia?'🏥':(x.tipo.saliente?'😴':(lloretDe(x.key)?'🌿':'')));
+      const e=si?'🍳':(x.tipo.guardia?'🏥':(x.tipo.saliente?'😴':(lloretDe(x.key)?cnOculta('🌿'):'')));
       return '<button class="'+(si?'si':'')+(pas?' pas':'')+(!puede&&!pas?' no':'')+'" data-a="plm-dia" data-i="'+i+'"'+(puede?'':' disabled')+(si?' aria-pressed="true"':'')+'>'+
         '<b>'+parseDate(x.key).getDate()+'</b>'+plDia3(x.key)+'<em>'+e+'</em></button>';}).join('')+'</div>';
   const olla=function(o,k){const c=o.c,col=PL_COL[c.g]||PL_COL.otro,x=sem[o.o.i],h=plCocina(x.key);
