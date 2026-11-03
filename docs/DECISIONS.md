@@ -2717,3 +2717,10 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Supuestos:** 420 págs y 12 págs/h para los 4 chips (el chip solo da el título); hoy en guardia/saliente sale «0 págs hoy»; tras empezar, la tarjeta no vuelve (hay objetivo). Las pruebas viejas del Estudio vacío (bloque del 74 y 204) pasan ahora por «a mano».
 - **Pruebas:** 550-552. Cae con `estudioDiaLibre` devolviendo siempre true: 550; con `b.sg=true` quitado: 551.
 
+
+### T2c · Flechas de día en Hoy (pruebas 560-564, 03/11/2026)
+- **Elegido:** X1 variante A. Las flechas ya existían dentro de la tarjeta (botones pequeños, y no en «De viaje»). Ahora son una fila propia de 56 px encima de la tarjeta, `diaNavHTML()`: «‹ lun · Hoy · mié ›» (con otro día, el centro pasa a «volver a hoy»). Se usa en `renderHoy` (conductor, reloj y línea: la fila va antes de la tarjeta, no depende del modo) y en `renderHoyViaje`. Mueven `ui.diaHoy` por `moverDiaHoy`, las mismas acciones `dia-prev/dia-next/dia-hoy` (solo en `act()`). Las flechas ‹ › de la barra de arriba siguen. CSS: `#main .diasnav2 .btn` (con `#main`, porque `:is(#main,…) .btn{min-height:44px}` ganaba por especificidad).
+- **Descartado:** gesto de deslizar y «+» flotante (aprobado por el usuario el 03/11); estado nuevo (se reutiliza `ui.diaHoy`).
+- **Quita:** de la fila interior de la tarjeta, los botones ‹ día / volver a hoy / día ›; quedan «Lloretazo» y «＋ añadir».
+- **Cae con X revertido:** 560, 561, 563 y 564 caen con `diaNavHTML` y su CSS revertidos (562, de ausencia, no cae: es un guardia). Ninguna otra.
+- **Supuestos:** «Hoy · mié 11» en el centro cuando es hoy; en «De viaje» las flechas llevan a un día normal y «volver a hoy» devuelve a lo esencial.

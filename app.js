@@ -5666,6 +5666,13 @@ function dayPanelHTML(dateStr){
    «Semana» y abrir el día. Ahora la pantalla se mueve por días con las mismas flechas ‹ › de
    arriba que ya mueven el mes y la semana, y se vuelve al día de hoy pulsando «Hoy» en la barra. */
 function fechaHoy(){return ui.diaHoy||iso(new Date());}
+/* X1 · las flechas «‹ lun · mié ›» de Hoy: una fila de 56 px encima de la tarjeta, la misma en los tres
+   modos (conductor, reloj, línea) y en «De viaje». Sin gesto de deslizar. Mueven ui.diaHoy (moverDiaHoy). */
+function diaNavHTML(dref,esHoy){
+  return '<nav class="diasnav2" aria-label="Cambiar de día">'+
+    '<button class="btn" data-a="dia-prev" title="día anterior">‹ '+esc(DIA3[addDays(dref,-1).getDay()])+'</button>'+
+    (esHoy?'<b>Hoy · '+esc(DIA3[dref.getDay()])+' '+dref.getDate()+'</b>':'<button class="btn p" data-a="dia-hoy">volver a hoy</button>')+
+    '<button class="btn" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button></nav>';}
 function esHoyDeVerdad(k){return k===iso(new Date());}
 function moverDiaHoy(n){
   const d=parseDate(fechaHoy());if(!d)return;
@@ -8087,7 +8094,7 @@ function mvBandaHTML(){
 function renderHoyViaje(hoy){
   const v=store.modoViaje,c=mvCuenta(v),cama=(function(){try{const p=suenoCamaHoy(nocheDeAhora());return p&&p.cama?hCortaHM(p.cama):'';}catch(e){return '';}})();
   let pasos='';for(let i=1;i<=Math.min(c.t,31);i++)pasos+='<i'+(i<=c.n?' class="h"':'')+'></i>';
-  $('#main').innerHTML='<div class="grid">'+
+  $('#main').innerHTML='<div class="grid">'+diaNavHTML(parseDate(hoy)||new Date(),true)+
     '<div class="card mv mvcab"><h2>De viaje · día '+c.n+' de '+c.t+' · '+esc(mvVuelves(v))+'</h2>'+
       (v.destino?'<p>'+esc(v.destino)+'</p>':'')+'<div class="mvpasos" role="img" aria-label="Día '+c.n+' de '+c.t+'">'+pasos+'</div></div>'+
     '<div class="card mv"><h2>Lo esencial de hoy</h2>'+
@@ -8522,15 +8529,12 @@ function renderHoy(){
     (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' '+esc(gTipo(inf.guard).label):'')+
       (hhE?' · '+esc(hhE):'')+(rotE&&!isGuardia(sh)&&hhE?' · '+esc(rotE):'')):'sin día asignado');
   const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
-  $('#main').innerHTML='<div class="grid">'+
+  $('#main').innerHTML='<div class="grid">'+diaNavHTML(dref,esHoy)+
     '<div class="card"><h2>'+(esHoy?'☀️ Hoy · ':'🗓️ ')+esc(fecha)+'<span class="hoychip'+(esHoy?'':' otro')+'">'+esc(chip)+'</span>'+
 '</h2>'+
     /* moverse por días sin salir de la pantalla: la víspera de una guardia quieres ver el día de
        mañana, no el de hoy. Las flechas ‹ › de la barra de arriba hacen lo mismo. */
     '<div class="row diasnav">'+
-      '<button class="btn s" data-a="dia-prev" title="día anterior">‹ '+esc(DIA3[addDays(dref,-1).getDay()])+'</button>'+
-      (esHoy?'':'<button class="btn p s" data-a="dia-hoy">volver a hoy</button>')+
-      '<button class="btn s" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button>'+
       '<span class="sp"></span>'+
       '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="'+esc(cnOculta('Lloretazo'))+': '+
         esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">'+cnOculta('🌿')+(lloretDe(hoy)?' ✓':'')+'</button>'+
