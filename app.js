@@ -24159,7 +24159,7 @@ function xlsxLibro(hojas){
       h.filas.map(function(f,r){return '<row r="'+(r+1)+'">'+f.map(function(c,ci){
         if(c==null||c==='')return '';
         const ref=col(ci)+(r+1),o=(c&&typeof c==='object')?c:{v:c},neg=!!o.b||r===0;
-        if(typeof o.v==='number'&&isFinite(o.v))return '<c r="'+ref+'" s="'+(neg?3:1)+'"><v>'+(Math.round(o.v*100)/100)+'</v></c>';
+        if(typeof o.v==='number'&&isFinite(o.v))return '<c r="'+ref+'" s="'+(o.u?(neg?5:4):(neg?3:1))+'"><v>'+(Math.round(o.v*100)/100)+'</v></c>';
         return '<c r="'+ref+'" t="inlineStr" s="'+(neg?2:0)+'"><is><t>'+x(o.v)+'</t></is></c>';}).join('')+'</row>';}).join('')+
       '</sheetData></worksheet>';};
   const enc=new TextEncoder(),F=[];
@@ -24180,8 +24180,8 @@ function xlsxLibro(hojas){
     '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'+
     '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'+
     '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
-    '<cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'+
-    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/></cellXfs>'+
+    '<cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'+
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>'+
     '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>')});
   hojas.forEach(function(h,i){F.push({name:'xl/worksheets/sheet'+(i+1)+'.xml',data:enc.encode(hojaXML(h))});});
   return zipGuardado(F);}
@@ -24201,6 +24201,64 @@ function dineroXlsx(anio){
     return [h.ico+' '+h.nombre,h.saldo,ll?ll.obj:'',ap||'',ll&&ll.falta&&ll.mk?huchaLlegaTxt(ll):'',(h.deseos||[]).map(function(d){return d.txt+' ('+eur(d.precio)+')';}).join(', ')||h.meta||''];}))};
   return xlsxLibro([res,gas].concat(porMes,[hu]));}
 function dineroXlsxBlob(anio){return new Blob([dineroXlsx(anio)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});}
+
+/* ---- T4 · exportar el mes que estás viendo: «Resumen del mes» (vista de impresión → PDF) y un Excel de 4 hojas.
+   Todo sale de lo que ya cuenta la app (bloquesTrabajo, salidaDeGuardia, suenoReal, gymS().registro, mesDinero); con «Privado» los nombres pasan por cnOculta ---- */
+function resumenMes(y,m){
+  const ini=iso(new Date(y,m,1)),fin=iso(new Date(y,m+1,0)),r1=function(v){return Math.round(v*100)/100;};
+  const dias=monthDays(y,m).map(function(d){
+    let hG=0,hT=0;
+    bloquesTrabajo(d.key,d.inf).forEach(function(b){const h=(b.a-b.de)/60;if(b.tipo==='guard')hG+=h;else hT+=h;});
+    const sh=shiftById(d.shiftId);
+    return {key:d.key,nombre:cnOculta(d.name),hG:r1(hG),hT:r1(hT),guardia:!!(sh&&isGuardia(sh)),saliente:!!salidaDeGuardia(d.key)};});
+  const noches=dias.map(function(d){const r=suenoReal(d.key);return r?{key:d.key,h:r1(+r.h||0),siesta:r1(+r.siesta||0),total:r1(suenoTotal(r)||0),guardia:!!r.guardia}:null;}).filter(Boolean);
+  const g=gymS(),sesPor={};g.sesiones.forEach(function(s){sesPor[s.id]=s;});
+  const regs=g.registro.filter(function(x){return x.fecha>=ini&&x.fecha<=fin&&x.t!=='c';}).sort(function(a,b){return a.fecha.localeCompare(b.fecha)||(a.ts||0)-(b.ts||0);});
+  const nSerie={};
+  const series=regs.map(function(x){const s=sesPor[x.sesionId],k=(x.sesionId||x.fecha)+'|'+x.ex;nSerie[k]=(nSerie[k]||0)+1;
+    return {fecha:x.fecha,sesion:s?cnOculta(s.nombre||'Sesión'):'Suelto',ex:cnOculta(x.ex),serie:nSerie[k],kg:+x.kg||0,reps:+x.reps||0};});
+  const sesiones=g.sesiones.filter(function(s){return s.fecha>=ini&&s.fecha<=fin;});
+  const D=mesDinero(y,m),pagos=D.pagos.slice().sort(function(a,b){return a.fecha.localeCompare(b.fecha);}).map(function(p){
+    return {fecha:p.fecha,nombre:cnOculta(p.nombre),cat:cnOculta(p.cat||'otros'),importe:+p.importe||0};});
+  const cats={};Object.keys(D.porCat).forEach(function(k){const c=cnOculta(k);cats[c]=(cats[c]||0)+D.porCat[k];});
+  return {y:y,m:m,dias:dias,nGuardias:dias.filter(function(d){return d.guardia;}).length,
+    hG:r1(dias.reduce(function(s,d){return s+d.hG;},0)),hT:r1(dias.reduce(function(s,d){return s+d.hT;},0)),
+    nSal:dias.filter(function(d){return d.saliente;}).length,noches:noches,
+    mediaSueno:noches.length?r1(noches.reduce(function(s,n){return s+n.total;},0)/noches.length):null,
+    series:series,sesiones:sesiones,minEntreno:sesiones.reduce(function(s,x){return s+(+x.duracionMin||0);},0),
+    pagos:pagos,pagado:D.pagado,cats:cats,pres:D.pres};}
+function resumenMesHTML(y,m){
+  const R=resumenMes(y,m),r2=function(n){return Math.round(n*10)/10;},h=function(n){return String(r2(n)).replace('.',',')+' h';};
+  const fila=function(a,b){return '<tr><td>'+esc(a)+'</td><td>'+esc(b)+'</td></tr>';};
+  const gd=R.dias.filter(function(d){return d.guardia;}).map(function(d){return +d.key.slice(8);});
+  const cats=Object.keys(R.cats).sort(function(a,b){return R.cats[b]-R.cats[a];}).slice(0,6);
+  const ejs={};R.series.forEach(function(s){ejs[s.ex]=1;});
+  return '<h1>Resumen de '+esc(MONTH_FULL[m])+' '+y+'</h1>'+
+    '<section><h2>Guardias y horas</h2><table>'+fila('Guardias',R.nGuardias+(gd.length?' (días '+gd.join(', ')+')':''))+
+      fila('Horas de guardia',h(R.hG))+fila('Horas de trabajo (jornada)',h(R.hT))+fila('Días de saliente',String(R.nSal))+'</table></section>'+
+    '<section><h2>Sueño</h2>'+(R.noches.length?'<table>'+fila('Noches apuntadas',String(R.noches.length))+fila('Media por noche (con siesta)',h(R.mediaSueno))+
+      fila('Noches por debajo de tu mínimo ('+suenoCfg().min+' h)',String(R.noches.filter(function(n){return n.total<suenoCfg().min-0.05;}).length))+'</table>':'<p>Ninguna noche apuntada este mes.</p>')+'</section>'+
+    '<section><h2>Entrenos</h2>'+(R.series.length||R.sesiones.length?'<table>'+fila('Sesiones',String(R.sesiones.length))+fila('Series apuntadas',String(R.series.length))+
+      fila('Ejercicios distintos',String(Object.keys(ejs).length))+fila('Tiempo entrenando',fmtHM(R.minEntreno))+'</table>':'<p>Ningún entreno apuntado este mes.</p>')+'</section>'+
+    '<section><h2>Dinero</h2>'+(R.pagos.length?'<table>'+fila('Gastado',eur(R.pagado)+' en '+R.pagos.length+' movimiento'+(R.pagos.length===1?'':'s'))+
+      (R.pres?fila('Presupuesto del mes',eur(R.pres)):'')+cats.map(function(k){return fila('· '+k,eur(R.cats[k]));}).join('')+'</table>':'<p>Ningún gasto apuntado este mes.</p>')+'</section>';}
+function resumenMesImprimir(){
+  const y=monthDate.getFullYear(),m=monthDate.getMonth();
+  let el=document.getElementById('resPrint');if(!el){el=document.createElement('div');el.id='resPrint';document.body.appendChild(el);}
+  el.innerHTML=resumenMesHTML(y,m);document.documentElement.classList.add('imp-res');
+  const fin=function(){document.documentElement.classList.remove('imp-res');el.innerHTML='';window.removeEventListener('afterprint',fin);};
+  window.addEventListener('afterprint',fin);
+  try{window.print();}catch(e){}
+  setTimeout(fin,4000);}
+function mesXlsx(y,m){
+  const R=resumenMes(y,m),u=function(v){return {v:v,u:true};},bu=function(v){return {v:v,u:true,b:true};},si=function(b){return b?'sí':'no';};
+  const g=[['Fecha','Tipo de día','Horas de trabajo','Horas de guardia','Guardia','Saliente']].concat(R.dias.map(function(d){
+      return [d.key,d.nombre,u(d.hT),u(d.hG),si(d.guardia),si(d.saliente)];}),
+    [[{v:'Total',b:true},{v:R.nGuardias+' guardias',b:true},bu(R.hT),bu(R.hG),'','']]);
+  const gas=[['Fecha','Concepto','Categoría','Importe']].concat(R.pagos.map(function(p){return [p.fecha,p.nombre,p.cat,p.importe];}),[[{v:'Total',b:true},'','',{v:R.pagado,b:true}]]);
+  const sue=[['Noche (día que despiertas)','Horas','Siesta','Total','Guardia']].concat(R.noches.map(function(n){return [n.key,u(n.h),u(n.siesta),u(n.total),si(n.guardia)];}));
+  const ent=[['Fecha','Sesión','Ejercicio','Serie','Peso (kg)','Reps']].concat(R.series.map(function(s){return [s.fecha,s.sesion,s.ex,u(s.serie),u(s.kg),u(s.reps)];}));
+  return xlsxLibro([{nombre:'Guardias y horas',filas:g},{nombre:'Gastos',filas:gas},{nombre:'Sueño',filas:sue},{nombre:'Entrenos',filas:ent}]);}
 
 
 function eventosS(){if(!Array.isArray(store.eventos))store.eventos=[];return store.eventos;}
@@ -25514,6 +25572,9 @@ function renderData(){
         (diasDesdeBackup()===0?'última copia: hoy':'última copia: hace '+diasDesdeBackup()+' día'+(diasDesdeBackup()===1?'':'s')+(diasDesdeBackup()>=avisoBackupD()?' — te toca otra':''))}</p>
       <div class="row" style="margin-top:6px"><button class="btn p" data-a="copia-compartir">Guardar en Drive / Archivos</button><button class="btn" data-a="export">Descargar JSON</button><button class="btn" data-a="copy">Copiar JSON</button>
       <span class="sp"></span><button class="btn d" data-a="reset">Restaurar el ejemplo</button></div>
+      <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Exportar ${esc(MONTH_FULL[monthDate.getMonth()])} ${monthDate.getFullYear()}</b>
+        <button class="btn" data-a="exp-pdf">Resumen del mes (PDF)</button><button class="btn" data-a="exp-xlsx">Excel: guardias, gastos, sueño y entrenos</button>
+        <span class="note" style="flex:1 1 100%">En el PDF, elige «Guardar como PDF» en la ventana de imprimir. Es el mes que estás viendo en el calendario.</span></div>
       ${rescateTxt()?`<div class="aviso" style="margin-top:10px"><b>Hay datos apartados</b> que no se pudieron leer al abrir (${Math.round(rescateTxt().length/1024)} KB). Cópialos y pégalos en «Importar JSON» o guárdalos para ayuda.
         <div class="row" style="margin-top:6px"><button class="btn s" data-a="rescate-copiar">Copiar esos datos</button><button class="btn s d" data-a="rescate-borrar">Borrarlos</button></div></div>`:''}
       <textarea id="importBox" rows="8" placeholder="Pega aquí un JSON y pulsa Importar" style="margin-top:8px"></textarea>
@@ -27659,6 +27720,9 @@ function act(a,el){
     case 'gym-modo':gymS().modo=el.dataset.v==='completo'?'completo':'sencillo';save();render();flash(gymS().modo==='completo'?'modo completo: todas las cifras':'modo sencillo: empezar, marcar y resumen');break;
     case 'gym-unidad':gymS().unidad=el.dataset.v==='lb'?'lb':'kg';save();render();break;
     case 'gv-todas':{const m=marcarTodas(+el.dataset.x);if(m)flash(m);break;}
+    case 'exp-pdf':resumenMesImprimir();break;
+    case 'exp-xlsx':{const y=monthDate.getFullYear(),m=monthDate.getMonth(),nm='mes-'+y+'-'+String(m+1).padStart(2,'0')+'.xlsx';
+      dlTxt(mesXlsx(y,m),nm,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');break;}
     case 'copia-compartir':copiaCompartir().then(function(m){if(m)flash(m);});break;
     case 'copia-restaurar':{const k=el.dataset.k;confirmar('¿Volver a la copia del '+k+'? Antes guardo una de cómo está ahora, por si acaso.').then(function(ok){
         if(!ok)return;copiasLeer(k).then(function(x){if(!x){flash('esa copia ya no está');return;}

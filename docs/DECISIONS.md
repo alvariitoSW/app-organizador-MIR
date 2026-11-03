@@ -2743,3 +2743,11 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Descartado:** cambiar la primera pantalla de quien empieza de cero (el asistente de 4 preguntas y sus pruebas del arranque quedan intactos); borrar o convertir el ciclo; proponer patrón con menos de 3 guardias.
 - **Supuestos:** «servicio» = servicio del mes (`monthService`); el tipo cambia las horas de la guardia (15:00-08:00 para 17 h, 20:00-08:00 para 12 h); el patrón solo rellena el mes siguiente y no pisa días ya puestos; la pantalla vuelve a «Datos» con «‹».
 - **Cae con X revertido:** 580 y 582 caen con las guardias tocadas sin `setDayOverride` en `tgGuarda`; las demás (581, 583-588) cubren calendario, patrón, previas, avanzado, teclear y medidas. Pruebas viejas pasadas sin cambio: 491-495, 520.
+
+
+### T4 · Exportar: resumen del mes (PDF) y Excel (pruebas 600-604, 03/11/2026)
+- **Elegido:** dos botones en Ajustes → Datos → Copias, del mes que estás viendo (`monthDate`). PDF sin librería: `resumenMesImprimir()` pinta `#resPrint` (fuera de `#main`), pone `html.imp-res` y llama a `window.print()` (mismo mecanismo que `imprimir()`); en pantalla no existe. Excel: se reutiliza `xlsxLibro`/`zipGuardado` (zip sin comprimir + CRC32 que ya hacía el Excel de Dinero) y `dlTxt` para bajarlo; las 4 hojas salen de `resumenMes(y,m)` (bloquesTrabajo, salidaDeGuardia, suenoReal, gymS().registro, mesDinero). Se añadió a `xlsxLibro` la celda `{u:true}` (número sin formato €) para las horas.
+- **Descartado:** librería de PDF/Excel; hoja con los gastos fijos pendientes (solo los pagos hechos); copiar el horario hora a hora.
+- **Privado:** nombres de día, gastos, categorías, sesiones y ejercicios pasan por `cnOculta`.
+- **Cae con X revertido:** 600-604 caen con `app.js` revertido (no existen los botones). Las viejas 207 y 216 (Excel de Dinero) siguen en verde.
+- **Supuestos:** «horas de guardia» = horas de calendario de cada día con bloque de guardia (el día de la guardia desde la hora de entrada y la mañana siguiente hasta el relevo); «horas de trabajo» = jornada; «Saliente» = día en que sales de una guardia. Sueño = noches apuntadas (con siesta). Series sin las de calentamiento «c».

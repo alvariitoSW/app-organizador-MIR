@@ -4492,3 +4492,16 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
 .tg-op b{display:block;font-size:var(--t-14)}.tg-op span{display:block;font-size:var(--t-13);color:var(--texto-2);margin-top:2px}
 .tg-op.on{background:var(--marca-suave);box-shadow:inset 0 0 0 2px var(--brand)}
 .tg-res{margin-top:14px}
+/* ============ T4 · «Resumen del mes» (PDF por la vista de impresión): en pantalla no existe ============ */
+#resPrint{display:none}
+@media print{
+  html.imp-res body>*:not(#resPrint){display:none!important}
+  html.imp-res #resPrint{display:block;color:#111;font-size:var(--t-13)}
+  #resPrint h1{font-size:var(--t-20);margin:0 0 8px}
+  #resPrint h2{font-size:var(--t-16);margin:12px 0 4px;border-bottom:1px solid #999}
+  #resPrint table{width:100%;border-collapse:collapse}
+  #resPrint td{padding:3px 0;border-bottom:1px solid #ddd;font-size:var(--t-13)}
+  #resPrint td+td{text-align:right;font-weight:700}
+  #resPrint p{margin:4px 0;font-size:var(--t-13)}
+  #resPrint section{break-inside:avoid}
+}

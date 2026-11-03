@@ -18206,6 +18206,87 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copiaT3b; delete window.__copiaT3b; P.ui.tg = null; P.ui.datosVista = ''; P.ui.tab = 'month'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
+  // ===== T4 · EXPORTAR: RESUMEN DEL MES (PDF) Y EXCEL (600-609) =====
+  // 600) T4 · Ajustes → Datos → Copias: los dos botones con su rótulo exacto, la frase «Guardar como PDF» y el mes que se exporta.
+  // 601) T4 · con datos sembrados, «Excel…» descarga un .xlsx que es un zip válido, con las 4 hojas y celdas esperadas (guardia, gasto, noche, serie).
+  // 602) T4 · «Resumen del mes (PDF)»: en vista de impresión sale el resumen con sus 4 bloques y las cifras del mes, y nada más de la app.
+  // 603) T4 · con «Privado» puesto, ni el resumen ni el Excel llevan «Lloretazo» (sale «Plan privado»).
+  // 604) T4 · en un mes vacío el resumen lo dice («Ninguna noche apuntada…») y el Excel lleva solo sus cabeceras.
+  {
+    await fijaHoy(12, 0);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const os = require('os'), cp = require('child_process');
+    const siembra = (privado) => page.evaluate((privado) => { const P = window.PG; if (!window.__copia600) window.__copia600 = JSON.parse(JSON.stringify(P.store));
+      const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth(), k = (d) => P.iso(new Date(y, m, d, 12)), GU = P.store.shifts.filter(P.isGuardia)[0];
+      P.setDayOverride(k(10), GU.id, 'urg');
+      P.store.suenoReal = { [k(9)]: { h: 7, siesta: 0.5 }, [k(12)]: { h: 6, siesta: 0 } };
+      P.dineroS().pagos.push({ id: 'pg600', fecha: k(8), nombre: privado ? 'Lloretazo cena' : 'Cena 600', importe: 42.5, cat: privado ? 'Lloretazo' : 'comida', gastoId: '', ts: 1 });
+      const g = P.gymS(); g.sesiones.push({ id: 'ses600', rutinaId: '', fecha: k(11), duracionMin: 50, seriesIds: ['gs600'], nombre: 'Torso 600' });
+      g.registro.push({ id: 'gs600', fecha: k(11), ex: 'Press banca 600', kg: 62.5, reps: 8, ts: 5, sesionId: 'ses600' });
+      if (privado) P.store.consumo = Object.assign({}, P.store.consumo || {}, { priv: Object.assign({}, (P.store.consumo || {}).priv || {}, { privado: true }) });
+      P.monthDate = new Date(y, m, 1, 12); P.save(); P.render(); }, privado);
+    const suelta = () => page.evaluate(() => { const P = window.PG; if (window.__copia600) { P.store = window.__copia600; delete window.__copia600; } P.save(); P.render(); });
+    const mesTxt = await page.evaluate(() => { const d = new Date(); return ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][d.getMonth()] + ' ' + d.getFullYear(); });
+    // el .xlsx a texto: lista de nombres del zip (cabeceras locales) y XML de cada hoja
+    const leeXlsx = async (descarga) => { const f = path.join(os.tmpdir(), 'mes-t4-' + Date.now() + '.xlsx'); await descarga.saveAs(f);
+      let valido = true; try { cp.execFileSync('python3', ['-I', '-m', 'zipfile', '-t', f], { stdio: 'pipe' }); } catch (e) { valido = false; }
+      const b = fs.readFileSync(f), nombres = []; let p = 0, todo = '';
+      while (b.readUInt32LE(p) === 0x04034b50) { const sz = b.readUInt32LE(p + 18), n = b.readUInt16LE(p + 26), ex = b.readUInt16LE(p + 28), nm = b.toString('utf8', p + 30, p + 30 + n);
+        nombres.push(nm); todo += '\n#' + nm + '\n' + b.toString('utf8', p + 30 + n + ex, p + 30 + n + ex + sz); p += 30 + n + ex + sz; }
+      fs.unlinkSync(f); return { valido, nombres, todo }; };
+    await siembra(false);
+    await gotoTab('data', 'copia'); await page.waitForTimeout(200);
+    const b0 = await page.evaluate(() => { const t = document.getElementById('main').innerText; const pdf = document.querySelector('#main [data-a="exp-pdf"]'), xl = document.querySelector('#main [data-a="exp-xlsx"]');
+      return { pdf: pdf && pdf.textContent.trim(), xl: xl && xl.textContent.trim(), guardar: /Guardar como PDF/.test(t), mes: t }; });
+    check('600 Exportar · en Ajustes → Datos → Copias están «Resumen del mes (PDF)» y «Excel: guardias, gastos, sueño y entrenos», con «Guardar como PDF» y el mes que se exporta',
+      b0.pdf === 'Resumen del mes (PDF)' && b0.xl === 'Excel: guardias, gastos, sueño y entrenos' && b0.guardar && b0.mes.toLowerCase().includes('exportar ' + mesTxt), JSON.stringify({ pdf: b0.pdf, xl: b0.xl, guardar: b0.guardar }));
+    // 601 excel
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#main [data-a="exp-xlsx"]')]);
+    const X = await leeXlsx(dl), hoja = (n) => (X.todo.split('\n#xl/worksheets/sheet' + n + '.xml\n')[1] || '').split('\n#')[0];
+    const wb = (X.todo.split('\n#xl/workbook.xml\n')[1] || '').split('\n#')[0];
+    check('601 Exportar · el Excel baja como .xlsx (zip válido) con las hojas «Guardias y horas», «Gastos», «Sueño» y «Entrenos», y con la guardia, el gasto, la noche y la serie del mes',
+      /^mes-\d{4}-\d\d\.xlsx$/.test(dl.suggestedFilename()) && X.valido && ['[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels', 'xl/worksheets/sheet4.xml'].every((n) => X.nombres.includes(n)) &&
+      ['Guardias y horas', 'Gastos', 'Sueño', 'Entrenos'].every((n) => wb.includes('name="' + n + '"')) &&
+      /guardias<\/t>/.test(hoja(1)) && /Cena 600/.test(hoja(2)) && /<v>42.5<\/v>/.test(hoja(2)) && /<v>7.5<\/v>/.test(hoja(3)) && /Press banca 600/.test(hoja(4)) && /<v>62.5<\/v>/.test(hoja(4)) && /Torso 600/.test(hoja(4)),
+      JSON.stringify({ n: dl.suggestedFilename(), v: X.valido, nom: X.nombres }));
+    // 602 pdf
+    await gotoTab('data', 'copia'); await page.waitForTimeout(150);
+    await page.evaluate(() => { window.print = () => {}; });
+    await page.click('#main [data-a="exp-pdf"]'); await page.waitForTimeout(200);
+    await page.emulateMedia({ media: 'print' });
+    const pr = await page.evaluate(() => { const r = document.getElementById('resPrint'), vis = (e) => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
+      return { t: r ? r.innerText : '', h2: r ? [...r.querySelectorAll('h2')].map((x) => x.textContent) : [], visible: vis(r), main: vis(document.getElementById('main')), head: vis(document.querySelector('header')) }; });
+    await page.emulateMedia({ media: 'screen' });
+    const enPantalla = await page.evaluate(() => getComputedStyle(document.getElementById('resPrint')).display);
+    check('602 Exportar · «Resumen del mes (PDF)»: en vista de impresión sale «Resumen de ' + mesTxt.split(' ')[0] + '» con Guardias y horas, Sueño, Entrenos y Dinero (1 guardia, 2 noches, 1 sesión, 42,50 €), y no sale el resto de la app',
+      pr.visible && !pr.main && !pr.head && pr.h2.join('|') === 'Guardias y horas|Sueño|Entrenos|Dinero' && /Guardias\s*1 \(días 10\)/.test(pr.t) && /Noches apuntadas\s*2/.test(pr.t) && /Sesiones\s*1/.test(pr.t) && /42,50/.test(pr.t) && enPantalla === 'none',
+      JSON.stringify(pr));
+    await page.evaluate(() => { document.documentElement.classList.remove('imp-res'); });
+    // 603 privado
+    await suelta(); await siembra(true);
+    await gotoTab('data', 'copia'); await page.waitForTimeout(150);
+    await page.evaluate(() => { window.print = () => {}; });
+    await page.click('#main [data-a="exp-pdf"]'); await page.waitForTimeout(200);
+    const pt = await page.evaluate(() => document.getElementById('resPrint').innerText);
+    const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#main [data-a="exp-xlsx"]')]);
+    const X2 = await leeXlsx(dl2);
+    await page.evaluate(() => { document.documentElement.classList.remove('imp-res'); });
+    check('603 Exportar · con «Privado» puesto, ni el resumen ni el Excel dicen «Lloretazo» (sale «Plan privado») y siguen saliendo las cifras',
+      !/lloret/i.test(pt) && !/lloret/i.test(X2.todo) && /plan privado/i.test(pt) && /plan privado/i.test(X2.todo) && /42,50/.test(pt), JSON.stringify({ pt: pt.slice(-160), sin: !/lloret/i.test(X2.todo) }));
+    // 604 mes vacío
+    await suelta();
+    await page.evaluate(() => { const P = window.PG; const d = new Date(); P.monthDate = new Date(d.getFullYear() - 3, 0, 1, 12); P.render(); });
+    await gotoTab('data', 'copia'); await page.waitForTimeout(150);
+    await page.evaluate(() => { window.print = () => {}; });
+    await page.click('#main [data-a="exp-pdf"]'); await page.waitForTimeout(200);
+    const pv = await page.evaluate(() => document.getElementById('resPrint').innerText);
+    const [dl3] = await Promise.all([page.waitForEvent('download'), page.click('#main [data-a="exp-xlsx"]')]);
+    const X3 = await leeXlsx(dl3), h4 = (X3.todo.split('\n#xl/worksheets/sheet4.xml\n')[1] || '').split('\n#')[0];
+    await page.evaluate(() => { document.documentElement.classList.remove('imp-res'); const P = window.PG; P.monthDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1, 12); P.render(); });
+    check('604 Exportar · en un mes sin datos el resumen dice «Ninguna noche apuntada», «Ningún entreno apuntado» y «Ningún gasto apuntado», y la hoja Entrenos lleva solo su cabecera',
+      /Ninguna noche apuntada/.test(pv) && /Ningún entreno apuntado/.test(pv) && /Ningún gasto apuntado/.test(pv) && X3.valido && (h4.match(/<row /g) || []).length === 1, JSON.stringify({ pv, filas: (h4.match(/<row /g) || []).length }));
+    await page.setViewportSize(vp); await sueltaHoy();
+  }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
