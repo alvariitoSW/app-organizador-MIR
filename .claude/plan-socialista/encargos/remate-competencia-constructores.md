@@ -41,3 +41,22 @@ viejas que pasaste, lo que cambió de lo que esperaban las viejas, las frases ex
 |---|---|---|---|
 | R2 Primera pantalla | 630-639 | `rpp` | «Tu guardia en 3 pasos» (T3b, `tguS()` y vecinas en `app.js`, prefijo `tgu`) **también como primera pantalla** de quien instala de cero, en lugar del asistente de arranque viejo. Reutiliza el de T3b, no lo dupliques. Quien ya tiene datos no lo ve. Rehaz las pruebas del arranque que esperan el asistente viejo (grep en `tests/` de sus textos y selectores; también `tests/siembra-70.js` y los helpers que «saltan el asistente», que deben seguir funcionando). |
 | R3 Compra | 640-644 | `rcl` | En la lista de la compra, una línea escrita a mano de una receta («100 g de tomate triturado») se suma con el mismo alimento que pide la semana («300 g Tomate triturado» → una sola línea «400 g Tomate triturado»). Mismo alimento = mismo nombre sin mayúsculas, tildes ni plural simple; si las unidades no casan (g frente a «1 lata»), se quedan las dos líneas. Ver docs/DECISIONS.md «El Chef · CH2». |
+
+## Traspaso (03/11, al cerrar el remate)
+
+**Hecho, en `main` de una en una** (cada una con suite completa en verde, sello y run de Actions en verde antes de la siguiente):
+R1 add23c7 · R2 06f3002 · R3 282656a · R4 437e7e9. PNG (5): cerrado sin tocar. Tandas viejas (6): nada pendiente; tachadas en el plan.
+
+**Lo que aprendió el remate (para gastar menos):**
+1. **Los números de prueba se reservan mirando la suite, no `plan-v3.md`:** T5 ya usaba 600-614 y hubo que mover R2/R3 a 630/640.
+   `grep -oE "check\('[0-9]{3}" tests/regression.test.js | sort -u | tail` antes de repartir.
+2. **Una prueba que conduce la primera pantalla y guarda datos ha de devolverlos al acabar:** la del primer arranque marcaba
+   guardias los días 3, 11 y 19 del mes; un día 3 tumbó 5 pruebas lejanas y colgó un trozo. Se vio porque `main` pasaba y la rama
+   no (la suite sobre `main` en un worktree aparte lo aclaró en 8 min sin leer código).
+3. **Subir de una en una** cuesta poco en tokens (cada suite es espera), pero sí en reloj: ~8 min por tanda.
+4. Comandos con hook: el commit y el `git push … main` en llamadas separadas (el hook mira antes de que exista el commit).
+5. Con un ayudante o una suite corriendo a la vez, las pruebas «de tiempo» caen a veces (564 por 0,00001 px, `gotoTab` no
+   estable): repetir con el equipo libre antes de investigar.
+
+**Queda abierto:** el Lanzador K2-K4 (aparcado por el usuario). En R4, en tema claro la Línea de hoy sigue sobre fondo negro (el
+usuario: «súbela así»). Los estilos `.arrpasos` de `styles.css` quedan sin uso tras R2.

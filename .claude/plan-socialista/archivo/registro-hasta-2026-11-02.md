@@ -284,3 +284,11 @@ general aprobada: `maquetas/recetario.html`. **El Chef I** = CH1-CH8 (~6,9 M, a 
 | CH10b | **Pulido de toda la app** con las skills de `emilkowalski/skills` (MIT; pedido el 31/10): `mobile-native` (falta `100dvh`, `@media (hover: hover)` y repasar inputs ≥16 px), `animation-performance` y `review-animations` (curvas ease-out, `:active` con `scale(0.97)`, solo transform/opacity, `prefers-reduced-motion`). Se instalan en `.claude/skills/` solo esas 3 (texto, sin código). `verificador` mide antes y después a 412×915 | arreglo | sonnet con ficha | ~0,9 M |
 | CH11 | Cierre: verificador, suite, sella, `main`, Actions | arreglo | sonnet | ~0,6 M |
 
+
+
+## Cerrados el 03/11/2026 (remate de La Competencia, en `main` 437e7e9)
+
+- ✅ [aparc-compra-linea-escrita] En la compra, una línea escrita a mano de una receta («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la semana («300 g Tomate triturado»): salen dos líneas. Ya era así; visto en la CH2 de El Chef (30/10) · docs/DECISIONS.md «El Chef · CH2»
+- ✅ [aparc-css-marca] En `styles.css` (también en `main`) hay una línea suelta `=======` de una fusión antigua, justo antes de «/* K1: la lanzadora */»: el navegador se salta la regla `.snmovil .del` que va detrás. Pregunta hecha al usuario el 03/11 (quitarla cambia cómo se ven esos botoncitos en Sueño); sin respuesta todavía · styles.css ~4356
+- ✅ [aparc-png-design] `design/` pesa 74 MB en PNG de maquetas: comprimirlos (no afecta a la app, solo al repositorio)
+  · R1 quitó `=======` (prueba 620) · R3 suma las líneas a mano en gramos (640-644) · PNG: cerrado sin tocar (el usuario, 03/11: G13 ya los bajó a 22 MB y recomprimir haría crecer el historial)

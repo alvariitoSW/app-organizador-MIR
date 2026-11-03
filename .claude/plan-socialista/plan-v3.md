@@ -12,6 +12,8 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
+~~Remate de La Competencia~~ ✅ (03/11, en `main` 437e7e9): R1 `=======` fuera de styles.css, chapita «del móvil ✓» (620) · R2 «Tu guardia en 3 pasos» como primera pantalla (630-634) · R3 compra suma líneas a mano en gramos (640-644) · R4 Línea de hoy del conductor a 13 px reales, opción B (650-653) · 5 PNG: cerrado sin tocar (G13 ya los bajó; recomprimir haría crecer el historial) · 6 tandas viejas: nada pendiente, tachadas R7-R10, S6 y S7. De paso: la prueba del primer arranque devuelve lo que había (sus guardias se colaban los días 3, 11 y 19) y la 564 redondea al píxel.
+
 **La Competencia · fase 3** (en marcha): encargo `encargos/competencia-fase-3-constructores.md` (el usuario aprobó todo lo recomendado de `maquetas/competencia-c.html`, 03/11). ✅ pasada y maqueta (1,1 M) · ✅ T1a arreglos + T1b Privado al exportar y pasillos en la rama (3,0 M, pruebas 530-539) · ✅ pruebas de hora real arregladas (sol, 285→289, 333) y T1 en `main` 03fc627 (run 41603354066 success) · ✅ T2a Entreno (540-549) ‖ T2b Estudio (550-552) ‖ T2c flechas de día (560-564) en `main` 466540f (03/11, run 41605768870 success; suite 1022/1022; 3,4 M con el arreglo) · ✅ T3a caja de frase (570-577) ‖ T3b Tu guardia en Ajustes → Mi planning (580-588) ‖ letra mínima Conductor/Línea (590-594) ‖ T4 PDF «Resumen del mes» y Excel de 4 hojas (600-604) ‖ T5 entreno a horas tranquilas del gimnasio, ≥5 h antes de dormir y comida al volver (610-614) en `main` 7633880 (03/11, run 41613839826 success; suite 1054/1054) · **queda, en sesión nueva:** T3b también como primera pantalla de quien empieza de cero (se dejó fuera para no tocar las pruebas del arranque) · K2-K4 del Lanzador aparcados por el usuario (03/11). Fase 3 hecha salvo eso.
 
 ~~La Competencia · fase 2~~ ✅ (02/11, en `main` ab1be8d, run 41526387915 success): C3 Hoy (480-485) · C4 Mes (490-496) · C5 Comer (500-503) · C4b Foto del cuadrante (520-529) · C6 Privado, hábitos y «Esperan turno» (510-519b). Pasada en tema claro hecha al empezar. Gasto 9,6 M frente a ~12 M (`gastos.md`).
@@ -20,7 +22,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## Por hacer
 
-### Remate de La Competencia · decidido por el usuario el 03/11/2026 (sesión nueva)
+### ~~Remate de La Competencia~~ ✅ hecho el 03/11 (ver «En marcha») · decidido por el usuario el 03/11/2026
 [v3-remate-competencia] En este orden, con constructores sonnet en paralelo donde no se pisen (prefijo propio y grep antes de usar un nombre):
 1. **Quitar la línea suelta `=======` de `styles.css`** (~4356, antes de «/* K1: la lanzadora */»): la regla `.snmovil .del` vuelve a aplicarse. Captura de Sueño a 412×915 al usuario antes de subir. Cierra [aparc-css-marca].
 2. **«Tu guardia en 3 pasos» también como primera pantalla** de quien instala de cero (T3b lo dejó solo en Ajustes → Mi planning). Rehacer las pruebas del arranque que esperan el asistente viejo (~1 M).
@@ -115,8 +117,8 @@ son **estimaciones** hasta tener medidas; las dos primeras sesiones calibran el 
 | ~~S3~~ | ✅ main 9b53fd3 · 3,1 M + 12,1 M · Construir el Comer del reloj (línea del día, semana a mano con compra sacada de lo apuntado, nevera dibujada, escribir lo comido; buscador y ficha con vitaminas) — empieza con su ficha (`ficha-de-tarea`); quizá en 2 sesiones | [v3-comer-perdido] + [v3-boceto-semana] + [comida-ri-A] | construir | opus dirige con la ficha; constructor sonnet; `verificador` | ~1,8 M ×2 |
 | ~~S4~~ | ✅ Cantidades y ración de verdad · main 3b7a617 · sin medir | [v3-cantidades] + [comida-ri-B] | construir | constructor sonnet; `verificador` | ~1,2 M |
 | ~~S5~~ | ✅ (D) Nutri-Score, NOVA y aditivos · main 2416c99 · sin medir; (A) vitaminas y minerales hechas en la S3b | [comida-ri-A] | construir | constructor sonnet | ~0,5 M |
-| S6 | La semana en borrador (ojo: la S3b ya hizo la semana a mano y «¿Me la propones?»; al abrir, decidir qué queda) | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
-| S7 | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
+| ~~S6~~ ✅ (hecha dentro de La Gran Ley; repaso del 03/11) | La semana en borrador (ojo: la S3b ya hizo la semana a mano y «¿Me la propones?»; al abrir, decidir qué queda) | [v3-boceto-semana] | construir | constructor sonnet; `verificador` | ~1,3 M |
+| ~~S7~~ ✅ (hecha dentro de La Gran Ley; repaso del 03/11) | Antojos con recetas de microondas | [v3-antojos] | construir | recetas: opus breve (criterio de nutrición); pantalla: constructor sonnet | ~0,9 M |
 | ~~S8~~ | → **Tanda Dinero** (D1-D6, Consejo 28/10) | [v3-dinero-compras] | **informe primero** (tú das tus ideas → informe de cómo resolverlo → tu visto bueno) → maqueta → construir | informe y maquetas opus; constructor sonnet | ~0,4 M informe + ~2,0 M |
 
 **Total: ~10 M** frente a **~14 M** haciéndolas una a una (cinco rondas de maquetas por separado y cada sesión
@@ -148,10 +150,10 @@ proteína, recetas de TikTok con su página, ejercicios con dibujo que enganchen
 | ~~R4~~ | ✅ main 8786ed2 · 30/10 · 1,2 M (con parte y salud) · Fintonic en pequeño: renombrar y quitar filas en la revisión, aviso si no cuadra (ficha `fichas/reforma-r4-fintonic.md`) | arreglo | sonnet | ~0,8 M |
 | ~~R5~~ | ✅ rama claude/magical-clarke-dlp8mb-r5 · 30/10 · maqueta aprobada `maquetas/comer-reforma.html` (ficha `fichas/reforma-r5-comer.md`) | maqueta | opus + sonnet | ~1,5 M |
 | ~~R6~~ | ✅ main 56f30af · 30/10 (= G3) · Construir compra base + congelador | construir | opus dirige, sonnet | ~2,0 M |
-| R7 | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
-| R8 | TikTok: enlace guardado, cola, compartir a la app, página de receta | construir | sonnet con ficha | ~1,2 M |
-| R9 | Maqueta de Entreno: 3 ejercicios dibujados + «Lo que toca hoy» | maqueta | opus + sonnet | ~1,0 M |
-| R10 | Construir Entreno: 12 dibujos, un toque por serie, «prueba +2,5 kg», récord (absorbe el primer trozo de [v3-entrenador]) | construir | haiku dibujos, sonnet obra | ~2,0 M |
+| ~~R7~~ ✅ (hecha dentro de La Gran Ley; repaso del 03/11) | Construir proteína en Hoy + semana básica (absorbe la S6) | construir | sonnet | ~1,2 M |
+| ~~R8~~ ✅ (hecha dentro de La Gran Ley; repaso del 03/11) | TikTok: enlace guardado, cola, compartir a la app, página de receta | construir | sonnet con ficha | ~1,2 M |
+| ~~R9~~ ✅ (hecha dentro de La Gran Ley; repaso del 03/11) | Maqueta de Entreno: 3 ejercicios dibujados + «Lo que toca hoy» | maqueta | opus + sonnet | ~1,0 M |
+| ~~R10~~ ✅ (hecha dentro de La Gran Ley; repaso del 03/11) | Construir Entreno: 12 dibujos, un toque por serie, «prueba +2,5 kg», récord (absorbe el primer trozo de [v3-entrenador]) | construir | haiku dibujos, sonnet obra | ~2,0 M |
 
 Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Dinero primero y Fintonic en pequeño detrás; R1 → R10, antes de «Después». S6 y S7 de la tanda Comer: S6 entra en R7; S7 sigue aparte.
 
