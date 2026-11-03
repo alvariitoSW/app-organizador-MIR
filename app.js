@@ -352,9 +352,8 @@ function load(){
         (apartado?'Lo que había está apartado: en Datos → Copias puedes copiarlo':'No se guardará nada encima hasta que importes una copia'),9000);},0);}}
   normalize(store);
   /* primer arranque: no hab\u00eda NADA guardado y no viene de una copia ya montada. Quien ya tiene
-     sus datos no ve el asistente nunca, ni aunque actualice la app. */
-  if(!habiaAlgo&&!(store.meta&&store.meta.montada))ui.arranque={paso:0,jEntra:'08:00',jSale:'15:00',
-    gEntra:'08:00',gSale:'08:00',gMes:4,despierta:'06:50',acuesta:'22:40',sitio:SITIOS_FIJOS[0].id};
+     sus datos no ve la primera pantalla nunca, ni aunque actualice la app. */
+  if(!habiaAlgo&&!(store.meta&&store.meta.montada))ui.arranque={primera:true};
   try{const m=JSON.parse(localStorage.getItem(MKEY)||'[]');if(Array.isArray(m))ui.marks=new Set(m);}catch(e){}
   try{if(localStorage.getItem(TKEY)!=='light')document.documentElement.classList.add('dark');}catch(e){document.documentElement.classList.add('dark');}
   aplicarTema();aplicarColoresCal();
@@ -24806,133 +24805,18 @@ function estSesionesHTML(){
         '<button class="btn d" data-a="est-del-sesion" data-id="'+esc(s.id)+'" title="quitar">×</button></div>';}).join('')
       :'<div class="empty">Nada apuntado todavía.</div>')+
   '</div>';}
-/* ===================== el primer arranque =====================
-   Hasta ahora la app abría con el planning de ejemplo —«Pollo al curry», la semana «1 guardia ·
-   repartida»— presentado como si ya fuera tuyo, y hacerla tuya era encontrar «Datos → importar tu
-   planning» o editar 126 campos a mano. `grep -i bienvenida|onboarding|asistente app.js` daba cero.
-   Esto son cuatro preguntas cortas, todas de cosas que la app usa de verdad: con ellas queda
-   montada a tu nombre. Los menús y los platos de ejemplo se quedan: son contenido útil, no
-   configuración, y se cambian en Comer cuando quieras. */
-const ARR_PASOS=[
-  {id:'jornada',t:'Tu jornada',s:'Un día normal de trabajo'},
-  {id:'guardias',t:'Tus guardias',s:'Cuántas y a qué hora'},
-  {id:'sueno',t:'Tus horas',s:'Cuándo te levantas y te acuestas'},
-  {id:'sitio',t:'Dónde vives',s:'Para las horas de sol'}
-];
-function arrS(){
-  if(!ui.arranque)ui.arranque={paso:0,jEntra:'08:00',jSale:'15:00',gEntra:'08:00',gSale:'08:00',
-    gMes:4,despierta:'06:50',acuesta:'22:40',sitio:(sitioActual()||{}).id||''};
-  return ui.arranque;}
-function arrLee(){
-  /* se relee del DOM antes de cada paso: el formulario se repinta entero y lo tecleado se perdería */
-  const a=arrS(),v=function(id){const e=$('#'+id);return e?e.value:null;};
-  [['arrJEntra','jEntra'],['arrJSale','jSale'],['arrGEntra','gEntra'],['arrGSale','gSale'],
-   ['arrDespierta','despierta'],['arrAcuesta','acuesta'],['arrSitio','sitio']].forEach(function(p){
-    const x=v(p[0]);if(x!=null&&x!=='')a[p[1]]=x;});
-  const g=v('arrGMes');if(g!=null&&g!=='')a.gMes=Math.max(0,Math.min(15,+g||0));
-  return a;}
-function arrAplica(){
-  const a=arrLee();
-  /* la jornada y el día de trabajo */
-  const t=shiftById('sh-t');if(t){t.start=a.jEntra;t.end=a.jSale;}
-  const f=shiftById('sh-f');if(f)f.end=a.jSale;   /* el día de fuerza entrena antes y luego trabaja igual */
-  if(!store.rotation.jornada)store.rotation.jornada={};
-  /* start/end: es lo que lee el resto de la app (from/to no lo leía nadie y la jornada seguía en 8–15) */
-  store.rotation.jornada.start=a.jEntra;store.rotation.jornada.end=a.jSale;
-  /* las guardias */
-  const g=shiftById('sh-g');if(g){g.start=a.gEntra;g.end=a.gSale;}
-  store.rotation.guardiasMes=a.gMes;
-  /* las horas: se aplican al día de trabajo y al de fuerza, que son los que siguen un horario fijo */
-  ['sh-t','sh-f'].forEach(function(id){
-    if(!store.rhythm[id])store.rhythm[id]={};
-    store.rhythm[id].wake=a.despierta;store.rhythm[id].sleep=a.acuesta;});
-  /* dónde vives */
-  if(a.sitio){store.sitio=a.sitio;olvidaSitios();}   /* hay caché: sin esto el sol sigue en el sitio viejo */
-  store.meta.montada=true;
-  save();}
-function arrCampo(id,etiqueta,valor,tipo,extra){
-  return '<label class="fld" style="flex:1 1 130px">'+esc(etiqueta)+
-    '<input type="'+(tipo||'time')+'" id="'+id+'" value="'+esc(valor)+'"'+(extra||'')+'></label>';}
-function renderArranque(){
-  const a=arrS(),n=ARR_PASOS.length;
+/* ===================== la primera pantalla (R2) =====================
+   Quien instala de cero ve «Tu guardia en 3 pasos» (T3b, tgu*) en lugar de las cuatro preguntas de antes
+   (jornada, guardias, horas, sitio): lo único que la app no puede adivinar son los días de guardia; lo demás
+   queda con los valores de fábrica y se cambia en «Turno y rotación». Quien ya tiene datos no la ve nunca. */
+function rppSale(){ui.arranque=null;document.documentElement.classList.remove('en-arranque');}
+function rppCabecera(){
   /* la barra de arriba no pinta nada aquí: todavía no hay nada que navegar */
   const tb=$('#tabs');if(tb)tb.innerHTML='';
   const cm=$('#calModes');if(cm)cm.hidden=true;
-  /* «Imprimir» y «JSON» son de una app que ya tiene datos: aquí todavía no hay nada que imprimir */
   document.documentElement.classList.add('en-arranque');
   const wn=$('#wkNav');if(wn)wn.hidden=true;
-  const wl=$('#wkLabel');if(wl)wl.textContent='';
-  if(a.paso>=n){
-    /* el resumen: qué ha quedado montado, con las cifras de verdad */
-    const sit=sitiosS().filter(function(s){return s.id===a.sitio;})[0]||sitioActual();
-    const horas=sleepHours(a.acuesta,a.despierta);
-    $('#main').innerHTML='<div class="grid arranque">'+
-      '<div class="card"><h2>✓ Listo</h2>'+
-        '<p class="note" style="margin:0 0 10px">Esto es lo que te he montado. Todo se cambia luego en '+
-        '«Turno y rotación» sin romper nada.</p>'+
-        '<div class="estado"><span class="em">💼</span><span class="tx"><b>Tu jornada</b></span>'+
-          '<span class="vl">'+esc(a.jEntra)+' – '+esc(a.jSale)+'</span></div>'+
-        '<div class="estado"><span class="em">🩺</span><span class="tx"><b>Guardias</b></span>'+
-          '<span class="vl">'+a.gMes+' al mes · '+esc(a.gEntra)+'</span></div>'+
-        '<div class="estado"><span class="em">🛌</span><span class="tx"><b>Duermes</b></span>'+
-          '<span class="vl">'+(horas!=null?fmtHM(horas*60):'—')+'</span></div>'+
-        '<div class="estado"><span class="em">☀️</span><span class="tx"><b>Dónde</b></span>'+
-          '<span class="vl">'+esc((sit&&sit.nombre)||'—')+'</span></div>'+
-      '</div>'+
-      '<div class="card"><h2>Lo que traes de fábrica</h2>'+
-        '<p class="note" style="margin:0">Los menús, los platos y las semanas tipo que ves son un '+
-        '<b>ejemplo</b> para que la app haga algo desde el primer día. Cámbialos cuando quieras en '+
-        '«Comer» y en «Turno y rotación», o pega tu planning de verdad en «Datos».</p>'+
-      '</div>'+
-      '<div class="row">'+
-        '<button class="btn p" data-a="arr-fin">empezar</button>'+
-        '<button class="btn s" data-a="arr-fin" data-t="data">pegar mi planning →</button>'+
-        '<span class="sp"></span>'+
-        '<button class="btn s" data-a="arr-paso" data-p="0">volver atrás</button>'+
-      '</div>'+
-    '</div>';
-    return;}
-  const p=ARR_PASOS[a.paso];
-  let cuerpo='';
-  if(p.id==='jornada')cuerpo=
-    '<p class="note" style="margin:0 0 10px">Un día de trabajo normal, el que más se repite. Con esto '+
-    'la app sabe cuándo estás fuera de casa y coloca las comidas y el entreno alrededor.</p>'+
-    '<div class="row">'+arrCampo('arrJEntra','entras',a.jEntra)+arrCampo('arrJSale','sales',a.jSale)+'</div>';
-  else if(p.id==='guardias')cuerpo=
-    '<p class="note" style="margin:0 0 10px">Si no haces guardias, deja el número en 0 y sigue: el resto '+
-    'de la app funciona igual.</p>'+
-    '<div class="row">'+arrCampo('arrGEntra','entras',a.gEntra)+arrCampo('arrGSale','sales',a.gSale)+
-      arrCampo('arrGMes','al mes',String(a.gMes),'number',' min="0" max="15"')+'</div>'+
-    '<p class="mini" style="margin:9px 0 0">Una guardia que entra y sale a la misma hora se entiende como '+
-    'de 24 h, y el día siguiente queda como saliente.</p>';
-  else if(p.id==='sueno')cuerpo=
-    '<p class="note" style="margin:0 0 10px">Entre semana. La app cuenta tus horas, te dice a qué hora '+
-    'tocaría acostarse y encaja la cena para no dormir con la digestión a medias.</p>'+
-    '<div class="row">'+arrCampo('arrDespierta','te levantas',a.despierta)+arrCampo('arrAcuesta','te acuestas',a.acuesta)+'</div>'+
-    (function(){const h=sleepHours(a.acuesta,a.despierta);
-      return h!=null?('<p class="mini" style="margin:9px 0 0">Son <b style="color:var(--ink)">'+fmtHM(h*60)+'</b> de sueño.</p>'):'';})();
-  else cuerpo=
-    '<p class="note" style="margin:0 0 10px">Solo para las horas de sol, que se calculan aquí en el móvil '+
-    'sin conexión. No sale nada a internet.</p>'+
-    '<label class="fld" style="max-width:280px">tu sitio<select id="arrSitio">'+
-      sitiosS().map(function(s){return '<option value="'+esc(s.id)+'"'+(s.id===a.sitio?' selected':'')+'>'+esc(s.nombre)+'</option>';}).join('')+
-    '</select></label>';
-  $('#main').innerHTML='<div class="grid arranque">'+
-    '<div class="card"><h2>👋 Vamos a montarla a tu nombre</h2>'+
-      '<p class="note" style="margin:0">Cuatro preguntas cortas. Todo esto se cambia luego, y si prefieres '+
-      'saltarlas, la app arranca igual con un ejemplo.</p>'+
-      '<div class="arrpasos">'+ARR_PASOS.map(function(x,i){
-        return '<i class="'+(i<a.paso?'ok':(i===a.paso?'on':''))+'"></i>';}).join('')+'</div>'+
-    '</div>'+
-    '<div class="card"><h2>'+esc(p.t)+'<span class="mini" style="margin-left:auto;font-weight:400">'+
-      (a.paso+1)+' de '+n+'</span></h2>'+cuerpo+'</div>'+
-    '<div class="row">'+
-      (a.paso?'<button class="btn s" data-a="arr-paso" data-p="'+(a.paso-1)+'">‹ atrás</button>':'')+
-      '<button class="btn p" data-a="arr-paso" data-p="'+(a.paso+1)+'">'+(a.paso===n-1?'ver lo que queda':'siguiente ›')+'</button>'+
-      '<span class="sp"></span>'+
-      '<button class="btn s" data-a="arr-saltar">saltar</button>'+
-    '</div>'+
-  '</div>';}
+  const wl=$('#wkLabel');if(wl)wl.textContent='';}
 /* ===================== Eventos: sección propia =====================
    Estaban dentro de Ajustes, tarjeta 4 de 13, entre el lector de enlaces y las copias de
    seguridad: lo que más se usa, en lo que menos se encuentra. Aquí son una sección del cajón,
@@ -25645,7 +25529,8 @@ function tguGuarda(){
   else if(a.futuro==='igual')sig=tguIgual(a);
   sig.forEach(function(k){if(!dayOverride(k))setDayOverride(k,G.id,'');});
   store.meta.montada=true;save();ui.tgu=null;ui.datosVista='';ui.tab='month';
-  render();
+  if(ui.arranque)rppSale();
+  render();window.scrollTo(0,0);
   flash('Guardia guardada: '+a.dias.length+' en '+MES_TG[a.m]+(sig.length?' y '+sig.length+' el mes siguiente':''));}
 function tguVista(){
   const a=tguS(),p=a.paso,h=[];
@@ -25659,7 +25544,9 @@ function tguVista(){
       '<b class="tgu-et">¿Libras el día después?</b><div class="tgu-fila">'+
       [[true,'Sí, saliente'],[false,'No']].map(function(x){return '<button class="chipx tgu-chip'+(a.saliente===x[0]?' on':'')+'" data-a="tgu-sal" data-v="'+(x[0]?1:0)+'" aria-pressed="'+(a.saliente===x[0])+'">'+x[1]+'</button>';}).join('')+'</div>'+
       '<button class="btn p tgu-sig" data-a="tgu-paso" data-p="2">Siguiente</button>'+
-      '<button class="btn s tgu-av" data-a="cfg-vista" data-v="semana">Avanzado: repetir por fechas (ciclo)</button>');
+      (ui.arranque?'<button class="btn s rpp-pegar" data-a="rpp-pegar">Prefiero pegar mi planning</button>'+
+        '<button class="btn s rpp-saltar" data-a="rpp-saltar">Saltar: uso el ejemplo</button>'
+       :'<button class="btn s tgu-av" data-a="cfg-vista" data-v="semana">Avanzado: repetir por fechas (ciclo)</button>'));
   }else if(p===2){
     const first=new Date(a.y,a.m,1),lead=(first.getDay()+6)%7,n=new Date(a.y,a.m+1,0).getDate(),cells=[];
     for(let i=0;i<lead;i++)cells.push('<span class="tgu-c off"></span>');
@@ -25683,7 +25570,9 @@ function tguVista(){
       '<button class="btn p tgu-sig" data-a="tgu-guarda">Guardar mi guardia</button>');
   }
   h.push('</div>');
-  subPantalla('datos-vista','Datos','🩺 Tu guardia',h.join(''));}
+  if(ui.arranque)$('#main').innerHTML='<div class="grid arranque"><div class="card rpp-hola"><h2>👋 Vamos a montarla a tu nombre</h2>'+
+    '<p class="note" style="margin:0">Una sola cosa que la app no puede adivinar: tus guardias. El resto lo dejo como ejemplo y se cambia luego.</p></div>'+h.join('')+'</div>';
+  else subPantalla('datos-vista','Datos','🩺 Tu guardia',h.join(''));}
 /* ===================== render: datos =====================
    Eran 7 tarjetas y 4 317 px, con el calendario de Google partido en dos (y una tercera copia en
    Ajustes) y 210 palabras explicando d\u00f3nde se guarda todo. Ahora: portada con tu copia arriba
@@ -26176,7 +26065,7 @@ function renderNow(){
     if(!f.catalogoFuente)f.catalogoFuente='catálogo local · '+iso(new Date())+' · '+FOOD_CATALOGO.length+' productos (Mercadona, Carrefour, 100 Montaditos)';
     save();}
   /* el asistente del primer arranque se come la pantalla entera: todavía no hay nada que navegar */
-  if(ui.arranque)return renderArranque();
+  if(ui.arranque){rppCabecera();return tguVista();}
   if(ui.scanStream&&ui.tab!=='food')pararEscaner();   /* solo si de verdad se sale de Comida: un render de paso (p. ej. al filtrar) no debe apagar la cámara */
   const inCal=CAL_SET.has(ui.tab),inComer=COMER_SET.has(ui.tab);
   /* las cifras de las pestañas: la del mes solo se ve dentro de Calendario */
@@ -26633,26 +26522,14 @@ function act(a,el){
     case 'tanda-abrir':{const t=el.dataset.id||'';ui.tandaAbierta=(ui.tandaAbierta===t)?'-':t;render();break;}
     case 'rt-dia':{flash(toggleRutinaDia(el.dataset.id,el.dataset.sh));render();break;}
     case 'cfg-vista':{ui.tab='cfg';ui.cfgVista=el.dataset.v||'';render();window.scrollTo(0,0);break;}
-    case 'arr-paso':{
-      /* leer SIEMPRE antes de repintar: el formulario se reemplaza entero y lo tecleado se perdería */
-      const a=arrLee(),n=ARR_PASOS.length,to=Math.max(0,Math.min(n,+el.dataset.p||0));
-      a.paso=to;
-      if(to>=n)arrAplica();     /* al llegar al resumen ya queda guardado: si cierra la app, no lo pierde */
-      render();window.scrollTo(0,0);break;}
-    case 'arr-saltar':{
-      confirmar('¿Saltar las preguntas? La app arranca con un ejemplo y lo cambias luego en «Turno y rotación».',
+    case 'rpp-saltar':{
+      confirmar('¿Saltar? La app arranca con un ejemplo y pones tu guardia luego en Ajustes → Mi planning.',
         'Sí, saltar').then(function(ok){
         if(!ok)return;
-        store.meta.montada=true;save();
-        ui.arranque=null;document.documentElement.classList.remove('en-arranque');render();window.scrollTo(0,0);
-        flash('montada con el ejemplo — cámbialo en «Turno y rotación» cuando quieras',4500);});
+        store.meta.montada=true;save();ui.tgu=null;rppSale();render();window.scrollTo(0,0);
+        flash('montada con el ejemplo: pon tu guardia cuando quieras en Ajustes → Mi planning',4500);});
       break;}
-    case 'arr-fin':{
-      arrAplica();
-      ui.arranque=null;document.documentElement.classList.remove('en-arranque');
-      if(el.dataset.t){ui.tab=el.dataset.t;ui.datosVista='planning';}
-      render();window.scrollTo(0,0);
-      flash('lista: tu jornada, tus guardias y tus horas ya están puestas',4000);break;}
+    case 'rpp-pegar':{store.meta.montada=true;save();ui.tgu=null;rppSale();ui.tab='data';ui.datosVista='planning';render();window.scrollTo(0,0);break;}
     case 'est-vista':{ui.estVista=el.dataset.v||'';ui.estPrev=null;render();window.scrollTo(0,0);break;}
     case 'est-tema':{ui.estVista='t:'+el.dataset.id;render();window.scrollTo(0,0);break;}
     case 'est-sube':{flash(estSubir(el.dataset.id));render();break;}
@@ -30665,7 +30542,6 @@ window.PG={fraseApuntarLee,pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedAp
   ahorroS,nominaMes,guardiasDelMes,ahorroMes,epocaDe,
   estS,estTema,estEstado,estProxima,estTocaHoy,estBloques,estCuenta,estMinSemana,
   estSubir,estBajar,estOlvidar,estAddSesion,estDelSesion,estImportar,estProgresoJSON,EST_NIVELES,estDias,setEstDias,
-  arrS,arrLee,arrAplica,ARR_PASOS,
   rutinaDias,toggleRutinaDia,CFG_DONDE,
   eventoDeNota,notasCuenta,purgaNotas,migraNotasDia,
   SITIOS_FIJOS,sitiosS,sitioActual,addSitio,delSitio,solDe,solTxt,horaLocal,arcoSolHTML,

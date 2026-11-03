@@ -2779,3 +2779,9 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
   chapita verde con borde de 1 px, como estaba diseñada. Prueba 620. **Cae con la línea `=======` de vuelta** (borde «0px none», en línea).
 - **Descartado:** dejarla y copiar la regla más arriba (mismo resultado con una línea basura dentro).
 - **Supuestos:** el usuario da el visto bueno a la captura de Sueño antes de subir (cierra [aparc-css-marca]).
+
+
+## R2 · Primera pantalla (03/11/2026)
+- **Elegido:** quien instala de cero ve «Tu guardia en 3 pasos» (el de T3b, mismas funciones `tgu*`) con una cabecera «Vamos a montarla a tu nombre»; sin barra. Guardar escribe las guardias y lleva al mes. Dos salidas: «Prefiero pegar mi planning» (Datos → Mi planning) y «Saltar: uso el ejemplo» (con confirmación). Se retira el asistente viejo de cuatro preguntas.
+- **Descartado:** duplicar el asistente de T3b; mantener las cuatro preguntas antes de las guardias (jornada, horas y sitio: quedan con valores de fábrica y se cambian en Turno y rotación).
+- **Supuestos:** el sitio queda en el primero de la lista; «Avanzado: ciclo» se oculta en la primera pantalla. Prueba del arranque rehecha (conduce tgu*). Cae con `rppSale()` quitado de `tguGuarda` revertido: caen 631 y el bloque del primer arranque, ninguna otra.
