@@ -4446,3 +4446,13 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
 .cnbanda .btn{min-height:var(--toque)}
 .cnprivsw{min-height:var(--toque);align-items:center}.cnprivsw input{width:22px;height:22px;flex:none}.cnprivsw b{font-size:var(--t-16)}
 .habplant{margin-top:var(--e-8)}
+
+/* C7·d · «Empieza» de Estudio */
+.emp-cap{font-size:var(--t-14);font-weight:700;color:var(--ink2);margin:var(--e-8) 0 var(--e-4)}
+.emp-ch{display:flex;flex-wrap:wrap;gap:var(--e-8);margin-bottom:var(--e-8)}
+.emp-ch .chipx{min-height:var(--toque)}
+.emp-ah{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--e-8);text-align:center;margin:var(--e-8) 0}
+.emp-ah b{display:block;font-size:var(--t-20)}
+.emp-ah small{display:block;font-size:var(--suelo);color:var(--ink2)}
+.emp-ok{width:100%;min-height:var(--toque-grande)}
+.emp-lnk{appearance:none;display:block;width:100%;border:0;background:none;color:var(--brand);font:inherit;font-size:var(--t-14);font-weight:700;min-height:var(--toque);cursor:pointer}

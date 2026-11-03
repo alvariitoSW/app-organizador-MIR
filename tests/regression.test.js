@@ -4101,6 +4101,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       { id: 'x', nombre: 'url no https', url: 'javascript:alert(1)' } ] };
     await gotoTab('estudio');
     await page.waitForTimeout(200);
+    await page.click('.emp-lnk'); // T2b: el Estudio vacío abre con «Empieza»; el formulario de siempre va tras «Prefiero rellenarlo todo a mano»
+    await page.waitForTimeout(150);
     await page.click('[data-a="est-vista"][data-v="conectar"]');
     await page.waitForTimeout(250);
     await page.fill('#estBox', JSON.stringify(TEMARIO));
@@ -7080,7 +7082,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // estudio: un libro del HUD como objetivo, página actual y cuándo terminas; el HUD se lee
     await page.evaluate(() => { localStorage.setItem('hud-pomodoros-completados', '23');
-      const P = window.PG; P.estS().libros = []; P.ui.tab = 'estudio'; P.ui.estVista = ''; P.save(); P.render(); });
+      const P = window.PG; P.estS().libros = []; P.ui.estManual = true; P.ui.tab = 'estudio'; P.ui.estVista = ''; P.save(); P.render(); });
     await page.waitForTimeout(200);
     const hudTxt = await page.evaluate(() => /23/.test((document.querySelector('#main') || {}).innerText || ''));
     const lh = await page.$('[data-a="libro-hud"]');
@@ -17804,6 +17806,54 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !!primero && b.pas[0].k === a.pas[0].k && b.pas[0].it[0] === primero + ' [hecho]' && b.pas.length === a.pas.length && /· 1 cogida$/.test(b.cuenta.trim()), JSON.stringify({ primero, b0: b.pas[0], cuenta: b.cuenta }));
     check('539 Casa por pasillos · «Ya en casa, no entran» va plegado al final y se abre al tocarlo; al subir un pasillo en el orden del súper, la lista lo sigue',
       a.ya && !a.yaAbierto && d.yaAbierto && enOrden(c) && c.pas[0].k === ultimo && a.pas[0].k !== ultimo, JSON.stringify({ ya: a.ya, ab: a.yaAbierto, d: d.yaAbierto, primeros: [a.pas[0].k, c.pas[0].k], ultimo }));
+  }
+
+
+  // ===== T2b · ESTUDIO «EMPIEZA» (550-559) =====
+  // 550) T2b · C7·d · EN ESTUDIO VACÍO SALE LA TARJETA «EMPIEZA» (4 chips, − / + de horas y «págs hoy · al día · acabas») y el «acabas» NO cuenta guardias ni salientes: con una guardia a 3 días el fin se retrasa 2 días (guardia + saliente).
+  //      Encadenada: Estudio vacío → «+» (1,5 h → 18 págs) → «−» vuelve a 1 h → poner guardia → la fecha salta. Cae con `estudioDiaLibre` devolviendo siempre true.
+  // 551) T2b · «Empezar» crea el objetivo con ese tiempo, la tarjeta desaparece y el libro dice la misma fecha que la tarjeta («terminas el …»). Cae con `b.sg` (libroCalc) quitado.
+  // 552) T2b · el chip elegido da el título del objetivo y «Prefiero rellenarlo todo a mano» abre el formulario de siempre (sin tarjeta «Empieza»).
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const prepara550 = (conGuardia) => page.evaluate((conGuardia) => { const P = window.PG;
+      if (!window.__copia550) window.__copia550 = JSON.stringify(P.store);
+      const T = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren|post/i.test(x.name || ''))[0], GU = P.store.shifts.filter(P.isGuardia)[0];
+      for (let i = -1; i < 70; i++) P.setDayOverride(P.iso(P.addDays(new Date(), i)), T.id, '');
+      if (conGuardia) P.setDayOverride(P.iso(P.addDays(new Date(), 3)), GU.id, 'urg');
+      P.estS().libros = []; P.estS().temas = []; P.ui.estManual = false; P.ui.estEmp = null; P.ui.libroNuevo = false; P.ui.tab = 'estudio'; P.ui.estVista = ''; P.save(); P.render(); }, conGuardia);
+    const lee550 = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => m.querySelector(s);
+      return { tarjeta: !!q('.emp'), chips: m.querySelectorAll('.emp-ch .chipx').length, on: ((q('.emp-ch .chipx.on') || {}).textContent || ''), horas: ((q('.emp .gpaso b') || {}).textContent || ''),
+        ah: [...m.querySelectorAll('.emp-ah > div')].map((d) => d.querySelector('b').textContent), mano: !!q('.emp-lnk'), form: !!q('#lbTit'), lib: !!q('.lb'), libTxt: ((q('.lb') || {}).innerText || ''), hoy: window.PG.iso(new Date()) }; });
+    const sumaDias = (iso, n) => page.evaluate(([iso, n]) => { const P = window.PG; return P.fechaCorta(P.iso(P.addDays(P.parseDate(iso), n))); }, [iso, n]);
+    await prepara550(false); await page.waitForTimeout(200);
+    const a = await lee550();
+    await page.click('.emp [data-a="emp-h"][data-d="0.5"]'); await page.waitForTimeout(150);
+    const b = await lee550();
+    await page.click('.emp [data-a="emp-h"][data-d="-0.5"]'); await page.waitForTimeout(150);
+    const c = await lee550();
+    await prepara550(true); await page.waitForTimeout(200);
+    const d = await lee550();
+    const sin = await sumaDias(a.hoy, 34), con = await sumaDias(a.hoy, 36);
+    check('550 Estudio «Empieza» · en Estudio vacío sale la tarjeta con 4 chips, − / + de horas (1,5 h = 18 págs) y «acabas» que NO cuenta guardias ni salientes (una guardia a 3 días lo retrasa 2)',
+      a.tarjeta && a.chips === 4 && a.on === 'Temario de la especialidad' && a.mano && !a.form && a.horas === '1 h' && a.ah[0] === '12' && a.ah[2] === sin && b.horas === '1,5 h' && b.ah[0] === '18' && c.horas === '1 h' && c.ah[0] === '12' && d.ah[2] === con && d.ah[2] !== a.ah[2],
+      JSON.stringify({ a, b: b.ah, c: c.ah, d: d.ah, sin, con }));
+    // 551 / 552
+    await prepara550(true); await page.waitForTimeout(150);
+    await page.click('.emp [data-a="emp-q"][data-k="1"]'); await page.click('.emp [data-a="emp-h"][data-d="0.5"]'); await page.waitForTimeout(150);
+    const e = await lee550();
+    await page.click('.emp [data-a="emp-ok"]'); await page.waitForTimeout(250);
+    const f = await lee550();
+    await prepara550(true); await page.waitForTimeout(150);
+    await page.click('.emp-lnk'); await page.waitForTimeout(200);
+    const g = await lee550();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia550); delete window.__copia550; P.ui.estManual = false; P.ui.libroNuevo = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('551 Estudio «Empieza» · «Empezar» crea el objetivo (1,5 h/día) sin guardias ni salientes, la tarjeta desaparece y el libro dice la misma fecha que daba la tarjeta',
+      e.on === 'Un libro' && e.horas === '1,5 h' && !f.tarjeta && f.lib && f.libTxt.includes('1.5 h/día') && f.libTxt.includes('terminas el ' + e.ah[2]), JSON.stringify({ e: e.ah, f: f.libTxt }));
+    check('552 Estudio «Empieza» · el chip elegido da el título del objetivo y «Prefiero rellenarlo todo a mano» abre el formulario de siempre (sin tarjeta)',
+      f.libTxt.includes('Un libro') && !g.tarjeta && g.form, JSON.stringify({ lib: f.libTxt.slice(0, 40), g: { t: g.tarjeta, f: g.form } }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

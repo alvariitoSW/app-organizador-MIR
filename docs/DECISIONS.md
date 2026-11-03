@@ -2710,3 +2710,10 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Descartado:** subir los tiempos de espera fijos (sigue dependiendo de la carga); tocar `app.js` (el fallo era de las pruebas, no de la app).
 - **Comprobado:** a las 07:54 la suite caía igual que en `main` ab1be8d; con los arreglos, suite completa 1004/1004 a las 08:2x. Sin prueba encadenada nueva: no hay arreglo de la app que revertir.
 - **Supuestos:** el sol del reloj por la tarde ya pasaba (el reloj no baja), así que el `scrollIntoView` no cambia lo que mide.
+
+## 2026-11-03 · La Competencia · T2b Estudio «Empieza» (C7·d)
+- **Elegido (lo recomendado de la maqueta):** Estudio vacío (sin objetivos ni temario) abre con la tarjeta «Empieza»: 4 chips, horas al día (− / + de 0,5 h, de 0,5 a 6) y «págs hoy · h al día · acabas». «Empezar» crea el objetivo con 420 págs y 12 págs/h; el cálculo salta guardias y salientes (`estudioDiaLibre`: `isGuardia`, `esSaliente`, `salidaDeGuardia`) y el objetivo lleva `sg` para que `libroCalc` siga saltándolos. «Prefiero rellenarlo todo a mano» muestra lo de antes.
+- **Descartado:** contar guardia/saliente como media hora (opción B); tocar `libroCalc` de los objetivos que ya existen (sin `sg` igual que antes).
+- **Supuestos:** 420 págs y 12 págs/h para los 4 chips (el chip solo da el título); hoy en guardia/saliente sale «0 págs hoy»; tras empezar, la tarjeta no vuelve (hay objetivo). Las pruebas viejas del Estudio vacío (bloque del 74 y 204) pasan ahora por «a mano».
+- **Pruebas:** 550-552. Cae con `estudioDiaLibre` devolviendo siempre true: 550; con `b.sg=true` quitado: 551.
+

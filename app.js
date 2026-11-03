@@ -8266,13 +8266,34 @@ const HUD_LIBROS=[
   ['beaubien-souligny-2020-desarrollo-vexus','Beaubien-Souligny 2020 · VExUS',12,0]];
 function librosS(){const e=estS();if(!Array.isArray(e.libros))e.libros=[];return e.libros;}
 function libroById(id){return librosS().filter(function(b){return b.id===id;})[0]||null;}
+/* C7·d · «Empieza» de Estudio: el día n-ésimo de estudio a partir de una fecha, sin contar guardias ni salientes */
+function estudioDiaLibre(k){const sh=shiftById(dayInfo(k).shiftId);return !(isGuardia(sh)||esSaliente(sh)||salidaDeGuardia(k));}
+function estudioFinDias(desde,n){const d=parseDate(desde);let c=0;
+  for(let i=0;i<800;i++){const k=iso(addDays(d,i));if(estudioDiaLibre(k)&&++c>=Math.max(1,n))return k;}
+  return iso(addDays(d,799));}
+const EMP_QUE=['Temario de la especialidad','Un libro','Un curso','Otra cosa'],EMP_PAGS=420,EMP_PPH=12;
+function empPlan(h){const pd=Math.max(1,Math.round(h*EMP_PPH)),n=Math.ceil(EMP_PAGS/pd),hoy=iso(new Date());
+  return {pd:pd,n:n,hoy:estudioDiaLibre(hoy)?pd:0,fin:estudioFinDias(hoy,n)};}
+function estEmpiezaHTML(){
+  const o=ui.estEmp||(ui.estEmp={q:0,h:1}),p=empPlan(o.h);
+  return '<div class="card emp"><div class="emp-cap">Empieza</div><h2>¿Qué vas a estudiar?</h2>'+
+    '<div class="emp-ch">'+EMP_QUE.map(function(t,i){return '<button class="chipx'+(i===o.q?' on':'')+'" data-a="emp-q" data-k="'+i+'">'+t+'</button>';}).join('')+'</div>'+
+    '<div class="emp-cap">¿Cuánto al día, los días sin guardia?</div>'+
+    '<div class="gpaso"><button class="btn" data-a="emp-h" data-d="-0.5" aria-label="Media hora menos">−</button><b>'+fmt(o.h).replace('.',',')+' h</b>'+
+      '<button class="btn" data-a="emp-h" data-d="0.5" aria-label="Media hora más">+</button></div>'+
+    '<div class="emp-ah"><div><b>'+p.hoy+'</b><small>págs hoy</small></div><div><b>'+fmt(o.h).replace('.',',')+' h</b><small>al día</small></div><div><b>'+esc(fechaCorta(p.fin))+'</b><small>acabas</small></div></div>'+
+    '<p class="mini" style="margin:0 0 10px">Con '+EMP_PAGS+' páginas y sin estudiar los días de guardia ni los salientes.'+(p.hoy?'':' Hoy no cuenta.')+'</p>'+
+    '<button class="btn p emp-ok" data-a="emp-ok">Empezar</button></div>'+
+    '<button class="emp-lnk" data-a="emp-mano">Prefiero rellenarlo todo a mano</button>';}
 function libroCalc(b){
   const pagsDia=Math.max(1,Math.round((+b.horasDia||1)*(+b.pph||10)));
   const pag=Math.max(0,Math.min(+b.pags||0,+b.pag||0)),resto=Math.max(0,(+b.pags||0)-pag);
   const hoy=iso(new Date()),leidoHoy=(b.log||[]).filter(function(l){return l.f===hoy;}).reduce(function(a,l){return a+(+l.p||0);},0);
   const dias=Math.ceil(resto/pagsDia);
   const empieza=b.inicio&&b.inicio>hoy?b.inicio:hoy;
-  const fin=resto?iso(addDays(parseDate(empieza),Math.max(0,dias-1+(leidoHoy>=pagsDia&&empieza===hoy?1:0)))):hoy;
+  const extra=leidoHoy>=pagsDia&&empieza===hoy?1:0;
+  /* b.sg (lo creado desde «Empieza»): los días de guardia y los salientes no se estudian y no cuentan */
+  const fin=resto?(b.sg?estudioFinDias(empieza,dias+extra):iso(addDays(parseDate(empieza),Math.max(0,dias-1+extra)))):hoy;
   /* por delante o por detrás: lo que tendrías leído a este ritmo desde que empezaste */
   let dif=null;
   if(b.inicio&&b.inicio<=hoy){const n=Math.round((parseDate(hoy)-parseDate(b.inicio))/864e5)+1;
@@ -24383,7 +24404,7 @@ function renderEstudio(){
       t.bloque||'');}
   /* la portada */
   if(!e.temas.length){$('#main').innerHTML='<div class="grid">'+
-    '<div class="subcab"><h2 class="subtit">📚 Estudio</h2></div>'+estudioLibrosHTML()+estudioHudHTML()+estVacioHTML()+'</div>';return;}
+    '<div class="subcab"><h2 class="subtit">📚 Estudio</h2></div>'+(!librosS().length&&!ui.estManual?estEmpiezaHTML():estudioLibrosHTML()+estudioHudHTML()+estVacioHTML())+'</div>';return;}
   const toca=estTocaHoy(),c=estCuenta(),min=estMinSemana();
   const pct=c.total?Math.round(c.sabidos/c.total*100):0;
   const puerta=function(vista,ico,tit,sub){return puertaHTML('est-vista',vista,ico,tit,sub);};
@@ -27610,6 +27631,11 @@ function act(a,el){
       ui.infLun=iso(addDays(base,+el.dataset.d||0));render();break;}
     case 'libro-abrir':{const i=el.dataset.id||'';ui.libroAbierto=ui.libroAbierto===i?'':i;render();break;}
     case 'libro-nuevo':ui.libroNuevo=!ui.libroNuevo;render();break;
+    case 'emp-q':ui.estEmp=Object.assign(ui.estEmp||{q:0,h:1},{q:+el.dataset.k||0});render();break;
+    case 'emp-h':{const o=ui.estEmp||(ui.estEmp={q:0,h:1});o.h=Math.max(0.5,Math.min(6,o.h+(+el.dataset.d||0)));render();break;}
+    case 'emp-mano':ui.estManual=true;ui.libroNuevo=true;render();break;
+    case 'emp-ok':{const o=ui.estEmp||{q:0,h:1},b=libroNuevo({titulo:EMP_QUE[o.q]||EMP_QUE[0],pags:EMP_PAGS,horasDia:o.h,pph:EMP_PPH});
+      b.sg=true;save();ui.estEmp=null;render();flash('Listo: acabas el '+fechaCorta(libroCalc(b).fin));break;}
     case 'libro-crear':{const v=function(id){return (($('#'+id)||{}).value)||'';};
       if(!v('lbTit').trim()){flash('ponle un título');break;}
       if(!(+v('lbPags')>0)){flash('¿cuántas páginas tiene?');break;}
