@@ -17806,6 +17806,149 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.ya && !a.yaAbierto && d.yaAbierto && enOrden(c) && c.pas[0].k === ultimo && a.pas[0].k !== ultimo, JSON.stringify({ ya: a.ya, ab: a.yaAbierto, d: d.yaAbierto, primeros: [a.pas[0].k, c.pas[0].k], ultimo }));
   }
 
+  // 540) T2a · COPIAR MI ÚLTIMO ENTRENO (C7·c) (y 541, 542): con la tarjeta de hoy vacía salen tres salidas («Copiar mi último entreno» con su resumen, «Plan recomendado» y «Empezar vacío»);
+  //      copiar monta una rutina con los mismos ejercicios y las series con los pesos de la última vez y deja DENTRO del entreno; al terminar, la sesión «no venía de una rutina» y sale la hoja
+  //      «¿Guardar como rutina?» con su nombre y los tipos de día; «Guardar rutina» la deja como rutina de verdad en esos días. Encadenada: copiar → apuntar una serie → terminar → renombrar + elegir día → guardar.
+  //      Cae con `ses-copiar`/`copiarUltimoEntreno` quitados o con la hoja `rutg` quitada de HOJAS.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(), hoy = P.iso(new Date()); window.__copia540 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.registro = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymLam = false; P.ui.gymInforme = ''; P.ui.rutG = null; P.ui.gymPanel = '';
+      g.rutinas = [{ id: 'r540', nombre: 'Torso 540', dias: ['__ninguno__'], ejercicios: [{ ex: 'Press banca', series: 3, reps: 8 }, { ex: 'Remo con barra', series: 2, reps: 10 }] }];
+      const f = P.iso(P.addDays(new Date(), -3));
+      g.sesiones.push({ id: 's540', rutinaId: 'r540', fecha: f, duracionMin: 48, seriesIds: [], plan: 5, completo: true, nota: '', tipo: 'fuerza' });
+      [['Press banca', 60, 8], ['Press banca', 60, 8], ['Press banca', 60, 7], ['Remo con barra', 50, 10], ['Remo con barra', 50, 10]].forEach((x, i) => g.registro.push({ id: 'g540' + i, fecha: f, ex: x[0], kg: x[1], reps: x[2], si: i, ts: 1000 + i, sesionId: 's540', nota: '', rpe: null }));
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const R = {};
+    R.sal = await page.evaluate(() => { const q = (a) => document.querySelector('#main .ghero2 [data-a="' + a + '"]'); const t = (e) => (e ? e.textContent.replace(/\s+/g, ' ').trim() : '');
+      return { copia: t(q('ses-copiar')), plan: t(q('ses-empezar')), vacio: t(q('gym-serie')), bajo: q('gym-serie') ? Math.round(q('gym-serie').getBoundingClientRect().bottom) : 0 }; });
+    await page.click('#main .ghero2 [data-a="ses-copiar"]'); await page.waitForTimeout(350);
+    R.viva = await page.evaluate(() => { const P = window.PG, g = P.gymS(), sa = P.ui.gymSesionActiva, rt = sa && g.rutinas.filter((r) => r.id === sa.rutinaId)[0];
+      return { activa: !!sa, panel: P.ui.gymPanel, suelta: !!(rt && rt.suelta), ex: rt ? rt.ejercicios.map((e) => e.ex) : [], kg: rt ? rt.ejercicios.map((e) => P.ejSets(e).map((s) => s.kg + 'x' + s.reps).join(',')) : [] }; });
+    await page.click('#main tr.act [data-a="gv-ok"]'); await page.waitForTimeout(300);
+    R.una = await page.evaluate(() => { const P = window.PG, sa = P.ui.gymSesionActiva, r = P.gymS().registro.filter((x) => sa && x.sesionId === sa.id); return { n: r.length, ex: r[0] && r[0].ex, kg: r[0] && r[0].kg }; });
+    await page.click('#main [data-a="gv-terminar"]'); await page.waitForTimeout(300);
+    await page.click('#main [data-a="gv-rpe-fin"][data-d="7"]'); await page.waitForTimeout(450);
+    R.hoja = await page.evaluate(() => { const h = document.querySelector('#hojaDia .hoja'); return h ? { t: h.querySelector('h2').textContent, nom: h.querySelector('#rutgNom').value, chips: h.querySelectorAll('[data-a="rutg-dia"]').length, ahora: !!h.querySelector('[data-a="rutg-no"]'), guardar: !!h.querySelector('[data-a="rutg-ok"]') } : null; });
+    await page.fill('#hojaDia #rutgNom', 'Torso B');
+    await page.click('#hojaDia [data-a="rutg-dia"][data-sh="sh-t"]'); await page.waitForTimeout(150);
+    R.marcado = await page.evaluate(() => ({ on: !!document.querySelector('#hojaDia [data-a="rutg-dia"][data-sh="sh-t"].on'), nom: document.querySelector('#hojaDia #rutgNom').value }));
+    await page.click('#hojaDia [data-a="rutg-ok"]'); await page.waitForTimeout(300);
+    R.fin = await page.evaluate(() => { const P = window.PG, g = P.gymS(), r = g.rutinas.filter((x) => x.nombre === 'Torso B')[0], s = g.sesiones[g.sesiones.length - 1];
+      return { hoja: !!document.querySelector('#hojaDia .hoja'), r: r ? { suelta: !!r.suelta, dias: r.dias, ex: r.ejercicios.length, id: r.id } : null, sesionDe: s && s.rutinaId, otra: g.rutinas.filter((x) => x.suelta).length }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia540; window.__copia540 = null; P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.rutG = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('540 Entreno · la tarjeta de hoy vacía ofrece «Copiar mi último entreno» (Torso 540 · 2 ejercicios · 48 min), «Plan recomendado: Torso 540» y «Empezar vacío», a la vista en 412×915',
+      /^Copiar mi último entreno.*Torso 540 · .* · 2 ejercicios · 48 min$/.test(R.sal.copia) && /^Plan recomendado: Torso 540.*Encaja: no tienes guardia/.test(R.sal.plan) && R.sal.vacio === 'Empezar vacío' && R.sal.bajo <= 915, JSON.stringify(R.sal));
+    check('541 Entreno · copiar mete en el entreno con los mismos ejercicios y los pesos de la última vez (60×8, 60×8, 60×7 / 50×10 ×2) y el ✓ apunta la primera serie con 60 kg',
+      R.viva.activa && R.viva.panel === 'vivo' && R.viva.suelta && R.viva.ex.join('|') === 'Press banca|Remo con barra' && R.viva.kg.join('|') === '60x8,60x8,60x7|50x10,50x10' && R.una.n === 1 && R.una.ex === 'Press banca' && R.una.kg === 60, JSON.stringify({ v: R.viva, u: R.una }));
+    check('542 Entreno · al terminar la copia sale «¿Guardar como rutina?» con el nombre y los tipos de día; con otro nombre y «Trabajo» elegido, «Guardar rutina» la deja como rutina de verdad en ese día',
+      !!R.hoja && R.hoja.t === '¿Guardar como rutina?' && R.hoja.nom === 'Torso 540' && R.hoja.chips >= 2 && R.hoja.ahora && R.hoja.guardar && R.marcado.on && R.marcado.nom === 'Torso B' &&
+      !R.fin.hoja && !!R.fin.r && !R.fin.r.suelta && R.fin.r.dias.join() === 'sh-t' && R.fin.r.ex === 2 && R.fin.sesionDe === R.fin.r.id && R.fin.otra === 0, JSON.stringify({ h: R.hoja, m: R.marcado, f: R.fin }));
+  }
+
+  // 543) T2a · «AHORA NO» (y 544): terminar una copia y tocar «Ahora no» no deja rutina nueva (la sesión sigue en el historial con su nombre y se puede copiar otra vez); terminar una sesión que SÍ venía de una rutina no pregunta nada.
+  //      Cae con `rutNoGuardar` sin quitar la rutina suelta, o con `ofreceGuardarRutina` sin mirar `suelta`.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(), hoy = P.iso(new Date()); window.__copia543 = JSON.parse(JSON.stringify(P.store));
+      P.setDayOverride(hoy, 'sh-t', ''); g.sesiones = []; g.cardio = []; g.registro = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymLam = false; P.ui.gymInforme = ''; P.ui.rutG = null; P.ui.gymPanel = '';
+      g.rutinas = [{ id: 'r543', nombre: 'Pierna 543', dias: ['__ninguno__'], ejercicios: [{ ex: 'Sentadilla', series: 2, reps: 6 }] }];
+      const f = P.iso(P.addDays(new Date(), -2));
+      g.sesiones.push({ id: 's543', rutinaId: 'r543', fecha: f, duracionMin: 40, seriesIds: [], plan: 2, completo: true, nota: '', tipo: 'fuerza' });
+      [80, 80].forEach((kg, i) => g.registro.push({ id: 'g543' + i, fecha: f, ex: 'Sentadilla', kg, reps: 6, si: i, ts: 1000 + i, sesionId: 's543', nota: '', rpe: null }));
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const R = {};
+    await page.click('#main .ghero2 [data-a="ses-copiar"]'); await page.waitForTimeout(350);
+    await page.click('#main tr.act [data-a="gv-ok"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="gv-terminar"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="gv-rpe-fin"][data-d="7"]'); await page.waitForTimeout(400);
+    R.hoja = await page.evaluate(() => !!document.querySelector('#hojaDia [data-a="rutg-no"]'));
+    await page.click('#hojaDia [data-a="rutg-no"]'); await page.waitForTimeout(300);
+    R.no = await page.evaluate(() => { const P = window.PG, g = P.gymS(), s = g.sesiones[g.sesiones.length - 1]; return { hoja: !!document.querySelector('#hojaDia .hoja'), rutinas: g.rutinas.map((r) => r.nombre), ses: g.sesiones.length, nombre: s && s.nombre, tit: (document.querySelector('#main .gvfint b') || { textContent: '' }).textContent }; });
+    await page.click('#main [data-a="gym-informe-cerrar"]'); await page.waitForTimeout(250);
+    R.otra = await page.evaluate(() => { const b = document.querySelector('#main .ghero2 [data-a="ses-copiar"]'); return b ? b.textContent.replace(/\s+/g, ' ') : ''; });
+    // una sesión de una rutina de verdad no pregunta
+    await page.evaluate(() => { const P = window.PG; P.ui.gymSesionActiva = null; P.empezarRutina('r543', P.iso(new Date())); });
+    await page.waitForTimeout(250);
+    await page.click('#main tr.act [data-a="gv-ok"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="gv-terminar"]'); await page.waitForTimeout(250);
+    await page.click('#main [data-a="gv-rpe-fin"][data-d="7"]'); await page.waitForTimeout(400);
+    R.real = await page.evaluate(() => ({ hoja: !!document.querySelector('#hojaDia .hoja'), informe: !!document.querySelector('#main .gvfin') }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia543; window.__copia543 = null; P.ui.gymSesionActiva = null; P.ui.gymInforme = ''; P.ui.rutG = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('543 Entreno · «Ahora no» no deja rutina nueva: solo queda «Pierna 543», la sesión está en el historial con su nombre y la hoja se cierra; el último entreno vuelve a poder copiarse',
+      R.hoja && !R.no.hoja && R.no.rutinas.join() === 'Pierna 543' && R.no.ses === 2 && R.no.nombre === 'Pierna 543' && /Pierna 543/.test(R.no.tit) && /Copiar mi último entreno/.test(R.otra), JSON.stringify(R));
+    check('544 Entreno · terminar una sesión que venía de una rutina de verdad no pregunta «¿Guardar como rutina?» (sale el informe y ninguna hoja)',
+      R.real.informe && !R.real.hoja, JSON.stringify(R.real));
+  }
+
+  // 545) T2a · TRAS GUARDIA NO SE PROPONE TORSO/PIERNA (y 546): el día de salir de guardia (saliente) hay «Vienes de guardia» y ni «Copiar mi último entreno» ni «Plan recomendado»;
+  //      en guardia tampoco; un día libre normal sí. Cae con `trasG`/`malo` quitados de la condición de `copiable` y de `planRecomendadoHTML`.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(), hoy = P.iso(new Date()); window.__copia545 = JSON.parse(JSON.stringify(P.store));
+      g.sesiones = []; g.cardio = []; g.registro = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymLam = false; P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymDescansa = ''; P.ui.gymDate = null;
+      g.rutinas = [{ id: 'r545', nombre: 'Torso 545', dias: ['__ninguno__'], ejercicios: [{ ex: 'Press banca', series: 2, reps: 8 }] }];
+      const f = P.iso(P.addDays(new Date(), -4));
+      g.sesiones.push({ id: 's545', rutinaId: 'r545', fecha: f, duracionMin: 45, seriesIds: [], plan: 2, completo: true, nota: '', tipo: 'fuerza' });
+      [60, 60].forEach((kg, i) => g.registro.push({ id: 'g545' + i, fecha: f, ex: 'Press banca', kg, reps: 8, si: i, ts: 1000 + i, sesionId: 's545', nota: '', rpe: null }));
+      P.ui.tab = 'gym'; P.save(); });
+    const ver = (turno) => page.evaluate((turno) => { const P = window.PG, hoy = P.iso(new Date()); P.setDayOverride(hoy, turno, ''); P.render();
+      const h = document.querySelector('#main .ghero2'); return { copia: !!document.querySelector('#main [data-a="ses-copiar"]'), plan: !!document.querySelector('#main .gopc[data-a="ses-empezar"]'), txt: h ? h.textContent.replace(/\s+/g, ' ').slice(0, 160) : '' }; }, turno);
+    const R = {};
+    R.libre = await ver('sh-t'); await page.waitForTimeout(150);
+    R.sal = await ver('sh-s'); await page.waitForTimeout(150);
+    R.guardia = await page.evaluate(() => { const P = window.PG, g = P.store.shifts.filter(P.isGuardia)[0], hoy = P.iso(new Date()); P.setDayOverride(hoy, g.id, ''); P.render();
+      const h = document.querySelector('#main .ghero2'); return { copia: !!document.querySelector('#main [data-a="ses-copiar"]'), plan: !!document.querySelector('#main .gopc[data-a="ses-empezar"]'), txt: h ? h.textContent.replace(/\s+/g, ' ').slice(0, 160) : '' }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia545; window.__copia545 = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('545 Entreno · el día de salir de guardia sale «Vienes de guardia» y no se propone ni copiar el último entreno ni el plan recomendado (y en guardia tampoco)',
+      /Vienes de guardia/.test(R.sal.txt) && !R.sal.copia && !R.sal.plan && !R.guardia.copia && !R.guardia.plan, JSON.stringify(R));
+    check('546 Entreno · un día libre normal (mismo seed) sí ofrece copiar el último entreno y el plan recomendado',
+      R.libre.copia && R.libre.plan, JSON.stringify(R.libre));
+  }
+
+  // 547) T2a · X3 RÉCORDS EN GRÁFICO (y 548, 549): en la portada de Entreno, un gráfico pequeño con la mejor serie de cada semana de UN ejercicio (el que más has movido), con el récord en verde,
+  //      «cambiar ›» pasa al siguiente ejercicio (cambia el título y las barras), y sin dos semanas con datos no sale. Cae con `gymRecordsHTML` quitado de `renderGymPortada`.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia547 = JSON.parse(JSON.stringify(P.store));
+      g.sesiones = []; g.cardio = []; g.registro = []; g.forzar = {}; g.cambios = {}; P.ui.gymSesionActiva = null; P.ui.gymLam = false; P.ui.gymInforme = ''; P.ui.gymPanel = ''; P.ui.gymRecEx = '';
+      g.rutinas = [{ id: 'r547', nombre: 'Torso 547', dias: ['__ninguno__'], ejercicios: [{ ex: 'Press banca', series: 2, reps: 8 }] }];
+      const add = (ex, kg, atras, i) => g.registro.push({ id: 'g547' + ex + i, fecha: P.iso(P.addDays(new Date(), -atras)), ex, kg, reps: 8, si: 0, ts: 1000 + i, sesionId: null, nota: '', rpe: null });
+      [[50, 35], [55, 28], [57.5, 21], [60, 14], [62.5, 7], [60, 6]].forEach((x, i) => add('Press banca', x[0], x[1], i));
+      [[40, 14], [45, 7]].forEach((x, i) => add('Remo con barra', x[0], x[1], 20 + i));
+      add('Peso muerto', 100, 3, 40);
+      P.ui.tab = 'gym'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => { const c = document.querySelector('#main .grec'); if (!c) return null; const bs = [...c.querySelectorAll('.grecbar > div')];
+      const r = c.getBoundingClientRect(), verde = c.querySelector('.grecbar > div.r');
+      return { tit: c.querySelector('.cap').textContent.trim(), n: bs.length, kg: bs.map((b) => b.textContent.trim()).join(','), rec: verde ? verde.textContent.trim() : '', iguales: bs.filter((b) => b.classList.contains('r')).length,
+        fondo: verde ? getComputedStyle(verde).backgroundColor : '', fondo0: bs[0] ? getComputedStyle(bs[0]).backgroundColor : '', cambiar: !!c.querySelector('[data-a="gym-rec-cambiar"]'), ancho: Math.round(r.width), nota: c.querySelector('p.mini').textContent.trim() }; });
+    const R = {};
+    R.a = await lee();
+    await page.click('#main [data-a="gym-rec-cambiar"]'); await page.waitForTimeout(200);
+    R.b = await lee();
+    await page.click('#main [data-a="gym-rec-cambiar"]'); await page.waitForTimeout(200);
+    R.c = await lee();
+    await page.evaluate(() => { const P = window.PG, g = P.gymS(); g.registro = g.registro.filter((x) => x.ex === 'Peso muerto'); P.ui.gymRecEx = ''; P.render(); }); await page.waitForTimeout(200);
+    R.nada = await page.evaluate(() => !!document.querySelector('#main .grec'));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia547; window.__copia547 = null; P.ui.gymRecEx = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('547 Entreno · portada: «Récords · Press banca» (el más movido) con 5 barras por semana (50 → 62,5 kg), el récord 62,5 en verde y distinto de las demás, y «+12,5 kg» en la nota',
+      !!R.a && R.a.tit === 'Récords · Press banca' && R.a.n === 5 && /^50.*62,5$/.test(R.a.kg) && R.a.rec === '62,5' && R.a.iguales === 1 && R.a.fondo !== R.a.fondo0 && /\+12,5 kg/.test(R.a.nota) && R.a.ancho <= 412, JSON.stringify(R.a));
+    check('548 Entreno · «cambiar ›» pasa al siguiente ejercicio con datos de 2 semanas (Remo con barra: 2 barras, 45 en verde), otra vez vuelve a Press banca; Peso muerto (una sola semana) no entra',
+      !!R.b && R.b.tit === 'Récords · Remo con barra' && R.b.n === 2 && R.b.rec === '45' && !!R.c && R.c.tit === 'Récords · Press banca', JSON.stringify({ b: R.b, c: R.c }));
+    check('549 Entreno · con un solo ejercicio de una sola semana no sale el gráfico de récords', R.nada === false, JSON.stringify(R.nada));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
