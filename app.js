@@ -5743,8 +5743,8 @@ function fraseGuardiaTxt(k){const sh=shiftById(dayInfo(k).shiftId);
   return 'Ese día tienes '+(sh&&sh.name?sh.name.toLowerCase():'guardia')+'. ¿Lo guardo igual?';}
 function fraseCajaHTML(){
   const F=fraseEstado();
-  if(!F.abierta)return '<button class="cmplh frase0" data-a="frase-abre" aria-expanded="false"><span class="e">✏️</span><span class="t"><b>Apuntar algo…</b></span><span class="chev">＋</span></button>';
-  let h='<div class="card frase"><div class="cap">Apuntar algo</div>';
+  if(!F.abierta)return '<button class="cmplh apunta0" data-a="frase-abre" aria-expanded="false"><span class="e">✏️</span><span class="t"><b>Apuntar algo…</b></span><span class="chev">＋</span></button>';
+  let h='<div class="card apunta"><div class="cap">Apuntar algo</div>';
   const P=F.prev;
   if(!P){
     h+='<input id="fraseTxt" type="text" maxlength="200" enterkeyhint="go" autocomplete="off" placeholder="cena con Lucía el jueves a las 21" value="'+esc(F.txt)+'" aria-label="Qué quieres apuntar">'+
