@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**La Competencia · fase 3** (siguiente, sesión nueva): encargo `encargos/competencia-fase-3.md` — antes, la pasada del verificador por todas las pantallas y las maquetas de la fase 3 (quedaron de la fase 2); luego K3 → K4 ‖ C7 ‖ deslizar, «+» y récords; PDF/Excel lo último y preguntando. ~14 M.
+**La Competencia · fase 3** (en marcha): encargo `encargos/competencia-fase-3-constructores.md` (el usuario aprobó todo lo recomendado de `maquetas/competencia-c.html`, 03/11). ✅ pasada y maqueta (1,1 M) · ✅ T1a arreglos + T1b Privado al exportar y pasillos en la rama (3,0 M, pruebas 530-539) · **siguiente, en sesión nueva:** subir T1 a `main` (la suite falla igual en `main` por 2 pruebas de fecha: arreglarlas antes, ~0,3 M) → T2a Entreno ‖ T2b Estudio ‖ T2c flechas → T3a caja de frase ‖ T3b Tu guardia → K3/K4 con el usuario → PDF/Excel preguntando. ~14 M.
 
 ~~La Competencia · fase 2~~ ✅ (02/11, en `main` ab1be8d, run 41526387915 success): C3 Hoy (480-485) · C4 Mes (490-496) · C5 Comer (500-503) · C4b Foto del cuadrante (520-529) · C6 Privado, hábitos y «Esperan turno» (510-519b). Pasada en tema claro hecha al empezar. Gasto 9,6 M frente a ~12 M (`gastos.md`).
 
