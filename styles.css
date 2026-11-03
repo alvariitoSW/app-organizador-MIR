@@ -4353,7 +4353,6 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color])
 :where(button:not(:disabled),[role=button]):active{transform:scale(.97)}
 :where(button,[role=button]){-webkit-tap-highlight-color:transparent}
 @media (prefers-reduced-motion:reduce){:where(button,[role=button]):active{transform:none}}
-=======
 /* K1: la lanzadora (uso del móvil leído solo) */
 .snmovil .del{display:inline-block;font-size:var(--suelo);font-weight:800;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:0 6px;margin-left:4px;text-transform:none}
 .usoaviso{margin-top:10px;padding:10px 12px;border:2px dashed var(--warn);border-radius:12px;background:color-mix(in srgb,var(--warn) 10%,var(--bg2))}

@@ -2771,3 +2771,11 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Elegido:** con T5 la comida de un día de entreno iba siempre a fin del entreno + vuelta, y la hora de «si entrenas» que pones en Ajustes → Horas y sueño dejaba de contar (la prueba «cambiar la hora de comer desde la pantalla… se guarda al recargar», bloque 77, daba 18:30 en vez de 19:15). Ahora: nunca antes de volver, pero si tu hora es más tarde, manda la tuya; la de fábrica (18:00) no cuenta como puesta.
 - **Cae con X revertido:** esa prueba (bloque 77) cae sin el `Math.max(…, tuya)`; se vio en la suite completa.
 - **Supuestos:** una hora tuya más temprana que la vuelta del entreno se ignora (el usuario no come antes de entrenar).
+
+## Remate de La Competencia · R1 · la línea suelta `=======` de `styles.css` (03/11/2026)
+
+- **Elegido:** quitar la línea `=======` (resto de una fusión antigua, antes de «/* K1: la lanzadora */»). El navegador se saltaba la
+  regla `.snmovil .del` que iba detrás: la marca «del móvil ✓» de la hoja de la noche (Sueño) salía como texto suelto; ahora sale como
+  chapita verde con borde de 1 px, como estaba diseñada. Prueba 620. **Cae con la línea `=======` de vuelta** (borde «0px none», en línea).
+- **Descartado:** dejarla y copiar la regla más arriba (mismo resultado con una línea basura dentro).
+- **Supuestos:** el usuario da el visto bueno a la captura de Sueño antes de subir (cierra [aparc-css-marca]).

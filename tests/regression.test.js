@@ -18449,6 +18449,27 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
+  // ===== Remate · R1: LA LÍNEA SUELTA «=======» DE styles.css (620) =====
+  // 620) Sueño · llega el uso del móvil por #uso=… → la hoja de la noche trae «del móvil ✓» como chapita (borde verde de 1 px, en línea);
+  //      tocar un chip la quita. Cae con la línea «=======» de vuelta antes de «/* K1: la lanzadora */» (la regla .snmovil .del no se aplica).
+  {
+    const hash = (o) => '#uso=' + encodeURIComponent(JSON.stringify(o));
+    const p0 = await context.newPage(); await p0.goto(base + 'index.html'); await p0.waitForFunction(() => window.PG);
+    const ayer = await p0.evaluate(() => { const P = window.PG, a = P.iso(P.addDays(new Date(), -1)); P.store.uso = {}; P.store.suenoReal = {}; P.save(); return a; }); await p0.close();
+    const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + hash({ v: 1, d: [{ f: ayer, m: 95, u: 30, a: [['Vídeos', 50], ['Chat', 45]] }] }));
+    await p.waitForFunction(() => window.PG); await p.waitForTimeout(400);
+    await p.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.snHoja = P.iso(new Date()); P.ui.snTr = null; P.render(); });
+    await p.waitForTimeout(200);
+    const D = () => p.evaluate(() => { const e = document.querySelector('.snmovil .del'); if (!e) return null; const c = getComputedStyle(e);
+      return { t: e.textContent, borde: c.borderTopWidth + ' ' + c.borderTopStyle, disp: c.display, peso: c.fontWeight, alto: Math.round(e.getBoundingClientRect().height) }; });
+    const d1 = await D();
+    await p.click('[data-a="sn-movil-chip"][data-v="60"]'); await p.waitForTimeout(150);
+    const d2 = await D(); await p.close();
+    check('620 Sueño · «del móvil ✓» sale como chapita (borde de 1 px, en línea, negrita) al llegar el uso del móvil y desaparece al tocar el chip de 60',
+      d1 && d1.t === 'del móvil ✓' && d1.borde === '1px solid' && d1.disp === 'inline-block' && +d1.peso >= 800 && d2 === null, JSON.stringify({ d1, d2 }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
