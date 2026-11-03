@@ -20,6 +20,16 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## Por hacer
 
+### Remate de La Competencia · decidido por el usuario el 03/11/2026 (sesión nueva)
+[v3-remate-competencia] En este orden, con constructores sonnet en paralelo donde no se pisen (prefijo propio y grep antes de usar un nombre):
+1. **Quitar la línea suelta `=======` de `styles.css`** (~4356, antes de «/* K1: la lanzadora */»): la regla `.snmovil .del` vuelve a aplicarse. Captura de Sueño a 412×915 al usuario antes de subir. Cierra [aparc-css-marca].
+2. **«Tu guardia en 3 pasos» también como primera pantalla** de quien instala de cero (T3b lo dejó solo en Ajustes → Mi planning). Rehacer las pruebas del arranque que esperan el asistente viejo (~1 M).
+3. **Compra:** que una línea escrita a mano de una receta («100 g de tomate triturado») se sume con el mismo alimento de la semana. Cierra [aparc-compra-linea-escrita].
+4. **Letra de los dibujos de Conductor y Línea** (texto SVG a 1-9 px en pantalla): **maqueta primero** (skill `redisena-seccion`) y esperar su elección.
+5. **Comprimir los PNG de `design/`** (74 MB), sin tocar la app. Cierra [aparc-png-design].
+6. **Repasar las tandas antiguas** («La Gran Ley», «La Reforma», Comer) y decir qué les queda; lo que salga se le pregunta antes de construir.
+
+
 ### «Sueño de un toque» (opción B del Consejo 02/11) · aprobada por el usuario el 02/11/2026
 
 [v3-sueno-un-toque] El usuario: «sí a todo» (acta `consejo/2026-11-02.md`, asunto 4, opción B). Al despertar, una fila bajo el cartel La Noche en los 4 modos: «Anoche 23:40–7:10 · 7 h 30 · ✓ Vale · cambiar», con las horas de «He vuelto» y «En pie» (hoy se guardan aparte y no rellenan la noche: `lloret.vuelta`, `manana[fecha].pie`); después, opcional, 3 caras de cómo amanece. Tramos, KSS y móvil quedan dentro de «cambiar» (sin borrar datos). El cartel gana una línea por día: víspera «Debes X h · cama HH:MM», saliente «Siesta 90 min antes de las 15:00» (de las 3 órdenes que ya existen). La vista Sueño queda para consultar (Mejorar, Datos, Ciencia plegados) y se quita la fila «Te faltan N noches». Cierra [aparc-sueno-sitio] si se aprueba.
