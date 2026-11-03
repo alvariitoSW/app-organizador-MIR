@@ -4697,23 +4697,56 @@ function listaAMano(texto){
    entienda la app, sin conexión y sin que nada salga del teléfono. */
 /* lo que NO es un artículo: cabecera de la tienda, datos fiscales y forma de pago. Va por
    PRINCIPIO de línea, no por línea entera: «MERCADONA, S.A.» y «NIF: A-46103834» llevan cola. */
-const TICKET_FUERA=/^\s*(mercadona|carrefour|lidl|aldi|dia\b|alcampo|eroski|consum|s\.?a\.?\b|s\.?l\.?\b|c\/|avda|avenida|calle|plaza|pol[íi]gono|\d{5}\s|tel[ée]fono|tel[:.]|nif|cif|factura|descripci[óo]n|p\.? ?unit|importe|total|entrega|tarjeta|efectivo|contactless|cambio|iva\b|base imponible|cuota|gracias|su compra|op[:.]|aut[:.]|fecha|hora|caja|ticket|n\.? ?factura|simplificada|www\.|https?:|[-=*_]{3,})/i;
-const TICKET_FIN=/^total\b|^total ?\(/i;
+const TICKET_FUERA=/^\s*(mercadona|carrefour|lidl|aldi|dia\b|alcampo|eroski|consum|s\.?a\.?\b|s\.?l\.?\b|c\/|cl\s|avda|avenida|calle|plaza|pol[íi]gono|\d{5}\s|tel[ée]fono|tel[:.]|nif|cif|factura|descripci[óo]n|p\.? ?unit|importe|total|entrega|tarjeta|efectivo|contactless|cambio|iva\b|base imponible|cuota|gracias|su compra|op[:.]|aut[:.]|a[ju]t\b|tarj|comerciante|minorista|verificado|fecha|hora|caja|ticket|n\.? ?factura|simplificada|www\.|https?:|[-=*_]{3,})/i;
+const TICKET_FIN=/^\W{0,3}t[o0][tm]?[a-z]{0,2}l? ?\(|^\W{0,3}total\b|\bcomerciante\b|\bminorista\b|\btarj(eta)?\.? ?bancari|^\W{0,3}(entrega|efectivo)\b/i;
 function ticketNum(x){
   /* «2,81», «2.81», y lo que la foto deja torcido: «2'45», «2/45», «¡65», «240» (la coma perdida) */
-  let t=String(x||'').replace(/^[¡!|]/,'').replace(/['\/]/g,',');
+  let t=String(x||'').replace(/^[¡!|]/,'').replace(/['\/:]/g,',');
   if(/^\d{3}$/.test(t))t=t.slice(0,1)+','+t.slice(1);
   if(/^\d{1,2}$/.test(t))return null;   /* «¡65», «25»: un importe sin céntimos es la foto, no el precio */
   if(/^\d+\.\d{2}$/.test(t))t=t.replace('.',',');
   const n=parseFloat(t.replace(/\./g,'').replace(',','.'));return isNaN(n)?null:n;}
+/* palabras que se quedan tal cual aunque sean cortas o vayan pegadas al precio */
+const TK_CORTAS=/^(wc|s[g6]|xl|uht|bio|pvc|kg|ml|cl|l|g|m|s\/gl|s\/lact?|c\/|s\/gluten|100%|0%)$/i;
+function ticketLimpia(raw){
+  /* lo que la foto mete en la línea y no es del ticket. Medido con un ticket real de 35 productos
+     leído en diez fotos distintas: la cantidad «1» sale como «!», «|», «T» o «7»; «2 C. POLLO» como
+     «2. POLLO»; y entre el nombre y el precio aparecen trocitos sueltos («ía», «Cn», «—», «“», «L»)
+     que hacían que la línea no se entendiera y el producto se perdiera. */
+  let t=String(raw||'').replace(/\s+/g,' ').trim();
+  t=t.replace(/^[\s—–\-_"“”'<>*.,:;~]+/,'');
+  t=t.replace(/^[!|\]lIiTJ?](?=\s)/,'1').replace(/^(\d{1,2})[.,](?=\s[A-ZÁÉÍÓÚÑa-z])/,'$1').replace(/^(\d{1,2})([a-z])\.\s/i,'$1 $2. ')
+    .replace(/^(\d{1,2}) [a-zA-Z] (?=[A-ZÁÉÍÓÚÑ]{3})/,'$1 ');   /* «1 J MOZZARELLA»: una letra suelta tras la cantidad */
+  /* la línea en mayúsculas, como la imprime el súper: lo que salga en minúsculas al final es de la foto */
+  const may=(t.match(/[A-ZÁÉÍÓÚÑ]/g)||[]).length,min=(t.match(/[a-záéíóúñ]/g)||[]).length;
+  const ps=t.split(' ');if(ps.length<2)return t;
+  /* desde el final: los importes se guardan, la basura se quita, y al primer trozo de nombre se para */
+  const cola=[];let i=ps.length-1;
+  for(;i>0;i--){const w=ps[i];
+    if(/^[¡!|]?\d[\d.,'\/:%]*€?$/.test(w)||/^\d+%\d*$/.test(w)){cola.unshift(w.replace(/€$/,''));continue;}
+    const letras=w.replace(/[^a-záéíóúñ]/gi,'');
+    if(TK_CORTAS.test(w.replace(/[^\w\/%áéíóúñ]+$/i,'')))break;
+    if(!letras.length||letras.length===1){continue;}
+    if(letras.length<=4&&/[a-záéíóúñ]/.test(letras)&&(cola.length||may>3*min)){continue;}   /* «ía», «Cn», «Te», «un:» antes del precio */
+    if(letras.length===2&&cola.length){continue;}                            /* «DM», «TX», «TE» */
+    break;}
+  const nom=ps.slice(0,i+1).join(' ').replace(/[\s—–\-_"“”'<>*=$+.,:;\[\]()]+$/,'');
+  /* un «7» delante de un solo importe es casi siempre un «1»: con 7 iguales el ticket pone el precio por unidad */
+  const nums=cola.filter(function(w){return ticketNum(w)!=null;});
+  let q=nom.replace(/^7(?=\s[A-ZÁÉÍÓÚÑ])/,nums.length<2?'1':'7');
+  return (q+(cola.length?' '+cola.join(' '):'')).trim();}
 function ticketLinea(raw){
+  /* una línea con «importe» de mil euros o más no es un producto: es el NIF o el teléfono */
+  const it=ticketLinea0(raw);
+  return it&&it.eur!=null&&it.eur>=1000?null:it;}
+function ticketLinea0(raw){
   /* una línea de ticket: cantidad, nombre y uno o dos importes al final. Los formatos que se ven
      de verdad en un Mercadona:
        «1 ACEITE OLIVA SUAVE            5,95»      → unidad suelta
        «2 LECHE SEMIDESNATADA   0,89    1,78»      → varias, con precio unitario
        «0,894 kg TOMATE RAMA    2,19    1,96»      → a peso
      y lo mismo de cualquier otro súper, que es la misma forma. */
-  const t=String(raw||'').replace(/\s+/g,' ').trim();
+  const t=ticketLimpia(raw);
   if(!t||t.length>90)return null;
   if(TICKET_FUERA.test(t))return null;
   /* a peso: la cantidad lleva unidad pegada */
@@ -4742,16 +4775,49 @@ function ticketPeso(x){
   if(/^\d{1,2}\.\d{1,3}$/.test(s.trim()))q=parseFloat(s);
   if(q!=null&&q>=50&&!/[.,]/.test(s))q=q/1000;
   return q;}
+/* las palabras que salen en un ticket, para enderezar lo que la foto tuerce letra a letra
+   («BIGUETTE», «VACUND», «COOKTE», «CANDNIGOS», «ATRAPAPOLyo») */
+const TK_PALABRAS='ice tea rojo zero isotonico blue bolsa plastico vinagre limpieza lejia fuet espetec extra refill dermo detergente '+
+  'pollo natural rollo cocina jumbo ketchup salsa soja gluten tomate ensalada lomo adobado huevos medianos grandes baguette papel humedo '+
+  'higienico atun claro cookie lactosa picada vacuno chili carne salmon verduras jamon extrafino cafe molido mezcla queso azul mozzarella '+
+  'fresca burrata entrecot vaca filete pechuga curado embuchado canonigos gamuza atrapapolvo semidesnatada desnatada entera leche yogur '+
+  'griego platano manzana naranja lechuga cebolla patata zanahoria pimiento calabacin brocoli espinacas aguacate limon fresas arroz pasta '+
+  'macarrones espaguetis garbanzos lentejas alubias aceite oliva girasol harina azucar galletas cereales avena chocolate cacao mantequilla '+
+  'margarina nata pavo fiambre serrano cocido chorizo salchichas hamburguesa merluza bacalao gambas mejillones calamares sardinas caldo '+
+  'champu gel ducha desodorante suavizante friegasuelos lavavajillas estropajo servilletas cocacola refresco cerveza agua mineral zumo '+
+  'tortilla pizza patatas fritas mayonesa mostaza tomate frito triturado guisantes maiz hogaza chapata integral centeno';
+function tkVocab(){
+  if(tkVocab._v)return tkVocab._v;
+  const v={};const mete=function(t){alimTxt(t).split(/[^a-zñ]+/).forEach(function(w){if(w.length>=4)v[w]=1;});};
+  mete(TK_PALABRAS);ALIMENTOS.concat(ALIMENTOS_MAS).forEach(function(a){mete(a.n);});Object.keys(ALIM_SINONIMOS).forEach(mete);
+  return (tkVocab._v=Object.keys(v));}
+function tkDist(a,b,max){
+  /* distancia de edición (letras cambiadas, de más o de menos), cortando en cuanto pasa de max */
+  if(Math.abs(a.length-b.length)>max)return max+1;
+  let prev=[];for(let j=0;j<=b.length;j++)prev[j]=j;
+  for(let i=1;i<=a.length;i++){const cur=[i];let lo=i;
+    for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));if(cur[j]<lo)lo=cur[j];}
+    if(lo>max)return max+1;prev=cur;}
+  return prev[b.length];}
+function tkCorrige(n){
+  /* cada palabra de 5 letras o más que la app no conoce se cambia por la conocida más parecida, si la
+     hay a una letra (a dos en las de 9 o más) y no hay empate. Las que ya conoce no se tocan. */
+  const V=tkVocab();
+  return n.replace(/[a-záéíóúñ]{5,}/gi,function(w){
+    const a=alimTxt(w);if(V.indexOf(a)>=0)return w;
+    const max=a.length>=9?2:1;let mejor=null,d0=max+1,empate=false;
+    for(let i=0;i<V.length;i++){const d=tkDist(a,V[i],max);if(d<d0){d0=d;mejor=V[i];empate=false;}else if(d===d0&&d<=max&&V[i]!==mejor)empate=true;}
+    return mejor&&!empate?mejor:w;});}
 function ticketNombre(x){
   /* los tickets vienen en mayúsculas y con abreviaturas del súper. Se pasa a algo que la app sepa
      clasificar por pasillos y buscar en la tabla de alimentos. */
-  let n=String(x||'').trim().toLowerCase();
+  let n=tkCorrige(String(x||'').trim().toLowerCase());
   n=n.replace(/\b(bolsa pl[aá]stico|bolsa de pl[aá]stico|bolsa)\b/g,'bolsa');
   /* lo que la foto tuerce siempre igual en un Mercadona */
-  n=n.replace(/\$\/gl\b/g,'s/gl').replace(/\bchamp[oó](?![a-záéíóúñ])/g,'champú').replace(/\bh[a&]s\b/g,'h&s').replace(/\bbac?g?uette\b|\bbacuette\b/g,'baguette')
+  n=n.replace(/[$s]\/[g6][l1]\b/g,'s/gl').replace(/\bchamp[oó](?![a-záéíóúñ])/g,'champú').replace(/\bh[a&]s\b/g,'h&s').replace(/\bbac?g?uette\b|\bbacuette\b/g,'baguette')
      .replace(/\bs\/gl\b/g,'sin gluten').replace(/\bs\/lac[ti]\b/g,'sin lactosa')
      .replace(/\bplatan[do]?\b/g,'plátano').replace(/\bo[x%]\b/g,'0%').replace(/^.*\bm[ea]dianos?\b.*$/,'huevos medianos')
-     .replace(/\bsg\b/g,'sin gluten')
+     .replace(/\bs[g6]\b/g,'sin gluten')
      /* la cola de basura de la foto («plátano ta», «queso curado — a»), sin tocar «200 g» */
      .replace(/([a-záéíóúñ.%)])[\s—–\-|]+[a-z]{1,2}$/,'$1')
      .replace(/^[^a-záéíóúñ0-9]+|[\s—–\-|.]+$/g,'');
@@ -4768,24 +4834,43 @@ function ticketLeer(texto){
   const lineas=String(texto||'').split(/\n+/);
   const items=[],sueltas=[];let total=null,fin=false,empezado=false;
   /* con cabecera de columnas («Descripción  P. Unit  Importe»), lo de antes es la dirección y el NIF */
-  const hayCabecera=lineas.some(function(l){return /descrip|p\.? ?unit|imp\.? ?\(/i.test(l);});
+  const CAB=/descrip|cripci[oó]n|p\.? ?unit|\bunit\b|imp\.? ?\(/i;
+  const hayCabecera=lineas.some(function(l){return CAB.test(l);});
   lineas.forEach(function(l){
     /* el precio por kilo o por unidad («2,19/kg», «2,19 €/kg») no es parte del nombre */
     const t=l.replace(/\s+/g,' ').replace(/\s\d+[.,]\d+\s*€?\s*\/\s*(kg|l|ud|u)\b/ig,'').trim();
     if(!t)return;
     if(TICKET_FIN.test(t)){
-      const m=t.match(/([\d.,]+)\s*€?$/);
+      /* el total, solo de la línea del TOTAL: en la de la tarjeta, el número del final son sus 4 cifras */
+      const m=/tarj|bancari|comerciante|minorista/i.test(t)?null:t.match(/(\d[\d.,]*[.,]\d{2})\s*€?$/);
       if(m&&total==null)total=ticketNum(m[1]);
       fin=true;return;}
     if(fin)return;                       /* lo de después del total es forma de pago y datos fiscales */
-    if(!empezado&&hayCabecera){if(/descrip|p\.? ?unit|imp\.? ?\(|importe/i.test(t))empezado=true;return;}
+    if(!empezado&&hayCabecera){if(CAB.test(t)||/importe/i.test(t))empezado=true;return;}
     /* la línea partida de antes («2 C. FRESA EXTRA 0%» + «4 59» sueltos) */
     const t2=t.replace(/(\s\d)\s(\d{2})$/,function(a,b,c){return /[.,]\d{2}$/.test(t)?a:b+','+c;});
     const it=ticketLinea(t2);
     if(it&&it.peso){const ult=items[items.length-1];if(ult&&!ult.uni){ult.q=it.q;ult.uni=it.uni;if(it.eur!=null)ult.eur=it.eur;}return;}
-    if(it)items.push(it);
-    else if(!TICKET_FUERA.test(t)&&/[a-záéíóúñ]{3}/i.test(t)&&t.length<90)sueltas.push(t);});
+    if(it){items.push(it);return;}
+    /* ya dentro de los productos, una línea con nombre de verdad y sin precio legible es un producto
+       (la foto se suele comer la columna de los importes): se mete con su cantidad, sin precio */
+    const sp=(empezado||items.length)?tkSinPrecio(t2):null;
+    if(sp){items.push(sp);return;}
+    if(!TICKET_FUERA.test(t)&&/[a-záéíóúñ]{3}/i.test(t)&&t.length<90)sueltas.push(t);});
   return {items:items,sueltas:sueltas,total:total};}
+function tkSinPrecio(raw){
+  const t=ticketLimpia(raw).replace(/(\s+[¡!|]?\d[\d.,'\/:%]*)+$/,'');
+  if(TICKET_FUERA.test(t))return null;
+  let m=t.match(/^(\d{1,2})\s+(.+)$/),q=1,nom=t;
+  if(m){q=+m[1];nom=m[2];}
+  else{
+    /* sin cantidad: solo si son dos palabras de verdad en mayúsculas, como las imprime el súper */
+    const gordas=(t.match(/\b[A-ZÁÉÍÓÚÑ]{3,}\b/g)||[]).length;
+    if(gordas<2||/[a-záéíóúñ]{3}/.test(t.replace(/\b[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\b/g,'')))return null;}
+  if(!/[a-záéíóúñ]{4,}/i.test(nom))return null;
+  const n=ticketNombre(nom);
+  if(!n||!/[a-záéíóúñ]{3}/.test(n))return null;
+  return {q:q,uni:'',nom:n,eur:null};}
 function ticketAplicar(items){
   /* el ticket entra en casa: cada línea a la despensa con su cantidad, y la fecha de la compra
      queda puesta, que es lo que apaga el aviso de «toca hacer la compra» */
@@ -22100,6 +22185,19 @@ function listaManoCardHTML(){
       'placeholder="2 rollos de papel\n1 gel de ducha\n500 g arroz"></textarea></label>'+
     '<div class="row" style="margin-top:9px"><button class="btn p" data-a="compra-mano">añadir a la compra</button></div>'+
     '</div>';}
+function tkUmbral(a,w,h){
+  /* blanco y negro con umbral LOCAL (Bradley): cada punto se compara con la media de su alrededor, no
+     con un gris fijo. Con uno fijo (180), la sombra de la mano o del móvil sobre el papel se volvía un
+     borrón negro y el ticket real de 39 productos salía con cero. */
+  const g=new Float64Array(w*h),I=new Float64Array((w+1)*(h+1));
+  for(let i=0,j=0;i<g.length;i++,j+=4)g[i]=.299*a[j]+.587*a[j+1]+.114*a[j+2];
+  for(let y=0;y<h;y++){let fila=0;for(let x=0;x<w;x++){fila+=g[y*w+x];I[(y+1)*(w+1)+x+1]=I[y*(w+1)+x+1]+fila;}}
+  const r=Math.max(8,Math.round(w/TK_VENTANA));
+  for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h,y+r+1);
+    for(let x=0;x<w;x++){const x0=Math.max(0,x-r),x1=Math.min(w,x+r+1);
+      const m=(I[y1*(w+1)+x1]-I[y0*(w+1)+x1]-I[y1*(w+1)+x0]+I[y0*(w+1)+x0])/((x1-x0)*(y1-y0));
+      const v=g[y*w+x]<m*(1-TK_K)?0:255,j=(y*w+x)*4;a[j]=a[j+1]=a[j+2]=v;a[j+3]=255;}}}
+var TK_VENTANA=16,TK_K=.15;   /* medido con el ticket real y cuatro variantes (girado, oscuro, pequeño, grande) */
 function tkPrepara(file){
   /* el ticket es papel térmico: gris claro sobre blanco. Ampliar, pasar a blanco y negro y listo
      (sin engordar el trazo, que en un ticket junta las letras de las columnas) */
@@ -22107,8 +22205,7 @@ function tkPrepara(file){
     img.onload=function(){URL.revokeObjectURL(url);const k=Math.min(2,2000/Math.max(1,img.width));
       const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
       const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(img,0,0,c.width,c.height);
-      const d=x.getImageData(0,0,c.width,c.height),a=d.data;
-      for(let i=0;i<a.length;i+=4){const v=(.299*a[i]+.587*a[i+1]+.114*a[i+2])<180?0:255;a[i]=a[i+1]=a[i+2]=v;a[i+3]=255;}
+      const d=x.getImageData(0,0,c.width,c.height);tkUmbral(d.data,c.width,c.height);
       x.putImageData(d,0,0);ok(c);};
     img.onerror=function(){URL.revokeObjectURL(url);ko(new Error('esa imagen no se puede abrir'));};img.src=url;});}
 function tkOcr(files){
@@ -22196,7 +22293,11 @@ function renderShopTicket(){
     '</div>')+
     (t.msg?('<div class="card"><div class="empty">'+esc(t.msg)+'</div></div>'):'')+
     (l?('<div class="card"><h2>Lo que he leído <span class="mini">'+l.items.length+'</span></h2>'+
-      (l.total!=null?('<p class="mini" style="margin:0 0 8px">Total del ticket: <b>'+eur(l.total)+'</b>.</p>'):'')+
+      (l.total!=null?('<p class="mini" style="margin:0 0 8px">Total del ticket: <b>'+eur(l.total)+'</b>.</p>')
+        /* el TOTAL va en letra gorda y la foto lo emborrona: si casi todas las líneas traen precio, su suma */
+        :(function(){const con=l.items.filter(function(x){return x.eur!=null;});
+          return con.length&&con.length>=.8*l.items.length?('<p class="mini" style="margin:0 0 8px">No he leído el total; las líneas suman <b>'+
+            eur(con.reduce(function(a,x){return a+x.eur;},0))+'</b>.</p>'):'';})())+
       (l.items.length?('<div class="dlista">'+filas+'</div>')
         :'<div class="empty">No he sacado ninguna línea. ¿Seguro que has pegado el detalle de los artículos?</div>')+
       (l.sueltas.length?('<p class="mini" style="margin:9px 0 0;color:var(--warn)">'+l.sueltas.length+
@@ -30517,7 +30618,7 @@ window.PG={fraseApuntarLee,pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedAp
   bloquesDelDia,rangoCarril,carrilHTML,viajeCfg,salirDeCasaTxt,llegasACasa,
   ICS_GRUPOS,ICS_COLORES,icsGrupoDe,icsColorGrupo,setIcsColor,icsCuentaGrupo,
   calSyncCfg,calSyncURL,calSyncPendiente,calSyncSubir,buzonNuevo,calSyncAuto,calSyncPide,calSyncAhoraSiToca,icsColorChoca,
-  ticketLeer,ticketNombre,ticketAplicar,ticketSano,
+  ticketLeer,ticketNombre,ticketAplicar,ticketSano,ticketLimpia,tkUmbral,
   edadHoy,metabolismoBasal,gastoDiario,kcalSugeridas,proteinaSugerida,ajusteMeta,protPorKg,setMetaNum,kcalFaltaTxt,
   diasEspS,diaEspDe,diaEspTipo,marcarDiaEsp,setDiaEspKcal,setKcalTipo,kcalTipoDia,kcalExtraDe,DIA_TIPOS,diaComer,
   claseDeToma,platosDeClase,platoCubierto,platoApto,menuAutoDia,menuAutoSemana,aplicarMenuAuto,pesoDeTomas,

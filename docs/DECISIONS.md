@@ -2815,3 +2815,23 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Pruebas:** 650-653 (encadenadas, 412×915). Viejas: 592 cambia (antes `.cd-stt` = 9,5 unidades; ahora ≥13 px en pantalla y «LÍNEA DE HOY»/«PRÓXIMA PARADA» fuera de la lista); 590, 591, 593, 594 sin cambios.
 - **Cae con X revertido:** con `fig/conductor.js` de antes caen 650, 651, 652, 653 (y la 592 vieja ya adaptada).
 - **Supuestos:** «ahora» = la parada en curso (el turno «Trabajo» cuando hay sesión dentro); `sw.js` ya lista `fig/conductor.js` (no se toca, no cambia la lista, solo el contenido: el `version.json` lo sella quien despliega).
+
+
+## El lector del ticket con foto (03/11/2026)
+- **Medido:** con una foto real de un ticket de Mercadona de 35 productos (sombra de la mano encima), el lector sacaba **0**.
+  La causa principal: el blanco y negro con un gris fijo (180) volvía negra la parte en sombra. Ahora, **35 de 35** en la foto y en
+  cuatro variantes (girada 2°, más oscura, más pequeña, más grande).
+- **Elegido:** (1) `tkUmbral`: umbral local (Bradley, ventana = ancho/16, k = 0,15; medidos en la rejilla con las cinco fotos).
+  (2) `ticketLimpia`: antes de leer la línea, «!», «|», «J», «T» delante → 1; «2C.»/«2.» → «2 C.»; se quitan los trocitos que mete
+  la foto entre el nombre y el precio («ía», «Cn», «—», «L»…); un «7» con un solo importe es un 1. (3) `tkCorrige`: cada palabra
+  desconocida de 5+ letras se cambia por la conocida más parecida (a 1 letra; a 2 si es larga; sin empate), con el vocabulario de la
+  tabla de alimentos, los sinónimos del ticket y una lista de palabras de súper («BIGUETTE» → baguette, «VACUND» → vacuno).
+  (4) `tkSinPrecio`: ya dentro de los productos, una línea con nombre y sin precio legible entra (sin precio). (5) El final se
+  reconoce también por «COMERCIANTE MINORISTA» / «TARJ. BANCARIA» y por un «TOTAL» torcido; el total ya no se coge de la línea de
+  la tarjeta (salía 5013). (6) Si no se lee el total y el 80 % de las líneas tienen precio: «No he leído el total; las líneas suman X».
+- **Descartado:** dos pasadas del lector con umbrales distintos (el doble de tiempo en el móvil); poner el total sumado en el botón
+  de Dinero (en esta foto los precios bajan una línea por la curva del papel: la suma da 91 € y el ticket 110,54 €).
+- **Prueba 654** (encadenada: Compra → ticket → pegar lo leído de la foto → leerlo → a la despensa; y el umbral con una sombra
+  sintética). **Cae con X revertido:** con el gris fijo cae la primera; sin `ticketLimpia`/`tkSinPrecio`, la segunda (29 de 35).
+- **Supuestos:** la foto no se guarda en el repositorio (privacidad); en la prueba va solo el texto de los productos, sin teléfono
+  ni tarjeta. Los precios de cada línea pueden ir desplazados si el papel está curvado: se muestran tal cual.

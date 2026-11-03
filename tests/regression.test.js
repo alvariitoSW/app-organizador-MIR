@@ -18607,6 +18607,93 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
+  // 654) EL TICKET DE LA FOTO, CON SOMBRAS: (a) el blanco y negro va con umbral local, así la sombra de la mano sobre
+  // el papel no se vuelve un borrón (con el gris fijo de 180 el ticket real salía con CERO productos); (b) Compra → ticket:
+  // se pega lo que el lector sacó de esa foto (35 productos: «!», «J» o «7» por «1», trocitos sueltos entre el nombre y el
+  // precio, precios perdidos, «BIGUETTE», «VACUND»…) → «leerlo» → salen los 35 y ninguna línea rara → «a la despensa».
+  {
+    await fijaHoy();
+    await page.evaluate(() => { const P = window.PG; window.__copia654 = JSON.parse(JSON.stringify(P.store));
+      P.food().despensa = []; P.food().neveraMano = []; P.food().nevera = []; P.ui.ticket = null; P.ui.shopVista = ''; P.ui.tab = 'shop'; P.save(); P.render(); });
+    await page.waitForTimeout(200);
+    const umbral = await page.evaluate(() => { const P = window.PG, w = 120, h = 40, a = new Uint8ClampedArray(w * h * 4);
+      // mitad izquierda en sombra (gris 110) con letras a 50; mitad derecha al sol (235) con letras a 120 (el borde de la sombra, aparte)
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const letra = y >= 15 && y < 25 && x % 6 < 2, v = x < 60 ? (letra ? 50 : 110) : (letra ? 120 : 235);
+        const j = (y * w + x) * 4; a[j] = a[j + 1] = a[j + 2] = v; a[j + 3] = 255; }
+      P.tkUmbral(a, w, h);
+      let fondoNegro = 0, letraNegra = 0, letras = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const letra = y >= 15 && y < 25 && x % 6 < 2, n = a[(y * w + x) * 4] === 0;
+        if (letra) { letras++; if (n) letraNegra++; } else if (n && Math.abs(x - 60) > 9) fondoNegro++; }
+      return { fondoNegro, letraNegra, letras }; });
+    await page.click('[data-a="compra-ticket"]'); await page.waitForTimeout(300);
+    await page.fill('#tkTxt', [
+      "ADONA 2, s -",
+      "FACTURA SIMPLIFICADA: 7109-014",
+      "anna Ponit Imp.($)",
+      "ICE TEA ROJO ZERd-- *:-UN 30",
+      "",
+      "0,95 1",
+      "",
+      "4 ISOTÓNICO BLUE 0,52 2,08",
+      "4 BOLSA PLASTICO 0,15 0,60",
+      "1 VINAGRE LIMPIEZA 0,85",
+      "1 GEL WC C/ LEJÍA He. 0,95",
+      "1 FUET ESPETEC EXTRA 2,50",
+      "1 REFTLL DERMO 1,40",
+      "1 DETERGENTE GEL \"e",
+      "",
+      "2C. POLLO 100% NAT 12,30 4,60",
+      "1 ROLLO COCINA JUMBO %",
+      "",
+      "3,50",
+      "1 KETCHUP ZERO ñ 1,60",
+      "2 SALSA SOJA S/GLUTEN — % 50 5,00",
+      "- 1 TOMATE ENSALADA BAND a 2,60",
+      "1 LOMO ADOBADO | 2,85",
+      "1 12 HUEVOS MEDIANOS-M __ 3,75",
+      "2 BIGUETTE SG 1,95 3,90",
+      "2 PAPEL HUMEDO ye - 145 29",
+      "7 ATUN CLARO NATURAL ”... 3,95",
+      "1 COMTE $/6L Y s/LACy>. X 2,05",
+      "1 PICADA DE VACUNO 1 5,40",
+      "1 CHILI CON CARNE 280",
+      "1 SALMÓN CON VERDURAS A",
+      "1 JAMÓN EXTRAFINO — 2,5",
+      "1 CAFÉ MOLIDO MEZCLA ss 4,40",
+      "! POLLO EXTRAFINO one 2,85",
+      "1 JAMON S. EXTRA FINO Au 2,45",
+      "1 QUESO AZUL al 2,30",
+      "J MOZZARELLA FRESCA ; 0,90",
+      "1 BURRATA 2,8",
+      "1 ENTRECOT DE Vaca Te 10,94",
+      "1 FILETE PECHUGA CERY E 4.",
+      "! QUESO CURADO 4,69",
+      "1 LOMO EMBUCHADO 2/55",
+      "1 CANONIGOS 200",
+      "? GAMUZA ATRAPAPOLyo 1,70",
+      "TOTAL (e",
+      "TENOR ¡O",
+      ", N..",
+      "COMERCIANTE MINORISTA"].join('\n'));
+    await page.click('[data-a="tk-leer"]'); await page.waitForTimeout(400);
+    const leido = await page.evaluate(() => { const t = window.PG.ui.ticket.leido;
+      return { filas: document.querySelectorAll('#main .dfila').length, noms: [...document.querySelectorAll('#main .tknom')].map((i) => i.value),
+        sueltas: t.sueltas, q: Object.fromEntries(t.items.map((x) => [x.nom, x.q])),
+        suma: /No he leído el total; las líneas suman/.test(document.querySelector('#main').innerText) }; });
+    await page.click('[data-a="tk-aplicar"]'); await page.waitForTimeout(400);
+    const casa = await page.evaluate(() => window.PG.despensaS().map((x) => x.nom));
+    const quiere = ['isotónico blue', 'gel wc c/ lejía', 'detergente gel', 'rollo cocina jumbo', 'huevos medianos', 'baguette sin gluten', 'atun claro natural',
+      'picada de vacuno', 'salmón con verduras', 'pollo extrafino', 'mozzarella fresca', 'queso curado', 'canonigos', 'gamuza atrapapolvo'];
+    check('654 Ticket con sombras · el umbral local deja negras las letras en la sombra y al sol, y blanco el papel en sombra',
+      umbral.fondoNegro === 0 && umbral.letraNegra === umbral.letras, JSON.stringify(umbral));
+    check('654 Ticket con sombras · Compra → ticket → pegar lo leído de la foto → «leerlo»: salen los 35 productos, sin líneas raras, con «7»/«!»/«J» como 1, y van a la despensa',
+      leido.filas === 35 && leido.sueltas.length === 0 && quiere.every((n) => leido.noms.includes(n)) && leido.q['atun claro natural'] === 1 && leido.q['pollo extrafino'] === 1 &&
+      leido.q['isotónico blue'] === 4 && leido.suma && casa.includes('picada de vacuno') && casa.includes('queso curado') && !casa.some((n) => /comerciante|factura|total/.test(n)),
+      JSON.stringify({ ...leido, casa }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia654; P.ui.ticket = null; P.ui.shopVista = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await sueltaHoy();
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
