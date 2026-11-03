@@ -1806,6 +1806,16 @@ body[data-tab] #main .gcinta button.gcd{min-height:var(--toque-grande)}
 .gplanrec .cap{color:var(--brand);margin-bottom:var(--e-4)}
 .gplanrec b{font-size:var(--t-16)}
 .gplanrec .mini{margin-top:var(--e-4)}
+/* C7·c · tres salidas con la tarjeta de hoy vacía y X3 · gráfico de récords */
+.gbig2.gopc{display:flex;flex-direction:column;align-items:center;gap:0;min-height:var(--toque-grande)}
+.gbig2.gopc small{font-size:var(--suelo);font-weight:700;opacity:.85}
+.grec .grecb{min-height:var(--toque);min-width:var(--toque)}
+.grecbar{display:flex;align-items:flex-end;gap:var(--e-8);height:calc(var(--e-32)*4);margin-top:var(--e-24)}
+.grecbar>div{flex:1;min-width:0;position:relative;background:var(--line);border-radius:var(--e-4) var(--e-4) 0 0}
+.grecbar>div.r{background:var(--ok)}
+.grecbar>div b{position:absolute;left:0;right:0;top:-22px;text-align:center;font-size:var(--suelo);font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.grecej{display:flex;gap:var(--e-8);margin-top:var(--e-4)}
+.grecej span{flex:1;text-align:center;font-size:var(--suelo);color:var(--ink2)}
 .gser{display:flex;width:100%;text-align:left;justify-content:flex-start;margin-top:var(--e-8);min-height:var(--toque-grande)}
 .gser small{display:block;font-weight:600;color:var(--ink2);font-size:var(--suelo)}
 .gpaso{display:grid;grid-template-columns:var(--toque-grande) 1fr var(--toque-grande);gap:var(--e-8);align-items:center;text-align:center;margin-top:var(--e-8)}
