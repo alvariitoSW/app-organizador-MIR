@@ -3935,6 +3935,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .cs-tp.cad{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,var(--bg2))}
 .cs-tp .dot{position:absolute;right:-5px;top:-10px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:var(--suelo);font-weight:900;display:grid;place-items:center}
 .cs-bote{flex:1 1 104px;min-width:0;min-height:48px;padding:4px 2px;border-radius:8px;border:2px solid var(--line);background:var(--bg2);font-size:var(--suelo);font-weight:800;line-height:1.15;text-align:center;display:flex;align-items:center;justify-content:center;flex-flow:row wrap;column-gap:4px;row-gap:0}  /* T1a · el «falta» sigue al nombre en vez de ir a una 3.ª línea */
+.cs-der>.cs-bote{flex:0 0 auto}  /* la columna «Faltan» es vertical: sin esto la base de 104 px se vuelve alto */
 .cs-bote span{font-size:var(--suelo);font-weight:700;color:var(--ink2)}.cs-bote.hu{border-style:dashed;color:var(--ink2)}
 .cs-fz{border-color:var(--info,#4a90d9);background:color-mix(in srgb,var(--info,#4a90d9) 14%,var(--bg2));flex:1 1 90px}.cs-mas{min-height:44px;border:0;background:none;font-weight:800;font-size:var(--suelo);color:var(--brand2);text-align:left;padding:0 4px}.cs-piz{padding:6px;border-radius:6px;border:3px solid var(--line);background:var(--bg2);font-size:var(--suelo);font-weight:800;line-height:1.25}
 .cs-compra{margin-top:8px;border-color:var(--warn)}.cs-compra .row{display:flex;align-items:center;gap:8px;margin-bottom:4px}

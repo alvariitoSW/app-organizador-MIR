@@ -17721,9 +17721,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(250);
     await page.evaluate(() => { document.querySelector('#main .cs-wrap').innerHTML = ['Pechuga de pollo', 'Tomate pera', 'Yogur natural griego', 'Leche', 'Zanahoria'].map((n) => '<div class="cs-bote hu"> ' + n + '<span>falta</span></div>').join(''); });
     const casa = await page.evaluate(() => ({ x: Math.round(document.querySelector('#main .cstit').getBoundingClientRect().x),
-      altos: [...document.querySelectorAll('#main .cs-wrap .cs-bote.hu')].map((e) => Math.round(e.getBoundingClientRect().height)), dark: document.documentElement.classList.contains('dark') }));
+      altos: [...document.querySelectorAll('#main .cs-wrap .cs-bote.hu')].map((e) => Math.round(e.getBoundingClientRect().height)),
+      der: [...document.querySelectorAll('#main .cs-der .cs-bote')].map((e) => Math.round(e.getBoundingClientRect().height)), dark: document.documentElement.classList.contains('dark') }));
     check('533 Comer · Casa en oscuro: el título «Casa» empieza a 12 px (antes 8, pegado al borde)', casa.dark && casa.x === 12, JSON.stringify(casa));
     check('534 Comer · Casa: ningún chip «falta» de «Crudo y verdura» pasa de 2 líneas (≤ 60 px; antes 3 líneas, 72 px)', casa.altos.length === 5 && Math.max(...casa.altos) <= 60, JSON.stringify(casa));
+    // 534b) la columna «Faltan» va en vertical: la base de los chips no se convierte en alto (con la base de 104 px medían 104)
+    check('534b Comer · Casa: las cajas de la columna «Faltan» miden como mucho 2 líneas (≤ 60 px), no 104', casa.der.length > 0 && Math.max(...casa.der) <= 60, JSON.stringify(casa.der));
     await page.evaluate((s) => { const P = window.PG; P.store = JSON.parse(s); P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ponerTema('hud'); P.save(); P.render(); }, copia530);
     await page.setViewportSize(vp); await sueltaHoy();
   }
