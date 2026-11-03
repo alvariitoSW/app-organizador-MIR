@@ -6424,7 +6424,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('entrenando a las 6:30 la comida es al llegar del trabajo, no «post-entreno» a las 18:00',
       ent.sinDiaDeFuerza ? false : (
         ent.manana.fin === 8 * 60 && ent.manana.cp.por !== 'entreno' && ent.manana.cp.de !== '18:00' &&
-        ent.tarde.fin === 18 * 60 + 15 && ent.tarde.cp.por === 'entreno' && ent.tarde.cp.de === '18:00'),
+        ent.tarde.fin === 18 * 60 + 15 && ent.tarde.cp.por === 'entreno' && ent.tarde.cp.de === '18:30'),
       JSON.stringify(ent));
 
     // 2) CUÁNTA PANTALLA OCUPA EL CARRIL se elige en Ajustes, no se codifica. Se conduce el
@@ -9909,15 +9909,15 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const lib = P.store.shifts.find((s) => /libre/i.test(s.name)); P.store.rotation.mode = 'date'; P.setDayOverride(sab, lib.id, '');
       const g = P.gymS(); g.hora = ''; g.piscinaSal = {}; g.forzar = {}; g.forzar[sab] = true;
       g.rutinas = [{ id: 'rv', nombre: 'Vacía', notas: '', ejercicios: [] }, { id: 'rf', nombre: 'Fuerza', notas: '', ejercicios: [{ ex: 'Sentadilla', sets: [{ kg: 60, reps: 8 }] }] }];
-      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '10:00', fin: '11:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
+      P.eventosS().push({ id: 'eD252', titulo: 'Dentista', hora: '15:00', fin: '16:00', modo: 'fecha', fecha: sab, dow: [], color: '#f59e0b', on: true });
       P.render();
       const s = P.entrenoSemana(sab), x = s.dias.find((d) => d.k === sab);
       const out = { hora: x.hora, movido: !!x.movido, choca: !!x.choca, perdido: !!x.perdido,
         agenda: P.agendaDia(sab).filter((a) => a.tipo === 'gym').map((a) => a.hora),
         asig: Object.values(s.asig).map((q) => q.nombre), pisc: P.entrenoCfg().pisc.hora };
       P.store = c; P.save(); P.render(); return out; });
-    check('el entreno del sábado con dentista a las 10:00 (la hora fija del fin de semana) se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
-      r.hora !== '10:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
+    check('el entreno del sábado con dentista a las 15:00 (la hora fija del fin de semana) se mueve a otra hora (y sale en la agenda), la piscina del saliente es a las 18:00 y la rutina vacía no se reparte',
+      r.hora !== '15:00' && r.movido && !r.choca && !r.perdido && r.agenda.indexOf(r.hora) >= 0 &&
       r.asig.indexOf('Vacía') < 0 && r.asig.indexOf('Fuerza') >= 0 && r.pisc === '18:00', JSON.stringify(r));
   }
 
@@ -13884,8 +13884,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp348);
     check('entre semana, sin hora puesta, el entreno es a las 15:00, 50 min, en el gimnasio y la portada lo dice',
       r.a.hora === '15:00' && r.a.lugar === 'gimnasio' && r.a.dur === 50 && /15:00/.test(r.a.hero), JSON.stringify(r.a));
-    check('al pulsar el sábado: parque a las 10:00, 40 min, con la rutina de 6 ejercicios sin material',
-      r.b.k !== r.a.k && r.b.hora === '10:00' && r.b.lugar === 'parque' && r.b.dur === 40 && /10:00/.test(r.b.hero) && /Sentadilla/.test(r.b.rt) && /Plancha/.test(r.b.rt) && r.b.rt.split('|').length === 6, JSON.stringify(r.b));
+    check('al pulsar el sábado: parque a las 15:00, 40 min, con la rutina de 6 ejercicios sin material',
+      r.b.k !== r.a.k && r.b.hora === '15:00' && r.b.lugar === 'parque' && r.b.dur === 40 && /15:00/.test(r.b.hero) && /Sentadilla/.test(r.b.rt) && /Plancha/.test(r.b.rt) && r.b.rt.split('|').length === 6, JSON.stringify(r.b));
     check('si un evento pisa las 15:00 (ida incluida), la hora libre es la sesión mínima de las 15:30 (25 min), nunca de tarde-noche', r.c.hora === '15:30' && r.c.dur === 25, JSON.stringify(r.c));
     check('una hora puesta a mano en el gym manda sobre la franja', r.d === '19:30', JSON.stringify(r.d));
   }
@@ -18374,6 +18374,78 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const modos = {}; for (const mo of ['bus', 'reloj', 'linea']) { await prep(mo); await page.waitForTimeout(150); modos[mo] = await page.evaluate(() => !!document.querySelector('#main .diasnav2 + [data-a="frase-abre"]')); }
     check('577 Caja de frase · la línea «Apuntar algo…» sale justo bajo las flechas en conductor, reloj y línea', Object.values(modos).every(Boolean), JSON.stringify(modos));
     await page.evaluate(() => { const P = window.PG; if (window.__copia570) { P.store = window.__copia570; delete window.__copia570; } P.ui.apunta = null; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+  }
+  // ===== T5 · ENTRENO A HORAS TRANQUILAS Y COMIDA AL VOLVER (610-614) =====
+  // 610) T5 · EL FIN DE SEMANA SE ENTRENA A LAS 15:00, NO A LAS 10:00 (hora punta del gimnasio, ocupación por horas 03/11): sábado y domingo en el parque a las 15:00, 40 min; una hora puesta a mano manda.
+  //      Cae con `fin:ok(f.fin)?f.fin:'15:00'` vuelto a '10:00' en `franja()`.
+  // 611) T5 · LA COMIDA VA AL VOLVER DEL ENTRENO (fin + vuelta), nunca antes: martes de entreno a las 15:00 (50 min) → comida 16:05; subir «del gym a casa» a 30 min la pasa a las 16:20 y siempre queda después del entreno.
+  //      Cae con la rama `finG!=null` de `comidaPrincipalDe` quitada (volvía a las 18:00).
+  // 612) T5 · SIEMPRE ≥5 H ANTES DE DORMIR: con una cama a las 20:35 (12 h de sueño) el martes no cabe un entreno que acabe a las 15:50, no se propone y la semana lo explica («no se propone: dormirías a las …»); con 8 h vuelve a las 15:00.
+  //      Cae con `entrenoCabe` sin la regla de la cama.
+  // 613) T5 · DOMINGO: acaba antes de las 18:00 y, si un evento ocupa la tarde, no se pone a una hora punta ni tarde: se explica. Una hora a mano (19:30) se respeta.
+  //      Cae con `dom&&fin>18*60` quitado de `entrenoCabe`.
+  // 614) T5 · el entreno mueve su hora solo a horas tranquilas: el sábado con una reunión a las 15:00 salta a las 17:00 (nunca a las 10:00-12:00 de antes).
+  //      Cae con `ENT_HORAS.fuerza` vuelto a la lista de antes.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const prep = () => page.evaluate(() => { const P = window.PG, g = P.gymS(); window.__copia610 = JSON.parse(JSON.stringify(P.store));
+      const lun = P.mondayOf(new Date()), k = (i) => P.iso(P.addDays(lun, i));
+      g.rutinas = [{ id: 'r610', nombre: 'Torso 610', dias: [], ejercicios: ['Press banca (barra)', 'Remo con barra'].map((ex) => ({ ex, series: 3, reps: 8, rmax: 10 })) }];
+      delete g.hora; delete g.duracion; delete g.franja; g.registro = []; g.sesiones = []; g.forzar = {}; g.cambios = {}; g.minSemana = 0; g.vuelta = 15; g.ida = 15;
+      P.store.eventos = (P.store.eventos || []).filter((e) => !/lloret/i.test(e.titulo || ''));
+      P.store.sueno = Object.assign({}, P.store.sueno, { min: 8 });
+      const T = P.store.shifts.find((x) => /libre/i.test(x.name)); P.store.rotation.mode = 'date';
+      for (let i = -1; i < 8; i++) P.setDayOverride(k(i), T.id, '');
+      P.ui.tab = 'gym'; P.ui.gymDate = k(1); P.save(); P.render(); return { mar: k(1), sab: k(5), dom: k(6) }; });
+    const D = await prep(); await page.waitForTimeout(250);
+    const hero = () => page.evaluate(() => (document.querySelector('#main .ghero2 .k') || {}).textContent || '');
+    const hora = (k) => page.evaluate((k) => { const P = window.PG; return { h: P.gymHoraDe(k), dur: P.gymDur(k), lugar: P.lugarEntreno(k) }; }, D.mar);
+    // 610 · sábado y domingo por la interfaz
+    const R = {};
+    for (const [n, k] of [['sab', D.sab], ['dom', D.dom]]) {
+      await page.evaluate((k) => { const P = window.PG; P.gymForzar()[k] = true; P.render(); }, k);
+      await page.click('#main [data-a="gym-dia"][data-key="' + k + '"]'); await page.waitForTimeout(250);
+      R[n] = { hero: await hero(), ...(await page.evaluate((k) => { const P = window.PG; return { h: P.gymHoraDe(k), dur: P.gymDur(k), lugar: P.lugarEntreno(k), fin: P.finEntrenoDe(k) }; }, k)) };
+    }
+    check('610 Entreno · el sábado y el domingo se entrena en el parque a las 15:00 (40 min), no a las 10:00, y la portada lo dice',
+      R.sab.h === '15:00' && R.sab.lugar === 'parque' && R.sab.dur === 40 && /15:00/.test(R.sab.hero) && !/10:00/.test(R.sab.hero) &&
+      R.dom.h === '15:00' && R.dom.fin <= 18 * 60 && /15:00/.test(R.dom.hero), JSON.stringify(R));
+    // 611 · la comida, al volver
+    await page.evaluate((k) => { const P = window.PG; P.gymForzar()[k] = true; P.ui.gymDate = k; P.render(); }, D.mar);
+    const c1 = await page.evaluate((k) => { const P = window.PG, cp = P.comidaPrincipalDe(k); return { cp: cp && cp.de, por: cp && cp.por, fin: P.finEntrenoDe(k) }; }, D.mar);
+    await page.evaluate((k) => { const P = window.PG; P.gymS().vuelta = 30; P.render(); }, D.mar);
+    const c2 = await page.evaluate((k) => { const P = window.PG, cp = P.comidaPrincipalDe(k); return { cp: cp && cp.de, fin: P.finEntrenoDe(k) }; }, D.mar);
+    await page.evaluate(() => { window.PG.gymS().vuelta = 15; });
+    check('611 Comer · el martes de entreno a las 15:00 (50 min) la comida es a las 16:05 (fin + vuelta) y con 30 min de vuelta, a las 16:20: siempre después del entreno, no a las 18:00',
+      c1.por === 'entreno' && c1.fin === 15 * 60 + 50 && c1.cp === '16:05' && c2.cp === '16:20' && c2.fin === c1.fin, JSON.stringify({ c1, c2 }));
+    // 612 · 5 h antes de dormir
+    await page.evaluate((k) => { const P = window.PG; delete P.gymForzar()[k]; P.gymS().minSemana = 3; P.store.sueno.min = 12; P.render(); }, D.mar);
+    await page.click('#main [data-a="gym-panel"][data-p="plan"]'); await page.waitForTimeout(250);
+    const s612 = await page.evaluate((k) => { const P = window.PG, s = P.entrenoSemana(k), x = s.dias.find((d) => d.k === k);
+      const t = [...document.querySelectorAll('#main .entdias button')].map((b) => b.getAttribute('title') || '').find((t) => /no se propone/.test(t)) || '';
+      return { nocabe: x.nocabe || '', apto: x.apto, base: x.base, porque: P.entrenoPorQue(s), titulo: t, cama: P.snCamaDe(k) }; }, D.mar);
+    await page.evaluate(() => { const P = window.PG; P.store.sueno.min = 8; P.ui.gymPanel = ''; P.render(); });
+    const n612 = await page.evaluate((k) => { const P = window.PG, x = P.entrenoSemana(k).dias.find((d) => d.k === k); return { nocabe: x.nocabe || '', hora: x.hora, apto: x.apto }; }, D.mar);
+    check('612 Entreno · con la cama a las 20:35 (12 h de sueño) el martes no se propone (no hay 5 h entre el entreno y dormir) y se dice por qué; con 8 h de sueño vuelve a las 15:00',
+      /dormirías a las \d\d:\d\d y el entreno acabaría a las 15:50/.test(s612.nocabe) && !s612.apto && /no se propone: dormirías/.test(s612.porque) && /no se propone/.test(s612.titulo) &&
+      n612.nocabe === '' && n612.hora === '15:00' && n612.apto, JSON.stringify({ s612, n612 }));
+    // 613 · domingo con la tarde ocupada y hora a mano
+    await page.evaluate((k) => { const P = window.PG; P.gymS().minSemana = 0; delete P.gymForzar()[k];
+      P.eventosS().push({ id: 'ev613', titulo: 'Plan 613', hora: '13:30', fin: '16:30', modo: 'fecha', fecha: k, dow: [], on: true }); P.gymS().duracion = 90; P.gymForzar()[k] = true; P.render(); }, D.dom);
+    const dom613 = await page.evaluate((k) => { const P = window.PG, inf = P.dayInfo(k), v = P.ventanaEntreno(k, 'fuerza', inf), l = P.horaLibreEntreno(k, 'fuerza', inf, v); return { libre: l && l.hora }; }, D.dom);
+        await page.evaluate(() => { window.PG.gymS().duracion = 0; window.PG.gymS().hora = '19:30'; window.PG.render(); });
+    const man613 = await page.evaluate((k) => { const P = window.PG, x = P.entrenoSemana(P.iso(P.addDays(P.mondayOf(new Date()), 1))).dias[1]; return { h: P.gymHoraDe(P.iso(P.addDays(P.mondayOf(new Date()), 1))), nocabe: x.nocabe || '' }; }, D.dom);
+    await page.evaluate(() => { delete window.PG.gymS().hora; });
+    check('613 Entreno · el domingo con un plan hasta las 16:30 y 90 min de entreno no hay hora que acabe antes de las 18:00 y una hora puesta a mano (19:30) se respeta sin avisos',
+      dom613.libre === null && man613.h === '19:30' && man613.nocabe === '', JSON.stringify({ dom613, man613 }));
+    // 614 · el sábado con reunión a las 15:00 salta a las 17:00
+    await page.evaluate((k) => { const P = window.PG; P.eventosS().push({ id: 'ev614', titulo: 'Reunión 614', hora: '15:00', fin: '16:30', modo: 'fecha', fecha: k, dow: [], on: true }); P.gymForzar()[k] = true; P.ui.gymDate = k; P.render(); }, D.sab);
+    const s614 = await page.evaluate((k) => { const P = window.PG, x = P.entrenoSemana(k).dias.find((d) => d.k === k); return { hora: x.hora, movido: !!x.movido, choca: !!x.choca }; }, D.sab);
+    check('614 Entreno · el sábado con una reunión a las 15:00 el entreno se mueve a las 17:00 (hora tranquila, 5 h antes de dormir), no a las 10:00-12:00',
+      s614.hora === '17:00' && s614.movido && !s614.choca, JSON.stringify(s614));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia610; delete window.__copia610; P.ui.gymDate = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
 

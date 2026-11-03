@@ -1926,9 +1926,12 @@ function finEntrenoDe(dateStr,infOpt){
   if(esF){
     const propias=sh.start&&!(jor&&jor.start===sh.start);
     const hi=propias?sh.start:((gymS()||{}).hora||'');
-    const m=mins(hi);
+    let m=mins(hi),dur=gymDur(dateStr);
+    if(m==null&&!propias){/* sin hora a mano: la del plan (franja tranquila del gimnasio) */
+      const e=entrenoDe(dateStr);
+      if(e&&e.tipo==='fuerza'&&mins(e.hora)!=null){m=mins(e.hora);dur=e.dur||dur;}}
     if(m!=null){
-      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+gymDur(dateStr));
+      const f=(propias&&sh.end&&sh.end>sh.start)?mins(sh.end):(m+dur);
       if(f!=null&&(fin==null||f>fin))fin=f;}}
   const g2=diaSegundo(dateStr,inf);
   if(g2&&g2.on){const m=mins(g2.hora||'15:30');
@@ -1951,8 +1954,12 @@ function comidaPrincipalDe(dateStr,infOpt){
      comer, no cuenta: manda la jornada. */
   if(hayEntrenoEn(dateStr,inf)){
     const finG=finEntrenoDe(dateStr,inf),puesta0=mins(c.sinEntreno.de);
-    if(finG==null||puesta0==null||finG>puesta0)
-      return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};}
+    if(finG==null||puesta0==null||finG>puesta0){
+      /* COMES AL VOLVER (03/11): fin del entreno + la vuelta a casa, nunca antes; la hora de fábrica
+         de «si entrenas» solo vale si no se sabe cuándo acaba */
+      if(finG!=null){const de=finG+entrenoCfg().vuelta,w=Math.max(0,mins(c.conEntreno.a)-mins(c.conEntreno.de))||30;
+        return {de:hm(de),a:hm(de+w),por:'entreno'};}
+      return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};}}
   /* LA COMIDA NO PUEDE CAER DENTRO DE LA JORNADA. Esto decía «al salir de la jornada» y usaba una
      hora FIJA: con jornada de 8 a 15 te ponía a comer en casa a las 14:00, que es imposible —a esa
      hora estás en el hospital—. Ahora la hora de la lista es lo PRONTO que comerías, y si la
@@ -9735,10 +9742,10 @@ function gymForzar(){const g=gymS();if(!g.forzar||typeof g.forzar!=='object'||Ar
 function franja(){
   /* LA FRANJA DEL ENTRENO. Entre semana, a las 15:00 (50 min) y, si algo la pisa, la sesión mínima de 25 min a
      las 15:30: nunca de tarde-noche, que es cuando se come, se descansa y se duerme. Sábado y domingo, al
-     parque a las 10:00 (40 min). Se lee de gym.franja con estos valores por defecto: nada que migrar. */
+     parque a las 15:00 (40 min): a las 10:00 el gimnasio está lleno (ocupación del gimnasio por horas, 03/11). Se lee de gym.franja con estos valores por defecto: nada que migrar. */
   const f=(gymS().franja&&typeof gymS().franja==='object')?gymS().franja:{},ok=function(h){return /^\d{1,2}:\d{2}$/.test(String(h||''));},
     d=function(x,v){return (+x>=15&&+x<=240)?Math.round(+x):v;};
-  return {sem:ok(f.sem)?f.sem:'15:00',fin:ok(f.fin)?f.fin:'10:00',durSem:d(f.durSem,50),durFin:d(f.durFin,40),min:'15:30',durMin:25};}
+  return {sem:ok(f.sem)?f.sem:'15:00',fin:ok(f.fin)?f.fin:'15:00',durSem:d(f.durSem,50),durFin:d(f.durFin,40),min:'15:30',durMin:25};}
 function esFinDeSemana(key){const d=parseDate(key);return !!d&&(d.getDay()===0||d.getDay()===6);}
 function lugarEntreno(key){return esFinDeSemana(key)?'parque':'gimnasio';}
 const PARQUE_RUTINA=['Sentadilla','Flexiones inclinadas','Remo invertido','Zancadas','Plancha','Subir escalones'];
@@ -9750,10 +9757,21 @@ function rutinaParque(){
   PARQUE_RUTINA.forEach(function(n){addRutina(rt.id,n,{series:3,reps:n==='Plancha'?30:10,descansoSeg:60});});
   return rt;}
 function gymHoraDe(key,infOpt){
-  /* a qué hora entrenas ese día: la que pongas tú en el gym o, si no, la franja fija (15:00 entre semana,
-     10:00 el fin de semana). Antes salía de la hora de salir del trabajo y a veces caía por la tarde-noche. */
+  /* a qué hora entrenas ese día: la que pongas tú en el gym o, si no, la franja fija (15:00 entre semana
+     y el fin de semana). Antes salía de la hora de salir del trabajo y a veces caía por la tarde-noche. */
   const h=gymS().hora;if(h)return h;
   return esFinDeSemana(key)?franja().fin:franja().sem;}
+function entrenoCabe(key,hora,dur){
+  /* ¿cabe un entreno que empieza a `hora` y dura `dur`? '' si sí; si no, por qué. Dos reglas (03/11): solo en
+     las horas tranquilas del gimnasio (empieza entre las 15:00 y las 18:00; el domingo desde las 14:00 y
+     acabando antes de las 18:00) y acabar al menos 5 h antes de la hora de cama que ya calcula la app. */
+  const m=mins(hora);if(m==null)return '';
+  const dom=(parseDate(key)||new Date()).getDay()===0,fin=m+dur;
+  if(m<(dom?14:15)*60||m>18*60||(dom&&fin>18*60))return 'el gimnasio está lleno a esa hora';
+  let cama=mins(snCamaDe(key));if(cama==null)return '';
+  if(cama<12*60)cama+=1440;
+  if(fin>cama-300)return 'dormirías a las '+hm(cama)+' y el entreno acabaría a las '+hm(fin)+' (hacen falta 5 h entre medias)';
+  return '';}
 function gymDur(key){return +gymS().duracion>0?+gymS().duracion:(esFinDeSemana(key)?franja().durFin:franja().durSem);}
 function ventanaEntreno(key,tipo,inf){
   /* el rato que te ocupa entrenar, con ir y volver: es lo que no puede pisar un evento */
@@ -9778,7 +9796,7 @@ function llChoca(key,v){
   return (de<v.a&&v.de<a)?ll:null;}
 /* fuerza entre semana: solo las 15:00 y la sesión mínima de las 15:30; el fin de semana, el parque a las 10:00 primero */
 const ENT_HORAS={pisc:['18:00','17:00','17:30','16:30','19:00','10:00','11:00','12:00'],
-  fuerza:['10:00','11:00','12:00','17:00','18:00','16:00','19:00','09:00'],fuerzaSem:['15:00','15:30']};
+  fuerza:['15:00','16:00','14:00','17:00'],fuerzaSem:['15:00','15:30','16:00','17:00']};
 function horaLibreEntreno(key,tipo,inf,v0){
   /* la primera hora de la lista que no pisa trabajo, siesta, eventos ni el Lloretazo, y acaba antes
      de las 22:00 (luego toca cenar y dormir) */
@@ -9790,6 +9808,7 @@ function horaLibreEntreno(key,tipo,inf,v0){
     const dm=tipo!=='pisc'&&hs[i]===fr.min?Math.min(dur,fr.durMin):dur;   /* a las 15:30 solo cabe la sesión mínima */
     const v={de:h-c.ida,a:h+dm+c.vuelta,hora:hs[i],dur:dm};
     if(v.a>22*60)continue;
+    if(tipo!=='pisc'&&!gymS().hora&&entrenoCabe(key,hs[i],dm))continue;
     if(sie&&sie[0]!=null&&v.de<sie[1]&&sie[0]<v.a)continue;
     if(bs.some(function(b){return v.de<b.a&&b.de<v.a;}))continue;
     if(eventoQueChoca(key,v)||llChoca(key,v))continue;
@@ -9823,14 +9842,18 @@ function entrenoSemana(key){
     const x={k:k,i:i,tipo:tipo,forz:f===true,quitado:f===false,base:false,seg:false,auto:false,choca:null,
       motivo:!sh?'sin tipo de día':no||(sal?'saliente':'')};
     if(tipo){let v=ventanaEntreno(k,tipo,inf),c=eventoQueChoca(k,v)||llChoca(k,v);
+      /* hora punta del gimnasio o menos de 5 h antes de dormir: se busca otra hora y, si no hay, ese día no se propone */
+      const propio=!!x.forz||!!gymS().hora||/fuerza|entreno/i.test((sh&&sh.name)||'');
+      const nc=(tipo==='fuerza'&&!propio)?entrenoCabe(k,v.hora,v.dur):'';
+      if(nc&&!c){const v3=horaLibreEntreno(k,tipo,inf,v);if(v3){x.movido={de:v.hora,por:nc};v=v3;}else{x.nocabe=nc;}}
       /* SI CHOCA, SE MUEVE. Con el dentista a las 17:00 el entreno de las 17:00 se perdía y la semana
          contaba uno menos; y la piscina del saliente caía encima del Lloretazo. Antes de darlo por
          perdido se busca otra hora libre ese mismo día */
       if(c){const v2=horaLibreEntreno(k,tipo,inf,v);if(v2){x.movido={de:v.hora,por:c.titulo||'evento'};v=v2;c=null;}}
       x.hora=v.hora;x.dur=v.dur;x.choca=eventoQueChoca(k,v);}
-    if(conRut&&tipo==='fuerza'){if(x.choca&&!x.forz)x.perdido=true;else x.base=true;}
+    if(conRut&&tipo==='fuerza'){if((x.choca||x.nocabe)&&!x.forz)x.perdido=true;else x.base=true;}
     const g2=diaSegundo(k,inf);if(g2.on&&f!==false)x.seg=true;
-    x.apto=!!tipo&&!x.quitado&&!x.choca&&!(tipo==='pisc'&&!cfg.pisc.on);
+    x.apto=!!tipo&&!x.quitado&&!x.choca&&!x.nocabe&&!(tipo==='pisc'&&!cfg.pisc.on);
     dias.push(x);}
   const on=function(x){return x.base||x.forz||x.seg||x.auto;};
   const fuerzas=function(){return dias.filter(function(x){return (x.base||x.auto||x.forz)&&x.tipo==='fuerza';}).length;};
@@ -9863,10 +9886,11 @@ function entrenoSemana(key){
     if(x.tipo!=='fuerza'||!(x.base||x.auto||x.forz))return;
     const r=x.base?rutinaDeFechaBase(x.k):(rs.length?rs[(prev+1)%rs.length]:null);
     if(r){asig[x.k]=r;prev=rs.indexOf(r);}});
+  const nocabes=dias.filter(function(x){return x.nocabe;});
   const n=cuenta(),choques=dias.filter(function(x){return x.choca&&(x.perdido||(!on(x)&&x.tipo));});
   const r={lun:lk,dias:dias,total:n,min:cfg.min,faltan:Math.max(0,cfg.min-n),fuerza:fuerzas(),
     pisc:dias.filter(function(x){return on(x)&&x.tipo!=='fuerza';}).length,
-    auto:dias.filter(function(x){return x.auto;}).map(function(x){return x.k;}),asig:asig,
+    auto:dias.filter(function(x){return x.auto;}).map(function(x){return x.k;}),asig:asig,nocabes:nocabes,
     guardias:guardias,choques:choques,hayRut:hayRut};
   /* también es conflicto no llegar a tus días de fuerza: tres salientes llenan el mínimo de
      piscina, pero la semana se queda con un solo día de pesas */
@@ -9900,6 +9924,7 @@ function entrenoPorQue(s){
   const DL=['lun','mar','mié','jue','vie','sáb','dom'],p=[];
   if(s.guardias)p.push(s.guardias+' guardia'+(s.guardias===1?'':'s'));
   s.choques.forEach(function(x){p.push('el '+DL[x.i]+' choca con «'+(x.choca.titulo||'evento')+'»');});
+  (s.nocabes||[]).forEach(function(x){p.push('el '+DL[x.i]+' no se propone: '+x.nocabe);});
   if(!s.hayRut)p.push('no tienes rutinas creadas');
   return p.join(' · ');}
 function rutSigla(n){
@@ -9920,7 +9945,7 @@ function entrenoSemanaHTML(key,compacto){
     if(x.tipo==='pisc'&&(x.auto||x.forz))return '🏊';
     if(x.base)return '💪';if(x.forz)return '✋';if(x.auto)return '✨';
     if(x.seg)return '🏊';
-    if(x.choca||x.perdido)return '📌';
+    if(x.choca||x.perdido||x.nocabe)return '📌';
     return x.apto?'·':(x.motivo==='guardia'?'🩺':'—');};
   return '<div class="card"><div class="row"><h2 style="margin:0">Entrenos de la semana</h2><span class="sp"></span>'+
       '<span class="mini">mínimo</span><div class="hrst" style="margin-left:6px"><button class="btn s" data-a="ent-min" data-d="-1" aria-label="uno menos">−</button>'+
@@ -9931,7 +9956,7 @@ function entrenoSemanaHTML(key,compacto){
       const r=s.asig[x.k];
       const tit=DL[x.i]+' '+parseDate(x.k).getDate()+': '+(x.base?('entreno de siempre'+(r?' · '+r.nombre:'')):
         x.forz?'puesto a mano':x.auto?('puesto por la app'+(x.tipo==='pisc'?' · piscina de saliente '+x.hora:(r?' · '+r.nombre:''))):
-        x.seg?'piscina':x.perdido?('choca con «'+x.choca.titulo+'»'):x.quitado?'quitado a mano':x.choca?('choca con «'+x.choca.titulo+'»'):(x.motivo||'libre'))+
+        x.seg?'piscina':x.nocabe?('no se propone: '+x.nocabe):x.perdido?('choca con «'+x.choca.titulo+'»'):x.quitado?'quitado a mano':x.choca?('choca con «'+x.choca.titulo+'»'):(x.motivo||'libre'))+
         (x.movido&&on?' · movido a las '+x.hora+' (a las '+x.movido.de+' chocaba con «'+x.movido.por+'»)':'');
       return '<button class="'+cls+'" data-a="ent-dia" data-k="'+x.k+'" title="'+esc(tit)+'" aria-label="'+esc(tit)+'">'+
         '<span>'+DL[x.i]+'</span><b>'+ico(x)+'</b>'+(x.tipo==='fuerza'&&r&&on?('<i>'+esc(rutSigla(r.nombre))+'</i>'):'')+'</button>';}).join('')+'</div>'+
@@ -16397,7 +16422,7 @@ function cjeHoraMom(p,k){
   if(p==='desayuno'&&(C.guardia||C.trabajo)){
     try{const R=mananaRegleta(k),cf=R.filter(function(x){return x.e==='cafe';})[0];
       if(cf)return H(Math.round(cf.h*60));if(R[0]&&R[0].e==='cama')return H(Math.round(R[0].h*60)+20);}catch(e){}}
-  if(p==='comida')return C.guardia?comidasCfg().sinEntreno.de:sal?'15:00':comidasCfg()[entrenoDe(k)?'conEntreno':'sinEntreno'].de;
+  if(p==='comida')return C.guardia?comidasCfg().sinEntreno.de:sal?'15:00':(entrenoDe(k)?(comidaPrincipalDe(k)||comidasCfg().conEntreno).de:comidasCfg().sinEntreno.de);
   if(p==='cena'&&C.guardia)return '21:00';
   if(p==='post-entreno'){const f=finEntrenoDe(k);if(f!=null)return H(f+15);}   /* la hora del entreno real manda */
   return {desayuno:'9:00',cena:'21:30','post-entreno':'18:30'}[p]||'17:00';}
@@ -17022,7 +17047,7 @@ function proximaVezHTML(inf){
     return '<div class="gpr"><b>'+esc(ex)+'</b><span style="color:'+col+';font-weight:800">'+
       (pr.cl==='sube'?'▲ ':pr.cl==='baja'?'▼ ':'= ')+fmtKg(pr.kg)+' kg</span></div>';}).join('');
   const k=inf.ses.fecha,cc=comidasCfg();let sl=null;try{sl=sleepOf(iso(addDays(parseDate(k),1)));}catch(e){}
-  const ahora='🍽 comida de después '+cc.conEntreno.de+' (≈0,4 g de proteína por kg)'+(sl&&sl.bed?(' · 🌙 a la cama '+sl.bed+' para tus horas'):'');
+  const cpE=comidaPrincipalDe(k),ahora='🍽 comida de después '+(cpE?cpE.de:cc.conEntreno.de)+' (≈0,4 g de proteína por kg)'+(sl&&sl.bed?(' · 🌙 a la cama '+sl.bed+' para tus horas'):'');
   return (filas?('<div class="card"><h2>La próxima vez</h2>'+filas+'</div>'):'')+
     '<div class="card"><div class="mini">'+esc(ahora)+'</div></div>';}
 function renderGymInforme(){
