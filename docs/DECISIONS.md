@@ -2680,3 +2680,8 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Descartado:** cambiar el icono del Lloret para todos (la tapa es solo de «Privado»).
 - **Prueba:** 519b (Hoy sin 🌿 con Privado y con 🌿 al quitarlo). **Cae con los `ico:'🌿'` de `nocheCadena` sin `cnOculta`** (comprobado).
 - **Supuestos:** la 🌿 de «Día libre», de alimentos (perejil, albahaca…) y de la sección 4:20 por dentro no delata nada y se queda.
+
+## 2026-11-03 · La Competencia · fase 3: pasada, maqueta C y lo que eligió el usuario
+- **Elegido:** pasada del verificador por todas las pantallas en claro y oscuro (993 pruebas en verde; 2 fallos: vaso de Dinero en oscuro y «Ver del 1 al 1 de noviembre» en el Mes). Maqueta `maquetas/competencia-c.html` (C7·a-e y X1-X3); el usuario aprueba **todas las recomendadas**: Tu guardia en 3 pasos con «Lo pongo yo cada mes» por defecto; caja de frase plegada arriba de Hoy, solo eventos y notas; copiar el último entreno con pesos y «Guardar como rutina» en hoja al terminar; «Empieza» de Estudio sin contar guardias ni salientes; Casa por pasillos con lo cogido tachado en su sitio; flechas de día sin gesto; récords en gráfico pequeño. Con «Privado», lo exportado al calendario sale **tapado**. Tandas en `encargos/competencia-fase-3-constructores.md`.
+- **Descartado:** deslizar con el dedo y el «+» flotante (choca con el scroll y con la barra; ya hay «+» en cada tarjeta).
+- **Supuestos:** el cuadrante sigue leyéndose «un día por fila» hasta que el usuario lo pruebe con una foto real (no eligió); los costes de la maqueta son estimados.
