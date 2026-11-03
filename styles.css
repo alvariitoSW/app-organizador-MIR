@@ -4472,23 +4472,23 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
 .emp-lnk{appearance:none;display:block;width:100%;border:0;background:none;color:var(--brand);font:inherit;font-size:var(--t-14);font-weight:700;min-height:var(--toque);cursor:pointer}
 
 /* Tu guardia (asistente de 3 pasos) · Ajustes → Mi planning */
-.tg .tg-paso{margin:0 0 var(--e-4,6px);font-size:var(--t-13);color:var(--texto-2);font-weight:700}
-.tg .tg-et{display:block;margin:14px 0 6px;font-size:var(--t-14)}
-.tg .tg-fila{display:flex;flex-wrap:wrap;gap:8px}
-.tg .tg-chip{min-height:var(--toque);cursor:pointer}
-.tg .tg-sig,.tg-abre{display:block;width:100%;min-height:var(--toque-grande);margin-top:16px;justify-content:center}
-.tg-abre{margin-top:0}
-.tg .tg-av,.tg .tg-atras{margin-top:10px;min-height:var(--toque)}
-.tg .tg-atras{margin:0 0 8px}
-.tg-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
-.tg-cal>b{text-align:center;font-size:var(--t-13);color:var(--texto-2)}
-.tg-c{position:relative;min-height:var(--toque-grande);border-radius:var(--r-12);border:1px solid var(--borde);background:var(--superficie-1);color:var(--ink);font:inherit;font-weight:800;font-size:var(--t-14);cursor:pointer;padding:0}
-.tg-c.off{border:0;background:none}
-.tg-c.on{background:var(--marca-suave);box-shadow:inset 0 0 0 2px var(--brand)}
-.tg-c.sal{border-style:dashed;color:var(--texto-2)}
-.tg-c i{position:absolute;right:4px;bottom:2px;font-style:normal;font-size:var(--t-13);font-weight:800;color:var(--brand)}
-.tg-cuenta{margin:12px 0 0;font-weight:800;font-size:var(--t-14)}
-.tg-op{display:block;width:100%;text-align:left;margin-top:8px;min-height:var(--toque-grande);padding:10px 14px;border-radius:var(--r-12);border:1px solid var(--borde);background:var(--superficie-1);color:var(--ink);font:inherit;cursor:pointer}
-.tg-op b{display:block;font-size:var(--t-14)}.tg-op span{display:block;font-size:var(--t-13);color:var(--texto-2);margin-top:2px}
-.tg-op.on{background:var(--marca-suave);box-shadow:inset 0 0 0 2px var(--brand)}
-.tg-res{margin-top:14px}
+.tgu .tgu-paso{margin:0 0 var(--e-4,6px);font-size:var(--t-13);color:var(--texto-2);font-weight:700}
+.tgu .tgu-et{display:block;margin:14px 0 6px;font-size:var(--t-14)}
+.tgu .tgu-fila{display:flex;flex-wrap:wrap;gap:8px}
+.tgu .tgu-chip{min-height:var(--toque);cursor:pointer}
+.tgu .tgu-sig,.tgu-abre{display:block;width:100%;min-height:var(--toque-grande);margin-top:16px;justify-content:center}
+.tgu-abre{margin-top:0}
+.tgu .tgu-av,.tgu .tgu-atras{margin-top:10px;min-height:var(--toque)}
+.tgu .tgu-atras{margin:0 0 8px}
+.tgu-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.tgu-cal>b{text-align:center;font-size:var(--t-13);color:var(--texto-2)}
+.tgu-c{position:relative;min-height:var(--toque-grande);border-radius:var(--r-12);border:1px solid var(--borde);background:var(--superficie-1);color:var(--ink);font:inherit;font-weight:800;font-size:var(--t-14);cursor:pointer;padding:0}
+.tgu-c.off{border:0;background:none}
+.tgu-c.on{background:var(--marca-suave);box-shadow:inset 0 0 0 2px var(--brand)}
+.tgu-c.sal{border-style:dashed;color:var(--texto-2)}
+.tgu-c i{position:absolute;right:4px;bottom:2px;font-style:normal;font-size:var(--t-13);font-weight:800;color:var(--brand)}
+.tgu-cuenta{margin:12px 0 0;font-weight:800;font-size:var(--t-14)}
+.tgu-op{display:block;width:100%;text-align:left;margin-top:8px;min-height:var(--toque-grande);padding:10px 14px;border-radius:var(--r-12);border:1px solid var(--borde);background:var(--superficie-1);color:var(--ink);font:inherit;cursor:pointer}
+.tgu-op b{display:block;font-size:var(--t-14)}.tgu-op span{display:block;font-size:var(--t-13);color:var(--texto-2);margin-top:2px}
+.tgu-op.on{background:var(--marca-suave);box-shadow:inset 0 0 0 2px var(--brand)}
+.tgu-res{margin-top:14px}
