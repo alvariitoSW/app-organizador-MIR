@@ -17672,6 +17672,62 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       tapado.hoja === false && tapado.luna && tapado.lloret && libre.hoja === true, JSON.stringify({ tapado, libre }));
   }
 
+  // ===== T1a · ARREGLOS DE LA COMPETENCIA, fase 3 (530-534) =====
+  // 530) DINERO · Tu mes en OSCURO sin gasto del día a día: el vaso ya no es un bloque azul claro plano (el fondo es el de la tarjeta y «Te queda» es un nivel gris medio) y «Subir Fintonic»
+  //      no es un parche blanco; encadenada: Dinero → tema Noche HUD → tocar el vaso → tema Papel, donde todo sigue como antes (fondo azul claro, botón oscuro). Cae con el CSS `html.dark .tm-vf/.tq/.tm-bt.p` quitado.
+  // 531) DINERO · en los 5 temas «Subir Fintonic» tiene contraste ≥ 4,5:1 y, en los oscuros, «Te queda» se distingue del fondo del vaso (≥ 1,5:1). Cae con `html.dark .tm-vaso .tq/.tm-vf` quitado.
+  // 532) MES · el botón de los días ya pasados dice el rango de verdad: martes 3 → «Ver el 1 de …» (no «del 1 al 1»); el día 15 sigue «del 1 al N»; encadenada: tocarlo lo despliega («Ocultar …») y la cuadrícula gana el día 1. Cae con el texto de `mes-atras` revertido.
+  // 533) COMER · Casa en oscuro: el título «Casa» va a 12 px como el resto (antes 8). Cae con `.cstop{padding:0 4px}` quitado.
+  // 534) COMER · Casa: los chips «falta» de «Crudo y verdura» no pasan de 2 líneas (antes 3). Cae con `.cs-bote{flex:1 1 104px; flex-flow:row wrap}` revertido.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    const copia530 = await page.evaluate(() => JSON.stringify(window.PG.store));
+    const lumi = 'const rgb = (s) => (String(s).match(/[\\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number); const L = (s) => { const c = rgb(s).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }; const ratio = (a, b) => { const x = L(a), y = L(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };';
+    const siembra = () => page.evaluate(() => { const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = []; a.gastado = {}; a.cobrado = {}; a.epocas = [{ id: 'e530', nombre: 'R1', desde: '2000-01', neto: 2380, finde: 0, pagaJun: 0, pagaDic: 0 }];
+      d.gastos = [{ id: 'g1', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }, { id: 'g2', nombre: 'Luz y agua', importe: 60, dia: 5, cat: 'casa', on: true }]; d.pagos = [];
+      P.ui.tmFijos = false; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); });
+    const lee = () => page.evaluate((lumi) => { const f = new Function('m', lumi + " const q = (s) => m.querySelector(s); const cs = (e, p) => e ? getComputedStyle(e)[p] : 'rgb(0,0,0)';" +
+        " const bt = q('.tm-hero .tm-bt'), vf = q('.tm-vf'), tq = q('.tm-vaso svg .tq');" +
+        " return { hay: !!bt && !!vf, tq: !!tq, ratioBt: ratio(cs(bt, 'color'), cs(bt, 'backgroundColor')), lBt: L(cs(bt, 'backgroundColor')), lVf: L(cs(vf, 'fill')), lTq: tq ? L(cs(tq, 'fill')) : -1, ratioNivel: tq ? ratio(cs(tq, 'fill'), cs(vf, 'fill')) : 0, dark: document.documentElement.classList.contains('dark') };");
+      return f(document.querySelector('#main')); }, lumi);
+    await siembra(); await page.evaluate(() => window.PG.ponerTema('hud')); await page.waitForTimeout(250);
+    const o1 = await lee();
+    await page.click('#main .tm-vaso'); await page.waitForTimeout(250); const o2 = await lee();
+    await page.evaluate(() => window.PG.ponerTema('papel')); await page.waitForTimeout(250); const c1 = await lee();
+    check('530 Dinero · Tu mes en oscuro: el fondo del vaso no es azul claro (luminancia < 0,2), «Te queda» es un nivel gris medio (< 0,45) y «Subir Fintonic» no es un parche blanco (< 0,3); en Papel sigue claro',
+      o1.hay && o1.dark && o1.lVf < 0.2 && o1.tq && o1.lTq < 0.45 && o1.lBt < 0.3 && o2.hay && o2.lVf < 0.2 && o2.lBt < 0.3 && c1.hay && !c1.dark && c1.lVf > 0.5 && c1.lBt < 0.3, JSON.stringify({ o1, o2, c1 }));
+    const temas = {};
+    for (const t of ['hud', 'magenta', 'bosque', 'papel', 'arena']) { await page.evaluate((t) => window.PG.ponerTema(t), t); await page.waitForTimeout(200); temas[t] = await lee(); }
+    check('531 Dinero · en los 5 temas «Subir Fintonic» se lee (contraste ≥ 4,5:1) y en los 3 oscuros «Te queda» se distingue del fondo del vaso (≥ 1,5:1)',
+      Object.values(temas).every((x) => x.hay && x.ratioBt >= 4.5) && ['hud', 'magenta', 'bosque'].every((t) => temas[t].dark && temas[t].ratioNivel >= 1.5), JSON.stringify(temas));
+    await page.evaluate((s) => { const P = window.PG; P.store = JSON.parse(s); P.ui.tab = 'hoy'; P.ui.dinTab = ''; P.ponerTema('hud'); P.save(); P.render(); }, copia530);
+
+    // 532) el 3 nov 2026 (martes) la cuadrícula empieza el lunes 2: solo queda oculto el día 1
+    const pon = (y, mo, d) => page.evaluate(([y, mo, d]) => { const Orig = window.__origDateFijo || Date; window.__origDateFijo = Orig; const fr = new Orig(y, mo, d, 12, 0, 0).getTime();
+      window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } }; }, [y, mo, d]);
+    const mesVer = () => page.evaluate(() => { const b = document.querySelector('#main .mesatras'), h = new Date(); return { btn: b ? b.textContent.replace(/\s+/g, ' ').trim() : '', pr: !!document.querySelector('#main .cal [data-key="' + window.PG.iso(new Date(h.getFullYear(), h.getMonth(), 1, 12)) + '"]') }; });
+    const abreMes = () => page.evaluate(() => { const P = window.PG, h = new Date(); P.ui.mesAtras = false; P.ui.mesHoja = false; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.ui.monSel = ''; P.monthDate = new Date(h.getFullYear(), h.getMonth(), 1); P.save(); P.render(); });
+    await pon(2026, 10, 3); await abreMes(); await page.waitForTimeout(250); const m1 = await mesVer();
+    await page.click('#main .mesatras'); await page.waitForTimeout(250); const m2 = await mesVer();
+    await pon(2026, 10, 15); await abreMes(); await page.waitForTimeout(250); const m3 = await mesVer();
+    await page.evaluate(() => { window.PG.ui.mesAtras = false; window.PG.render(); });
+    check('532 Mes · el 3 de noviembre el botón dice «▲ Ver el 1 de noviembre» (no «del 1 al 1»), al tocarlo «▼ Ocultar el 1 de noviembre» y sale el día 1; el 15 (domingo) sigue «del 1 al 8»',
+      m1.btn === '▲ Ver el 1 de noviembre' && !m1.pr && m2.btn === '▼ Ocultar el 1 de noviembre' && m2.pr && m3.btn === '▲ Ver del 1 al 8 de noviembre', JSON.stringify({ m1, m2, m3 }));
+    await fijaHoy(12, 0);
+
+    // 533 / 534) Casa en oscuro
+    await page.evaluate(() => { const P = window.PG; P.ponerTema('hud'); P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.render(); });
+    await page.click('#main [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(250);
+    await page.evaluate(() => { document.querySelector('#main .cs-wrap').innerHTML = ['Pechuga de pollo', 'Tomate pera', 'Yogur natural griego', 'Leche', 'Zanahoria'].map((n) => '<div class="cs-bote hu"> ' + n + '<span>falta</span></div>').join(''); });
+    const casa = await page.evaluate(() => ({ x: Math.round(document.querySelector('#main .cstit').getBoundingClientRect().x),
+      altos: [...document.querySelectorAll('#main .cs-wrap .cs-bote.hu')].map((e) => Math.round(e.getBoundingClientRect().height)), dark: document.documentElement.classList.contains('dark') }));
+    check('533 Comer · Casa en oscuro: el título «Casa» empieza a 12 px (antes 8, pegado al borde)', casa.dark && casa.x === 12, JSON.stringify(casa));
+    check('534 Comer · Casa: ningún chip «falta» de «Crudo y verdura» pasa de 2 líneas (≤ 60 px; antes 3 líneas, 72 px)', casa.altos.length === 5 && Math.max(...casa.altos) <= 60, JSON.stringify(casa));
+    await page.evaluate((s) => { const P = window.PG; P.store = JSON.parse(s); P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ponerTema('hud'); P.save(); P.render(); }, copia530);
+    await page.setViewportSize(vp); await sueltaHoy();
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

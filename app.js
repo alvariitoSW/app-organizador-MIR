@@ -9356,7 +9356,7 @@ function renderMonth(){
         <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
         <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada color" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
       ${mesCarneHTML(abono,y,mo,svc)}${mesGuardiasLineaHTML(mo,abono,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
-      ${rejilla.oculto?'<button class="btn s mesatras" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+' del 1 al '+rejilla.oculto+' de '+MONTH_FULL[mo]+'</button>':''}
+      ${rejilla.oculto?'<button class="btn s mesatras" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+(rejilla.oculto===1?' el 1':' del 1 al '+rejilla.oculto)+' de '+MONTH_FULL[mo]+'</button>':''}
       <div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
       ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · la línea amarilla es la frontera entre meses'+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
@@ -23770,11 +23770,11 @@ function tmVasoSVG(D,sep){
     const h=l.v*K,y=228-cum*K-h;cum+=l.v;if(h<=0)return;
     if(l.pat)defs+='<pattern id="tmp'+i+'" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="'+(l.pc||'#fff')+'"/><rect width="3" height="7" fill="'+l.c+'"/></pattern>';
     const off=sep?(l.fijo?i:nF)*G:0;
-    rects+='<g class="l"'+(l.capa?' data-capa="'+l.capa+'"':'')+' style="transform:translateY('+(-off)+'px)"><rect x="0" y="'+y.toFixed(1)+'" width="170" height="'+h.toFixed(1)+'" fill="'+(l.pat?'url(#tmp'+i+')':l.c)+'" stroke="'+(l.fijo?l.c:'#fff')+'" stroke-width="1"/></g>';});
+    rects+='<g class="l"'+(l.capa?' data-capa="'+l.capa+'"':'')+' style="transform:translateY('+(-off)+'px)"><rect x="0" y="'+y.toFixed(1)+'" width="170" height="'+h.toFixed(1)+'"'+(l.c==='#cbd5e1'?' class="tq"':'')+' fill="'+(l.pat?'url(#tmp'+i+')':l.c)+'" stroke="'+(l.fijo?l.c:'#fff')+'" stroke-width="1"/></g>';});
   const ult=L.filter(function(l){return l.fijo;}).reduce(function(s,l){return s+l.v;},0);
   const lin=sep?'<line x1="14" x2="156" y1="'+(228-ult*K-nF*G-G/2).toFixed(1)+'" y2="'+(228-ult*K-nF*G-G/2).toFixed(1)+'" stroke="#0f172a" stroke-width="2.5" stroke-dasharray="5 3"/>':'';
   return '<svg viewBox="0 0 170 236" width="170" height="236" role="img" aria-labelledby="tmvt"><title id="tmvt">Vaso del mes por capas: fijos abajo, gastos normales, margen y lo que ahorras arriba</title>'+
-    '<defs><clipPath id="tmvc"><path d="'+VASO+'"/></clipPath>'+defs+'</defs><path d="'+VASO+'" fill="#e0ecff" opacity=".6"/>'+
+    '<defs><clipPath id="tmvc"><path d="'+VASO+'"/></clipPath>'+defs+'</defs><path class="tm-vf" d="'+VASO+'" fill="#e0ecff" opacity=".6"/>'+
     '<g clip-path="url(#tmvc)">'+rects+'</g>'+
     '<path d="'+VASO+'" fill="none" stroke="#64748b" stroke-width="3.5" stroke-linejoin="round"/>'+lin+'</svg>';}
 function dinTuMesHTML(){

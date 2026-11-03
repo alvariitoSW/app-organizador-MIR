@@ -3909,7 +3909,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .cjs7 span.hoy{border-color:var(--brand)}.cjs7 b{font-size:var(--suelo);color:var(--ink2)}.cjs7 i{font-style:normal;font-size:16px}
 
 /* ===== COMER · SEMANA a mano y CASA (la nevera dibujada) ===== */
-.cstop{display:flex;align-items:center;gap:8px;margin-bottom:8px}.cstit{margin:0;font-size:19px}
+.cstop{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 4px}  /* T1a · el título a 12 px como el resto (main da 8) */.cstit{margin:0;font-size:19px}
 .cs-lg{text-align:center;margin:4px 0 10px}
 .cs-dia{padding:10px 12px;margin:0 0 8px}.cs-dia .row{display:flex;align-items:center;gap:8px}
 .cs-hueco{display:grid;place-items:center;width:100%;min-height:44px;margin-top:6px;border:2px dashed var(--brand2);border-radius:11px;background:none;color:var(--brand);font:inherit;font-weight:800;font-size:var(--suelo);cursor:pointer}
@@ -3934,7 +3934,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .cs-tp small{display:block;font-size:var(--suelo);font-weight:700;color:var(--ink2)}
 .cs-tp.cad{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,var(--bg2))}
 .cs-tp .dot{position:absolute;right:-5px;top:-10px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:var(--suelo);font-weight:900;display:grid;place-items:center}
-.cs-bote{flex:1 1 70px;min-width:0;min-height:48px;padding:4px 2px;border-radius:8px;border:2px solid var(--line);background:var(--bg2);font-size:var(--suelo);font-weight:800;line-height:1.15;text-align:center;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.cs-bote{flex:1 1 104px;min-width:0;min-height:48px;padding:4px 2px;border-radius:8px;border:2px solid var(--line);background:var(--bg2);font-size:var(--suelo);font-weight:800;line-height:1.15;text-align:center;display:flex;align-items:center;justify-content:center;flex-flow:row wrap;column-gap:4px;row-gap:0}  /* T1a · el «falta» sigue al nombre en vez de ir a una 3.ª línea */
 .cs-bote span{font-size:var(--suelo);font-weight:700;color:var(--ink2)}.cs-bote.hu{border-style:dashed;color:var(--ink2)}
 .cs-fz{border-color:var(--info,#4a90d9);background:color-mix(in srgb,var(--info,#4a90d9) 14%,var(--bg2));flex:1 1 90px}.cs-mas{min-height:44px;border:0;background:none;font-weight:800;font-size:var(--suelo);color:var(--brand2);text-align:left;padding:0 4px}.cs-piz{padding:6px;border-radius:6px;border:3px solid var(--line);background:var(--bg2);font-size:var(--suelo);font-weight:800;line-height:1.25}
 .cs-compra{margin-top:8px;border-color:var(--warn)}.cs-compra .row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -4376,7 +4376,12 @@ body[data-tab="dinero"]{--suelo:14px}
    una losa clara: tarjeta oscura con borde cian. En claro no cambia nada. */
 html.dark .tm-a{color:#4ade80}
 html.dark .tm-a.mal{color:#fb7185}
-html.dark .tm-bt.p.tm-gbtn{background:var(--card);color:var(--ink);border-color:#22d3ee}
+html.dark .tm-bt.p{background:var(--card);color:var(--ink);border-color:#22d3ee}
+/* T1a · el vaso en oscuro: el fondo era un bloque azul claro (#e0ecff al 60 %) que se comía el nivel; ahora es el fondo de la tarjeta */
+html.dark .tm-vaso .tq{fill:#64748b;stroke:#94a3b8}
+html.dark .tm-ley i[style*="cbd5e1"]{background:#64748b!important}
+html.dark .tm-vf{fill:var(--bg);opacity:.55}
+label.tm-bt{display:flex;align-items:center;justify-content:center;padding:0 16px}
 
 /* SUELO-SMALL: <small> hereda el 83 % del padre; con suelo. Las excepciones lo conservan. */
 small{font-size:max(.83em,var(--suelo))}
