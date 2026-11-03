@@ -18105,7 +18105,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
   // ===== T3b · TU GUARDIA (580-589) =====
   // 580) C7·a · de punta a punta: Ajustes → Mi planning → «Tu guardia en 3 pasos» → servicio, 17 h, saliente → tocar 4 días → Guardar: el servicio del mes, el turno de guardia (15:00-08:00), las 4 guardias y sus salientes quedan escritos de verdad.
-  //      Cae con el `case 'tg-guarda'` vaciado (tgGuarda() sin setDayOverride).
+  //      Cae con el `case 'tgu-guarda'` vaciado (tgGuarda() sin setDayOverride).
   // 581) C7·a · hasta «Guardar» no se escribe nada: tocar días y volver atrás no cambia el planning; el calendario marca la guardia (G) y el saliente (S) y la cuenta dice «N guardias · M en fin de semana».
   // 582) C7·a · «¿Libras el día después?» No: se guardan las guardias y no se escribe ningún saliente.
   // 583) C7·a · paso 3: con cuatro guardias cada 8 días la app propone «una cada 8 días» y, si la eliges, escribe también las del mes siguiente; por defecto («Lo pongo yo cada mes») el mes siguiente queda intacto.
@@ -18117,49 +18117,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await fijaHoy(12, 0);
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.evaluate(() => { window.__copiaT3b = JSON.parse(JSON.stringify(window.PG.store)); const P = window.PG; P.store.rotation.mode = 'template'; P.store.rotation.daySet = {}; P.ui.tg = null; P.ui.tab = 'data'; P.ui.datosVista = 'planning'; P.render(); });
+    await page.evaluate(() => { window.__copiaT3b = JSON.parse(JSON.stringify(window.PG.store)); const P = window.PG; P.store.rotation.mode = 'template'; P.store.rotation.daySet = {}; P.ui.tgu = null; P.ui.tab = 'data'; P.ui.datosVista = 'planning'; P.render(); });
     await page.waitForTimeout(200);
     const dk = (y, m, d) => y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
     const base = await page.evaluate(() => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() }; });
     const sigM = new Date(base.y, base.m + 1, 1), dias8 = [2, 10, 18, 26].map((d) => dk(base.y, base.m, d));
     const dl = (ds) => page.evaluate((ds) => ds.map((k) => { const o = window.PG.dayOverride(k); return o ? o.shift + (o.auto ? ':auto' : '') : ''; }), ds);
-    const toca = async (ds) => { for (const k of ds) { await page.click('#main [data-a="tg-dia"][data-k="' + k + '"]'); await page.waitForTimeout(60); } };
+    const toca = async (ds) => { for (const k of ds) { await page.click('#main [data-a="tgu-dia"][data-k="' + k + '"]'); await page.waitForTimeout(60); } };
     const clic = async (sel) => { await page.click('#main ' + sel); await page.waitForTimeout(150); };
     const guardId = await page.evaluate(() => window.PG.store.shifts.filter(window.PG.isGuardia)[0].id);
-    const reinicia = async () => { await page.evaluate(() => { const P = window.PG; P.store.rotation.daySet = {}; P.store.rotation.autoPos = true; P.ui.tg = null; P.ui.tab = 'data'; P.ui.datosVista = 'planning'; P.render(); }); await page.waitForTimeout(150); };
+    const reinicia = async () => { await page.evaluate(() => { const P = window.PG; P.store.rotation.daySet = {}; P.store.rotation.autoPos = true; P.ui.tgu = null; P.ui.tab = 'data'; P.ui.datosVista = 'planning'; P.render(); }); await page.waitForTimeout(150); };
 
     // 580 + 581
-    await clic('[data-a="tg-abre"]');
-    await page.fill('#tgSvc', 'Urgencias');
-    await clic('[data-a="tg-tipo"][data-v="17"]'); await clic('[data-a="tg-sal"][data-v="1"]');
-    await clic('[data-a="tg-paso"][data-p="2"]'); await toca(dias8);
-    const antes = await page.evaluate(() => ({ daySet: Object.keys(window.PG.store.rotation.daySet || {}).length, cuenta: (document.querySelector('#main .tg-cuenta') || {}).textContent || '',
-      G: document.querySelectorAll('#main .tg-c.on i').length, S: document.querySelectorAll('#main .tg-c.sal i').length }));
-    await clic('[data-a="tg-paso"][data-p="1"]'); await clic('[data-a="tg-paso"][data-p="2"]');
-    const vuelta = await page.evaluate(() => document.querySelectorAll('#main .tg-c.on').length);
+    await clic('[data-a="tgu-abre"]');
+    await page.fill('#tguSvc', 'Urgencias');
+    await clic('[data-a="tgu-tipo"][data-v="17"]'); await clic('[data-a="tgu-sal"][data-v="1"]');
+    await clic('[data-a="tgu-paso"][data-p="2"]'); await toca(dias8);
+    const antes = await page.evaluate(() => ({ daySet: Object.keys(window.PG.store.rotation.daySet || {}).length, cuenta: (document.querySelector('#main .tgu-cuenta') || {}).textContent || '',
+      G: document.querySelectorAll('#main .tgu-c.on i').length, S: document.querySelectorAll('#main .tgu-c.sal i').length }));
+    await clic('[data-a="tgu-paso"][data-p="1"]'); await clic('[data-a="tgu-paso"][data-p="2"]');
+    const vuelta = await page.evaluate(() => document.querySelectorAll('#main .tgu-c.on').length);
     const finde = dias8.filter((k) => [0, 6].includes(new Date(k + 'T12:00:00').getDay())).length;
     check('581 Tu guardia · tocar días no escribe nada hasta Guardar, el calendario marca G y S, la cuenta dice cuántas y cuántas en fin de semana, y ir atrás y volver conserva los días',
       antes.daySet === 0 && antes.G === 4 && antes.S >= 3 && antes.cuenta.includes('4 guardias') && antes.cuenta.includes(finde + ' en fin de semana') && vuelta === 4, JSON.stringify({ antes, vuelta, finde }));
-    await clic('[data-a="tg-paso"][data-p="3"]'); await clic('[data-a="tg-guarda"]');
+    await clic('[data-a="tgu-paso"][data-p="3"]'); await clic('[data-a="tgu-guarda"]');
     const w = await page.evaluate(([ds, y, m]) => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0];
       return { svc: P.monthService(y, m).service, turno: G.start + '-' + G.end, gs: ds.map((k) => (P.dayOverride(k) || {}).shift === G.id), autos: Object.values(P.store.rotation.daySet).filter((v) => v && v.auto === 'pos').length, tab: P.ui.tab, cupo: P.monthService(y, m).guardias }; }, [dias8, base.y, base.m]);
     check('580 Tu guardia · de Ajustes → Mi planning a Guardar: servicio del mes, turno 15:00-08:00, las 4 guardias y sus salientes quedan escritos, y se vuelve al calendario',
       w.svc === 'Urgencias' && w.turno === '15:00-08:00' && w.gs.every(Boolean) && w.autos >= 3 && w.tab === 'month' && w.cupo === 4, JSON.stringify(w));
 
     // 582 sin saliente
-    await reinicia(); await clic('[data-a="tg-abre"]'); await clic('[data-a="tg-sal"][data-v="0"]'); await clic('[data-a="tg-paso"][data-p="2"]'); await toca(dias8);
-    await clic('[data-a="tg-paso"][data-p="3"]'); await clic('[data-a="tg-guarda"]');
+    await reinicia(); await clic('[data-a="tgu-abre"]'); await clic('[data-a="tgu-sal"][data-v="0"]'); await clic('[data-a="tgu-paso"][data-p="2"]'); await toca(dias8);
+    await clic('[data-a="tgu-paso"][data-p="3"]'); await clic('[data-a="tgu-guarda"]');
     const s0 = await page.evaluate(([ds]) => ({ gs: ds.filter((k) => window.PG.dayOverride(k)).length, autos: Object.values(window.PG.store.rotation.daySet).filter((v) => v && v.auto).length, ap: window.PG.store.rotation.autoPos }), [dias8]);
     check('582 Tu guardia · «¿Libras el día después?» No: se guardan las 4 guardias y ningún saliente', s0.gs === 4 && s0.autos === 0 && s0.ap === false, JSON.stringify(s0));
 
     // 583 patrón cada 8 días
-    await reinicia(); await clic('[data-a="tg-abre"]'); await clic('[data-a="tg-paso"][data-p="2"]'); await toca(dias8); await clic('[data-a="tg-paso"][data-p="3"]');
-    const op3 = await page.evaluate(() => ({ txt: document.getElementById('main').innerText, manual: !!document.querySelector('#main [data-a="tg-fut"][data-v="manual"].on') }));
-    await clic('[data-a="tg-guarda"]');
+    await reinicia(); await clic('[data-a="tgu-abre"]'); await clic('[data-a="tgu-paso"][data-p="2"]'); await toca(dias8); await clic('[data-a="tgu-paso"][data-p="3"]');
+    const op3 = await page.evaluate(() => ({ txt: document.getElementById('main').innerText, manual: !!document.querySelector('#main [data-a="tgu-fut"][data-v="manual"].on') }));
+    await clic('[data-a="tgu-guarda"]');
     const pref = sigM.getFullYear() + '-' + String(sigM.getMonth() + 1).padStart(2, '0');
     const sigVacio = await page.evaluate((pref) => Object.keys(window.PG.store.rotation.daySet).filter((k) => k.slice(0, 7) === pref && window.PG.dayOverride(k)).length, pref);
-    await reinicia(); await clic('[data-a="tg-abre"]'); await clic('[data-a="tg-paso"][data-p="2"]'); await toca(dias8); await clic('[data-a="tg-paso"][data-p="3"]');
-    await clic('[data-a="tg-fut"][data-v="cada"]'); await clic('[data-a="tg-guarda"]');
+    await reinicia(); await clic('[data-a="tgu-abre"]'); await clic('[data-a="tgu-paso"][data-p="2"]'); await toca(dias8); await clic('[data-a="tgu-paso"][data-p="3"]');
+    await clic('[data-a="tgu-fut"][data-v="cada"]'); await clic('[data-a="tgu-guarda"]');
     const esp = []; for (let x = new Date(base.y, base.m, 26 + 8, 12); x < new Date(base.y, base.m + 2, 1); x.setDate(x.getDate() + 8)) if (x >= sigM) esp.push(isoDate(x));
     const sg = await dl(esp);
     check('583 Tu guardia · con cuatro guardias cada 8 días se ofrece «una cada 8 días» (por defecto, «Lo pongo yo» y el mes siguiente queda vacío); si lo eliges se escriben también las del mes siguiente',
@@ -18167,9 +18167,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
 
     // 584 sin patrón + mismos días
     const raros = [3, 9, 20, 27].map((d) => dk(base.y, base.m, d));
-    await reinicia(); await clic('[data-a="tg-abre"]'); await clic('[data-a="tg-paso"][data-p="2"]'); await toca(raros); await clic('[data-a="tg-paso"][data-p="3"]');
-    const op4 = await page.evaluate(() => ({ cada: /una cada/.test(document.getElementById('main').innerText), igual: !!document.querySelector('#main [data-a="tg-fut"][data-v="igual"]') }));
-    await clic('[data-a="tg-fut"][data-v="igual"]'); await clic('[data-a="tg-guarda"]');
+    await reinicia(); await clic('[data-a="tgu-abre"]'); await clic('[data-a="tgu-paso"][data-p="2"]'); await toca(raros); await clic('[data-a="tgu-paso"][data-p="3"]');
+    const op4 = await page.evaluate(() => ({ cada: /una cada/.test(document.getElementById('main').innerText), igual: !!document.querySelector('#main [data-a="tgu-fut"][data-v="igual"]') }));
+    await clic('[data-a="tgu-fut"][data-v="igual"]'); await clic('[data-a="tgu-guarda"]');
     const sg4 = await dl([3, 9, 20, 27].map((d) => dk(sigM.getFullYear(), sigM.getMonth(), d)));
     check('584 Tu guardia · con días desiguales no se ofrece «una cada N días»; «Repite estos mismos días» escribe esos días el mes siguiente',
       !op4.cada && op4.igual && sg4.every((x) => x.startsWith(guardId)), JSON.stringify({ op4, sg4 }));
@@ -18177,10 +18177,10 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 585 guardias previas
     await reinicia();
     await page.evaluate(([a, b, otro]) => { const P = window.PG, G = P.store.shifts.filter(P.isGuardia)[0]; P.setDayOverride(a, G.id, ''); P.setDayOverride(b, G.id, ''); P.setDayOverride(otro, P.store.shifts.filter((s) => !P.isGuardia(s))[0].id, ''); P.save(); }, [dias8[0], dias8[1], dias8[3]]);
-    await clic('[data-a="tg-abre"]'); await clic('[data-a="tg-paso"][data-p="2"]');
-    const pre = await page.evaluate(() => document.querySelectorAll('#main .tg-c.on').length);
-    await page.click('#main [data-a="tg-dia"][data-k="' + dias8[0] + '"]'); await page.waitForTimeout(80);
-    await clic('[data-a="tg-paso"][data-p="3"]'); await clic('[data-a="tg-guarda"]');
+    await clic('[data-a="tgu-abre"]'); await clic('[data-a="tgu-paso"][data-p="2"]');
+    const pre = await page.evaluate(() => document.querySelectorAll('#main .tgu-c.on').length);
+    await page.click('#main [data-a="tgu-dia"][data-k="' + dias8[0] + '"]'); await page.waitForTimeout(80);
+    await clic('[data-a="tgu-paso"][data-p="3"]'); await clic('[data-a="tgu-guarda"]');
     const r5 = await dl([dias8[0], dias8[1], dias8[3]]);
     check('585 Tu guardia · las guardias que ya había salen marcadas; destocar una la quita, deja la otra y no toca un día de trabajo puesto a mano',
       pre === 2 && r5[0] === '' && r5[1].startsWith(guardId) && r5[2] !== '' && !r5[2].startsWith(guardId), JSON.stringify({ pre, r5 }));
@@ -18188,22 +18188,22 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 586 avanzado
     await reinicia();
     const ciclo0 = await page.evaluate(() => JSON.stringify([window.PG.store.rotation.mode, window.PG.store.patterns.length]));
-    await clic('[data-a="tg-abre"]'); await clic('[data-a="cfg-vista"][data-v="semana"]');
+    await clic('[data-a="tgu-abre"]'); await clic('[data-a="cfg-vista"][data-v="semana"]');
     const av = await page.evaluate(() => ({ ciclo: JSON.stringify([window.PG.store.rotation.mode, window.PG.store.patterns.length]), vista: window.PG.ui.cfgVista }));
     check('586 Tu guardia · «Avanzado: repetir por fechas (ciclo)» abre «Mi semana» y el ciclo queda como estaba', av.ciclo === ciclo0 && av.vista === 'semana', JSON.stringify({ av, ciclo0 }));
 
     // 587 teclear y volver
-    await reinicia(); await clic('[data-a="tg-abre"]'); await page.fill('#tgSvc', 'Medicina Interna'); await clic('[data-a="tg-paso"][data-p="2"]'); await clic('[data-a="tg-paso"][data-p="1"]');
-    check('587 Tu guardia · lo tecleado en «Servicio» sobrevive a ir al paso 2 y volver atrás', (await page.inputValue('#tgSvc')) === 'Medicina Interna', '');
+    await reinicia(); await clic('[data-a="tgu-abre"]'); await page.fill('#tguSvc', 'Medicina Interna'); await clic('[data-a="tgu-paso"][data-p="2"]'); await clic('[data-a="tgu-paso"][data-p="1"]');
+    check('587 Tu guardia · lo tecleado en «Servicio» sobrevive a ir al paso 2 y volver atrás', (await page.inputValue('#tguSvc')) === 'Medicina Interna', '');
 
     // 588 medidas
-    await clic('[data-a="tg-paso"][data-p="2"]');
-    const med = await page.evaluate(() => { const q = (s) => [...document.querySelectorAll(s)], dia = q('#main .tg-c[data-k]'), btn = q('#main .tg-sig, #main .tg-atras'), todos = q('#main .tg-c[data-k], #main .tg-sig, #main .tg-atras, #main .tg-cuenta, #main .note');
+    await clic('[data-a="tgu-paso"][data-p="2"]');
+    const med = await page.evaluate(() => { const q = (s) => [...document.querySelectorAll(s)], dia = q('#main .tgu-c[data-k]'), btn = q('#main .tgu-sig, #main .tgu-atras'), todos = q('#main .tgu-c[data-k], #main .tgu-sig, #main .tgu-atras, #main .tgu-cuenta, #main .note');
       return { dia: Math.min(...dia.map((x) => x.getBoundingClientRect().height)), btn: Math.min(...btn.map((x) => x.getBoundingClientRect().height)), f: Math.min(...todos.map((x) => parseFloat(getComputedStyle(x).fontSize))),
         scroll: document.documentElement.scrollWidth, vw: innerWidth }; });
     check('588 Tu guardia · a 412 px cada día mide ≥44 px de alto, los botones ≥44 px, la letra ≥13 px y nada desborda', med.dia >= 44 && med.btn >= 44 && med.f >= 13 && med.scroll <= med.vw, JSON.stringify(med));
 
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copiaT3b; delete window.__copiaT3b; P.ui.tg = null; P.ui.datosVista = ''; P.ui.tab = 'month'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copiaT3b; delete window.__copiaT3b; P.ui.tgu = null; P.ui.datosVista = ''; P.ui.tab = 'month'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
   // ===== T4 · EXPORTAR: RESUMEN DEL MES (PDF) Y EXCEL (600-609) =====
