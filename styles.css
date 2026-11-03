@@ -3939,6 +3939,10 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .cs-fz{border-color:var(--info,#4a90d9);background:color-mix(in srgb,var(--info,#4a90d9) 14%,var(--bg2));flex:1 1 90px}.cs-mas{min-height:44px;border:0;background:none;font-weight:800;font-size:var(--suelo);color:var(--brand2);text-align:left;padding:0 4px}.cs-piz{padding:6px;border-radius:6px;border:3px solid var(--line);background:var(--bg2);font-size:var(--suelo);font-weight:800;line-height:1.25}
 .cs-compra{margin-top:8px;border-color:var(--warn)}.cs-compra .row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .cs-compra .cs-or{font-size:var(--suelo);color:var(--ink2);text-align:right;white-space:nowrap}.cs-ya{margin-top:6px}
+.cs-pas{margin-top:6px}.cs-pasn{display:flex;align-items:center;gap:8px;padding:6px 0 2px;font-size:var(--suelo);font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2)}
+.cs-pasc{min-width:22px;padding:1px 7px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);text-align:center;font-weight:800}
+.cs-pas .cjli:first-of-type{border-top:0}
+.cs-ya summary{cursor:pointer;min-height:44px;list-style:none;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:44px}.cs-ya[open] summary{white-space:normal;line-height:1.35;padding:8px 0}
 /* S3b · vitaminas (parada «cierre» de la línea y hoja «% diario») e investigar lo que no conoce */
 .cjvit{display:flex;gap:9px;align-items:flex-start;width:100%;padding:12px 0 4px;border:0;border-top:1px dashed var(--line);background:none;color:var(--ink);font:inherit;text-align:left;--bx:#d95926;min-height:var(--toque,44px)}
 .cjvit .vh{width:44px;flex:none;font-size:var(--suelo);font-weight:800;color:var(--ink2);padding-top:2px}
