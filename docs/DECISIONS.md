@@ -2731,3 +2731,11 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Quita:** de la fila interior de la tarjeta, los botones ‹ día / volver a hoy / día ›; quedan «Lloretazo» y «＋ añadir».
 - **Cae con X revertido:** 560, 561, 563 y 564 caen con `diaNavHTML` y su CSS revertidos (562, de ausencia, no cae: es un guardia). Ninguna otra.
 - **Supuestos:** «Hoy · mié 11» en el centro cuando es hoy; en «De viaje» las flechas llevan a un día normal y «volver a hoy» devuelve a lo esencial.
+
+
+### T4 · Exportar: resumen del mes (PDF) y Excel (pruebas 600-604, 03/11/2026)
+- **Elegido:** dos botones en Ajustes → Datos → Copias, del mes que estás viendo (`monthDate`). PDF sin librería: `resumenMesImprimir()` pinta `#resPrint` (fuera de `#main`), pone `html.imp-res` y llama a `window.print()` (mismo mecanismo que `imprimir()`); en pantalla no existe. Excel: se reutiliza `xlsxLibro`/`zipGuardado` (zip sin comprimir + CRC32 que ya hacía el Excel de Dinero) y `dlTxt` para bajarlo; las 4 hojas salen de `resumenMes(y,m)` (bloquesTrabajo, salidaDeGuardia, suenoReal, gymS().registro, mesDinero). Se añadió a `xlsxLibro` la celda `{u:true}` (número sin formato €) para las horas.
+- **Descartado:** librería de PDF/Excel; hoja con los gastos fijos pendientes (solo los pagos hechos); copiar el horario hora a hora.
+- **Privado:** nombres de día, gastos, categorías, sesiones y ejercicios pasan por `cnOculta`.
+- **Cae con X revertido:** 600-604 caen con `app.js` revertido (no existen los botones). Las viejas 207 y 216 (Excel de Dinero) siguen en verde.
+- **Supuestos:** «horas de guardia» = horas de calendario de cada día con bloque de guardia (el día de la guardia desde la hora de entrada y la mañana siguiente hasta el relevo); «horas de trabajo» = jornada; «Saliente» = día en que sales de una guardia. Sueño = noches apuntadas (con siesta). Series sin las de calentamiento «c».
