@@ -18055,7 +18055,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { n: b.length, h: Math.min(...b.map((x) => x.getBoundingClientRect().height)), f: Math.min(...b.map((x) => parseFloat(getComputedStyle(x).fontSize))), ancho: r.width, scroll: document.documentElement.scrollWidth, vw: innerWidth }; });
     await page.evaluate(() => { const P = window.PG; if (window.__copia560) { P.store = window.__copia560; delete window.__copia560; } P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
-    check('564 Flechas de día · a 412 px cada flecha mide ≥56 px de alto y ≥13 px de letra, y la fila no desborda la pantalla', m.n === 2 && m.h >= 56 && m.f >= 13 && m.scroll <= m.vw && m.ancho <= m.vw, JSON.stringify(m));
+    check('564 Flechas de día · a 412 px cada flecha mide ≥56 px de alto y ≥13 px de letra, y la fila no desborda la pantalla', m.n === 2 && Math.round(m.h) >= 56 && m.f >= 13 && m.scroll <= m.vw && m.ancho <= m.vw, JSON.stringify(m));
   }
 
 

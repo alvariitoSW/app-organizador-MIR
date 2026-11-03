@@ -2788,3 +2788,5 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **R2 · al juntar (quien dirige):** la prueba del primer arranque marca guardias los días 3, 11 y 19 del mes en curso y se quedaban
   puestas: con la suite pasada un día 3 (hoy), la guardia de «hoy» tumbaba 5 pruebas de abajo (ics, Hoy, cupo R1, Comer, Entreno) y
   colgaba el trozo 5. Ahora la prueba guarda una copia antes de conducir y la devuelve al acabar (con «montada»). Con eso, 1065/1065.
+- **Prueba 564 (quien dirige, 03/11):** con el equipo cargado la flecha medía 55,99999 px y la prueba pedía ≥56 al decimal; ahora
+  redondea al píxel (`Math.round`). No cambia la app.
