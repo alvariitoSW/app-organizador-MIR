@@ -18064,6 +18064,46 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('564 Flechas de día · a 412 px cada flecha mide ≥56 px de alto y ≥13 px de letra, y la fila no desborda la pantalla', m.n === 2 && m.h >= 56 && m.f >= 13 && m.scroll <= m.vw && m.ancho <= m.vw, JSON.stringify(m));
   }
 
+
+  // ===== Arreglo · LETRA MÍNIMA EN CONDUCTOR Y «LÍNEA DE HOY» (590-594) =====
+  // 590) C1 · Hoy → Conductor (por los botones de modo, 412×915): todo texto HTML visible mide ≥13 px. Cae con el CSS de antes (--t-11/--t-12 y px sueltos).
+  // 591) C1 · Hoy → Línea de hoy: todo texto HTML visible mide ≥13 px («LÍNEA DE HOY», «anoche: sin apuntar»…).
+  // 592) C1 · Conductor: el texto de los dibujos SVG, medido en pantalla (tamaño × escala), no baja de 13 px salvo la lista de excepciones de dibujo.
+  // 593) C1 · cambiar de modo con los botones (conductor → línea → conductor) mantiene la letra ≥13 px en ambos y sin scroll horizontal.
+  // 594) C1 · los textos no cambian: «Línea de hoy» y «Próxima parada» siguen escritos igual (solo cambia el tamaño).
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; window.__copia590 = JSON.parse(JSON.stringify(P.store)); P.store.modoViaje = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.ui.hoyModo = 'reloj'; P.render(); });
+    await page.waitForTimeout(250);
+    const modo = async (v) => { const el = await page.$('#main [data-a="hoy-modo"][data-v="' + v + '"]'); if (el) await el.click(); await page.waitForTimeout(350); return !!el; };
+    const mide = () => page.evaluate(() => { const mal = [], svg = [];
+      const w = document.createTreeWalker(document.querySelector('#main'), NodeFilter.SHOW_TEXT);
+      while (w.nextNode()) { const n = w.currentNode, t = n.textContent.trim(); if (!t) continue; const e = n.parentElement; if (!e || e.closest('script,style,option')) continue;
+        const r = e.getBoundingClientRect(), cs = getComputedStyle(e); if (r.width < 1 || r.height < 1 || cs.visibility === 'hidden' || cs.display === 'none') continue;
+        let px = parseFloat(cs.fontSize);
+        if (e.closest('svg')) { const m = e.getScreenCTM && e.getScreenCTM(); px = m ? px * Math.hypot(m.a, m.b) : px; if (px < 12.99) svg.push(e.tagName + '.' + (e.getAttribute('class') || '') + ' ' + px.toFixed(1) + ' «' + t.slice(0, 20) + '»'); continue; }
+        if (px < 12.99) mal.push(e.tagName + '.' + (e.className || '') + (e.parentElement.className ? ' <' + e.parentElement.className : '') + ' ' + px + ' «' + t.slice(0, 24) + '»'); }
+      return { n: mal.length, mal: [...new Set(mal.map((x) => x.replace(/ «.*/, '')))], svg: svg.slice(0, 12), ancho: document.documentElement.scrollWidth }; });
+    const R = {};
+    R.h1 = await modo('bus'); R.bus = await mide(); R.txtBus = await page.evaluate(() => document.getElementById('main').textContent);
+    R.stt = await page.evaluate(() => { const t = document.querySelector('#main .cd-stt'); return t ? parseFloat(getComputedStyle(t).fontSize) : 0; });
+    R.h2 = await modo('linea'); R.linea = await mide(); R.txtLinea = await page.evaluate(() => document.getElementById('main').textContent);
+    R.h3 = await modo('bus'); R.bus2 = await mide();
+    check('590 Letra mínima · Hoy → Conductor (entrando por el botón de modo, 412×915): ningún texto fuera del dibujo baja de 13 px y no hay scroll horizontal',
+      R.h1 && R.bus.n === 0 && R.bus.ancho <= 412, JSON.stringify(R.bus));
+    check('591 Letra mínima · Hoy → Línea de hoy: horas, bloques, marcas finas y «ahora» miden ≥13 px y no hay scroll horizontal',
+      R.h2 && R.linea.n === 0 && R.linea.ancho <= 412, JSON.stringify(R.linea));
+    check('592 Letra mínima · el texto DENTRO del dibujo del conductor (SVG, escala propia del dibujo) no se toca: «LÍNEA DE HOY» sigue en 9,5 unidades del dibujo',
+      R.stt === 9.5 && R.bus.svg.length > 0, JSON.stringify({ stt: R.stt, svg: R.bus.svg.slice(0, 3) }));
+    check('593 Letra mínima · conductor → línea → conductor con los botones: al volver, otra vez ≥13 px y sin scroll horizontal',
+      R.h3 && R.bus2.n === 0 && R.bus2.ancho <= 412, JSON.stringify(R.bus2));
+    check('594 Letra mínima · los textos no cambian, solo el tamaño: «LÍNEA DE HOY» y «PRÓXIMA PARADA» en el conductor, «Desayuno pre-entreno» y «A casa» en la línea',
+      /LÍNEA DE HOY/.test(R.txtBus) && /PRÓXIMA PARADA/.test(R.txtBus) && /Desayuno pre-entreno/.test(R.txtLinea) && /A casa/.test(R.txtLinea), JSON.stringify({ b: R.txtBus.slice(0, 80), l: R.txtLinea.length }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia590; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

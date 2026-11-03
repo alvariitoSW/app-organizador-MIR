@@ -1440,7 +1440,7 @@ ul.slots{list-style:none;margin:0;padding:0}
 .carril{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
   margin-top:9px}
 .carril .ch{position:absolute;left:0;right:0;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
-.carril .ch span{position:absolute;left:7px;top:-7px;font-size:10.5px;font-weight:700;color:var(--ink2);
+.carril .ch span{position:absolute;left:7px;top:-7px;font-size:var(--t-13);font-weight:700;color:var(--ink2);
   font-variant-numeric:tabular-nums;background:var(--bg2);padding:0 2px}
 .carril .cbs{position:absolute;left:34px;right:7px;top:0;bottom:0}
 /* OJO: nada de overflow:hidden aquí. Convierte el bloque en su propio contenedor de scroll y el
@@ -1456,9 +1456,9 @@ ul.slots{list-style:none;margin:0;padding:0}
 .carril .cb{padding:0;align-items:stretch}
 .carril .cb .cbt{position:sticky;top:0;display:flex;flex-direction:column;gap:1px;
   padding:4px 9px;min-width:0}
-.carril .cb b{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.carril .cb b{font-size:var(--t-13);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   text-align:left}
-.carril .cb .cbt span{font-size:10.5px;font-weight:700;color:var(--c);overflow:hidden;
+.carril .cb .cbt span{font-size:var(--t-13);font-weight:700;color:var(--c);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;text-align:left}
 /* las comidas son marcas de hora, no bloques que se coman la mañana: van finas y a la derecha */
 .carril .cb.fino{left:auto;width:58%;border-radius:7px}
@@ -1471,12 +1471,12 @@ ul.slots{list-style:none;margin:0;padding:0}
 @media (hover:hover){.carril .cb.fino:hover{background:color-mix(in srgb,var(--c) 32%,var(--bg2))}}
 .carril .cb:not(.fino) .cbt{max-width:42%}
 .carril .cb.fino .cbt{padding:3px 8px}
-.carril .cb.fino b{font-size:11px}
+.carril .cb.fino b{font-size:var(--t-13)}
 /* dónde estás ahora mismo */
 .carril .cnow{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--bad);z-index:4;
   pointer-events:none}
 .carril .cnow i{position:absolute;left:3px;top:-9px;background:var(--bad);color:var(--bg);
-  font-size:9.5px;font-weight:800;font-style:normal;border-radius:5px;padding:1px 4px;
+  font-size:var(--t-13);font-weight:800;font-style:normal;border-radius:5px;padding:1px 4px;
   font-variant-numeric:tabular-nums}
 /* la caja del carril: alto fijo y scroll dentro, como el widget del móvil. Un día de 17 h se
    comía 750 px de la portada y había que mover la página entera para ver la cena. */
@@ -1625,7 +1625,7 @@ ul.slots{list-style:none;margin:0;padding:0}
   border-top:1px dashed var(--line)}
 .lcompra .secpick .btn{font-size:var(--suelo);padding:5px 9px}
 /* la hora de cada marca fina, delante de su nombre */
-.carril .cb .cbh{font-style:normal;font-variant-numeric:tabular-nums;color:var(--c);font-weight:800;margin-right:2px}
+.carril .cb .cbh{font-size:var(--t-13);font-style:normal;font-variant-numeric:tabular-nums;color:var(--c);font-weight:800;margin-right:2px}
 /* la primera hora del carril salía cortada por arriba («06» se leía «00») */
 .carril .ch:first-child span{top:1px}
 /* el bloque largo más corto de dos que se solapan: a la derecha y por encima, como una marca fina */
