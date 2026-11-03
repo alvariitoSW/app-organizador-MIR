@@ -2731,3 +2731,9 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Quita:** de la fila interior de la tarjeta, los botones ‹ día / volver a hoy / día ›; quedan «Lloretazo» y «＋ añadir».
 - **Cae con X revertido:** 560, 561, 563 y 564 caen con `diaNavHTML` y su CSS revertidos (562, de ausencia, no cae: es un guardia). Ninguna otra.
 - **Supuestos:** «Hoy · mié 11» en el centro cuando es hoy; en «De viaje» las flechas llevan a un día normal y «volver a hoy» devuelve a lo esencial.
+
+### Arreglo · Letra mínima de 13 px en Conductor y «Línea de hoy» (pruebas 590-594, 03/11/2026)
+- **Elegido:** terminar C1 en las dos vistas que se quedaron fuera. Todo texto HTML pasa a `var(--t-13)`: en la Línea (`styles.css`) las horas, el nombre, la hora y el subtítulo de cada bloque, las marcas finas y la etiqueta «ahora»; en el Conductor (`fig/conductor.js`) el subtítulo y «más ›» de la pizarra, «AHORA · hh:mm», las horas «en 6 h», «luego:», «sin apuntar · apúntala» y «¿QUÉ ESTOY VIENDO?». Textos, colores y orden, igual.
+- **Descartado:** subir el texto de los SVG (carretera, autobús, estación: «LÍNEA DE HOY», «PRÓXIMA PARADA», «anoche: sin apuntar»…). Su tamaño es en unidades del dibujo (viewBox de 600) y en pantalla ya sale a 1–9 px; a 13 px de pantalla no cabrían en la tira, el cartel y el display sin romper el dibujo. Se mide en pantalla (tamaño × escala) y se deja constancia: la 592 fija que el dibujo no se toca.
+- **Cae con X revertido:** 590, 591 y 593 caen con `styles.css` y `fig/conductor.js` revertidos; 592 y 594 (de ausencia) no. Ninguna otra; pasan 25, 54, 324 y 470-474.
+- **Supuestos:** los bloques finos de la Línea aguantan la letra mayor porque recortan con elipsis; el test mide con la Línea y el Conductor en un día de trabajo (fecha fija 12:00).
