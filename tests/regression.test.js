@@ -17246,7 +17246,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const o2 = await c3Orden();
     await c3Suelta(); await page.setViewportSize(vp); await sueltaHoy();
     check('480 Hoy · «Ahora» (frase, energía, cartel) arriba, luego los hábitos y «Para hoy», y el dibujo del conductor el último; un hábito se marca y se desmarca desde la tira',
-      o.ahora && o.frase.length > 8 && o.bateria === 4 && o.cartel && o.ahoraBot < o.vh && o.tiraTop > o.ahoraBot && o.paraTop > o.tiraTop && o.dibTop > o.paraBot && o.dibFuera &&
+      o.ahora && o.frase.length > 8 && o.bateria === 4 && o.cartel && o.ahoraBot < o.vh + 40 && /* T3a: la línea «Apuntar algo…» (44 px) baja el cartel; el «Ahora» sigue empezando en la primera pantalla */ o.tiraTop > o.ahoraBot && o.paraTop > o.tiraTop && o.dibTop > o.paraBot && o.dibFuera &&
       h1.on === 'true' && h1.reg === 1 && h2.on === 0 && h2.reg === 0 && o2.dibTop > o2.paraBot, JSON.stringify({ o, h1, h2 }));
   }
 
@@ -18062,6 +18062,96 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; if (window.__copia560) { P.store = window.__copia560; delete window.__copia560; } P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
     check('564 Flechas de día · a 412 px cada flecha mide ≥56 px de alto y ≥13 px de letra, y la fila no desborda la pantalla', m.n === 2 && m.h >= 56 && m.f >= 13 && m.scroll <= m.vw && m.ancho <= m.vw, JSON.stringify(m));
+  }
+
+  // ===== T3a · CAJA DE FRASE (570-579) =====
+  // 570) C7·b · la frase se entiende bien: «cena con Lucía el jueves a las 21», «dentista mañana 10:30», «cumple de mamá 20 dic», «comida con Pablo el 14» y «nota: pedir libro» (qué, día, hora, tipo).
+  // 571) C7·b · encadenada: abrir «Apuntar algo…», escribir, «Ver cómo lo entiendo», ver Qué/Día/Hora/Tipo y «Guardar» deja UN evento en eventosS con ese día y esa hora, y la caja se pliega.
+  //      Cae con `diaNavHTML` sin `+fraseCajaHTML()` (y con `fraseGuarda` sin el `eventosS().push`).
+  // 572) C7·b · una nota: «nota: pedir libro» se guarda en la libreta (sin día) y no crea ningún evento.
+  // 573) C7·b · si no entiende el día no guarda y lo dice; poner el día a mano y «Guardar» sí guarda; «el otro jueves» tampoco lo adivina.
+  // 574) C7·b · si ese día hay guardia avisa («Ese día tienes…», «Guardar igual», «Otro día»); y «guardia el 14» no se apunta aquí: lo dice y no guarda nada.
+  // 575) C7·b · seguridad: un texto con HTML se pinta como texto (escapado) en la vista previa.
+  // 576) C7·b · 412×915: la línea plegada mide ≥56 px, la letra ≥13 px, va bajo las flechas de día y nada desborda; abierta, los botones miden ≥44 px.
+  // 577) C7·b · la línea «Apuntar algo…» está justo bajo las flechas en los tres modos de Hoy (conductor, reloj, línea).
+  {
+    await fijaHoy(12, 0, false);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const prep = (modo = 'reloj') => page.evaluate((modo) => { const P = window.PG; if (!window.__copia570) window.__copia570 = JSON.parse(JSON.stringify(P.store));
+      P.store.modoViaje = null; P.store.eventos = []; P.store.notas = []; P.ui.apunta = null; P.ui.hoyModo = modo; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.render(); }, modo);
+    const dia = (n) => page.evaluate((n) => window.PG.iso(window.PG.addDays(new Date(), n)), n);
+    const jueves = () => page.evaluate(() => { for (let n = 1; n <= 7; n++) { const d = window.PG.addDays(new Date(), n); if (d.getDay() === 4) return window.PG.iso(d); } });
+    const escribe = async (txt) => { await page.click('[data-a="frase-abre"]'); await page.waitForTimeout(120); await page.fill('#fraseTxt', txt); await page.click('[data-a="frase-lee"]'); await page.waitForTimeout(120); };
+    const prevTxt = () => page.evaluate(() => ((document.querySelector('#main .frase') || {}).innerText || '').replace(/\s+/g, ' '));
+    const evs = () => page.evaluate(() => window.PG.eventosS().map((e) => ({ t: e.titulo, f: e.fecha, h: e.hora, m: e.modo })));
+    const notas = () => page.evaluate(() => window.PG.store.notas.map((n) => ({ t: n.txt, f: n.fecha })));
+    const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    await prep();
+    // 570
+    const L = await page.evaluate(() => { const r = {};
+      ['cena con Lucía el jueves a las 21', 'dentista mañana 10:30', 'cumple de mamá 20 dic', 'comida con Pablo el 14', 'nota: pedir libro', 'análisis hoy a las 9 y media'].forEach((s) => { const o = window.PG.fraseApuntarLee(s, new Date()); r[s] = [o.que, o.fecha, o.hora, o.tipo, o.dudas.length]; }); return r; });
+    const ex = { j: await jueves(), m: await dia(1), h: await dia(0) };
+    const d14 = await page.evaluate((hoy) => window.PG.iso(new Date(+hoy.slice(0, 4), +hoy.slice(5, 7), 14, 12)), ex.h); // fijaHoy deja hoy en el 15: «el 14» cae el mes que viene
+    check('570 Caja de frase · entiende jueves+hora, mañana+hora, «20 dic», «el 14», nota sin día y «hoy a las 9 y media»',
+      eq(L['cena con Lucía el jueves a las 21'], ['Cena con Lucía', ex.j, '21:00', 'evento', 0]) && eq(L['dentista mañana 10:30'], ['Dentista', ex.m, '10:30', 'evento', 0]) &&
+      L['cumple de mamá 20 dic'][0] === 'Cumple de mamá' && L['cumple de mamá 20 dic'][1].slice(5) === '12-20' && eq(L['comida con Pablo el 14'], ['Comida con Pablo', d14, '', 'evento', 0]) &&
+      eq(L['nota: pedir libro'], ['Pedir libro', '', '', 'nota', 0]) && eq(L['análisis hoy a las 9 y media'], ['Análisis', ex.h, '09:30', 'evento', 0]), JSON.stringify({ L, ex, d14 }));
+    // 571
+    await prep();
+    await page.click('[data-a="frase-abre"]'); await page.waitForTimeout(120);
+    const abierta = await page.evaluate(() => !!document.querySelector('#main #fraseTxt'));
+    await page.fill('#fraseTxt', 'cena con Lucía el jueves a las 21'); await page.click('[data-a="frase-lee"]'); await page.waitForTimeout(120);
+    const pv = await prevTxt(); const antes = await evs();
+    await page.click('[data-a="frase-guarda"]'); await page.waitForTimeout(150);
+    const despues = await evs(); const plegada = await page.evaluate(() => !document.querySelector('#main #fraseTxt') && !!document.querySelector('#main [data-a="frase-abre"]'));
+    check('571 Caja de frase · abrir, escribir, ver «Qué/Día/Hora/Tipo» y Guardar deja un evento con ese día y esa hora, y la caja se pliega',
+      abierta && /Qué Cena con Lucía/.test(pv) && /Día/.test(pv) && /Hora 21:00/.test(pv) && /Tipo Evento/.test(pv) && antes.length === 0 &&
+      eq(despues, [{ t: 'Cena con Lucía', f: ex.j, h: '21:00', m: 'fecha' }]) && plegada, JSON.stringify({ abierta, pv, antes, despues, plegada }));
+    // 572
+    await prep(); await escribe('nota: pedir libro');
+    const pn = await prevTxt(); await page.click('[data-a="frase-guarda"]'); await page.waitForTimeout(150);
+    check('572 Caja de frase · «nota: pedir libro» sale como Nota, se guarda en la libreta sin día y no crea evento',
+      /Tipo Nota/.test(pn) && !/Hora/.test(pn) && eq(await notas(), [{ t: 'Pedir libro', f: '' }]) && (await evs()).length === 0, JSON.stringify({ pn, n: await notas(), e: await evs() }));
+    // 573
+    await prep(); await escribe('reunión con Ana');
+    const p1 = await prevTxt(); await page.click('[data-a="frase-guarda"]'); await page.waitForTimeout(120);
+    const e1 = await evs(); const sigue = await page.evaluate(() => !!document.querySelector('#main [data-a="frase-guarda"]'));
+    await page.click('[data-a="frase-ed"][data-c="dia"]'); await page.waitForTimeout(100);
+    await page.fill('#fraseEd', ex.m); await page.click('[data-a="frase-ok"][data-c="dia"]'); await page.waitForTimeout(100);
+    const p2 = await prevTxt(); await page.click('[data-a="frase-guarda"]'); await page.waitForTimeout(150);
+    const e2 = await evs();
+    await prep(); await escribe('cita con Ana el otro jueves');
+    const p3 = await prevTxt(); const f3 = await page.evaluate(() => window.PG.ui.apunta.prev.fecha);
+    check('573 Caja de frase · sin día no guarda y lo dice; poniendo el día a mano guarda en ese día; «el otro jueves» no lo adivina',
+      /No sé qué día es/.test(p1) && e1.length === 0 && sigue && !/No sé qué día/.test(p2) && eq(e2, [{ t: 'Reunión con Ana', f: ex.m, h: '', m: 'fecha' }]) && /otro jueves/.test(p3) && f3 === '', JSON.stringify({ p1, e1, p2, e2, p3, f3 }));
+    // 574
+    await prep(); await page.evaluate((k) => { const P = window.PG, GU = P.store.shifts.filter(P.isGuardia)[0]; P.setDayOverride(k, GU.id, 'urg'); P.render(); }, ex.m);
+    await escribe('comida con Pablo mañana');
+    const pg = await prevTxt(); const ng = (await evs()).length;
+    await page.click('[data-a="frase-guarda"]'); await page.waitForTimeout(150); const g2 = await evs();
+    await prep(); await escribe('guardia el 14');
+    const pgd = await page.evaluate(() => ({ prev: !!window.PG.ui.apunta.prev, txt: ((document.querySelector('#main .frase') || {}).innerText || '') }));
+    check('574 Caja de frase · con guardia ese día avisa y deja «Guardar igual» / «Otro día»; «guardia el 14» no se apunta aquí y no guarda',
+      /Ese día tienes/.test(pg) && /Guardar igual/.test(pg) && /Otro día/.test(pg) && ng === 0 && g2.length === 1 && g2[0].f === ex.m &&
+      !pgd.prev && /guardias no se apuntan aquí/.test(pgd.txt) && (await evs()).length === 0, JSON.stringify({ pg, g2, pgd }));
+    // 575
+    await prep(); await escribe('<img src=x onerror=window.__xss570=1> mañana a las 10');
+    const sx = await page.evaluate(() => ({ img: document.querySelectorAll('#main .frase img').length, xss: !!window.__xss570, txt: document.querySelector('#main .frase .prev').innerText }));
+    check('575 Caja de frase · un texto con HTML sale como texto en la vista previa (nada se ejecuta)', sx.img === 0 && !sx.xss && /<img/.test(sx.txt), JSON.stringify(sx));
+    // 576
+    await prep();
+    const m1 = await page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), b = q('.frase0'), r = b.getBoundingClientRect(), n = q('.diasnav2').getBoundingClientRect();
+      return { h: r.height, f: parseFloat(getComputedStyle(b.querySelector('b')).fontSize), debajo: r.top >= n.bottom - 1, scroll: document.documentElement.scrollWidth, vw: innerWidth }; });
+    await escribe('dentista mañana 10:30');
+    const m2 = await page.evaluate(() => { const bs = [...document.querySelectorAll('#main .frase button')], r = document.querySelector('#main .frase').getBoundingClientRect();
+      return { n: bs.length, h: Math.min(...bs.map((x) => x.getBoundingClientRect().height)), f: Math.min(...[...document.querySelectorAll('#main .frase *')].filter((e) => e.children.length === 0 && (e.textContent || '').trim()).map((e) => parseFloat(getComputedStyle(e).fontSize))), der: r.right, vw: innerWidth, scroll: document.documentElement.scrollWidth }; });
+    check('576 Caja de frase · a 412 px la línea mide ≥44 px y ≥13 px de letra bajo las flechas; abierta, botones ≥44 px, letra ≥13 px y sin desbordar',
+      m1.h >= 44 && m1.f >= 13 && m1.debajo && m1.scroll <= m1.vw && m2.n >= 4 && m2.h >= 43.9 && m2.f >= 13 && m2.der <= m2.vw && m2.scroll <= m2.vw, JSON.stringify({ m1, m2 }));
+    // 577
+    const modos = {}; for (const mo of ['bus', 'reloj', 'linea']) { await prep(mo); await page.waitForTimeout(150); modos[mo] = await page.evaluate(() => !!document.querySelector('#main .diasnav2 + [data-a="frase-abre"]')); }
+    check('577 Caja de frase · la línea «Apuntar algo…» sale justo bajo las flechas en conductor, reloj y línea', Object.values(modos).every(Boolean), JSON.stringify(modos));
+    await page.evaluate(() => { const P = window.PG; if (window.__copia570) { P.store = window.__copia570; delete window.__copia570; } P.ui.apunta = null; P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

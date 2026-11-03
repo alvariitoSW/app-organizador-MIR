@@ -5672,7 +5672,133 @@ function diaNavHTML(dref,esHoy){
   return '<nav class="diasnav2" aria-label="Cambiar de día">'+
     '<button class="btn" data-a="dia-prev" title="día anterior">‹ '+esc(DIA3[addDays(dref,-1).getDay()])+'</button>'+
     (esHoy?'<b>Hoy · '+esc(DIA3[dref.getDay()])+' '+dref.getDate()+'</b>':'<button class="btn p" data-a="dia-hoy">volver a hoy</button>')+
-    '<button class="btn" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button></nav>';}
+    '<button class="btn" data-a="dia-next" title="día siguiente">'+esc(DIA3[addDays(dref,1).getDay()])+' ›</button></nav>'+fraseCajaHTML();}
+/* C7·b · «Apuntar algo…»: una frase («cena con Lucía el jueves a las 21») se convierte en evento o nota. La caja SOLO
+   interpreta: guardar es lo de siempre (eventosS().push como la hoja del día, addNota). Sin librería, todo en el móvil.
+   Regla de oro: nunca adivina. Si no entiende el día, o hay dos, lo dice y no guarda hasta que lo eliges. Guardias, no. */
+const FR_SIN=function(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'');};
+const FR_MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const FR_DIAS=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+function fraseApuntarLee(txt,hoy){
+  /* devuelve {que,fecha,hora,tipo,dudas:[]}; fecha/hora vacías si no las dice */
+  const out={que:'',fecha:'',hora:'',tipo:'evento',dudas:[]};
+  let s=String(txt||'').trim().replace(/\s+/g,' ');
+  if(!s){out.dudas.push('Escribe qué quieres apuntar.');return out;}
+  if(/\b(guardias?|libranzas?|salientes?)\b/.test(FR_SIN(s).toLowerCase())){
+    out.dudas.push('Las guardias no se apuntan aquí: van en Ajustes → Mi planning.');out.guardia=true;return out;}
+  const nt=/^nota\s*[:,-]?\s+/.exec(FR_SIN(s).toLowerCase());
+  if(nt){out.tipo='nota';s=s.slice(nt[0].length);}
+  const base=hoy instanceof Date?new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),12):new Date();
+  const ver=function(){return FR_SIN(s).toLowerCase();};   /* mismas posiciones que s: solo quita marcas de letras */
+  const quita=function(lista){lista.slice().sort(function(a,b){return b.index-a.index;}).forEach(function(m){
+    s=(s.slice(0,m.index)+' '+s.slice(m.index+m[0].length)).replace(/\s+/g,' ').trim();});};
+  /* la hora: «a las 21», «a las 9:30», «a las 9 y media», «10:30» */
+  let m=/\ba las?\s+(\d{1,2})(?:[:.h](\d{2}))?\s*(y media|y cuarto|h|horas)?(?![\d:])/.exec(ver())||/\b(\d{1,2}):(\d{2})\b/.exec(ver());
+  if(m){
+    let h=+m[1],mi=m[2]&&/^\d/.test(m[2])?+m[2]:0;
+    if(/media/.test(m[3]||''))mi=30;else if(/cuarto/.test(m[3]||''))mi=15;
+    if(h>23||mi>59)out.dudas.push('No entiendo la hora «'+m[0].trim()+'»: ponla tú.');
+    else out.hora=hm(h*60+mi);
+    if(out.tipo==='evento')quita([m]);}
+  /* el día: puede venir de varias maneras, y si vienen dos no adivino */
+  const cand=[],rest=[],v=ver();
+  m=/\bpasado manana\b/.exec(v);
+  if(m)cand.push({k:iso(addDays(base,2)),m:m});
+  else{m=/\bmanana\b/.exec(v);if(m)cand.push({k:iso(addDays(base,1)),m:m});}
+  m=/\bhoy\b/.exec(v);if(m)cand.push({k:iso(base),m:m});
+  m=/\b(?:el\s+)?otro\s+(?:domingo|lunes|martes|miercoles|jueves|viernes|sabado)\b/.exec(v);
+  if(m){out.dudas.push('No sé qué día es «'+m[0]+'»: elige el día.');rest.push(m);}
+  else{
+    m=/\b(?:(?:el|este|proximo|el proximo)\s+)?(domingo|lunes|martes|miercoles|jueves|viernes|sabado)(?:\s+que viene|\s+proximo)?\b/.exec(v);
+    if(m){const dw=FR_DIAS.indexOf(m[1]);let n=(dw-base.getDay()+7)%7;if(n===0)n=7;   /* «el jueves» dicho en jueves = el de la semana que viene */
+      cand.push({k:iso(addDays(base,n)),m:m});}}
+  /* «20 dic», «20 de diciembre», «el 14» */
+  m=new RegExp('\\b(\\d{1,2})(?:\\s+de)?\\s+('+FR_MESES.join('|')+')[a-z]*\\b').exec(v);
+  if(m){const d=+m[1],mo=FR_MESES.indexOf(m[2]);let f=new Date(base.getFullYear(),mo,d,12);
+    if(f.getMonth()!==mo||d<1){out.dudas.push('«'+m[0]+'» no es un día que exista: elige el día.');rest.push(m);}
+    else{if(iso(f)<iso(base))f=new Date(base.getFullYear()+1,mo,d,12);cand.push({k:iso(f),m:m});}}
+  else{m=/\bel\s+(\d{1,2})\b(?!\s*(?:de\b|h\b|horas|:))/.exec(v);
+    if(m){const d=+m[1];let ok=false;
+      for(let i=0;i<14&&!ok;i++){const f=new Date(base.getFullYear(),base.getMonth()+i,d,12);
+        if(f.getDate()===d&&iso(f)>=iso(base)){cand.push({k:iso(f),m:m});ok=true;}}
+      if(!ok){out.dudas.push('«'+m[0]+'» no es un día que exista: elige el día.');rest.push(m);}}}
+  if(cand.length>1)out.dudas.push('Veo dos días en la frase: elige el bueno.');
+  else if(cand.length===1)out.fecha=cand[0].k;
+  quita(cand.map(function(c){return c.m;}).concat(rest));   /* el título es lo que sobra */
+  if(!cand.length&&!out.dudas.length&&out.tipo==='evento')out.dudas.push('No sé qué día es: elige el día.');
+  s=s.replace(/^(?:para|el|a|de)\s+/i,'').replace(/[\s,;:.-]+$/,'').replace(/\s+(?:el|a|para|de|la|las|en)$/i,'').trim();
+  if(!s)out.dudas.push('¿Qué apunto? Falta el nombre.');
+  out.que=s.charAt(0).toUpperCase()+s.slice(1);
+  return out;}
+function fraseEstado(){return ui.apunta||(ui.apunta={abierta:false,txt:'',prev:null,ed:'',err:''});}
+function fraseDiaTxt(k){const d=parseDate(k);return d?(DAYN[(d.getDay()+6)%7]+' '+d.getDate()+' '+FR_MESES[d.getMonth()]):k;}
+function fraseGuardiaTxt(k){const sh=shiftById(dayInfo(k).shiftId);
+  return 'Ese día tienes '+(sh&&sh.name?sh.name.toLowerCase():'guardia')+'. ¿Lo guardo igual?';}
+function fraseCajaHTML(){
+  const F=fraseEstado();
+  if(!F.abierta)return '<button class="cmplh frase0" data-a="frase-abre" aria-expanded="false"><span class="e">✏️</span><span class="t"><b>Apuntar algo…</b></span><span class="chev">＋</span></button>';
+  let h='<div class="card frase"><div class="cap">Apuntar algo</div>';
+  const P=F.prev;
+  if(!P){
+    h+='<input id="fraseTxt" type="text" maxlength="200" enterkeyhint="go" autocomplete="off" placeholder="cena con Lucía el jueves a las 21" value="'+esc(F.txt)+'" aria-label="Qué quieres apuntar">'+
+      (F.err?'<div class="duda" role="alert">'+esc(F.err)+'</div>':'')+
+      '<div class="row"><button class="btn" data-a="frase-borra">Cerrar</button><button class="btn p" data-a="frase-lee" style="flex:2">Ver cómo lo entiendo</button></div>'+
+      '<p class="mini">Ejemplos: «dentista mañana 10:30», «nota: pedir libro», «cumple de mamá 20 dic», «comida con Pablo el 14».</p>';}
+  else{
+    const ln=function(c,et,val,bot){
+      if(F.ed===c){
+        const ctl=c==='que'?'<input id="fraseEd" type="text" maxlength="70" value="'+esc(P.que)+'" aria-label="Qué">':
+          c==='dia'?'<input id="fraseEd" type="date" value="'+esc(P.fecha)+'" aria-label="Día">':
+          '<input id="fraseEd" type="time" value="'+esc(P.hora)+'" aria-label="Hora">';
+        return '<div class="ln ed"><span>'+et+'</span>'+ctl+'<button class="btn s" data-a="frase-ok" data-c="'+c+'">Vale</button>'+
+          (c==='hora'?'<button class="btn s" data-a="frase-ok" data-c="hora" data-v="sin">Sin hora</button>':'')+'</div>';}
+      return '<div class="ln"><span>'+et+'</span><b>'+val+'</b><button class="u" data-a="frase-ed" data-c="'+c+'">'+bot+'</button></div>';};
+    h+='<div class="prev">'+ln('que','Qué',P.que?esc(P.que):'<i>falta</i>','cambiar')+
+      ln('dia','Día',P.fecha?esc(fraseDiaTxt(P.fecha)):'<i>elige el día</i>',P.fecha?'cambiar':'poner')+
+      (P.tipo==='evento'?ln('hora','Hora',P.hora?esc(P.hora):'sin hora',P.hora?'cambiar':'poner'):'')+
+      '<div class="ln"><span>Tipo</span><b>'+(P.tipo==='nota'?'Nota':'Evento')+'</b><button class="u" data-a="frase-tipo">cambiar</button></div></div>';
+    (P.dudas||[]).forEach(function(d){h+='<div class="duda" role="alert">'+esc(d)+'</div>';});
+    const gu=P.fecha&&esDiaGuardia(P.fecha)?fraseGuardiaTxt(P.fecha):'';
+    if(gu)h+='<div class="duda">'+esc(gu)+'</div>';
+    h+='<div class="row">'+(gu?'<button class="btn" data-a="frase-ed" data-c="dia">Otro día</button>':'<button class="btn" data-a="frase-borra">Borrar</button>')+
+      '<button class="btn p" data-a="frase-guarda" style="flex:2">'+(gu?'Guardar igual':'Guardar')+'</button></div>';}
+  return h+'</div>';}
+function fraseGuarda(){
+  const F=fraseEstado(),P=F.prev;if(!P)return;
+  if(!P.que){flash('falta el nombre');return;}
+  if(P.tipo==='evento'&&!P.fecha){flash('elige el día');return;}
+  if(P.dudas&&P.dudas.length){flash('hay algo que no entiendo: corrígelo antes');return;}
+  if(P.tipo==='nota'){const r=addNota(P.que+(P.hora?' · '+P.hora:''),P.fecha);flash(r.msg);if(!r.ok)return;}
+  else{eventosS().push({id:uid('ev'),titulo:P.que.slice(0,70),hora:P.hora,fin:'',modo:'fecha',fecha:P.fecha,dow:[],
+      recordatorio:false,cuentaAtras:false,color:tlColor('evt'),on:true,google:false});
+    save();flash('apuntado: '+P.que+' · '+fraseDiaTxt(P.fecha)+(P.hora?' '+P.hora:''));}
+  ui.apunta={abierta:false,txt:'',prev:null,ed:'',err:''};render();}
+function fraseAct(a,el){
+  const F=fraseEstado();
+  switch(a){
+    case 'frase-abre':F.abierta=true;F.prev=null;F.ed='';F.err='';render();
+      setTimeout(function(){const i=document.getElementById('fraseTxt');if(i)i.focus();},60);break;
+    case 'frase-borra':ui.apunta={abierta:false,txt:'',prev:null,ed:'',err:''};render();break;
+    case 'frase-lee':{const i=document.getElementById('fraseTxt');F.txt=i?i.value:F.txt;
+      if(!String(F.txt).trim()){F.err='Escribe qué quieres apuntar.';render();break;}
+      F.err='';F.prev=fraseApuntarLee(F.txt,new Date());
+      if(F.prev.guardia){F.err=F.prev.dudas[0];F.prev=null;}
+      F.ed='';render();break;}
+    case 'frase-ed':F.ed=el.dataset.c||'';render();
+      setTimeout(function(){const i=document.getElementById('fraseEd');if(i)i.focus();},60);break;
+    case 'frase-ok':{const P=F.prev,i=document.getElementById('fraseEd'),c=el.dataset.c;if(!P)break;
+      const val=i?i.value:'';
+      if(c==='que'){P.que=val.trim().slice(0,70);P.dudas=P.dudas.filter(function(d){return !/Falta el nombre/.test(d);});}
+      else if(c==='dia'){if(!val){flash('elige un día');break;}P.fecha=val;
+        P.dudas=P.dudas.filter(function(d){return !/día|dia/.test(d);});}
+      else if(c==='hora'){P.hora=el.dataset.v==='sin'?'':(/^\d{2}:\d{2}$/.test(val)?val:'');
+        P.dudas=P.dudas.filter(function(d){return !/hora/.test(d);});}
+      F.ed='';render();break;}
+    case 'frase-tipo':{const P=F.prev;if(!P)break;P.tipo=P.tipo==='nota'?'evento':'nota';
+      P.dudas=P.dudas.filter(function(d){return !/No sé qué día es\./.test(d);});
+      if(P.tipo==='evento'&&!P.fecha&&!P.dudas.length)P.dudas.push('No sé qué día es: elige el día.');
+      render();break;}
+    case 'frase-guarda':fraseGuarda();break;}}
 function esHoyDeVerdad(k){return k===iso(new Date());}
 function moverDiaHoy(n){
   const d=parseDate(fechaHoy());if(!d)return;
@@ -7889,6 +8015,7 @@ function snProgramaAvisos(){
     if(t>0&&t<20*3600000)_snAvT.push(setTimeout(function(){swMensaje({tipo:'aviso',tag:'sn-'+a.G+a.x.k,titulo:'😴 '+a.x.b,cuerpo:a.x.s});},t));});}
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='nocheNota')ui.nocheNota=e.target.value;});
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='tpTxt')ui.tpTxt=e.target.value;});
+document.addEventListener('input',function(e){if(e.target&&e.target.id==='fraseTxt')fraseEstado().txt=e.target.value;});
 document.addEventListener('input',function(e){const t=e.target;if(!t||(t.id!=='snWake'&&t.id!=='snNeed'))return;
   const o=t.parentNode.querySelector('output');if(o)o.textContent=t.id==='snWake'?hCortaHM(hm(+t.value)):fmtHM(+t.value*60);});
 function nocheDeAhora(){
@@ -26540,6 +26667,7 @@ function act(a,el){
       if(ui.tab==='month'){monthDate=new Date(monthDate.getFullYear(),monthDate.getMonth()+(a==='wk-next'?1:-1),1,12,0,0,0);}
       else if(ui.tab==='hoy'){moverDiaHoy(a==='wk-next'?1:-1);}
       render();break;}
+    case 'frase-abre':case 'frase-borra':case 'frase-lee':case 'frase-ed':case 'frase-ok':case 'frase-tipo':case 'frase-guarda':fraseAct(a,el);break;
     case 'dia-prev':moverDiaHoy(-1);render();break;
     case 'dia-next':moverDiaHoy(1);render();break;
     case 'dia-hoy':ui.diaHoy='';render();break;
@@ -29550,6 +29678,7 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Tab'){trapTab($('#modal'),e);return;}
     return;}
   if(escribiendo&&e.key==='Enter'&&t.id==='frIn'){e.preventDefault();frEnter();return;}
+  if(escribiendo&&e.key==='Enter'&&t.id==='fraseTxt'){e.preventDefault();fraseAct('frase-lee',t);return;}
   if(escribiendo){if(e.key==='Escape'&&t.blur)t.blur();return;}
   /* las partes tocables de la lámina del entreno son <g role=button> dentro de un SVG: Enter y espacio las pulsan */
   if((e.key==='Enter'||e.key===' ')&&t&&t.getAttribute&&t.getAttribute('role')==='button'&&t.dataset&&t.dataset.a&&t.closest&&t.closest('.glam')){
@@ -30284,7 +30413,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={fraseApuntarLee,pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
