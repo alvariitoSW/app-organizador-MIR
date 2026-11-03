@@ -1957,7 +1957,9 @@ function comidaPrincipalDe(dateStr,infOpt){
     if(finG==null||puesta0==null||finG>puesta0){
       /* COMES AL VOLVER (03/11): fin del entreno + la vuelta a casa, nunca antes; la hora de fábrica
          de «si entrenas» solo vale si no se sabe cuándo acaba */
-      if(finG!=null){const de=finG+entrenoCfg().vuelta,w=Math.max(0,mins(c.conEntreno.a)-mins(c.conEntreno.de))||30;
+      /* …pero si tú has puesto en Ajustes una hora de «si entrenas» MÁS TARDE que eso, manda la tuya
+         (la de fábrica, 18:00, no cuenta como puesta) */
+      if(finG!=null){const tuya=c.conEntreno.de!=='18:00'?mins(c.conEntreno.de):null,de=Math.max(finG+entrenoCfg().vuelta,tuya==null?0:tuya),w=Math.max(0,mins(c.conEntreno.a)-mins(c.conEntreno.de))||30;
         return {de:hm(de),a:hm(de+w),por:'entreno'};}
       return {de:c.conEntreno.de,a:c.conEntreno.a,por:'entreno'};}}
   /* LA COMIDA NO PUEDE CAER DENTRO DE LA JORNADA. Esto decía «al salir de la jornada» y usaba una
