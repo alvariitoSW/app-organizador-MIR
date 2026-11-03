@@ -4,6 +4,7 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
+- ~~[aparc-ticket-foto]~~ ✅ El lector del ticket con foto, en `main` 80ea128 (03/11). Lo que queda (precios desplazados, total gordo) en `plan-v3.md` → Ideas [idea-ticket-precios].
 - [aparc-competencia-fase-3] Fase 3 de La Competencia en `main` 7633880 (03/11, run 41613839826 success, sellado). Lo que queda está en `plan-v3.md` → [v3-remate-competencia] (6 pasos, decididos por el usuario el 03/11). La rama `claude/la-competencia` solo va 2 commits por delante (plan y traspaso).
 - ~~[aparc-competencia-construir]~~ ✅ cubierto por las fases 1 y 2 (en main ab1be8d, 02/11). Antes: Maquetas A y B de La Competencia aprobadas por el usuario (02/11, rama `claude/la-competencia`; opciones recomendadas, a confirmar). Pide `/plan-socialista` con el Consejo para aprobar cómo se construye: `encargos/competencia-construir.md`. No se ha tocado `app.js`.
 - ~~[aparc-consejo-competencia]~~ ✅ Consejo hecho (02/11, acta `consejo/2026-11-02-competencia.md`, rama `claude/la-competencia`, 929 k). Aprobado: plan en 3 fases (~38 M, máx. ~50 M), sin Consejo por tanda; PDF y Excel «más adelante»; widget = K4 del Lanzador. **Siguiente:** fase 1, `encargos/competencia-fase-1.md` (02/11); fase 2 el 03/11; fase 3 el 04/11.

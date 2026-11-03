@@ -176,6 +176,8 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
+- [idea-ticket-precios] Ticket con foto: los precios pueden caer en la línea de al lado si el papel está curvado, y el TOTAL en letra gorda no se lee (se enseña la suma). Posible: leer la columna de precios aparte o enderezar la foto · docs/DECISIONS.md «El lector del ticket con foto»
+
 - [v3-competencia-algun-dia] (02/11, «algún día, sin prisa») Lo que el Consejo de La Competencia dejó fuera: importar el planning en PDF y Excel (librería nueva y tocar `sw.js`: decide el usuario; «para más adelante», 02/11), deslizar para cambiar de día, «+» flotante y récords en gráfico. El widget pasó a la K4 del Lanzador (02/11). Acta `consejo/2026-11-02-competencia.md`.
 - [v3-foto-plato] (02/11, el usuario: «estaría muy bien») Hacer una foto a lo que comes y que la app lo interprete (qué es y cuánto, para apuntarlo en Comer). No se habló en La Competencia. Choca con la regla 3 (los datos no salen del móvil): reconocerlo en el propio móvil es posible pero flojo y pesado; mandarlo a un servicio de IA es mucho mejor pero la foto sale del móvil y cuesta por foto. Decide el usuario; candidata a Consejo + maqueta después de la fase 3.
 - [v3-mapa-comidas] (2026-10-30) Un mapamundi tipo Google Maps que vea dónde estoy ahora, poder decir «en este sitio he comido aquí» y guardar una foto de lo que he comido (de vacaciones o al salir de trabajar). A futuro. Ojo, regla 3: la ubicación y las fotos se quedan en el móvil (IndexedDB, no localStorage); los mosaicos del mapa (OpenStreetMap) se piden por red y dejan ver por dónde andas, así que decide el usuario.
@@ -194,6 +196,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Hecha
 
+- [v3-ticket-foto] El lector del ticket con foto: umbral local contra sombras, limpieza de líneas, corrector de palabras, líneas sin precio · 03/11 · main 80ea128 (ticket real de Mercadona: de 0 a 35 de 35; prueba 654)
 - [v3-mananas] «Las Mañanas» LM1-LM5 · 31/10 · main cfc43b6 (marcas «En pie»/«Vestido», hoja del móvil, «Tu semana», pausa con recuento; LM6 condicional sin hacer)
 - [v3-chef] «El Chef» CH1-CH11 · 30/10-01/11 · main (recetario sin gluten de 341 platos, modo cocina, semana y compra con el recetario, pulido CH10b)
 
