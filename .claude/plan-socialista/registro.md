@@ -13,7 +13,8 @@ tú puedes añadir o tachar a mano.
 - [aparc-compra-linea-escrita] En la compra, una línea escrita a mano de una receta («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la semana («300 g Tomate triturado»): salen dos líneas. Ya era así; visto en la CH2 de El Chef (30/10) · docs/DECISIONS.md «El Chef · CH2»
 
 - [aparc-reloj-324] La prueba 324 (tocar la sesión en «lo que viene» del reloj) cayó una vez en la suite completa (10:0x del 30/10, quedaba abierto «¿Quitar este evento?») y pasa sola, en su trozo y en la siguiente suite entera · tests/regression.test.js:12883
-- [aparc-letra-conductor] Visto por el verificador (03/11, no es de T2): Hoy en Conductor y «Línea de hoy» usa textos de 9,5 a 12 px («LÍNEA DE HOY», «PRÓXIMA PARADA», «anoche: sin apuntar»), por debajo del suelo de 13 px de C1 · app.js / styles.css
+- ~~[aparc-letra-conductor]~~ ✅ 03/11 en `main` 7633880: texto HTML de Conductor y Línea ≥13 px (pruebas 590-594); el texto dentro de los dibujos SVG sigue a 1-9 px en pantalla: subirlo pide rediseñar los dibujos
+- [aparc-css-marca] En `styles.css` (también en `main`) hay una línea suelta `=======` de una fusión antigua, justo antes de «/* K1: la lanzadora */»: el navegador se salta la regla `.snmovil .del` que va detrás. Pregunta hecha al usuario el 03/11 (quitarla cambia cómo se ven esos botoncitos en Sueño); sin respuesta todavía · styles.css ~4356
 - [aparc-lloret-suite] La prueba 205 del Lloretazo falló una vez en la suite completa (08:44 del 30/10); en las dos suites completas de la R6 (09:47 y 10:00 del 30/10) pasó. Se vigila; si no vuelve a caer, se cierra · tests/regression.test.js:7247
 
 ### Rediseño artístico (en marcha desde el 2026-10-14)
@@ -29,7 +30,7 @@ tú puedes añadir o tachar a mano.
 - [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
   haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
 
-- [aparc-comida-entreno] **Decidido 03/11 por el usuario:** no come antes de entrenar: entrena y come al volver. El entreno solo a horas en que el gimnasio no esté lleno (mandará capturas del gimnasio con la afluencia) y siempre ≥5 h antes de dormir (si entrena tarde no duerme). Falta: las horas tranquilas de sus capturas → tanda pequeña sobre `gymHoraDe`/`franja()` y la comida tras el entreno · app.js:9625
+- ~~[aparc-comida-entreno]~~ ✅ 03/11 en `main` 7633880 (T5): entreno entre 15:00 y 18:00 (sáb 15:00, dom antes de las 18), ≥5 h antes de dormir, comida al volver (o tu hora de Ajustes si es más tarde)
 - [aparc-png-design] `design/` pesa 74 MB en PNG de maquetas: comprimirlos (no afecta a la app, solo al repositorio)
 
 ### Versión 3.0
