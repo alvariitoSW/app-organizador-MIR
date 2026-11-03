@@ -45,7 +45,9 @@
 .cd-gslit{fill:#ffd98a}.cd-glamp{fill:#2a3240}.cd-glampo{fill:#ffe9b0}
 .cd-frame{fill:var(--cd-frame)}.cd-pillar{fill:var(--cd-pillar)}.cd-visor{fill:var(--cd-visor)}.cd-seal{stroke:#1e2738;stroke-width:3;fill:none}
 .cd-mirror{fill:#0e1420;stroke:#2a3448;stroke-width:2}.cd-mirrorg{fill:#1a2333}.cd-mirt{fill:#8fa6c6;font:600 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-mirt.cd-pend{fill:#f2a33a}
-.cd-strip{fill:#05070c;stroke:#1e2738;stroke-width:1.2}.cd-stripl{stroke:#2a3a55;stroke-width:2}.cd-stt{fill:#5d7394;font:700 9.5px ui-monospace,Menlo,monospace;letter-spacing:.06em}
+.cd-strip{fill:#05070c;stroke:#1e2738;stroke-width:1.2}.cd-stripl{stroke:#2a3a55;stroke-width:2}.cd-stt{fill:#8fa6c6;font:700 13px ui-monospace,Menlo,monospace;letter-spacing:.06em}
+.cd{display:flex;flex-direction:column}.cd-lin{order:-1;display:block;width:100%;height:auto;margin:0 0 6px}.cd-lin .cd-strip{stroke-width:1}
+.cd-lt{font:800 13px ui-sans-serif,system-ui,sans-serif;fill:#e9f2ff}.cd-lt.cd-ltn{fill:#ffd66b}.cd-lt.cd-ltg{fill:#ffb3a7}
 .cd-sdot{fill:#2a3a55}.cd-sdone{fill:#4ad08a}.cd-spast{fill:#56708f}.cd-snext{fill:#ffd66b}.cd-spend{fill:none;stroke:#f2a33a;stroke-width:1.8}.cd-sbus{fill:#38e1ff}
 .cd-dashtop{fill:var(--cd-dash)}.cd-dashe{stroke:var(--cd-dashe);stroke-width:1.5;fill:none}
 .cd-lcd{fill:var(--cd-panel);stroke:var(--cd-panele);stroke-width:1.2}.cd-clk{fill:var(--cd-cyan);font:700 30px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
@@ -77,7 +79,7 @@
 .cd-bicit{fill:var(--cd-ok);font:800 11px ui-sans-serif,system-ui,sans-serif}
 .cd-taxi{fill:#f2cf3a}.cd-taxid{fill:#b8961c}.cd-taxiv{fill:#0a1220}.cd-taxit{fill:#0d1726;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-taxil{fill:#7fe0a8}
 .cd-barra,.cd-barrap{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
-.cd-nxl{font-size:9.5px}.cd-nxb{font-size:12.5px;font-weight:800}.cd-nxa{font-size:12px}
+.cd-nxl{font-size:21px;letter-spacing:.04em}.cd-nxb{font-size:12.5px;font-weight:800}.cd-nxa{font-size:12px}
 /* en los temas claros la pantallita es blanca: «Ahora: …» iba en blanco y lo siguiente en ámbar claro, y no se leían
    (de guardia la pantallita sigue oscura, aunque el tema sea claro) */
 .cd.cd-claro:not(.guardia) .cd-nxa{fill:var(--cd-ink)}.cd.cd-claro:not(.guardia) .cd-nxb{fill:#9a6700}
@@ -259,7 +261,7 @@
   <path class="cd-visor" d="M62 54 Q150 48 238 51 L234 80 Q150 78 68 82 Z"/><text data-r="rot" class="cd-rot" x="151" y="70" text-anchor="middle"></text>
   <g data-o="atras"><rect class="cd-mirror" x="244" y="52" width="112" height="30" rx="9"/><rect class="cd-mirrorg" x="249" y="56.5" width="102" height="21" rx="6"/>
     <text data-r="mir" class="cd-mirt" x="300" y="71"></text><rect x="296" y="42" width="8" height="11" rx="2" class="cd-pillar"/></g>
-  <rect class="cd-strip" x="40" y="8" width="520" height="28" rx="7"/><text class="cd-stt" x="52" y="25.5">LÍNEA DE HOY</text><g data-r="route"></g>
+  
   <g data-o="mirai" class="cd-espejo"><ellipse data-r="mi" class="cd-esp" cx="30" cy="520" rx="32" ry="40"/><ellipse class="cd-espc" cx="30" cy="520" rx="24" ry="32"/>
     <rect x="16" y="508" width="9" height="28" rx="1" fill="#2e3850"/><rect x="27" y="498" width="11" height="38" rx="1" fill="#3a4763"/><rect x="40" y="516" width="7" height="20" rx="1" fill="#2e3850"/></g>
   <g data-o="mirad" class="cd-espejo"><ellipse data-r="md" class="cd-esp cd-espd" cx="570" cy="520" rx="32" ry="40"/><ellipse class="cd-espc" cx="570" cy="520" rx="24" ry="32" style="fill:#46784d"/>
@@ -269,7 +271,7 @@
   <g data-o="mirad"><rect class="cd-lado cd-ladod" x="484" y="588" width="110" height="26" rx="13"/><text class="cd-ladot cd-ladodt" x="539" y="606">entreno ▶</text></g>
   <g data-o="proxima"><rect class="cd-lcd" x="180" y="620" width="240" height="110" rx="20"/>
     <path class="cd-arc0" d="M222 684H378"/><path data-r="arc" class="cd-arc" d=""/>
-    <text data-r="nxl" class="cd-nxl" x="300" y="638" text-anchor="middle"></text><text data-r="clk" class="cd-clk" x="300" y="672"></text>
+    <text data-r="nxl" class="cd-nxl" x="300" y="642" text-anchor="middle"></text><text data-r="clk" class="cd-clk" x="300" y="672"></text>
     <text data-r="nxa" class="cd-nxa" x="300" y="704" text-anchor="middle"></text><text data-r="nxb" class="cd-nxb" x="300" y="721" text-anchor="middle"></text><text data-r="q" class="cd-q" x="300" y="0" style="display:none"></text></g>
   <g data-o="parahoy"><rect class="cd-tkb" x="18" y="652" width="142" height="76" rx="10"/><rect class="cd-tkp" x="30" y="630" width="118" height="28" rx="2"/>
     <text data-r="tk" class="cd-tkt" x="89" y="649"></text><rect x="30" y="676" width="118" height="20" rx="4" class="cd-tks"/><text data-r="tkv" class="cd-tkv" x="89" y="690"></text><circle cx="42" cy="712" r="4" fill="#38e1ff"/></g>
@@ -329,6 +331,7 @@
     if (!document.getElementById("cd-css")) { const st = document.createElement("style"); st.id = "cd-css"; st.textContent = CSS; document.head.appendChild(st); }
     el.innerHTML = '<div class="cd-vis"><svg viewBox="0 0 600 900" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="24" aria-label="Tu día desde el asiento del conductor. Arrastra a lo ancho o usa las flechas para mover la hora; Intro abre la próxima parada.">' + MARCO.replace(/__ID/g, ID) + "</svg>" +
       '<button type="button" class="cd-sub" data-r="sub" hidden></button></div>' +
+      '<svg class="cd-lin" data-r="lin" viewBox="0 0 380 108" role="img" aria-label="Línea de hoy: una bolita por parada"><rect class="cd-strip" x="0.5" y="0.5" width="379" height="107" rx="10"/><text class="cd-stt" x="12" y="22">LÍNEA DE HOY</text><g data-r="route"></g></svg>' +
       '<div class="cd-narr"><div data-r="narr"></div>' + LEYENDA + "</div>" +
       '<div class="cd-sr" data-r="sr" aria-label="Paradas de hoy"></div>';
     const svg = el.querySelector("svg"), R_ = {};
@@ -711,15 +714,24 @@
       R_.mir.setAttribute("class", "cd-mirt" + (pend ? " cd-pend" : ""));
       R_.mir.parentNode.setAttribute("data-i", pv ? pv.i : "");
       /* la línea de hoy: una bolita por parada (verde hecha, ámbar sin apuntar, amarilla la próxima) */
-      const E = R.est.filter((e) => !e.dep && !e.cont), n = E.length, x = (i) => 150 + (400 * (i + 0.5)) / Math.max(1, n);   /* la vuelta al turno no es otra bolita */
-      let r = n ? '<path class="cd-stripl" d="M' + x(0).toFixed(1) + " 22H" + x(n - 1).toFixed(1) + '"/>' : "";
+      const LW = Math.round(R_.lin.getBoundingClientRect().width) || 380; R_.lin.setAttribute("viewBox", "0 0 " + LW + " 108");
+      const E = R.est.filter((e) => !e.dep && !e.cont), n = E.length, x = (i) => 24 + ((LW - 48) * (i + 0.5)) / Math.max(1, n);   /* la vuelta al turno no es otra bolita */
+      let r = n ? '<path class="cd-stripl" d="M' + x(0).toFixed(1) + " 52H" + x(n - 1).toFixed(1) + '"/>' : "";
       E.forEach((e, i) => {
         const cls = e.h ? "cd-sdone" : (e.m && e.b <= ahora && D.modo !== "futuro") ? "cd-spend" : (igual(e, nx) || esta(st.enCurso, e)) ? "cd-snext" : e.b <= t ? "cd-spast" : "cd-sdot";
-        r += '<circle class="' + cls + '" cx="' + x(i).toFixed(1) + '" cy="22" r="' + (esta(st.enCurso, e) ? 5 : 3.6) + '"/>';
+        r += '<circle class="' + cls + '" cx="' + x(i).toFixed(1) + '" cy="52" r="' + (esta(st.enCurso, e) ? 8 : 6) + '"/>';
       });
       /* parado en la vuelta a un turno, el autobús de la línea va en la bolita de ese turno */
       const cur = c.k >= 0 ? R.est[c.k] : null, cs = cur && cur.cont && c.parado ? ((E.find((e) => e.k === cur.k && e.a === cur.padre) || cur).s) : c.s;
-      if (n) { const pos = E.findIndex((e) => e.s >= cs - 1e-6), bi = pos < 0 ? n - 0.5 : clamp(pos - (E[pos].s - cs) / GAP, -0.5, n - 0.5); r += '<path class="cd-sbus" d="M' + (x(bi) - 6).toFixed(1) + ' 15h12v7h-12z"/>'; }
+      if (n) { const pos = E.findIndex((e) => e.s >= cs - 1e-6), bi = pos < 0 ? n - 0.5 : clamp(pos - (E[pos].s - cs) / GAP, -0.5, n - 0.5); r += '<path class="cd-sbus" d="M' + (x(bi) - 6).toFixed(1) + ' 38h12v7h-12z"/>'; }
+      
+      /* rótulos a 13 px reales (el dibujo va a escala 1:1): solo ahora, la próxima y la guardia; en dos filas y, si no caben, se cae el menos importante */
+      const rot = [], vistos = [], quiere = [E.find((e) => esta(st.enCurso, e)), E.find((e) => igual(e, nx)), E.find((e) => e.k === "guard")], filas = [[], []];
+      quiere.forEach((e) => { if (!e || vistos.indexOf(e) >= 0) return; vistos.push(e); const i1 = E.indexOf(e); if (i1 < 0) return;
+        const tx = hhmm(e.a) + " " + cap(String(e.t)) + (e.k === "guard" ? " ☾" : ""), w = Math.min(tx.length * 7.8, LW - 12), cx = clamp(x(i1), 6 + w / 2, LW - 6 - w / 2);
+        for (let f = 0; f < 2; f++) { if (filas[f].every((q) => cx - w / 2 > q[1] + 8 || cx + w / 2 < q[0] - 8)) { filas[f].push([cx - w / 2, cx + w / 2]);
+          rot.push('<text class="cd-lt ' + (e.k === "guard" ? "cd-ltg" : esta(st.enCurso, e) || igual(e, nx) ? "cd-ltn" : "") + '" x="' + cx.toFixed(1) + '" y="' + (78 + 22 * f) + '" text-anchor="middle">' + esc(tx.length > 24 ? tx.slice(0, 23) + "…" : tx) + "</text>"); break; } } });
+      r += rot.join("");
       R_.route.innerHTML = r;
     }
 

@@ -18078,18 +18078,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         let px = parseFloat(cs.fontSize);
         if (e.closest('svg')) { const m = e.getScreenCTM && e.getScreenCTM(); px = m ? px * Math.hypot(m.a, m.b) : px; if (px < 12.99) svg.push(e.tagName + '.' + (e.getAttribute('class') || '') + ' ' + px.toFixed(1) + ' «' + t.slice(0, 20) + '»'); continue; }
         if (px < 12.99) mal.push(e.tagName + '.' + (e.className || '') + (e.parentElement.className ? ' <' + e.parentElement.className : '') + ' ' + px + ' «' + t.slice(0, 24) + '»'); }
-      return { n: mal.length, mal: [...new Set(mal.map((x) => x.replace(/ «.*/, '')))], svg: svg.slice(0, 12), ancho: document.documentElement.scrollWidth }; });
+      return { n: mal.length, mal: [...new Set(mal.map((x) => x.replace(/ «.*/, '')))], svg: svg.slice(0, 80), ancho: document.documentElement.scrollWidth }; });
     const R = {};
     R.h1 = await modo('bus'); R.bus = await mide(); R.txtBus = await page.evaluate(() => document.getElementById('main').textContent);
-    R.stt = await page.evaluate(() => { const t = document.querySelector('#main .cd-stt'); return t ? parseFloat(getComputedStyle(t).fontSize) : 0; });
+    R.stt = await page.evaluate(() => { const t = document.querySelector('#main .cd-lin .cd-stt'), m = t && t.getScreenCTM(); return t && m ? parseFloat(getComputedStyle(t).fontSize) * Math.hypot(m.a, m.b) : 0; });
     R.h2 = await modo('linea'); R.linea = await mide(); R.txtLinea = await page.evaluate(() => document.getElementById('main').textContent);
     R.h3 = await modo('bus'); R.bus2 = await mide();
     check('590 Letra mínima · Hoy → Conductor (entrando por el botón de modo, 412×915): ningún texto fuera del dibujo baja de 13 px y no hay scroll horizontal',
       R.h1 && R.bus.n === 0 && R.bus.ancho <= 412, JSON.stringify(R.bus));
     check('591 Letra mínima · Hoy → Línea de hoy: horas, bloques, marcas finas y «ahora» miden ≥13 px y no hay scroll horizontal',
       R.h2 && R.linea.n === 0 && R.linea.ancho <= 412, JSON.stringify(R.linea));
-    check('592 Letra mínima · el texto DENTRO del dibujo del conductor (SVG, escala propia del dibujo) no se toca: «LÍNEA DE HOY» sigue en 9,5 unidades del dibujo',
-      R.stt === 9.5 && R.bus.svg.length > 0, JSON.stringify({ stt: R.stt, svg: R.bus.svg.slice(0, 3) }));
+    check('592 Letra mínima · el texto DENTRO del dibujo del conductor (SVG, escala propia del dibujo) salvo la lista de excepciones del resto de la cabina; «LÍNEA DE HOY» (dibujo propio a 1:1) y «PRÓXIMA PARADA» ya miden ≥13 px y salen de la lista',
+      R.stt >= 12.99 && R.bus.svg.length > 0 && !R.bus.svg.some((x) => /LÍNEA DE HOY|PRÓXIMA PARADA/.test(x)), JSON.stringify({ stt: R.stt, svg: R.bus.svg.slice(0, 3) }));
     check('593 Letra mínima · conductor → línea → conductor con los botones: al volver, otra vez ≥13 px y sin scroll horizontal',
       R.h3 && R.bus2.n === 0 && R.bus2.ancho <= 412, JSON.stringify(R.bus2));
     check('594 Letra mínima · los textos no cambian, solo el tamaño: «LÍNEA DE HOY» y «PRÓXIMA PARADA» en el conductor, «Desayuno pre-entreno» y «A casa» en la línea',
@@ -18562,6 +18562,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       gr2(L5) === B && L5.some((x) => /^100 g (de )?zorramenta/i.test(x)), JSON.stringify({ B, L5 }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia640; delete window.__copia640; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
+  }
+
+  // 650) R4 Letra de los dibujos (pruebas 650-659, prefijo rld): la «Línea de hoy» del conductor va en su propio dibujo a escala 1:1
+  //          y solo rotula la parada de ahora, la próxima y la guardia, a ≥13 px reales y sin solaparse; «PRÓXIMA PARADA» del cuadro también ≥13 px.
+  //          EN CADENA (412×915): Hoy → botón de modo «Conductor» → hora 10:30 con guardia a las 15:00 → medir → botón «Línea» → botón «Conductor».
+  //          Cae con los tamaños de antes (tira dentro del dibujo de 600 unidades, 9,5 unidades ≈ 6 px, sin rótulos).
+  // 651) R4 · los rótulos no se solapan ni salen del dibujo; salen «Sesión clínica» y «Guardia».
+  // 652) R4 · «PRÓXIMA PARADA» del cuadro mide ≥13 px en pantalla.
+  // 653) R4 · conductor → línea → conductor: al volver, igual.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), GU = P.store.shifts.filter(P.isGuardia)[0];
+      window.__copia650 = JSON.parse(JSON.stringify(P.store)); sessionStorage.setItem('__conductor', '1');
+      P.setDayOverride(k, GU.id, 'urg');
+      P.store.eventos = (P.store.eventos || []).filter((e) => !/lloret/i.test(e.titulo || '')).concat([
+        { id: 'ev-650a', titulo: 'Sesión clínica', hora: '10:00', fin: '11:00', modo: 'fecha', fecha: k, dow: [], on: true },
+        { id: 'ev-650b', titulo: 'Entreno', hora: '11:30', fin: '12:30', modo: 'fecha', fecha: k, dow: [], on: true }]);
+      P.store.modoViaje = null; P.ui.hoyModo = 'reloj'; P.ui.hoyBusV = 'conductor'; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const modo = async (v) => { const el = await page.$('#main [data-a="hoy-modo"][data-v="' + v + '"]'); if (el) await el.click(); await page.waitForTimeout(400); return !!el; };
+    const mide = () => page.evaluate(() => { const lin = document.querySelector('#main .cd .cd-lin'); if (!lin) return { lin: false };
+      const m = lin.getScreenCTM(), esc = m ? Math.hypot(m.a, m.b) : 0, lr = lin.getBoundingClientRect();
+      const tx = [...lin.querySelectorAll('text')].map((t) => ({ t: t.textContent, px: parseFloat(getComputedStyle(t).fontSize) * esc, r: t.getBoundingClientRect() }));
+      const rot = tx.filter((o) => !/LÍNEA DE HOY/.test(o.t));
+      let solapa = 0; rot.forEach((a, i) => rot.forEach((b, j) => { if (j > i && a.r.left < b.r.right && b.r.left < a.r.right && a.r.top < b.r.bottom && b.r.top < a.r.bottom) solapa++; }));
+      const nxl = document.querySelector('#main .cd .cd-nxl'), mn = nxl && nxl.getScreenCTM();
+      return { lin: true, esc: +esc.toFixed(3), min: Math.min(...tx.map((o) => o.px)), rot: rot.map((o) => o.t), solapa, fuera: rot.filter((o) => o.r.left < lr.left - 1 || o.r.right > lr.right + 1).length,
+        nxl: nxl ? nxl.textContent : '', nxlPx: nxl && mn ? parseFloat(getComputedStyle(nxl).fontSize) * Math.hypot(mn.a, mn.b) : 0, ancho: document.documentElement.scrollWidth }; });
+    const R = {};
+    R.h1 = await modo('bus');
+    await page.evaluate(() => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: 10.5, vivo: false })); }); await page.waitForTimeout(250);
+    R.a = await mide();
+    R.h2 = await modo('linea'); R.h3 = await modo('bus');
+    await page.evaluate(() => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: 10.5, vivo: false })); }); await page.waitForTimeout(250);
+    R.b = await mide();
+    const bien = (m) => m.lin && m.esc > 0.97 && m.esc < 1.03 && m.min >= 12.99 && m.rot.length >= 2 && m.rot.length <= 3 && m.solapa === 0 && m.fuera === 0 && m.ancho <= 412;
+    check('650 Letra de los dibujos · Hoy → Conductor: la «Línea de hoy» va a escala 1:1 y sus rótulos (ahora, próxima, guardia) miden ≥13 px', R.h1 && bien(R.a), JSON.stringify(R.a));
+    check('651 Letra de los dibujos · los rótulos de la línea no se solapan ni se salen del dibujo y salen «Trabajo» (ahora), «Entreno» (próxima) y «Guardia» escritos', R.a.solapa === 0 && R.a.fuera === 0 && R.a.rot.some((t) => /Trabajo/.test(t)) && R.a.rot.some((t) => /Entreno/.test(t)) && R.a.rot.some((t) => /Guardia/.test(t)), JSON.stringify(R.a.rot));
+    check('652 Letra de los dibujos · «PRÓXIMA PARADA» del cuadro del conductor mide ≥13 px en pantalla', /PRÓXIMA PARADA/.test(R.a.nxl) && R.a.nxlPx >= 12.99, JSON.stringify({ t: R.a.nxl, px: R.a.nxlPx }));
+    check('653 Letra de los dibujos · conductor → línea → conductor con los botones: al volver, la línea sigue a 1:1 con rótulos ≥13 px', R.h2 && R.h3 && bien(R.b), JSON.stringify(R.b));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia650; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

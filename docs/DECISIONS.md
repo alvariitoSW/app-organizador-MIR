@@ -2807,3 +2807,11 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
   colgaba el trozo 5. Ahora la prueba guarda una copia antes de conducir y la devuelve al acabar (con «montada»). Con eso, 1065/1065.
 - **Prueba 564 (quien dirige, 03/11):** con el equipo cargado la flecha medía 55,99999 px y la prueba pedía ≥56 al decimal; ahora
   redondea al píxel (`Math.round`). No cambia la app.
+
+
+## R4 · Letra de los dibujos (Hoy → Conductor, «Línea de hoy») · 03/11/2026
+- **Elegido:** opción B de `maquetas/remate-letra-dibujos.html`. La «Línea de hoy» sale del dibujo de 600×900 y pasa a un `<svg class="cd-lin">` propio (viewBox = ancho real × 108, escala 1:1), encima del conductor (`order:-1`, queda detrás en el DOM para que `.cd svg` siga siendo el del conductor). «LÍNEA DE HOY» a 13 px; bolitas y autobús más grandes; solo llevan rótulo (13 px, sin `textLength`) la parada de ahora, la próxima y la guardia, en dos filas y, si no caben sin solaparse, se cae la menos importante. «PRÓXIMA PARADA» (`.cd-nxl`) pasa de 9,5 a 21 unidades (≈13 px a 0,63).
+- **Descartado:** A (rótulos fuera, en lista HTML) y C (rótulos al tocar). El resto de textos pequeños de la cabina (retrovisor, radio, marcha…) no se toca: siguen en la lista de excepciones de la 592.
+- **Pruebas:** 650-653 (encadenadas, 412×915). Viejas: 592 cambia (antes `.cd-stt` = 9,5 unidades; ahora ≥13 px en pantalla y «LÍNEA DE HOY»/«PRÓXIMA PARADA» fuera de la lista); 590, 591, 593, 594 sin cambios.
+- **Cae con X revertido:** con `fig/conductor.js` de antes caen 650, 651, 652, 653 (y la 592 vieja ya adaptada).
+- **Supuestos:** «ahora» = la parada en curso (el turno «Trabajo» cuando hay sesión dentro); `sw.js` ya lista `fig/conductor.js` (no se toca, no cambia la lista, solo el contenido: el `version.json` lo sella quien despliega).
