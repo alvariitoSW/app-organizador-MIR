@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Remate · letra de los dibujos (R4)</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--brand2:#7c5cff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;--r:16px}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:412px;padding:16px;background:var(--bg);color:var(--ink);font:14px/1.4 ui-sans-serif,system-ui,sans-serif}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:0}
+.nota{color:var(--ink2);font-size:13px;margin:0 0 12px}
+.op{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin:0 0 18px}
+.op.rec{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.cab{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.letra{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#04121c;font-weight:900;display:grid;place-items:center;flex:none}
+.rec .letra{background:var(--ok)}
+.tag{margin-left:auto;font-size:13px;font-weight:800;color:var(--ok)}
+.etq{font-size:13px;font-weight:800;color:var(--ink2);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+svg{display:block;width:100%;height:auto;border-radius:12px;background:#0a1020}
+.med{font-size:13px;color:var(--bad);margin:4px 0 0}
+.lista{margin:8px 0 0;padding:0;list-style:none}
+.lista li{display:flex;gap:10px;align-items:center;min-height:44px;border-top:1px solid var(--line);font-size:14px}
+.lista em{font-style:normal;font-weight:900;min-width:92px;font-variant-numeric:tabular-nums}
+.lista i{width:12px;height:12px;border-radius:4px;flex:none}
+.lista small{margin-left:auto;color:var(--ink2);font-size:13px}
+.lin{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font-size:15px;min-height:64px}
+.lin b{color:var(--brand)}
+.coste{font-size:13px;color:var(--ink2);margin:10px 0 0}
+.coste b{color:var(--ink)}
+.pie{font-size:13px;color:var(--ink2)}
+</style></head><body>
+<h1>Letra de los dibujos · R4</h1>
+<p class="nota">Conductor y «Línea de hoy» a 412 px. Datos inventados: guardia 15:00 a 08:00. El rojo es lo que mide hoy en pantalla (tamaño del dibujo × escala).</p>
+
+<section class="op" id="hoy">
+  <div class="cab"><div class="letra">0</div><h2>Hoy (como está)</h2></div>
+  <svg id="s0" viewBox="0 0 600 440" aria-label="Dibujo actual"></svg>
+  <p class="med" id="m0"></p>
+</section>
+
+<section class="op" id="A">
+  <div class="cab"><div class="letra">A</div><h2>Rótulos fuera, en HTML</h2></div>
+  <p class="nota">El dibujo se queda sin texto (solo color y forma). Las paradas y los bloques de la línea pasan a una lista HTML debajo, de 14 px y 44 px de alto, tocable.</p>
+  <svg id="sA" viewBox="0 0 600 300" aria-label="Dibujo sin texto"></svg>
+  <ul class="lista" id="lA"></ul>
+  <p class="coste"><b>Cuesta: media.</b> Quitar los textos de paradas y gantt en fig/conductor.js y pintar una lista desde los mismos datos (<code>D.dia</code>); la prueba 592 deja de necesitar excepciones.</p>
+</section>
+
+<section class="op rec" id="B">
+  <div class="cab"><div class="letra">B</div><h2>A todo el ancho, solo lo que importa</h2><span class="tag">Recomendada</span></div>
+  <p class="nota">La línea de hoy se dibuja a 380 unidades (1 unidad = 1 px, sin reducir) y más alta. Solo llevan rótulo la parada de ahora, la siguiente y la guardia, a 13 px reales. El resto, solo color.</p>
+  <svg id="sB" viewBox="0 0 380 330" aria-label="Línea de hoy a escala real"></svg>
+  <div class="etq">Debajo, igual que hoy</div>
+  <div class="lin"><b>Próxima parada</b> · Entreno 11:30, dentro de 1 h 10 min</div>
+  <p class="coste"><b>Cuesta: pequeña-media.</b> Cambiar la escala del gantt y de los carteles (viewBox propio, sin textLength), con tope de rótulos por solape; el resto del conductor no se mueve.</p>
+</section>
+
+<section class="op" id="C">
+  <div class="cab"><div class="letra">C</div><h2>Rótulos al tocar</h2></div>
+  <p class="nota">Dibujo limpio. Al tocar una parada o un bloque, una línea HTML de 15 px dice qué es. Prueba: toca el dibujo.</p>
+  <svg id="sC" viewBox="0 0 600 300" aria-label="Dibujo limpio, tocable"></svg>
+  <div class="lin" id="lC"><b>Toca un bloque</b> para ver qué es y a qué hora.</div>
+  <p class="coste"><b>Cuesta: pequeña.</b> Ya existe <code>onAbrir</code> y la línea «Próxima parada»; solo hay que usarla también para lo tocado. Pero un gesto más para saber qué hay: peor de un vistazo.</p>
+</section>
+
+<p class="pie"><b>Mi voto: B.</b> Se lee de un vistazo sin tocar nada (C) ni duplicar la agenda en una lista (A).</p>
+
+<script>
+const DIA=[
+ {a:8,b:9,t:'Desayuno',c:'#34d399'},
+ {a:9,b:10.5,t:'Visita planta',c:'#7c5cff'},
+ {a:10.5,b:11.5,t:'Sesión clínica',c:'#7c5cff'},
+ {a:11.5,b:12.5,t:'Entreno',c:'#a3e635',now:1},
+ {a:14,b:14.5,t:'Comida',c:'#fbbf24'},
+ {a:15,b:24,t:'Guardia (hasta 08:00)',c:'#fb7185'}];
+const h2=h=>{const m=Math.round(h*60);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+const X=(h,w)=>(h-7)/18*w;
+const T=(x,y,s,sz,f,an,wt)=>`<text x="${x}" y="${y}" font-size="${sz}" fill="${f||'#e9f2ff'}" text-anchor="${an||'start'}" font-weight="${wt||800}" font-family="ui-sans-serif,system-ui,sans-serif">${s}</text>`;
+const fondo=(w,h)=>`<rect width="${w}" height="${h}" fill="#0a1020"/><rect y="${h-70}" width="${w}" height="70" fill="#262c36"/><rect y="${h-72}" width="${w}" height="3" fill="#59616f"/>`;
+
+/* HOY: tamaños reales de fig/conductor.js (cd-stt 9.5, cd-nxb 12.5, carteles ~11, gantt h*0.46) */
+let o=fondo(600,440);
+o+=T(24,34,'LÍNEA DE HOY',9.5,'#8fa6c6');
+DIA.forEach(e=>{const x=X(e.a,560)+20,w=(e.b-e.a)/18*560-2;o+=`<rect x="${x}" y="46" width="${w}" height="34" rx="5" fill="${e.c}" opacity="${e.now?1:.8}"/>`;
+ if(w>40)o+=T(x+w/2,60,e.t.length*5>w?e.t.slice(0,8):e.t,34*.46*.7,'#04121c','middle');
+ if(w>60)o+=T(x+w/2,74,e.now?'ahora':h2(e.a),34*.26,'#04121c','middle',700)});
+[['Entreno','11:30'],['Comida','14:00'],['Guardia','15:00']].forEach((p,i)=>{const x=24+i*190;
+ o+=`<rect x="${x}" y="150" width="170" height="110" rx="8" fill="#0b1020" stroke="${i?'#3a4a66':'#ffd66b'}" stroke-width="${i?1:2}"/>`+T(x+9,176,p[0],12.5)+T(x+9,196,p[1],11,'#8fa6c6','start',700)});
+o+=T(24,300,'PRÓXIMA PARADA',9.5,'#8fa6c6')+T(24,320,'Entreno · dentro de 1 h 10 min',12.5);
+document.getElementById('s0').innerHTML=o;
+
+/* A: sin texto */
+let a=fondo(600,300);
+DIA.forEach(e=>{const x=X(e.a,560)+20,w=(e.b-e.a)/18*560-2;a+=`<rect x="${x}" y="30" width="${w}" height="70" rx="6" fill="${e.c}" opacity="${e.now?1:.8}"/>`});
+[0,1,2].forEach(i=>{a+=`<rect x="${24+i*190}" y="140" width="170" height="70" rx="8" fill="#0b1020" stroke="${i?'#3a4a66':'#ffd66b'}" stroke-width="${i?1:2}"/><circle cx="${109+i*190}" cy="175" r="16" fill="${['#a3e635','#fbbf24','#fb7185'][i]}"/>`});
+document.getElementById('sA').innerHTML=a;
+document.getElementById('lA').innerHTML=DIA.map(e=>`<li><i style="background:${e.c}"></i><em>${h2(e.a)}–${h2(e.b)}</em><span>${e.t}</span>${e.now?'<small>ahora</small>':''}</li>`).join('');
+
+/* B: escala 1:1, 13 px reales */
+let b=fondo(380,330);
+b+=T(10,26,'LÍNEA DE HOY',13,'#8fa6c6');
+const alto=64,y0=40;
+DIA.forEach(e=>{const x=X(e.a,360)+10,w=(e.b-e.a)/18*360-2;
+ b+=`<rect x="${x}" y="${y0}" width="${w}" height="${alto}" rx="6" fill="${e.c}" opacity="${e.now?1:.75}" ${e.now?'stroke="#fff" stroke-width="2"':''}/>`});
+b+=T(X(11.5,360)+12,y0+alto+20,'Entreno',13,'#a3e635')+T(X(11.5,360)+12,y0+alto+36,'11:30',13,'#8fa6c6','start',700);
+b+=T(370,y0+alto+20,'Guardia',13,'#fb7185','end')+T(370,y0+alto+36,'15:00 → 08:00',13,'#8fa6c6','end',700);
+b+=`<rect x="10" y="190" width="360" height="62" rx="10" fill="#0b1020" stroke="#ffd66b" stroke-width="2"/>`+T(22,214,'AHORA · Entreno',13,'#ffd66b')+T(22,238,'termina a las 12:30',13,'#e9f2ff','start',700);
+b+=`<rect x="10" y="262" width="360" height="40" rx="10" fill="#0b1020" stroke="#3a4a66"/>`+T(22,287,'Después · Comida 14:00',13,'#e9f2ff','start',700);
+document.getElementById('sB').innerHTML=b;
+
+/* C: tocar */
+let c=fondo(600,300);
+const frases=DIA.map(e=>`<b>${e.t}</b> · ${h2(e.a)} a ${h2(e.b)}`+(e.now?' · ahora':''));
+DIA.forEach((e,i)=>{const x=X(e.a,560)+20,w=(e.b-e.a)/18*560-2;c+=`<rect data-i="${i}" x="${x}" y="30" width="${w}" height="90" rx="6" fill="${e.c}" opacity=".8" style="cursor:pointer"/>`});
+[0,1,2].forEach(i=>{c+=`<rect data-p="${i}" x="${24+i*190}" y="150" width="170" height="80" rx="8" fill="#0b1020" stroke="${i?'#3a4a66':'#ffd66b'}" stroke-width="${i?1:2}" style="cursor:pointer"/>`});
+const sC=document.getElementById('sC');sC.innerHTML=c;
+const PAR=['<b>Entreno</b> · 11:30, dentro de 1 h 10 min','<b>Comida</b> · 14:00, dentro de 3 h 40 min','<b>Guardia</b> · 15:00 hasta 08:00 del día siguiente'];
+sC.addEventListener('click',ev=>{const t=ev.target;let s=null;
+ if(t.dataset.i!=null)s=frases[+t.dataset.i];if(t.dataset.p!=null)s=PAR[+t.dataset.p];
+ if(s){document.getElementById('lC').innerHTML=s;sC.querySelectorAll('[data-i]').forEach(r=>r.setAttribute('opacity',r===t?1:.55))}});
+
+/* medida real de la letra del dibujo «Hoy» */
+requestAnimationFrame(()=>{const sv=document.getElementById('s0'),k=sv.getBoundingClientRect().width/600;
+ const tam=[...sv.querySelectorAll('text')].map(t=>parseFloat(t.getAttribute('font-size'))*k);
+ document.getElementById('m0').textContent='Letra del dibujo en pantalla: de '+Math.min(...tam).toFixed(1)+' a '+Math.max(...tam).toFixed(1)+' px (mínimo pedido: 13). Escala '+k.toFixed(2)+'.'});
+</script></body></html>
