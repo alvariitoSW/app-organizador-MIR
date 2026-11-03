@@ -9,7 +9,7 @@ tú puedes añadir o tachar a mano.
 - ~~[aparc-consejo-competencia]~~ ✅ Consejo hecho (02/11, acta `consejo/2026-11-02-competencia.md`, rama `claude/la-competencia`, 929 k). Aprobado: plan en 3 fases (~38 M, máx. ~50 M), sin Consejo por tanda; PDF y Excel «más adelante»; widget = K4 del Lanzador. **Siguiente:** fase 1, `encargos/competencia-fase-1.md` (02/11); fase 2 el 03/11; fase 3 el 04/11.
 - [aparc-pruebas-dia-1] 6 pruebas de la regresión caen el día 1 de mes (vistas el 01/11/2026, también en el commit e87af01 de antes de la CH4): saliente, Lloretazo/taxi ×3, vacaciones a mano y la línea entre meses del Mes. El 01/11 (CH5) cae también la 83 («Hoy» junta las cinco patas), igual con el código de antes de la CH5 (c9e4c07): misma causa de fecha u hora. Dependen de la fecha, no del código; arreglarlas (fecha fija) antes del `main` de la CH8 · tests/regression.test.js
   **Cerrado 03/11:** las de la hora real (sol, 285→289, 333) arregladas; suite completa en verde.
-- [aparc-lanzador] Tanda «El Lanzador» aprobada (01/11, acta `consejo/2026-11-01.md`): Brave, lanzadora (C), todo plegado, ~2,6 M con delegación al Consejo. **K1 hecha** (01/11, rama `claude/plan-socialista-q4sp1t`, commits 70929a0 + ddb8562, **en `main` 09c5151 el 01/11** (run 41337590763 success): `#uso=` validado, `store.uso` a 30 días, relleno de la noche y del «sin pantallas», caso C; pruebas 445-448; formato del enlace documentado encima de `usoEntrante`). Clave de firma creada el 01/11 y guardada por el usuario en Secrets (`LANZADOR_KEYSTORE` en base64 de un PKCS12, `LANZADOR_PASSWORD` = contraseña del almacén y de la clave, `LANZADOR_ALIAS` = `lanzador`); el workflow de K2 usa esos nombres. Siguiente: **K2** (la lanzadora Android).
+- [aparc-lanzador] **Aparcado por el usuario el 03/11** (K2-K4 no se hacen por ahora). Tanda «El Lanzador» aprobada (01/11, acta `consejo/2026-11-01.md`): Brave, lanzadora (C), todo plegado, ~2,6 M con delegación al Consejo. **K1 hecha** (01/11, rama `claude/plan-socialista-q4sp1t`, commits 70929a0 + ddb8562, **en `main` 09c5151 el 01/11** (run 41337590763 success): `#uso=` validado, `store.uso` a 30 días, relleno de la noche y del «sin pantallas», caso C; pruebas 445-448; formato del enlace documentado encima de `usoEntrante`). Clave de firma creada el 01/11 y guardada por el usuario en Secrets (`LANZADOR_KEYSTORE` en base64 de un PKCS12, `LANZADOR_PASSWORD` = contraseña del almacén y de la clave, `LANZADOR_ALIAS` = `lanzador`); el workflow de K2 usa esos nombres. Siguiente: **K2** (la lanzadora Android).
 - [aparc-compra-linea-escrita] En la compra, una línea escrita a mano de una receta («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la semana («300 g Tomate triturado»): salen dos líneas. Ya era así; visto en la CH2 de El Chef (30/10) · docs/DECISIONS.md «El Chef · CH2»
 
 - [aparc-reloj-324] La prueba 324 (tocar la sesión en «lo que viene» del reloj) cayó una vez en la suite completa (10:0x del 30/10, quedaba abierto «¿Quitar este evento?») y pasa sola, en su trozo y en la siguiente suite entera · tests/regression.test.js:12883
@@ -29,8 +29,7 @@ tú puedes añadir o tachar a mano.
 - [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
   haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
 
-- [aparc-comida-entreno] Los días de entreno a las 18:30 la comida sale a las 18:00 (ventana fija de Sueño): falta
-  decidir si debe ir después del entreno · DECISIONS.md:948 · desde 2026-10-15
+- [aparc-comida-entreno] **Decidido 03/11 por el usuario:** no come antes de entrenar: entrena y come al volver. El entreno solo a horas en que el gimnasio no esté lleno (mandará capturas del gimnasio con la afluencia) y siempre ≥5 h antes de dormir (si entrena tarde no duerme). Falta: las horas tranquilas de sus capturas → tanda pequeña sobre `gymHoraDe`/`franja()` y la comida tras el entreno · app.js:9625
 - [aparc-png-design] `design/` pesa 74 MB en PNG de maquetas: comprimirlos (no afecta a la app, solo al repositorio)
 
 ### Versión 3.0
@@ -40,7 +39,7 @@ Todo lo de la 3.0 (lo que está en marcha, el orden de lo que falta, las ideas y
 
 ### A futuro (sin fecha)
 
-- [aparc-parte-diario] Programar el parte para que salga solo cada mañana (falta decidir la hora) · desde 2026-10-14
+- ~~[aparc-parte-diario]~~ Descartado por el usuario (03/11): no quiere parte automático; lo pide con /plan-socialista
 
 ### Comida: ingeniería inversa para mejorar SOLO ese apartado  ·  [enc-comida-ri]  (pedido el 2026-10-26)
 
