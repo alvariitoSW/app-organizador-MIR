@@ -18082,7 +18082,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const dia = (n) => page.evaluate((n) => window.PG.iso(window.PG.addDays(new Date(), n)), n);
     const jueves = () => page.evaluate(() => { for (let n = 1; n <= 7; n++) { const d = window.PG.addDays(new Date(), n); if (d.getDay() === 4) return window.PG.iso(d); } });
     const escribe = async (txt) => { await page.click('[data-a="frase-abre"]'); await page.waitForTimeout(120); await page.fill('#fraseTxt', txt); await page.click('[data-a="frase-lee"]'); await page.waitForTimeout(120); };
-    const prevTxt = () => page.evaluate(() => ((document.querySelector('#main .frase') || {}).innerText || '').replace(/\s+/g, ' '));
+    const prevTxt = () => page.evaluate(() => ((document.querySelector('#main .apunta') || {}).innerText || '').replace(/\s+/g, ' '));
     const evs = () => page.evaluate(() => window.PG.eventosS().map((e) => ({ t: e.titulo, f: e.fecha, h: e.hora, m: e.modo })));
     const notas = () => page.evaluate(() => window.PG.store.notas.map((n) => ({ t: n.txt, f: n.fecha })));
     const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -18130,23 +18130,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const pg = await prevTxt(); const ng = (await evs()).length;
     await page.click('[data-a="frase-guarda"]'); await page.waitForTimeout(150); const g2 = await evs();
     await prep(); await escribe('guardia el 14');
-    const pgd = await page.evaluate(() => ({ prev: !!window.PG.ui.apunta.prev, txt: ((document.querySelector('#main .frase') || {}).innerText || '') }));
+    const pgd = await page.evaluate(() => ({ prev: !!window.PG.ui.apunta.prev, txt: ((document.querySelector('#main .apunta') || {}).innerText || '') }));
     check('574 Caja de frase · con guardia ese día avisa y deja «Guardar igual» / «Otro día»; «guardia el 14» no se apunta aquí y no guarda',
       /Ese día tienes/.test(pg) && /Guardar igual/.test(pg) && /Otro día/.test(pg) && ng === 0 && g2.length === 1 && g2[0].f === ex.m &&
       !pgd.prev && /guardias no se apuntan aquí/.test(pgd.txt) && (await evs()).length === 0, JSON.stringify({ pg, g2, pgd }));
     // 575
     await prep(); await escribe('<img src=x onerror=window.__xss570=1> mañana a las 10');
-    const sx = await page.evaluate(() => ({ img: document.querySelectorAll('#main .frase img').length, xss: !!window.__xss570, txt: document.querySelector('#main .frase .prev').innerText }));
+    const sx = await page.evaluate(() => ({ img: document.querySelectorAll('#main .apunta img').length, xss: !!window.__xss570, txt: document.querySelector('#main .apunta .prev').innerText }));
     check('575 Caja de frase · un texto con HTML sale como texto en la vista previa (nada se ejecuta)', sx.img === 0 && !sx.xss && /<img/.test(sx.txt), JSON.stringify(sx));
     // 576
     await prep();
-    const m1 = await page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), b = q('.frase0'), r = b.getBoundingClientRect(), n = q('.diasnav2').getBoundingClientRect();
+    const m1 = await page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), b = q('.apunta0'), r = b.getBoundingClientRect(), n = q('.diasnav2').getBoundingClientRect();
       return { h: r.height, f: parseFloat(getComputedStyle(b.querySelector('b')).fontSize), debajo: r.top >= n.bottom - 1, scroll: document.documentElement.scrollWidth, vw: innerWidth }; });
-    await escribe('dentista mañana 10:30');
-    const m2 = await page.evaluate(() => { const bs = [...document.querySelectorAll('#main .frase button')], r = document.querySelector('#main .frase').getBoundingClientRect();
-      return { n: bs.length, h: Math.min(...bs.map((x) => x.getBoundingClientRect().height)), f: Math.min(...[...document.querySelectorAll('#main .frase *')].filter((e) => e.children.length === 0 && (e.textContent || '').trim()).map((e) => parseFloat(getComputedStyle(e).fontSize))), der: r.right, vw: innerWidth, scroll: document.documentElement.scrollWidth }; });
+    await escribe('dentista hoy 10:30');
+    const m2 = await page.evaluate(() => { const bs = [...document.querySelectorAll('#main .apunta button')], r = document.querySelector('#main .apunta').getBoundingClientRect();
+      return { n: bs.length, h: Math.min(...bs.map((x) => x.getBoundingClientRect().height)), f: Math.min(...[...document.querySelectorAll('#main .apunta *')].filter((e) => e.children.length === 0 && (e.textContent || '').trim()).map((e) => parseFloat(getComputedStyle(e).fontSize))), der: r.right, borrar: (() => { const b = document.querySelector("#main .apunta [data-a=frase-borra]"); const q = b.getBoundingClientRect(); return [q.width, q.height, b.scrollWidth <= b.clientWidth + 1]; })(), vw: innerWidth, scroll: document.documentElement.scrollWidth }; });
     check('576 Caja de frase · a 412 px la línea mide ≥44 px y ≥13 px de letra bajo las flechas; abierta, botones ≥44 px, letra ≥13 px y sin desbordar',
-      m1.h >= 44 && m1.f >= 13 && m1.debajo && m1.scroll <= m1.vw && m2.n >= 4 && m2.h >= 43.9 && m2.f >= 13 && m2.der <= m2.vw && m2.scroll <= m2.vw, JSON.stringify({ m1, m2 }));
+      m1.h >= 44 && m1.f >= 13 && m1.debajo && m1.scroll <= m1.vw && m2.n >= 4 && m2.borrar[0] >= 80 && m2.borrar[1] <= 60 && m2.borrar[2] && m2.h >= 43.9 && m2.f >= 13 && m2.der <= m2.vw && m2.scroll <= m2.vw, JSON.stringify({ m1, m2 }));
     // 577
     const modos = {}; for (const mo of ['bus', 'reloj', 'linea']) { await prep(mo); await page.waitForTimeout(150); modos[mo] = await page.evaluate(() => !!document.querySelector('#main .diasnav2 + [data-a="frase-abre"]')); }
     check('577 Caja de frase · la línea «Apuntar algo…» sale justo bajo las flechas en conductor, reloj y línea', Object.values(modos).every(Boolean), JSON.stringify(modos));
