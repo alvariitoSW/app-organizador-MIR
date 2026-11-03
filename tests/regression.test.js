@@ -7887,6 +7887,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (el modo de Hoy se recuerda entre pruebas: si alguna lo dejó en otro, aquí se entra en Reloj, que es donde vive el arco)
     if (!(await page.$('#main .hoyreloj svg'))) { const b = await page.$('#main [data-a="hoy-modo"][data-v="reloj"]'); if (b) { await b.click(); await page.waitForTimeout(300); } }
     // el reloj se dibuja en la caja -60 -14 420 328 (las etiquetas van por fuera del anillo)
+    // por la mañana (hora real) la tira de la mañana va encima y el mediodía del reloj caía bajo la barra de pestañas: al centro primero
+    await page.evaluate(() => { document.querySelector('#main .hoyreloj svg').scrollIntoView({ block: 'center' }); });
+    await page.waitForTimeout(150);
     const pSol = await page.evaluate(() => { const v = document.querySelector('#main .hoyreloj svg').getBoundingClientRect(), k = 420 / v.width, t = Math.PI;
       return { x: v.left + (150 + 129 * Math.sin(t) + 60) / k, y: v.top + (150 - 129 * Math.cos(t) + 14) / k }; });
     await page.mouse.click(pSol.x, pSol.y);
@@ -11642,6 +11645,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // las 7:45 es el taxi; «esta semana» cuenta a tiempo/taxi. Fija: la hora de salir vivía solo en Ajustes, sin
   // registro de la real ni hábito.
   {
+    await fijaHoy(7, 20); // a las 7:20 de un día fijo: «he salido» está siempre, y no según la hora real a la que corra la suite
     const r = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), d = new Date(), kd = (n) => { const x = new Date(d.getTime()); x.setDate(x.getDate() + n); return P.iso(x); };
       /* kt y el día anterior (kp) deben caer en la misma semana: si kt fuese lunes, kp sería de la semana pasada y «esta semana» no lo contaría */
       const off = new Date(d.getTime() + 3 * 864e5).getDay() === 1 ? 4 : 3, kt = kd(off), kp = kd(off - 1), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
@@ -11662,10 +11666,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const hayHoy = await page.$('#main [data-a="manana-sali"]');
     if (hayHoy) { await hayHoy.click(); await page.waitForTimeout(200); }
     r.c = await page.evaluate((hubo) => { const P = window.PG, hoy = P.iso(new Date()), m = P.store.manana[hoy]; return { hubo, guardada: hubo ? !!(m && /^\d{2}:\d{2}$/.test(m.salio)) : null }; }, !!hayHoy);
-    await page.evaluate(() => { const P = window.PG, t = P.__t285; P.setDayOverride(t.kt, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.habitosS().items.length = t.nH; P.ui.diaHoy = ''; P.ui.tab = t.tab; delete P.__t285; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG, t = P.__t285; P.setDayOverride(t.kt, t.ov ? t.ov.shift : null, t.ov ? t.ov.guard : ''); P.store.rotation.mode = t.mode; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.habitosS().items.length = t.nH; P.ui.diaHoy = ''; P.ui.mananaMovil = null; P.ui.tab = t.tab; delete P.__t285; P.save(); P.render(); });
     check('la tira de la mañana: hitos (levantarse … salir de casa, bus, último bus), «saliste a las 7:40 · tarde: taxi» y deshacer; el hábito «taxi» se marca solo y «salir a tiempo» no; a las 7:45 vas en taxi',
       r.hay && r.hitos.indexOf('Salir de casa') >= 0 && r.hitos.some((h) => /^Último/.test(h)) && /Saliste a las 7:40/.test(r.txt) && /taxi/i.test(r.txt) && r.deshacer && r.taxi === 'ok' && r.puerta === '' && r.puerta2 === 'ok' && r.e745 === 'taxi' && Math.abs(r.salir - 7.667) < 0.01 && r.sem.n === 2 && r.sem.taxi === 1 && r.sem.aTiempo === 1, JSON.stringify(r));
     check('«deshacer» quita la hora apuntada y «he salido» guarda la del móvil', r.b.manana === null && (r.c.hubo === false || r.c.guardada === true), JSON.stringify({ b: r.b, c: r.c }));
+    await sueltaHoy();
   }
   // 286) LAS ESCENAS DEL CONDUCTOR, EN CADENA (módulo, cargado en Hoy): con datos de un día de jornada, sesión,
   // entreno a las 17:30 y las escenas (taxi, bici 15:00–15:20, rotación «Rayos»): (a) el cartel de la rotación en el
@@ -13611,7 +13616,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   {
     await fijaHoy(12, 0, true); // miércoles a mediodía: «montar» rellena lo que queda de la semana (en domingo o por la tarde no queda nada)
     const vp332 = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    const toca = async (sel, ms) => { const e = await page.$(sel); if (e) await e.click().catch(() => {}); await page.waitForTimeout(ms || 150); return !!e; };
+    // espera al botón y reintenta si se repinta al tocarlo (con los 5 trozos a la vez el navegador va cargado y 250 ms fijos no bastaban)
+    const toca = async (sel, ms) => { const ok = await page.locator(sel).first().click({ timeout: 3000 }).then(() => true, () => false); await page.waitForTimeout(ms || 150); return ok; };
     const r = {};
     await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia332', JSON.stringify(P.store));
       const T = P.store.shifts.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0];
