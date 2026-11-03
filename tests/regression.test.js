@@ -18519,6 +18519,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await sueltaHoy();
   }
 
+  // 640) R3 Compra (pruebas 640-644): una línea escrita a mano de una receta («100 g de tomate triturado») se suma con el mismo alimento que pide la semana
+  //          («300 g Tomate triturado» → «400 g Tomate triturado»); mismo nombre sin mayúsculas, tildes, «de» ni plural simple; otra unidad se queda aparte.
+  //          EN CADENA (412×915): plato con la línea a mano → Mis platos → receta → «Añadir a la compra» → (la semana ya pide 300 g) → pestaña Compra.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { window.__copia640 = JSON.parse(JSON.stringify(window.PG.store)); });
+    const compra640 = async (linea) => {
+      await page.evaluate((l) => { const P = window.PG; P.store.listas = []; P.food().despensa = []; delete P.food().compraRec; P.ui.marks = new Set(); P.ui.compraTodo = true;
+        P.store.dishes = P.store.dishes.filter((d) => !/^d640/.test(d.id));
+        const t = P.alimDeTexto('tomate triturado');
+        P.store.dishes.push({ id: 'd640', name: 'Plato 640', icon: '🍝', portions: 2, kcal: 600, prot: 20, tuyo: true, alims: [], alimsV: 1, ingredients: [l], steps: ['Mezcla.'] });
+        P.store.dishes.push({ id: 'd640s', name: 'Semana 640', icon: '🥫', portions: 2, kcal: 300, prot: 10, tuyo: true, alims: [{ id: t.id, g: 300 }], alimsV: true, ingredients: [], steps: ['Calienta.'] });
+        P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = { v: 'platos', f: '' }; P.save(); P.render(); }, linea);
+      await page.waitForTimeout(250);
+      await page.click('[data-a="cje-pver"][data-id="d640"]'); await page.waitForTimeout(150);
+      await page.click('[data-a="rec-abre"][data-id="d640"]'); await page.waitForTimeout(200);
+      await page.click('#hojaDia [data-a="rec-compra"]'); await page.waitForTimeout(200);
+      await page.evaluate(() => { const P = window.PG; P.food().compraRec.push({ id: 'd640s', rac: 2, sin: [] }); P.ui.cjeHoja = null; P.ui.tab = 'shop'; P.ui.shopVista = ''; P.ui.compraSalida = 'todo'; P.save(); P.render(); });
+      await page.waitForTimeout(250);
+      return page.evaluate(() => [...document.querySelectorAll('#main li.linea')].map((e) => e.innerText.replace(/\s+/g, ' ').trim()).filter((x) => /tomate|zorramenta/i.test(x)));
+    };
+    const gr2 = (L) => { const l = L.filter((x) => /^[\d.,]+ (kg|g) Tomate triturado/.test(x))[0] || ''; const m = /^([\d.,]+) (kg|g)/.exec(l); return m ? Math.round(parseFloat(m[1].replace(',', '.')) * (m[2] === 'kg' ? 1000 : 1)) : 0; };
+    const nTom = (L) => L.filter((x) => /Tomate triturado/.test(x) && !/Pan integral/.test(x)).length;
+    const L0 = await compra640(''); const B = gr2(L0);   // lo que ya pide la semana (con los 300 g de la receta de prueba)
+    const L1 = await compra640('100 g de tomate triturado');
+    check('640 Compra · «100 g de tomate triturado» escrito a mano se suma al tomate triturado que pide la semana: UNA sola línea con 100 g más',
+      B >= 300 && nTom(L1) === 1 && gr2(L1) === B + 100, JSON.stringify({ B, L1 }));
+    const L2 = await compra640('1 lata de tomate triturado');
+    check('641 Compra · «1 lata de tomate triturado» (otra unidad que los gramos) NO se suma: el tomate de la semana queda igual y la lata sale aparte',
+      gr2(L2) === B && L2.some((x) => /^1 lata/.test(x)), JSON.stringify({ B, L2 }));
+    const L3 = await compra640('150 g Tomates  Triturados');
+    check('642 Compra · mayúsculas, plural y espacios no importan: «150 g Tomates  Triturados» se suma al de la semana en una sola línea',
+      nTom(L3) === 1 && gr2(L3) === B + 150, JSON.stringify({ B, L3 }));
+    const L4 = await compra640('0,5 kg de tomate triturado');
+    check('643 Compra · «0,5 kg de tomate triturado» se suma como 500 g al de la semana (los kilos pasan a gramos)',
+      nTom(L4) === 1 && gr2(L4) === B + 500, JSON.stringify({ B, L4 }));
+    const L5 = await compra640('100 g de zorramenta');
+    check('644 Compra · una línea en gramos que no es ningún alimento de la tabla («100 g de zorramenta») se queda como estaba y no toca el tomate',
+      gr2(L5) === B && L5.some((x) => /^100 g (de )?zorramenta/i.test(x)), JSON.stringify({ B, L5 }));
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia640; delete window.__copia640; P.ui.marks = new Set(); P.ui.compraTodo = false; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

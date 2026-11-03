@@ -21631,6 +21631,10 @@ function compraDatos0(){
   /* un solo embudo para los dos orígenes: lo que se cocina en tanda y lo que no */
   const mete=function(ings,deReceta){
     ings.forEach(function(i){
+      /* una línea escrita a mano en gramos («100 g de tomate triturado») que es el mismo alimento de la tabla
+         que pide la semana se suma con él (misma clave `alim:`); en otra unidad («1 lata») se queda aparte */
+      if(!i.aid&&(i.unit==='g'||i.unit==='kg')&&isFinite(i.num)&&i.num>0){const a=compraAlimDe(i.item);
+        if(a)i=Object.assign({},i,{aid:a.id,item:a.n,unit:'g',num:i.num*(i.unit==='kg'?1000:1)});}
       /* celíaco: lo que lleva gluten entra ya en su versión sin gluten */
       if(esCeliaco()&&glutenDe(i.item)==='si'){const sg=sinGlutenTexto(i.item),b=alimPorNombre(sg);i=Object.assign({},i,{item:sg.charAt(0).toUpperCase()+sg.slice(1),aid:b?b.id:i.aid});}
       const key=i.aid?('alim:'+i.aid):(i.item.toLowerCase()+'|'+(i.unit||''));
@@ -21719,6 +21723,12 @@ function compraDatos0(){
   /* lo que la semana del menú da de comer, frente a tu objetivo: la dieta se hace en la compra */
   return {grupos:grupos,total:total,marcados:marcados,semana:semana,dias:nDias,eje:eje,recetas:recetas,sueltas:sueltas,ejemplo:ejemplo,
     kcalDia:kcalPlanMedia(),kcalObj:+(objetivoMacros()||{}).kcal||0};}
+function compraAlimDe(item){
+  /* el alimento de la tabla con el MISMO nombre que esta línea: sin mayúsculas, tildes, «de/del» delante ni plural simple */
+  const t=alimTxt(item).replace(/[^a-z0-9ñ ]/g,' ').replace(/\s+/g,' ').trim().replace(/^(de|del|la|el|los|las)\s+/,'');
+  if(!t)return null;
+  const sing=function(x){return x.split(' ').map(function(w){return w.length>4?w.replace(/s$/,''):w;}).join(' ');};
+  return alimPorNombre(t)||alimPorNombre(sing(t))||alimIdx().lista.filter(function(a){return sing(alimTxt(a.n))===sing(t);})[0]||null;}
 function casaTiene(texto,aid,desp){
   /* ¿esto ya está en casa? por nombre y, si no, por alimento, no solo por nombre: «pechuga pollo ajillo»
      del ticket cubre la «pechuga de pollo» de la receta, y «huevos medianos» a los «huevos» */
