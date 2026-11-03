@@ -17806,6 +17806,72 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       a.ya && !a.yaAbierto && d.yaAbierto && enOrden(c) && c.pas[0].k === ultimo && a.pas[0].k !== ultimo, JSON.stringify({ ya: a.ya, ab: a.yaAbierto, d: d.yaAbierto, primeros: [a.pas[0].k, c.pas[0].k], ultimo }));
   }
 
+  // ===== T2c · FLECHAS DE DÍA (560-564) =====
+  // 560) X1 · en Hoy, las flechas «‹ lun · mié ›» (fila de 56 px sobre la tarjeta) mueven ui.diaHoy en los tres modos (conductor, reloj, línea): mañana → pasado → ayer de pasado → volver a hoy.
+  //      Cae con `diaNavHTML(dref,esHoy)+` quitado del render de Hoy.
+  // 561) X1 · en «De viaje» también hay flechas: mañana sale la tarjeta normal del día y «volver a hoy» trae otra vez «Lo esencial de hoy».
+  // 562) X1 · sin gesto: un deslizado horizontal en Hoy no cambia de día, y no hay «+» flotante fijo.
+  // 563) X1 · mirando otro día, el centro dice «volver a hoy», el rótulo de la barra sigue el día y las flechas muestran el día vecino (lun/mié).
+  // 564) X1 · medidas a 412×915: cada flecha ≥56 px de alto, letra ≥13 px, y la fila cabe sin desbordar.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    const prep = (modo) => page.evaluate((modo) => { const P = window.PG; if (!window.__copia560) window.__copia560 = JSON.parse(JSON.stringify(P.store));
+      P.store.modoViaje = null; P.ui.hoyModo = modo; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.mvCompleto = false; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.render(); }, modo);
+    const click = async (sel) => { const el = await page.$('#main ' + sel); if (el) await el.click(); await page.waitForTimeout(250); return !!el; };
+    const lee = () => page.evaluate(() => ({ dia: window.PG.ui.diaHoy || '', nav: !!document.querySelector('#main .diasnav2'),
+      h2: ((document.querySelector('#main .card h2') || {}).innerText || ''), rot: (document.getElementById('wkLabel') || {}).textContent || '',
+      centro: ((document.querySelector('#main .diasnav2 b, #main .diasnav2 [data-a="dia-hoy"]') || {}).textContent || '').trim(),
+      prev: ((document.querySelector('#main [data-a="dia-prev"]') || {}).textContent || '').trim(), next: ((document.querySelector('#main [data-a="dia-next"]') || {}).textContent || '').trim() }));
+    const hoyP = await page.evaluate(() => window.PG.iso(new Date()));
+    const mas = (n) => { const d = new Date(hoyP + 'T12:00:00'); d.setDate(d.getDate() + n); return isoDate(d); };
+    const R = {};
+    for (const modo of ['bus', 'reloj', 'linea']) {
+      await prep(modo); await page.waitForTimeout(200);
+      const o = [await lee()];
+      const h = [await click('[data-a="dia-next"]')]; o.push(await lee());
+      h.push(await click('[data-a="dia-next"]')); o.push(await lee());
+      h.push(await click('[data-a="dia-prev"]')); o.push(await lee());
+      h.push(await click('[data-a="dia-prev"]')); o.push(await lee());
+      R[modo] = { h, d: o.map((x) => x.dia), nav: o.map((x) => x.nav) };
+    }
+    check('560 Flechas de día · en conductor, reloj y línea, mañana → pasado → de vuelta, y siempre con su fila de flechas',
+      ['bus', 'reloj', 'linea'].every((m) => R[m].h.every(Boolean) && R[m].nav.every(Boolean) && R[m].d.join('|') === ['', mas(1), mas(2), mas(1), ''].join('|')), JSON.stringify(R));
+    // 561 viaje
+    await page.evaluate(() => { const P = window.PG; P.store.modoViaje = { destino: 'Lisboa', ida: P.iso(P.addDays(new Date(), -1)), vuelta: P.iso(P.addDays(new Date(), 2)), pausa: {}, lista: [], billetes: [], avisados: [] };
+      P.ui.hoyModo = 'bus'; P.ui.diaHoy = ''; P.ui.mvCompleto = false; P.render(); });
+    await page.waitForTimeout(250);
+    const v0 = await page.evaluate(() => ({ esencial: /Lo esencial de hoy/.test(document.getElementById('main').innerText), nav: !!document.querySelector('#main .diasnav2') }));
+    await click('[data-a="dia-next"]');
+    const v1 = await page.evaluate(() => ({ esencial: /Lo esencial de hoy/.test(document.getElementById('main').innerText), dia: window.PG.ui.diaHoy }));
+    await click('[data-a="dia-hoy"]');
+    const v2 = await page.evaluate(() => ({ esencial: /Lo esencial de hoy/.test(document.getElementById('main').innerText), dia: window.PG.ui.diaHoy }));
+    check('561 Flechas de día · en «De viaje» hay flechas: mañana sale la tarjeta normal y «volver a hoy» trae «Lo esencial de hoy»',
+      v0.esencial && v0.nav && !v1.esencial && v1.dia === mas(1) && v2.esencial && v2.dia === '', JSON.stringify({ v0, v1, v2 }));
+    // 562 sin gesto ni «+»
+    await prep('bus'); await page.waitForTimeout(150);
+    const g = await page.evaluate(() => { const m = document.getElementById('main'), t = (type, x) => m.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true,
+        touches: type === 'touchend' ? [] : [new Touch({ identifier: 1, target: m, clientX: x, clientY: 300 })], changedTouches: [new Touch({ identifier: 1, target: m, clientX: x, clientY: 300 })] }));
+      t('touchstart', 350); t('touchmove', 150); t('touchend', 60); const dia = window.PG.ui.diaHoy || '';
+      const fijos = [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).position === 'fixed' && /^[+＋]$/.test((e.textContent || '').trim()));
+      return { dia, fijos: fijos.length }; });
+    await page.waitForTimeout(200);
+    check('562 Flechas de día · deslizar con el dedo no cambia de día y no hay «+» flotante', g.dia === '' && g.fijos === 0, JSON.stringify(g));
+    // 563 otro día
+    await click('[data-a="dia-next"]');
+    const t = await lee(); const dn = new Date(mas(1) + 'T12:00:00');
+    const DS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    await click('[data-a="dia-hoy"]'); const t2 = await lee();
+    check('563 Flechas de día · mirando mañana, el centro dice «volver a hoy», el rótulo de arriba no dice «hoy» y las flechas enseñan el día vecino; al volver, el centro dice «Hoy · …»',
+      /volver a hoy/i.test(t.centro) && !/· hoy$/.test(t.rot) && t.prev.toLowerCase().includes(DS[(dn.getDay() + 6) % 7]) && t.next.toLowerCase().includes(DS[(dn.getDay() + 1) % 7]) && /^Hoy ·/.test(t2.centro) && /· hoy$/.test(t2.rot), JSON.stringify({ t, t2 }));
+    // 564 medidas
+    const m = await page.evaluate(() => { const b = [...document.querySelectorAll('#main .diasnav2 .btn')], n = document.querySelector('#main .diasnav2'), r = n ? n.getBoundingClientRect() : { width: 9999 };
+      return { n: b.length, h: Math.min(...b.map((x) => x.getBoundingClientRect().height)), f: Math.min(...b.map((x) => parseFloat(getComputedStyle(x).fontSize))), ancho: r.width, scroll: document.documentElement.scrollWidth, vw: innerWidth }; });
+    await page.evaluate(() => { const P = window.PG; if (window.__copia560) { P.store = window.__copia560; delete window.__copia560; } P.ui.diaHoy = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
+    await page.setViewportSize(vp); await sueltaHoy();
+    check('564 Flechas de día · a 412 px cada flecha mide ≥56 px de alto y ≥13 px de letra, y la fila no desborda la pantalla', m.n === 2 && m.h >= 56 && m.f >= 13 && m.scroll <= m.vw && m.ancho <= m.vw, JSON.stringify(m));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

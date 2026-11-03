@@ -2710,3 +2710,10 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Descartado:** subir los tiempos de espera fijos (sigue dependiendo de la carga); tocar `app.js` (el fallo era de las pruebas, no de la app).
 - **Comprobado:** a las 07:54 la suite caía igual que en `main` ab1be8d; con los arreglos, suite completa 1004/1004 a las 08:2x. Sin prueba encadenada nueva: no hay arreglo de la app que revertir.
 - **Supuestos:** el sol del reloj por la tarde ya pasaba (el reloj no baja), así que el `scrollIntoView` no cambia lo que mide.
+
+### T2c · Flechas de día en Hoy (pruebas 560-564, 03/11/2026)
+- **Elegido:** X1 variante A. Las flechas ya existían dentro de la tarjeta (botones pequeños, y no en «De viaje»). Ahora son una fila propia de 56 px encima de la tarjeta, `diaNavHTML()`: «‹ lun · Hoy · mié ›» (con otro día, el centro pasa a «volver a hoy»). Se usa en `renderHoy` (conductor, reloj y línea: la fila va antes de la tarjeta, no depende del modo) y en `renderHoyViaje`. Mueven `ui.diaHoy` por `moverDiaHoy`, las mismas acciones `dia-prev/dia-next/dia-hoy` (solo en `act()`). Las flechas ‹ › de la barra de arriba siguen. CSS: `#main .diasnav2 .btn` (con `#main`, porque `:is(#main,…) .btn{min-height:44px}` ganaba por especificidad).
+- **Descartado:** gesto de deslizar y «+» flotante (aprobado por el usuario el 03/11); estado nuevo (se reutiliza `ui.diaHoy`).
+- **Quita:** de la fila interior de la tarjeta, los botones ‹ día / volver a hoy / día ›; quedan «Lloretazo» y «＋ añadir».
+- **Cae con X revertido:** 560, 561, 563 y 564 caen con `diaNavHTML` y su CSS revertidos (562, de ausencia, no cae: es un guardia). Ninguna otra.
+- **Supuestos:** «Hoy · mié 11» en el centro cuando es hoy; en «De viaje» las flechas llevan a un día normal y «volver a hoy» devuelve a lo esencial.
