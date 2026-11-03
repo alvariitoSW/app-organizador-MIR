@@ -25387,6 +25387,91 @@ function renderAjustes(){
   '</div>';
 }
 
+/* ===================== Tu guardia (asistente de 3 pasos) =====================
+   Poner la rotación entera eran 6 toques o más y palabras como «ciclo» y «plantilla». Aquí: servicio y tipo,
+   los días del mes tocando un calendario (el saliente sale solo, lo pone setDayOverride) y qué pasa los meses
+   siguientes. Escribe en las mismas estructuras de siempre (daySet, month, autoPos, turno de guardia); el ciclo
+   «por fecha» sigue en «Mi semana», sin tocar. Nada se guarda hasta «Guardar mi guardia». */
+const TG_TIPOS=[{id:'24',t:'24 h',s:'08:00',e:'08:00'},{id:'17',t:'17 h (tarde-noche)',s:'15:00',e:'08:00'},{id:'12',t:'12 h',s:'20:00',e:'08:00'}];
+const MES_TG=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function tgS(){
+  if(!ui.tg){const h=new Date(),G=store.shifts.filter(isGuardia)[0]||{};
+    const ya=monthDays(h.getFullYear(),h.getMonth()).filter(function(d){return d.shiftId&&isGuardia(shiftById(d.shiftId));}).map(function(d){return d.key;});
+    const t=TG_TIPOS.filter(function(x){return x.s===G.start&&x.e===G.end;})[0];
+    ui.tg={paso:1,y:h.getFullYear(),m:h.getMonth(),servicio:monthService(h.getFullYear(),h.getMonth()).service||'',
+      tipo:t?t.id:'24',saliente:store.rotation.autoPos!==false,dias:ya.slice(),ya:ya.slice(),futuro:'manual'};}
+  return ui.tg;}
+function tgLee(){const a=tgS(),e=$('#tgSvc');if(e)a.servicio=e.value.trim().slice(0,40);return a;}
+function tgPatron(a){
+  /* solo si se ve claro: con 3 días o más y todos separados por lo mismo (cada N días) */
+  const d=a.dias.slice().sort();if(d.length<3)return null;
+  const dif=Math.round((parseDate(d[1])-parseDate(d[0]))/864e5);
+  if(dif<2)return null;
+  for(let i=2;i<d.length;i++)if(Math.round((parseDate(d[i])-parseDate(d[i-1]))/864e5)!==dif)return null;
+  const sig=new Date(a.y,a.m+1,1),fin=new Date(a.y,a.m+2,0),out=[];
+  for(let x=addDays(parseDate(d[d.length-1]),dif);x<=fin;x=addDays(x,dif))if(x>=sig)out.push(iso(x));
+  return out.length?{cada:dif,dias:out}:null;}
+function tgIgual(a){
+  /* «estos mismos días» de cada mes (los que existan en el mes siguiente) */
+  const n=new Date(a.y,a.m+2,0).getDate(),y=a.y+(a.m===11?1:0),m=(a.m+1)%12;
+  return a.dias.map(function(k){return +k.slice(8);}).sort(function(p,q){return p-q;}).filter(function(n2){return n2<=n;})
+    .map(function(n2){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(n2).padStart(2,'0');});}
+function tgFinde(dias){return dias.filter(function(k){const w=parseDate(k).getDay();return w===0||w===6;}).length;}
+function tgDiasTxt(dias){return dias.map(function(k){return +k.slice(8);}).join(', ');}
+function tgGuarda(){
+  const a=tgLee(),G=store.shifts.filter(isGuardia)[0];
+  if(!G){flash('No hay ningún tipo de día marcado como guardia: míralo en «Turno y rotación»');return;}
+  const tp=TG_TIPOS.filter(function(x){return x.id===a.tipo;})[0]||TG_TIPOS[0];
+  G.start=tp.s;G.end=tp.e;
+  store.rotation.autoPos=!!a.saliente;
+  if(a.servicio)setMonthService(a.y,a.m,a.servicio,a.dias.length);else setGuardiasMes(a.y,a.m,a.dias.length);
+  /* los días que traía el mes y has destocado se quitan (solo los puestos a mano); los tocados se ponen */
+  a.ya.forEach(function(k){if(a.dias.indexOf(k)<0&&dayOverride(k))setDayOverride(k,null);});
+  a.dias.forEach(function(k){setDayOverride(k,G.id,'');});
+  let sig=[];
+  if(a.futuro==='cada'){const p=tgPatron(a);sig=p?p.dias:[];}
+  else if(a.futuro==='igual')sig=tgIgual(a);
+  sig.forEach(function(k){if(!dayOverride(k))setDayOverride(k,G.id,'');});
+  store.meta.montada=true;save();ui.tg=null;ui.datosVista='';ui.tab='month';
+  render();
+  flash('Guardia guardada: '+a.dias.length+' en '+MES_TG[a.m]+(sig.length?' y '+sig.length+' el mes siguiente':''));}
+function tgVista(){
+  const a=tgS(),p=a.paso,h=[];
+  h.push('<div class="card tg"><p class="tg-paso">Tu guardia · '+p+' de 3</p>');
+  if(p===1){
+    h.push('<h2>¿Dónde haces las guardias este mes?</h2>'+
+      '<label class="fld">Servicio<input id="tgSvc" list="tgSvcL" value="'+esc(a.servicio)+'" placeholder="Urgencias"></label>'+
+      '<datalist id="tgSvcL">'+(store.rotation.servicios||[]).concat(['Urgencias','UMI']).map(function(s){return '<option value="'+esc(s)+'">';}).join('')+'</datalist>'+
+      '<b class="tg-et">Tipo de guardia</b><div class="tg-fila">'+
+      TG_TIPOS.map(function(x){return '<button class="chipx tg-chip'+(a.tipo===x.id?' on':'')+'" data-a="tg-tipo" data-v="'+x.id+'" aria-pressed="'+(a.tipo===x.id)+'">'+esc(x.t)+'</button>';}).join('')+'</div>'+
+      '<b class="tg-et">¿Libras el día después?</b><div class="tg-fila">'+
+      [[true,'Sí, saliente'],[false,'No']].map(function(x){return '<button class="chipx tg-chip'+(a.saliente===x[0]?' on':'')+'" data-a="tg-sal" data-v="'+(x[0]?1:0)+'" aria-pressed="'+(a.saliente===x[0])+'">'+x[1]+'</button>';}).join('')+'</div>'+
+      '<button class="btn p tg-sig" data-a="tg-paso" data-p="2">Siguiente</button>'+
+      '<button class="btn s tg-av" data-a="cfg-vista" data-v="semana">Avanzado: repetir por fechas (ciclo)</button>');
+  }else if(p===2){
+    const first=new Date(a.y,a.m,1),lead=(first.getDay()+6)%7,n=new Date(a.y,a.m+1,0).getDate(),cells=[];
+    for(let i=0;i<lead;i++)cells.push('<span class="tg-c off"></span>');
+    for(let d=1;d<=n;d++){const k=a.y+'-'+String(a.m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),on=a.dias.indexOf(k)>=0,
+      sal=a.saliente&&!on&&a.dias.indexOf(iso(addDays(parseDate(k),-1)))>=0;
+      cells.push('<button class="tg-c'+(on?' on':'')+(sal?' sal':'')+'" data-a="tg-dia" data-k="'+k+'" aria-pressed="'+on+'" aria-label="'+d+' de '+MES_TG[a.m]+(on?', guardia':(sal?', saliente':''))+'">'+d+(on?'<i>G</i>':(sal?'<i>S</i>':''))+'</button>');}
+    h.push('<button class="btn s tg-atras" data-a="tg-paso" data-p="1">‹ atrás</button>'+
+      '<h2>Toca los días de guardia de '+MES_TG[a.m]+'</h2><p class="note">Un toque pone la guardia'+(a.saliente?'; la app marca sola el saliente.':'.')+'</p>'+
+      '<div class="tg-cal"><b>L</b><b>M</b><b>X</b><b>J</b><b>V</b><b>S</b><b>D</b>'+cells.join('')+'</div>'+
+      '<p class="tg-cuenta" role="status">'+a.dias.length+' guardia'+(a.dias.length===1?'':'s')+' · '+tgFinde(a.dias)+' en fin de semana</p>'+
+      '<button class="btn p tg-sig" data-a="tg-paso" data-p="3">Siguiente</button>');
+  }else{
+    const pa=tgPatron(a),ig=a.dias.length?tgIgual(a):[],sg=MES_TG[(a.m+1)%12];
+    const op=function(id,t,s){return '<button class="tg-op'+(a.futuro===id?' on':'')+'" data-a="tg-fut" data-v="'+id+'" aria-pressed="'+(a.futuro===id)+'"><b>'+t+'</b><span>'+s+'</span></button>';};
+    h.push('<button class="btn s tg-atras" data-a="tg-paso" data-p="2">‹ atrás</button><h2>¿Y los meses siguientes?</h2>'+
+      op('manual','Lo pongo yo cada mes','Cuando salga el cuadrante: foto, pegar el texto o tocar días')+
+      (pa?op('cada','Repite «una cada '+pa.cada+' días»','La app lo ha visto en tus '+a.dias.length+' días. '+sg[0].toUpperCase()+sg.slice(1)+': '+tgDiasTxt(pa.dias)):'')+
+      (ig.length?op('igual','Repite estos mismos días',tgDiasTxt(ig)+' de cada mes'):'')+
+      '<p class="note tg-res">Resumen: '+esc(a.servicio||'sin servicio')+' · '+(TG_TIPOS.filter(function(x){return x.id===a.tipo;})[0]||{}).t+
+      (a.saliente?' con saliente':' sin saliente')+' · '+a.dias.length+' guardia'+(a.dias.length===1?'':'s')+' en '+MES_TG[a.m]+'. Se puede cambiar luego en Ajustes → Mi planning.</p>'+
+      '<button class="btn p tg-sig" data-a="tg-guarda">Guardar mi guardia</button>');
+  }
+  h.push('</div>');
+  subPantalla('datos-vista','Datos','🩺 Tu guardia',h.join(''));}
 /* ===================== render: datos =====================
    Eran 7 tarjetas y 4 317 px, con el calendario de Google partido en dos (y una tercera copia en
    Ajustes) y 210 palabras explicando d\u00f3nde se guarda todo. Ahora: portada con tu copia arriba
@@ -25394,7 +25479,9 @@ function renderAjustes(){
 function renderData(){
   const v=ui.datosVista||'';
   if(v==='planfoto'){fotoVista();return;}
-  if(v==='planning'){cfgPantalla('\ud83d\uddc2 Mi planning',`<div class="card">
+  if(v==='tuguardia'){tgVista();return;}
+  if(v==='planning'){cfgPantalla('\ud83d\uddc2 Mi planning',`<div class="card"><button class="btn p tg-abre" data-a="tg-abre">🩺 Tu guardia en 3 pasos</button>
+      <p class="note">Servicio, los días de guardia en un calendario y el saliente sale solo.</p></div><div class="card">
       <button class="btn p pegar-copiado" data-a="plan-pegar">📋 Pegar lo copiado</button>
       <button class="btn pegar-copiado" data-a="datos-vista" data-v="planfoto">📷 Foto del cuadrante</button>
       <p class="note">Copia el cuadrante donde te lo hayan mandado y toca el botón; o pega aquí las líneas del mes, tal cual: <i>1 ago G 08:00-08:00</i>. Reconoce día+mes, tipo de día (guardia/saliente/fuerza/libre/descanso/asuntos propios/vacante/noche) y horarios, agrupa por semanas y genera las semanas tipo —incluida la variante de 1 y 2 guardias— con sus horarios puestos en los turnos.</p>
@@ -26568,6 +26655,13 @@ function act(a,el){
     case 'autofill':flash(autofill()||'Semanas tipo creadas');render();break;
     case 'draft':planningAnaliza($('#pasteBox').value||'');break;
     case 'plan-pegar':planningPegar();break;
+    case 'tg-abre':ui.tg=null;ui.tab='data';ui.datosVista='tuguardia';render();window.scrollTo(0,0);break;
+    case 'tg-paso':tgLee();tgS().paso=+el.dataset.p||1;render();window.scrollTo(0,0);break;
+    case 'tg-tipo':tgLee();tgS().tipo=el.dataset.v;render();break;
+    case 'tg-sal':tgLee();tgS().saliente=el.dataset.v==='1';render();break;
+    case 'tg-dia':{const a=tgS(),i=a.dias.indexOf(el.dataset.k);if(i>=0)a.dias.splice(i,1);else a.dias.push(el.dataset.k);a.futuro='manual';render();break;}
+    case 'tg-fut':tgS().futuro=el.dataset.v;render();break;
+    case 'tg-guarda':tgGuarda();break;
     case 'foto-cancela':fotoSuelta();ui.datosVista='planning';render();window.scrollTo(0,0);break;
     case 'foto-otra':fotoSuelta();render();break;
     case 'foto-yo':{const f=ui.foto;if(!f||!f.an)break;const i=+el.dataset.v;store.planFoto={nombre:fotoNorm(f.an.cab[i])};save();fotoCuenta(i);render();fotoPintaCortes();break;}
