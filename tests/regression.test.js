@@ -18273,6 +18273,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await gotoTab('data', 'copia'); await page.waitForTimeout(150);
     await page.evaluate(() => { window.print = () => {}; });
     await page.click('#main [data-a="exp-pdf"]'); await page.waitForTimeout(200);
+    // con los 5 trozos a la vez, 200 ms no siempre bastan para que se pinte el resumen: se espera a que tenga texto
+    await page.waitForFunction(() => { const r = document.getElementById('resPrint'); return r && r.innerText.trim(); }, null, { timeout: 5000 }).catch(() => {});
     const pv = await page.evaluate(() => document.getElementById('resPrint').innerText);
     const [dl3] = await Promise.all([page.waitForEvent('download'), page.click('#main [data-a="exp-xlsx"]')]);
     const X3 = await leeXlsx(dl3), h4 = (X3.todo.split('\n#xl/worksheets/sheet4.xml\n')[1] || '').split('\n#')[0];

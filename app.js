@@ -20656,8 +20656,9 @@ function impTraerEnlace(){
   ui.imp.ofrecer=false;
   const gen=_impGen,yo=++_impTraeN;
   /* si es la última petición pero ya no vale, al menos que no se quede en «trayendo…» */
-  const caduca=function(){if(yo===_impTraeN&&ui.imp.estado==='trayendo'){ui.imp.estado='';render();}};
+  const caduca=function(){if(yo===_impTraeN&&ui.imp&&ui.imp.estado==='trayendo'){ui.imp.estado='';render();}};
   traerDescripcion(u).then(function(d){
+    if(!ui.imp)return;   /* la pantalla del importador se cerró mientras llegaba: no hay dónde ponerla */
     /* mientras llegaba has pegado otro enlace o cambiado el texto: esta respuesta ya no es la tuya */
     if(gen!==_impGen)return caduca();
     const partes=[d.texto,d.autor?('— '+d.autor):''].filter(Boolean);
@@ -20667,6 +20668,7 @@ function impTraerEnlace(){
     if(r){ui.imp.receta=impSinGluten(r);ui.imp.via='local';render();flash('Receta lista: '+r.name+(d.via?(' · vía '+d.via):''));}
     else{render();flash('Descripción traída'+(d.via?(' vía '+d.via):'')+': ahora dale a leerla');}
   }).catch(function(e){
+    if(!ui.imp)return;
     if(gen!==_impGen)return caduca();
     ui.imp.estado='error';ui.imp.msg=(e&&e.msg)||'No he podido traer la descripción.';
     ui.imp.ofrecer=!!(e&&e.ofrecer);   /* quedan salidas que ofrecerle al usuario */

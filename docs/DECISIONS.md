@@ -2835,3 +2835,6 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
   sintética). **Cae con X revertido:** con el gris fijo cae la primera; sin `ticketLimpia`/`tkSinPrecio`, la segunda (29 de 35).
 - **Supuestos:** la foto no se guarda en el repositorio (privacidad); en la prueba va solo el texto de los productos, sin teléfono
   ni tarjeta. Los precios de cada línea pueden ir desplazados si el papel está curvado: se muestran tal cual.
+- **Al desplegar:** la 604 caía en la suite a trozos (el resumen aún no se había pintado a los 200 ms): ahora espera a que tenga
+  texto. Y un error suelto «Cannot set properties of null (setting 'estado')»: la respuesta de «traer la descripción» del
+  importador llegaba con la pantalla ya cerrada (`ui.imp` en null); ahora se descarta.
