@@ -273,57 +273,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // saltarlo, TODO lo de abajo arrancaría dentro del asistente.
   {
     const primera = await page.evaluate(() => ({
-      asistente: /montarla a tu nombre/.test(document.getElementById('main').innerText),
+      asistente: /montarla a tu nombre/.test(document.getElementById('main').innerText) && /Tu guardia · 1 de 3/.test(document.getElementById('main').innerText),
       sinBarra: document.getElementById('tabs').innerHTML.trim() === '',
     }));
-    check('en una instalación nueva la app se presenta y se monta a tu nombre',
+    check('en una instalación nueva la app se presenta y se monta a tu nombre (con «Tu guardia en 3 pasos»)',
       primera.asistente && primera.sinBarra, JSON.stringify(primera));
 
-    // si el asistente no está, conducirlo daría un timeout de 30 s y tumbaría la suite entera en
+    // si la primera pantalla no está, conducirla daría un timeout de 30 s y tumbaría la suite entera en
     // vez de dejar un FAIL con su motivo: se avisa y se sigue
-    if (!(await page.$('#arrJEntra'))) {
-      check('el asistente se puede rellenar', false, 'no hay campos que rellenar');
+    if (!(await page.$('#tguSvc'))) {
+      check('la primera pantalla se puede rellenar', false, 'no hay campos que rellenar');
       await page.evaluate(() => { window.PG.store.meta.montada = true; window.PG.ui.arranque = null;
         window.PG.save(); window.PG.render(); });
       await page.waitForTimeout(200);
     } else {
-    // se conduce entero, que es como lo vive el usuario
-    await page.fill('#arrJEntra', '08:30');
-    await page.fill('#arrJSale', '16:00');
-    await page.click('[data-a="arr-paso"][data-p="1"]');
+    // se conduce entera, que es como lo vive el usuario: servicio, 3 días de guardia, guardar
+    await page.fill('#tguSvc', 'Urgencias');
+    await page.click('[data-a="tgu-paso"][data-p="2"]');
     await page.waitForTimeout(180);
-    await page.fill('#arrGMes', '5');
-    await page.click('[data-a="arr-paso"][data-p="2"]');
+    const d1 = await page.evaluate(() => { const n = new Date(); return [3, 11, 19].map((d) => n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0')); });
+    for (const k of d1) { await page.click('[data-a="tgu-dia"][data-k="' + k + '"]'); await page.waitForTimeout(60); }
+    await page.click('[data-a="tgu-paso"][data-p="3"]');
     await page.waitForTimeout(180);
-    await page.fill('#arrDespierta', '07:15');
-    await page.click('[data-a="arr-paso"][data-p="3"]');
-    await page.waitForTimeout(180);
-    await page.click('[data-a="arr-paso"][data-p="4"]');
-    await page.waitForTimeout(220);
-    await page.click('[data-a="arr-fin"]');
+    await page.click('[data-a="tgu-guarda"]');
     await page.waitForTimeout(300);
-    const montada = await page.evaluate(() => {
-      const S = window.PG.store, t = S.shifts.filter((x) => x.id === 'sh-t')[0];
-      return { trabajo: t.start + '-' + t.end, jornada: (S.rotation.jornada || {}).start + '-' + (S.rotation.jornada || {}).end,   // start/end: lo que lee la app (antes guardaba from/to, que no leía nadie)
-
-        gMes: S.rotation.guardiasMes, wake: S.rhythm['sh-t'].wake, montada: S.meta.montada,
-        tab: window.PG.ui.tab };
-    });
-    check('lo que contestas en el asistente queda puesto de verdad en el planning',
-      montada.trabajo === '08:30-16:00' && montada.jornada === '08:30-16:00' && montada.gMes === 5 &&
-      montada.wake === '07:15' && montada.montada === true && montada.tab === 'month',
+    const montada = await page.evaluate((d1) => {
+      const P = window.PG, S = P.store;
+      return { gs: d1.map((k) => { const o = P.dayOverride(k); return o ? o.shift : ''; }), guardia: S.shifts.filter(P.isGuardia)[0].id,
+        montada: S.meta.montada, tab: P.ui.tab, arranque: P.ui.arranque, clase: document.documentElement.classList.contains('en-arranque') };
+    }, d1);
+    check('lo que contestas en la primera pantalla queda puesto de verdad en el planning',
+      montada.gs.every((x) => x === montada.guardia) && montada.montada === true && montada.tab === 'month' && !montada.arranque && !montada.clase,
       JSON.stringify(montada));
 
     await page.reload();
     await page.waitForTimeout(400);
-    check('al volver a abrirla el asistente no vuelve a salir',
+    check('al volver a abrirla la primera pantalla no vuelve a salir',
       !(await page.evaluate(() => /montarla a tu nombre/.test(document.getElementById('main').innerText))), '');
 
     // y quien ya tenía sus datos no lo ve nunca, ni aunque le falte la marca
     await page.evaluate(() => { window.PG.store.meta.montada = false; window.PG.save(); });
     await page.reload();
     await page.waitForTimeout(400);
-    check('con datos ya guardados no sale el asistente aunque falte la marca',
+    check('con datos ya guardados no sale la primera pantalla aunque falte la marca',
       !(await page.evaluate(() => /montarla a tu nombre/.test(document.getElementById('main').innerText))), '');
     await page.evaluate(() => { window.PG.store.meta.montada = true; window.PG.save(); });
     }
@@ -18447,6 +18439,63 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       s614.hora === '17:00' && s614.movido && !s614.choca, JSON.stringify(s614));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia610; delete window.__copia610; P.ui.gymDate = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
+  }
+
+  // ===== R2 · PRIMERA PANTALLA (630-639) =====
+  //   630 · R2 · quien instala de cero ve «Tu guardia · 1 de 3» (no las cuatro preguntas de antes), sin barra, con «pegar mi planning» y «saltar»; no hay campos de jornada/horas.
+  //   631 · R2 · de punta a punta: servicio, 3 días, guardar → las guardias quedan escritas, se va al mes con la barra de vuelta, y al recargar no sale otra vez.
+  //      Cae con `if(ui.arranque)rppSale();` quitado de tguGuarda (se quedaría en la primera pantalla).
+  //   632 · R2 · «Prefiero pegar mi planning» lleva a Datos → Mi planning (caja de pegar) y no vuelve a salir; «Saltar» pide confirmar y deja la app con el ejemplo.
+  //   633 · R2 · medidas a 412×915: botones ≥44 px, letra ≥13 px, nada desborda.
+  //   634 · R2 · quien ya tiene datos no la ve: con montada=false pero datos guardados, la app abre en el mes.
+  {
+    await fijaHoy(12, 0);
+    const nuevaInst = async () => { const c = await browser.newContext({ viewport: { width: 412, height: 915 }, hasTouch: true });
+      const p = await c.newPage(); await p.goto(base + 'index.html');
+      await p.waitForFunction(() => window.PG && window.__arrancada, null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(300); return { c, p }; };
+    const A = await nuevaInst(), pa = A.p;
+    const v630 = await pa.evaluate(() => { const t = document.getElementById('main').innerText; return { paso: /Tu guardia · 1 de 3/.test(t), hola: /montarla a tu nombre/.test(t),
+      viejo: !!document.querySelector('#arrJEntra') || /Cuatro preguntas/.test(t), pegar: !!document.querySelector('[data-a="rpp-pegar"]'), saltar: !!document.querySelector('[data-a="rpp-saltar"]'),
+      barra: document.getElementById('tabs').innerHTML.trim() === '', ciclo: !!document.querySelector('.tgu-av') }; });
+    check('630 Primera pantalla · quien instala de cero ve «Tu guardia · 1 de 3», sin barra ni las cuatro preguntas viejas, con «pegar mi planning» y «saltar»',
+      v630.paso && v630.hola && !v630.viejo && v630.pegar && v630.saltar && v630.barra && !v630.ciclo, JSON.stringify(v630));
+    // 633 medidas (sobre la misma pantalla)
+    const m633 = await pa.evaluate(() => { const bs = [...document.querySelectorAll('#main button')], chicos = bs.filter((b) => b.getBoundingClientRect().height < 44).map((b) => b.textContent.trim().slice(0, 20)),
+      letra = [...document.querySelectorAll('#main *')].filter((e) => e.children.length === 0 && e.textContent.trim() && parseFloat(getComputedStyle(e).fontSize) < 13).map((e) => e.textContent.trim().slice(0, 20));
+      return { chicos, letra, ancho: document.documentElement.scrollWidth }; });
+    check('633 Primera pantalla · a 412×915 los botones miden ≥44 px, ningún texto baja de 13 px y nada desborda', m633.chicos.length === 0 && m633.letra.length === 0 && m633.ancho <= 412, JSON.stringify(m633));
+    // 631 en cadena
+    await pa.fill('#tguSvc', 'Urgencias'); await pa.click('[data-a="tgu-paso"][data-p="2"]'); await pa.waitForTimeout(150);
+    const dk631 = await pa.evaluate(() => { const n = new Date(); return [4, 12, 20].map((d) => n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0')); });
+    for (const k of dk631.slice(0, 2)) { await pa.click('[data-a="tgu-dia"][data-k="' + k + '"]'); await pa.waitForTimeout(60); }
+    const antes631 = await pa.evaluate((ks) => ks.map((k) => !!window.PG.dayOverride(k)), dk631.slice(0, 2));
+    await pa.click('[data-a="tgu-paso"][data-p="3"]'); await pa.waitForTimeout(150); await pa.click('[data-a="tgu-guarda"]'); await pa.waitForTimeout(300);
+    const r631 = await pa.evaluate((ks) => { const P = window.PG; return { g: ks.map((k) => !!P.dayOverride(k)), tab: P.ui.tab, arr: !!P.ui.arranque, barra: document.getElementById('tabs').innerHTML.trim() !== '', montada: P.store.meta.montada }; }, dk631.slice(0, 2));
+    await pa.reload(); await pa.waitForTimeout(400);
+    const rec631 = await pa.evaluate(() => /montarla a tu nombre/.test(document.getElementById('main').innerText));
+    check('631 Primera pantalla · servicio, dos días y guardar: quedan escritos, se va al mes con la barra de vuelta y al recargar no sale otra vez',
+      antes631.every((x) => !x) && r631.g.every(Boolean) && r631.tab === 'month' && !r631.arr && r631.barra && r631.montada && !rec631, JSON.stringify({ antes631, r631, rec631 }));
+    await A.c.close();
+    // 632 pegar y saltar
+    const B = await nuevaInst(), pb = B.p;
+    await pb.click('[data-a="tgu-paso"][data-p="2"]'); await pb.click('[data-a="tgu-paso"][data-p="1"]'); await pb.click('[data-a="rpp-pegar"]'); await pb.waitForTimeout(300);
+    const r632a = await pb.evaluate(() => ({ caja: !!document.getElementById('pasteBox'), arr: !!window.PG.ui.arranque, montada: window.PG.store.meta.montada }));
+    await B.c.close();
+    const C = await nuevaInst(), pc = C.p;
+    await pc.click('[data-a="rpp-saltar"]'); await pc.waitForTimeout(250);
+    const pidio = await pc.evaluate(() => !!document.querySelector('[data-a="confirm-yes"]'));
+    await pc.click('[data-a="confirm-yes"]'); await pc.waitForTimeout(300);
+    const r632b = await pc.evaluate(() => ({ arr: !!window.PG.ui.arranque, montada: window.PG.store.meta.montada, barra: document.getElementById('tabs').innerHTML.trim() !== '' }));
+    await C.c.close();
+    check('632 Primera pantalla · «Prefiero pegar mi planning» lleva a la caja de pegar; «Saltar» pide confirmar y deja la app con el ejemplo',
+      r632a.caja && !r632a.arr && r632a.montada && pidio && !r632b.arr && r632b.montada && r632b.barra, JSON.stringify({ r632a, pidio, r632b }));
+    // 634 con datos guardados no sale
+    const r634 = await page.evaluate(() => { const P = window.PG; return { arr: !!P.ui.arranque, montada: P.store.meta.montada, tab: P.ui.tab }; });
+    await page.evaluate(() => { window.PG.store.meta.montada = false; window.PG.save(); }); await page.reload(); await page.waitForTimeout(400);
+    const r634b = await page.evaluate(() => ({ arr: !!window.PG.ui.arranque, t: /montarla a tu nombre/.test(document.getElementById('main').innerText) }));
+    await page.evaluate(() => { window.PG.store.meta.montada = true; window.PG.save(); });
+    check('634 Primera pantalla · quien ya tiene datos no la ve, ni con la marca «montada» perdida', !r634.arr && !r634b.arr && !r634b.t, JSON.stringify({ r634, r634b }));
+    await sueltaHoy();
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

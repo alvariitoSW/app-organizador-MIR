@@ -2771,3 +2771,9 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Elegido:** con T5 la comida de un día de entreno iba siempre a fin del entreno + vuelta, y la hora de «si entrenas» que pones en Ajustes → Horas y sueño dejaba de contar (la prueba «cambiar la hora de comer desde la pantalla… se guarda al recargar», bloque 77, daba 18:30 en vez de 19:15). Ahora: nunca antes de volver, pero si tu hora es más tarde, manda la tuya; la de fábrica (18:00) no cuenta como puesta.
 - **Cae con X revertido:** esa prueba (bloque 77) cae sin el `Math.max(…, tuya)`; se vio en la suite completa.
 - **Supuestos:** una hora tuya más temprana que la vuelta del entreno se ignora (el usuario no come antes de entrenar).
+
+
+## R2 · Primera pantalla (03/11/2026)
+- **Elegido:** quien instala de cero ve «Tu guardia en 3 pasos» (el de T3b, mismas funciones `tgu*`) con una cabecera «Vamos a montarla a tu nombre»; sin barra. Guardar escribe las guardias y lleva al mes. Dos salidas: «Prefiero pegar mi planning» (Datos → Mi planning) y «Saltar: uso el ejemplo» (con confirmación). Se retira el asistente viejo de cuatro preguntas.
+- **Descartado:** duplicar el asistente de T3b; mantener las cuatro preguntas antes de las guardias (jornada, horas y sitio: quedan con valores de fábrica y se cambian en Turno y rotación).
+- **Supuestos:** el sitio queda en el primero de la lista; «Avanzado: ciclo» se oculta en la primera pantalla. Prueba del arranque rehecha (conduce tgu*). Cae con `rppSale()` quitado de `tguGuarda` revertido: caen 631 y el bloque del primer arranque, ninguna otra.
