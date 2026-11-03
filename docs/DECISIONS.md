@@ -2335,6 +2335,23 @@ Seis arreglos decididos por el Consejo (acta `.claude/plan-socialista/consejo/20
   - Una línea escrita a mano («100 g de tomate triturado») no se suma con el mismo alimento de la tabla que pide la
     semana: es como ya funcionaba la compra; queda para pulir.
 
+## R3 Compra · la línea escrita a mano se suma con el mismo alimento de la semana (2026-11-03)
+- **Elegido**
+  - En `compraDatos0` (`mete`), una línea sin alimento asociado, en g o kg y con cantidad («100 g de tomate triturado»,
+    «0,5 kg…») pasa por `compraAlimDe()`: mismo nombre que un alimento de la tabla sin mayúsculas, tildes, «de/del/la…»
+    delante ni plural simple. Si lo hay, entra con la clave `alim:` en gramos y se suma al que pide la semana
+    («300 g» + «100 g» → «400 g Tomate triturado»). Pruebas 640-644 (cadena: plato con la línea → receta →
+    «Añadir a la compra» → pestaña Compra).
+  - Otra unidad («1 lata», «2 botes») o un nombre que no es alimento exacto («zorramenta») se queda como estaba, en su línea.
+- **Descartado**
+  - Convertir latas/botes a gramos para sumarlos: es una estimación (80 g la lata) y el encargo pide dejar las dos líneas.
+  - Reconocimiento por palabras (`alimDeTexto`, difuso): un «tomate frito casero» no debe sumarse a «Tomate triturado».
+- **Supuestos**
+  - Los platos que pasan por `migrarPlato` ya sumaban por alimento; esto cubre los que llegan con la línea en texto.
+  - La prueba 641 (lata) y la 644 (no alimento) guardan lo que no cambia; caen al revertir la 640, 642 y 643.
+- **Cae con `compraAlimDe` desconectado:** 640, 642 y 643 (y ninguna otra de las 47f, 200-202, 206, 223, 225, 236, 238, 376, 384, 400, 47e, 537, 77).
+- Ajeno: la prueba «Cocina simple: Hoy · Semana · Nevera · Compra» cae ya en la rama sin mi cambio (pestañas «Hoy/Semana/Casa»).
+
 ## Pruebas que caían el día 31 (2026-10-31)
 - **Elegido:** arreglar las pruebas, no la app. La 315 pinta una guardia en el último día del mes y solo restauraba
   `shiftByDay`: ahora también `daySet` (el 31 esa guardia caía hoy y tumbaba el techo de Comer y la vuelta del gimnasio).
