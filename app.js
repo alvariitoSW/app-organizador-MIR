@@ -7105,7 +7105,7 @@ function snNocheEventos(desde,hasta){
   /* «🌿 Vete del Lloret» (noches con Lloretazo) y «🚪 Sal de casa» (días de bus), con las horas de La noche; apagados de serie */
   const c=suenoCfg(),out=[];if(!c.avisoLloret&&!c.avisoSalir&&!c.avisoMitad)return out;
   const mk=function(k,m,summ,desc,clave){const kc=m>=1440?nextIso(k):k;if(kc<desde||kc>hasta)return;
-    out.push({allDay:false,fecha:icsNum(kc),isoKey:kc,hora:hm(m),horaFin:'',dur:10,avisoMin:0,uid:icsUID(clave+'|'+k),summ:summ,desc:desc,cat:'TAREA'});};
+    out.push({allDay:false,fecha:icsNum(kc),isoKey:kc,hora:hm(m),horaFin:'',dur:10,avisoMin:0,uid:icsUID(clave+'|'+k),summ:summ,desc:desc,cat:'TAREA',lloret:clave==='vetell'});};
   /* la noche de ayer trae la salida de hoy: se empieza un día antes */
   for(let d=addDays(parseDate(desde),-1),i=0;d&&iso(d)<=hasta&&i<121;d=addDays(d,1),i++){
     const k=iso(d);let C=null;try{C=nocheCadena(k,20*60);}catch(e){C=null;}if(!C)continue;
@@ -16380,7 +16380,7 @@ function cjeCasaHTML(){
   const li=function(x){const on=ui.marks.has(x.id);
     return '<button class="cjli'+(on?' done':'')+'" data-a="cje-mark" data-id="'+esc(x.id)+'"><span class="ck'+(on?' on':'')+'"></span><span class="tx">'+esc(compraSG(x.texto))+'</span>'+
       '<span class="q cs-or">'+esc(x.origen||(x.fija?'tu lista':''))+'</span></button>';};
-  const nr=(store.dishes||[]).filter(platoApto).length;
+  const nr=(store.dishes||[]).filter(platoApto).length,cogidas=faltan.filter(function(x){return ui.marks.has(x.id);}).length;
   return '<div class="cstop"><h2 class="cstit">Casa</h2></div>'+
     '<div class="cs-fr"><div class="cs-izq">'+
       '<div class="cs-sh"><div class="cs-nm">PARA ESTA SEMANA</div><div class="cs-stack">'+(tp.length?tp.join(''):'<div class="cs-bote hu">nada cocinado</div>')+'</div></div>'+
@@ -16390,9 +16390,13 @@ function cjeCasaHTML(){
     '<div class="cs-der"><div class="cs-piz">🛒 FALTAN<br><b>'+faltan.length+' cosa'+(faltan.length===1?'':'s')+'</b></div>'+
       faltan.slice(0,6).map(function(x){return bote('',nom(x),'',true);}).join('')+
       (faltan.length>6?'<button class="cs-mas" data-a="cje-ver-compra">y '+(faltan.length-6)+' más ›</button>':'')+'</div></div>'+
-    '<div class="card cs-compra"><div class="row"><b>🛒 Compra · de tus cenas y comidas</b></div>'+
-      (faltan.length?faltan.map(li).join(''):'<p class="mini">No falta nada. 👌</p>')+
-      (ya.length?'<div class="mini cs-ya">Ya en casa, no entran: '+esc(ya.map(nom).filter(function(n,i,a){return a.indexOf(n)===i;}).join(', '))+'.</div>':'')+
+    '<div class="card cs-compra"><div class="row"><b>🛒 Compra · de tus cenas y comidas</b><span class="sp"></span>'+
+        (faltan.length?'<span class="mini cs-cuenta">'+faltan.length+' cosa'+(faltan.length===1?'':'s')+' · '+cogidas+' cogida'+(cogidas===1?'':'s')+'</span>':'')+'</div>'+
+      /* T1b C7·e: por pasillos, en el orden de tu súper (porSeccion/secsOrdenadas); lo cogido se queda tachado en su pasillo */
+      (faltan.length?porSeccion(faltan).map(function(g){
+        return '<div class="cs-pas" data-pas="'+esc(g.k)+'"><div class="cs-pasn"><span aria-hidden="true">'+g.ico+'</span><b>'+esc(g.nom)+'</b><span class="sp"></span><span class="cs-pasc">'+g.items.length+'</span></div>'+g.items.map(li).join('')+'</div>';}).join('')
+        :'<p class="mini">No falta nada. 👌</p>')+
+      (ya.length?'<details class="mini cs-ya"><summary>Ya en casa, no entran: '+esc(ya.map(nom).filter(function(n,i,a){return a.indexOf(n)===i;}).join(', '))+'.</summary></details>':'')+
       '<div class="cs-3" style="margin-top:8px"><button class="btn s" data-a="food-vista" data-v="nevera2">＋ A mano</button><button class="btn s" data-a="food-panel2" data-k="scan">▥ Código</button>'+
         '<button class="btn s" data-a="ticket-foto">🧾 Ticket</button></div>'+
       (faltan.length?'<div class="cjbtns"><button class="btn p" data-a="cje-comprado">Ya he comprado</button></div>':'')+'</div>'+
@@ -29133,7 +29137,7 @@ function calEventos(desde,hasta){
     out.push({allDay:!ev.hora,fecha:icsNum(ev.fecha),isoKey:ev.fecha,hora:icsHM(ev.hora||''),
       horaFin:ev.fin||'',dur:dur||60,
       uid:icsUID('evento|'+ev.id),summ:'📌 '+String(ev.titulo||'Evento').slice(0,60),
-      desc:'Evento apuntado en la app'+(dur?(' · dura '+evDuraTxt(ev)):'')+'.',cat:'EVENTO'});});
+      desc:'Evento apuntado en la app'+(dur?(' · dura '+evDuraTxt(ev)):'')+'.',cat:'EVENTO',lloret:!!ev.lloret});});
   /* los eventos que se repiten cada semana —la sesión de la UMI de los martes, la general de los
      jueves—, uno por día, cada uno con su UID para que al volver a importar se actualice. Los que
      van «solo los días que trabajas» no salen en vacaciones ni en libres. */
@@ -29145,7 +29149,7 @@ function calEventos(desde,hasta){
       out.push({allDay:!ev.hora,fecha:icsNum(k),isoKey:k,hora:icsHM(ev.hora||''),
         horaFin:ev.fin||'',dur:dur||60,
         uid:icsUID('evsem|'+ev.id+'|'+k),summ:'📌 '+String(ev.titulo||'Evento').slice(0,60),
-        desc:'Se repite '+diasCorta(ev.dow)+(ev.soloTrabajo?', los días que trabajas':'')+'.',cat:'EVENTO'});});}
+        desc:'Se repite '+diasCorta(ev.dow)+(ev.soloTrabajo?', los días que trabajas':'')+'.',cat:'EVENTO',lloret:!!ev.lloret});});}
   /* la rotación en la que estás: un aviso de varios días por cada tramo de mes con servicio puesto */
   for(let m=new Date(i0.getFullYear(),i0.getMonth(),1,12);m<=i1;m=new Date(m.getFullYear(),m.getMonth()+1,1,12)){
     const sv=monthService(m.getFullYear(),m.getMonth()).service;
@@ -29158,6 +29162,11 @@ function calEventos(desde,hasta){
   snAvisosEventos(desde,hasta).forEach(function(e){out.push(e);});
   snCamaEventos(desde,hasta).forEach(function(e){out.push(e);});
   snNocheEventos(desde,hasta).forEach(function(e){out.push(e);});
+  /* T1b: con «Privado» (o PIN) lo que sale de la app tapado: el Lloretazo va como «Privado», sin su nota ni su nombre,
+     y cualquier otro título o descripción que nombre el 4:20 o el Lloretazo pasa por cnOculta */
+  if(cnTapado())out.forEach(function(e){
+    if(e.lloret){e.summ='🌙 Privado';e.desc='Privado.';}
+    else{e.summ=cnOculta(e.summ);e.desc=cnOculta(e.desc);}});
   return out;}
 function icsTexto(desde,hasta,opt){
   /* el .ics que Google entiende: cabecera de cuaderno, eventos con UID estable y su VALARM */

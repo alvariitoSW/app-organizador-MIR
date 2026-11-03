@@ -17672,6 +17672,75 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       tapado.hoja === false && tapado.luna && tapado.lloret && libre.hoja === true, JSON.stringify({ tapado, libre }));
   }
 
+  // ===== T1B · PRIVADO Y PASILLOS (535-539) =====
+  // 535) T1b · CON «PRIVADO» EL .ICS NO LLEVA EL LLORETAZO: Ajustes → Calendario → «ver la lista» enseña el .ics tal cual; con Privado puesto el Lloretazo (título cambiado a mano, y repetido cada semana) sale «Privado»,
+  //      sin el nombre ni «Marta»; sin Privado sale con su nombre (el tapado es de Privado, no un cambio de texto). Cae con el bloque `if(cnTapado())` de calEventos revertido.
+  //   (536) T1b · LOS AVISOS DE LA NOCHE TAMBIÉN: el aviso «Vete del Lloret» (calendario, apagado de serie) con Privado sale «Privado» y con el hábito «Plan privado»; sin Privado sale «Vete del Lloret». Cae con `lloret:clave==='vetell'` revertido.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia535', JSON.stringify(P.store));
+      P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = Object.assign({}, P.store.lloret, { diario: false, salta: {} });
+      const c = P.consumoS(); delete c.priv.pin; c.priv.privado = false; c.priv.oculto = false; P.lloretPoner(P.iso(new Date())); P.save(); });
+    const k0 = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); const e = P.store.eventos.filter((x) => x.lloret && x.fecha === k)[0]; e.titulo = 'Lloretazo con Marta';
+      P.store.eventos.push({ id: 'ev-ll-sem', titulo: 'Lloretazo de los jueves en casa de Marta', hora: '21:00', fin: '23:00', modo: 'semanal', dow: [0, 1, 2, 3, 4, 5, 6], lloret: true, on: true, color: '#38bdf8' });
+      P.store.sueno.avisoLloret = true; P.consumoS().priv.privado = false; P.save(); return k; });
+    const verLista = async () => { await gotoTab('ajustes', 'calendario'); await page.waitForTimeout(150);
+      const ya = await page.evaluate(() => window.PG.ui.calView); if (ya) { await page.click('[data-a="cal-ver"]'); await page.waitForTimeout(150); }
+      await page.click('[data-a="cal-ver"]'); await page.waitForTimeout(250);
+      return page.evaluate(() => (document.getElementById('txtIcs') || {}).textContent || ''); };
+    const libre = await verLista();
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    const tapado = await verLista();
+    const ll = (t) => t.split(/\r?\n/).filter((l) => /^(SUMMARY|DESCRIPTION):/.test(l)).join('\n');
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = false; window.PG.save(); });
+    const libre2 = await verLista();
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia535')); localStorage.removeItem('__copia535'); P.ui.calView = false; P.ui.calTxt = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+    check('535 Privado · en el .ics (Ajustes → Calendario → ver la lista) el Lloretazo, suelto y repetido, sale «Privado» sin su nombre ni «Marta»; sin Privado sale con su nombre',
+      /Lloretazo con Marta/.test(libre) && /Marta/.test(libre2) && !/lloret|marta|4:20/i.test(tapado) && /SUMMARY:🌙 Privado/.test(tapado) && /BEGIN:VEVENT/.test(tapado), JSON.stringify({ k0, libre: ll(libre).slice(0, 200), tapado: ll(tapado).slice(0, 300) }));
+    check('536 Privado · el aviso «Vete del Lloret» del calendario sale «Privado» y sin Privado vuelve a salir con su nombre',
+      /SUMMARY:🌿 Vete del Lloret/.test(libre) && /SUMMARY:🌙 Privado/.test(tapado) && !/Vete del Lloret/.test(tapado), JSON.stringify({ libre: /Vete/.test(libre), tapado: ll(tapado).slice(0, 200) }));
+  }
+
+  // 537) T1b (y 538, 539) · LA LISTA DE CASA POR PASILLOS (C7·e): la compra de Casa sale por pasillos en el orden del súper, con cabecera y cuenta; lo cogido se queda tachado en su pasillo
+  //      y «Ya en casa, no entran» va plegado al final. Encadenada: Casa → tocar una cosa → tachada en su sitio y «1 cogida» → subir un pasillo en el orden → la lista sigue ese orden.
+  {
+    await fijaHoy(12, 0, true);
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia537', JSON.stringify(P.store));
+      const T = P.store.shifts.filter((x) => !P.isGuardia(x) && !/saliente|post ?-?guardia|vacacion|festiv/i.test(x.name))[0];
+      for (let i = 0; i < 9; i++) P.setDayOverride(P.iso(P.addDays(new Date(), i)), T.id, '');
+      P.store.semBase = { on: true, d: {} }; P.store.gComida = {}; P.store.food.despensa = []; P.store.food.cocinado = []; P.store.food.secOrden = null;
+      P.despensaAdd('6 huevos');
+      const sb = P.sbS(), kk = P.sbKey(P.iso(P.addDays(new Date(), 1))); if (!sb.d[kk]) sb.d[kk] = {}; const cel = sb.d[kk].cena = { items: [], meal: '' }; cel.items = ['600 g pechuga de pollo', '6 plátanos', '8 yogures naturales', '500 g avena', '2 huevos'].map((t) => ({ kind: 'txt', t })); cel.meal = ''; cel.auto = false; cel.cocino = false; sb.on = true;
+      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.tab = 'food'; P.ui.foodVista = 'eje'; P.ui.cjeTab = 'casa'; P.save(); P.render(); });
+    await page.waitForTimeout(250);
+    const lee = () => page.evaluate(() => ({ pas: [...document.querySelectorAll('#main .cs-compra .cs-pas')].map((g) => ({ k: g.dataset.pas, h: g.querySelector('.cs-pasn b').textContent, n: +g.querySelector('.cs-pasc').textContent, it: [...g.querySelectorAll('.cjli')].map((b) => b.innerText.replace(/\s+/g, ' ').trim() + (b.classList.contains('done') ? ' [hecho]' : '')) })),
+      cuenta: ((document.querySelector('#main .cs-cuenta') || {}).innerText || ''), ya: !!document.querySelector('#main details.cs-ya'), yaAbierto: !!document.querySelector('#main details.cs-ya[open]'), orden: window.PG.secsOrdenadas().map((x) => x[0]),
+      sueltas: document.querySelectorAll('#main .cs-compra > .cjli').length }));
+    const a = await lee();
+    await page.click('#main .cs-compra .cjli[data-id]'); await page.waitForTimeout(200);
+    const primero = a.pas[0] && a.pas[0].it[0];
+    const b = await lee();
+    const ultimo = a.pas.length > 1 ? a.pas[a.pas.length - 1].k : '';
+    await page.evaluate((k) => { for (let i = 0; i < 20; i++) window.PG.moverSeccion(k, -1); window.PG.render(); }, ultimo);
+    await page.waitForTimeout(250);
+    const c = await lee();
+    await page.click('#main details.cs-ya summary'); await page.waitForTimeout(200);
+    const d = await lee();
+    const pos = (o) => (k) => o.orden.indexOf(k);
+    const enOrden = (x) => x.pas.every((g, i, l) => !i || x.orden.indexOf(l[i - 1].k) < x.orden.indexOf(g.k));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia537')); localStorage.removeItem('__copia537'); P.save();
+      P.ui.marks = new Set(); P.ui.cjeHoja = null; P.ui.cjeTab = ''; P.ui.foodVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.setViewportSize(vp);
+    check('537 Casa por pasillos · la compra sale agrupada en pasillos con su cabecera y su cuenta, en el orden del súper, y arriba dice «N cosas · 0 cogidas»',
+      a.pas.length >= 3 && a.sueltas === 0 && enOrden(a) && a.pas.every((g) => g.n === g.it.length && g.h) && /^\d+ cosas? · 0 cogidas?$/.test(a.cuenta.trim()), JSON.stringify(a));
+    check('538 Casa por pasillos · lo cogido se queda tachado en su pasillo (no baja ni sube) y la cuenta pasa a «1 cogida»',
+      !!primero && b.pas[0].k === a.pas[0].k && b.pas[0].it[0] === primero + ' [hecho]' && b.pas.length === a.pas.length && /· 1 cogida$/.test(b.cuenta.trim()), JSON.stringify({ primero, b0: b.pas[0], cuenta: b.cuenta }));
+    check('539 Casa por pasillos · «Ya en casa, no entran» va plegado al final y se abre al tocarlo; al subir un pasillo en el orden del súper, la lista lo sigue',
+      a.ya && !a.yaAbierto && d.yaAbierto && enOrden(c) && c.pas[0].k === ultimo && a.pas[0].k !== ultimo, JSON.stringify({ ya: a.ya, ab: a.yaAbierto, d: d.yaAbierto, primeros: [a.pas[0].k, c.pas[0].k], ultimo }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
