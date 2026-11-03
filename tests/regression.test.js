@@ -288,6 +288,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       await page.waitForTimeout(200);
     } else {
     // se conduce entera, que es como lo vive el usuario: servicio, 3 días de guardia, guardar
+    // copia de lo que había: al acabar se devuelve, para que las 3 guardias (una puede caer hoy) no se cuelen en las pruebas de abajo
+    const copiaArr = await page.evaluate(() => JSON.stringify(window.PG.store));
     await page.fill('#tguSvc', 'Urgencias');
     await page.click('[data-a="tgu-paso"][data-p="2"]');
     await page.waitForTimeout(180);
@@ -317,7 +319,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(400);
     check('con datos ya guardados no sale la primera pantalla aunque falte la marca',
       !(await page.evaluate(() => /montarla a tu nombre/.test(document.getElementById('main').innerText))), '');
-    await page.evaluate(() => { window.PG.store.meta.montada = true; window.PG.save(); });
+    await page.evaluate((c) => { const P = window.PG; P.store = JSON.parse(c); P.store.meta.montada = true; P.ui.arranque = null; P.save(); P.render(); }, copiaArr);
     }
   }
 

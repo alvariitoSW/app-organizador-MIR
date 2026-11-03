@@ -2785,3 +2785,6 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Elegido:** quien instala de cero ve «Tu guardia en 3 pasos» (el de T3b, mismas funciones `tgu*`) con una cabecera «Vamos a montarla a tu nombre»; sin barra. Guardar escribe las guardias y lleva al mes. Dos salidas: «Prefiero pegar mi planning» (Datos → Mi planning) y «Saltar: uso el ejemplo» (con confirmación). Se retira el asistente viejo de cuatro preguntas.
 - **Descartado:** duplicar el asistente de T3b; mantener las cuatro preguntas antes de las guardias (jornada, horas y sitio: quedan con valores de fábrica y se cambian en Turno y rotación).
 - **Supuestos:** el sitio queda en el primero de la lista; «Avanzado: ciclo» se oculta en la primera pantalla. Prueba del arranque rehecha (conduce tgu*). Cae con `rppSale()` quitado de `tguGuarda` revertido: caen 631 y el bloque del primer arranque, ninguna otra.
+- **R2 · al juntar (quien dirige):** la prueba del primer arranque marca guardias los días 3, 11 y 19 del mes en curso y se quedaban
+  puestas: con la suite pasada un día 3 (hoy), la guardia de «hoy» tumbaba 5 pruebas de abajo (ics, Hoy, cupo R1, Comer, Entreno) y
+  colgaba el trozo 5. Ahora la prueba guarda una copia antes de conducir y la devuelve al acabar (con «montada»). Con eso, 1065/1065.
