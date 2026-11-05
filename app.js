@@ -5583,9 +5583,18 @@ function modoAvisoHTML(enHoy){
      está en modo plantilla (sin fechas), lo avisa aquí para que el cambio de pantalla no sorprenda */
   if(store.rotation.mode==='date')return '';
   if(enHoy&&avisoCola()!=='av-modo')return '';
+  if(enHoy&&!ui.uphPlant)return '';   /* P1 Hoy: en Hoy va plegado en la etiqueta «ℹ️ plantilla» (uphPlantBtn) */
   /* margen arriba y abajo: en Hoy va justo debajo de «＋ añadir» y sin él los dos botones se tocaban */
   return '<div class="row mini" style="gap:8px;margin:10px 0"><span style="flex:1">ℹ️ Tu semana está en modo plantilla, sin las fechas de este calendario.</span><button class="btn s" data-a="mon-sync">Usar las fechas del Mes</button>'+(enHoy?ahoraNoBtn('av-modo'):'')+'</div>';
 }
+function uphPlantBtn(){
+  if(store.rotation.mode==='date'||avisoCola()!=='av-modo')return '';
+  return '<button class="btn s uph-pl" data-a="uph-plant" aria-expanded="'+(ui.uphPlant?'true':'false')+'">ℹ️ plantilla</button>';}
+function uphSegHTML(){
+  const m=hoyModo(),est=m==='bus'&&hoyBusVista()==='estacion';
+  return '<div class="hoyseg h4" role="tablist">'+[['bus','🚌 Conductor'],['est','🏗 Estación'],['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
+    const on=o[0]==='est'?est:(o[0]==='bus'?(m==='bus'&&!est):m===o[0]);
+    return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';}
 function daySleepLineHTML(dateStr,inf){
   const sl=sleepOf(dateStr,inf),nt=nightOf(dateStr,sl),today=isToday(dateStr),r=suenoReal(dateStr);
   /* «dormiste» solo con lo que apuntaste; lo del plan se dice como plan */
@@ -6225,7 +6234,10 @@ function nocheVisperaDe(key){
     const st=suenoEstado(key),c=suenoCfg(),sum=st.tres.reduce(function(t,x){return t+(x.n?x.n.h:0);},0),falta=Math.round((st.n*c.min-sum)*60);
     l4=(st.n&&falta>0?'Faltan '+nocheFalta(falta)+' en '+(st.n===1?'tu última noche':'tus '+st.n+' últimas noches')+' · ':'')+'cama '+snCamaDe(key);}
   else{const o=snOrdenes(G,false)[0];if(o)l4=o.t+' · '+o.h;}
-  return {l4:l4,html:'<div class="nvis"><div class="dsucap">'+(vis?'MAÑANA TIENES GUARDIA':'HOY TIENES GUARDIA')+'</div>'+snOrdenesHTML(G,vis)+'</div>'};}
+  /* P1 Hoy: el plan de la víspera, plegado en una línea; al tocarla sale el bloque entero */
+  const linea='🩺 '+(vis?'Mañana guardia · a la cama '+snCamaDe(key):'Hoy guardia'+(l4?' · '+l4:''));
+  return {l4:l4,html:'<button class="uph-vis" data-a="uph-vis" aria-expanded="'+(ui.uphVis?'true':'false')+'">'+esc(linea)+' <span aria-hidden="true">'+(ui.uphVis?'▴':'▾')+'</span></button>'+
+    (ui.uphVis?'<div class="nvis"><div class="dsucap">'+(vis?'MAÑANA TIENES GUARDIA':'HOY TIENES GUARDIA')+'</div>'+snOrdenesHTML(G,vis)+'</div>':'')};}
 function nocheSugHTML(key){
   const s=nocheSugerencia(key);if(!s)return '';
   if(avisoCola()!=='cama')return '';
@@ -6406,13 +6418,11 @@ function habTiraHTML(key,esHoy){
 function hoyDiaHTML(key,inf,esHoy){
   const m=hoyModo(),n=hoyNow(esHoy),est=m==='bus'&&hoyBusVista()==='estacion';
   /* la estación es un modo más, no una vista dentro de un modo: eran dos selectores apilados (80 px) */
-  const seg='<div class="hoyseg h4" role="tablist">'+[['bus','🚌 Conductor'],['est','🏗 Estación'],['reloj','◷ Reloj'],['linea','☰ Línea']].map(function(o){
-    const on=o[0]==='est'?est:(o[0]==='bus'?(m==='bus'&&!est):m===o[0]);
-    return '<button role="tab" aria-selected="'+on+'" class="'+(on?'on':'')+'" data-a="hoy-modo" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
+  const seg='';   /* P1 Hoy: el selector baja al final de la tarjeta (uphSegHTML, en renderHoy) */
   /* la línea entera, sin desplazarla por dentro; el ajuste de 12/18/24 h decide lo alta que es una hora */
   const sn=esHoy?snBotonHTML(key,'margin:0 0 10px'):'';
   if(m==='linea')return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+carrilHTML(key,{px:Math.max(16,Math.round(franjaAlto()/Math.max(6,tlHoras()))),caja:4000});
-  if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+(esHoy?hoyAhoraHTML(key,inf,esHoy):hoyBusHTML(key,inf,esHoy));   /* C3: hoy el dibujo baja (renderHoy); otro día se queda aquí */
+  if(m==='bus')return seg+nocheHTML(key,esHoy)+dinHoyLineaHTML(key,esHoy)+hoyChoqueHTML(key,inf)+(esHoy?'':hoyBusHTML(key,inf,esHoy));   /* C3: hoy el dibujo baja (renderHoy); otro día se queda aquí */
   const it=hoyItems(key,inf);
   return seg+nocheHTML(key,esHoy)+sn+dinHoyLineaHTML(key,esHoy)+hoyRelojHTML(key,inf,esHoy)+hoyChoqueHTML(key,inf)+'<div id="hoyTira">'+hoyTiraHTML(it,n,key,esHoy)+'</div>'+
     (esHoy?hoyQuedaHTML(it,key,n):'<div class="hlst">'+it.map(function(x){return hoyFilaHTML(x,key,-1);}).join('')+'</div>');}
@@ -8749,20 +8759,20 @@ function renderHoy(){
     (sh?(esc(sh.icon)+' '+esc(sh.name)+(inf.guard?' '+esc(gTipo(inf.guard).label):'')+
       (hhE?' · '+esc(hhE):'')+(rotE&&!isGuardia(sh)&&hhE?' · '+esc(rotE):'')):'sin día asignado');
   const guardiaHoy=!inf.vac&&sh&&isGuardia(sh);
+  const uphCorto=esHoy&&hoyModo()==='bus';   /* P1 Hoy: título y botones en una fila; «Ahora» sube bajo el estado */
   $('#main').innerHTML='<div class="grid">'+diaNavHTML(dref,esHoy)+
-    '<div class="card"><h2>'+(esHoy?'☀️ Hoy · ':'🗓️ ')+esc(fecha)+'<span class="hoychip'+(esHoy?'':' otro')+'">'+esc(chip)+'</span>'+
-'</h2>'+
+    '<div class="card"><h2 class="uph-h2"><span class="uph-t">'+(esHoy?'☀️ Hoy · ':'🗓️ ')+esc(fecha)+'<span class="hoychip'+(esHoy?'':' otro')+'">'+esc(chip)+'</span></span>'+
     /* moverse por días sin salir de la pantalla: la víspera de una guardia quieres ver el día de
        mañana, no el de hoy. Las flechas ‹ › de la barra de arriba hacen lo mismo. */
-    '<div class="row diasnav">'+
-      '<span class="sp"></span>'+
+    '<span class="uph-bt">'+
       '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="'+esc(cnOculta('Lloretazo'))+': '+
         esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">'+cnOculta('🌿')+(lloretDe(hoy)?' ✓':'')+'</button>'+
-      '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'">＋ añadir</button>'+
-    '</div>'+
+      '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'" aria-label="añadir">＋</button>'+
+    '</span></h2>'+
     modoAvisoHTML(true)+mvBandaHTML()+
     '<div class="row" style="gap:8px;align-items:center"><div class="hoyest" style="--tc:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+
-    (guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div><span class="sp"></span>'+entrenoContadorHTML(hoy)+'</div>'+
+    (guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div><span class="sp"></span>'+uphPlantBtn()+entrenoContadorHTML(hoy)+'</div>'+
+    (uphCorto?hoyAhoraHTML(hoy,inf,esHoy):'')+
     /* EL DÍA COMO CARRIL, en el sitio donde estaban la barra horizontal y la lista de horas. Es
        las dos cosas a la vez y mejor que ninguna: cada cosa ocupa el rato que ocupa de verdad, así
        que la duración y el hueco entre dos se ven sin leer nada. Y al tocar un bloque se va a
@@ -8774,6 +8784,7 @@ function renderHoy(){
     (hoyModo()==='bus'?'':'<div class="hoypie">'+
       '<div class="drsol">'+solPiesHTML(hoy)+'</div>'+
       '<button class="hoykcal" data-a="hoy-food-obj" title="cambiar el objetivo de kcal"><b>'+ft.kcal+'</b> / '+(pl.kcal||'—')+' kcal ›</button></div>')+
+    uphSegHTML()+
     '</div>'+
     /* el orden manda: primero el día, luego LO QUE HAY QUE HACER —entrenar, las tareas, lo que
        toca pagar, los hábitos— y al final lo de consulta. Al abrir la app por la mañana lo que
@@ -27014,6 +27025,8 @@ function act(a,el){
     case 'hab-ed':habEdAbre(el.dataset.id);render();break;
     case 'hoy-food-obj':ui.tab='food';ui.foodObjOpen=true;render();window.scrollTo(0,0);break;
     case 'noche-plegar':ui.nocheAbierta=!ui.nocheAbierta;render();break;
+    case 'uph-plant':ui.uphPlant=!ui.uphPlant;render();break;
+    case 'uph-vis':ui.uphVis=!ui.uphVis;render();break;
     case 'noche-android':ui.nocheAndroid=el.dataset.v==='samsung'?'samsung':'pixel';render();break;
     case 'noche-vista':ui.hoyVista=/^(alarmas|semana|android)$/.test(el.dataset.v||'')?el.dataset.v:'';render();window.scrollTo(0,0);break;
     case 'noche-hoja':ui.nocheHoja={k:el.dataset.k==='llego'?'llego':'vuelta',t:hoyNow(true)};render();break;

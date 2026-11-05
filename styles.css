@@ -4539,3 +4539,12 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .mesgl{max-width:none;margin:0 6px}
 .upmmas{margin:0 6px}
 .upmbaja{min-height:44px;margin:4px 0 0}
+
+/* P1 Hoy · una pantalla: título y botones en una fila, plantilla y víspera plegadas */
+.uph-h2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap}
+.uph-t{min-width:0;flex:1}
+.uph-bt{display:flex;gap:6px;flex:none}
+.uph-bt .btn{min-width:44px;min-height:44px;justify-content:center}
+.uph-pl{min-height:44px;font-size:var(--suelo);white-space:nowrap}
+.uph-vis{display:block;width:100%;min-height:44px;margin-top:var(--e-8);padding:var(--e-8) var(--e-12);text-align:left;font:inherit;font-size:var(--t-14);font-weight:800;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:var(--r-12);cursor:pointer}
+.uph-vis+.nvis{margin-top:4px}
