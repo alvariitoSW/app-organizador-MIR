@@ -369,6 +369,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     JSON.stringify({ drawerOpenState, drawerClosedState }));
 
   const fmtMil = (n) => { const v = Math.round(+n || 0); return (v < 0 ? '−' : '') + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+  // P1 Mes (upm): el abono, el R1 y las vacaciones van plegados bajo la línea de guardias; las pruebas viejas los quieren a la vista (la 675 prueba el pliegue y lo restaura)
+  await page.evaluate(() => { window.PG.ui.upmMas = true; });
+
   // 1) el ciclo de servicios no vuelve a pintar "NaN" (bug del "+ +" en serviciosCard)
   await gotoTab('month');
   await page.waitForTimeout(200);
@@ -14711,7 +14714,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       !r.a.hay && !r.a.capa && r.b.hay && r.b.capa && /Apartado \(rayas\)\s*550 €/.test(r.b.txt) && r.b.px >= 14 && r.b.fuera && r.b.rayas && r.b.ancho <= 412 && !r.c.hay && !r.c.capa, JSON.stringify(r));
   }
   // 373) HOY y MES · G1 [aparc-hoy-plantilla], EN CADENA (412×915): semana en modo plantilla → en Hoy el aviso «Usar las fechas del Mes» queda separado ≥8 px de «＋ añadir»
-  //      (antes se tocaban) → en Mes, separado ≥8 px de la fila de «hoy» → vuelta a Hoy con la semana en modo fecha: el aviso desaparece
+  //      (antes se tocaban) → en Mes (abierto el menú «⋯»), separado ≥8 px del botón de imprimir → vuelta a Hoy con la semana en modo fecha: el aviso desaparece
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
     await page.evaluate(() => { const P = window.PG; window.__copia373 = JSON.parse(JSON.stringify(P.store)); P.store.rotation.mode = 'pattern'; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.save(); P.render(); });
@@ -14722,7 +14725,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = {};
     await page.waitForTimeout(250); r.hoy = await mide();
     r.hoyAnade = await page.evaluate(() => [...document.querySelectorAll('#main button')].some((x) => /añadir/.test(x.textContent)));
-    await page.click('#tabs [data-a="nav-cal"]'); if (await page.$('#calModes button[data-t="month"]')) await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300); r.mes = await mide();
+    await page.click('#tabs [data-a="nav-cal"]'); if (await page.$('#calModes button[data-t="month"]')) await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300); await page.click('#main [data-a="upm-menu"]'); await page.waitForTimeout(200); r.mes = await mide();   /* P1 Mes: el aviso ahora vive en el menú «⋯», pegado al botón de imprimir */
     await page.evaluate(() => { const P = window.PG; P.store.rotation.mode = 'date'; P.ui.tab = 'hoy'; P.save(); P.render(); }); await page.waitForTimeout(200); r.tras = await mide(); r.modo = await page.evaluate(() => window.PG.store.rotation.mode);
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia373; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp);
@@ -16659,14 +16662,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (!l) return null; const r = l.getBoundingClientRect(); return { txt: l.textContent.trim(), cabe: l.scrollWidth <= l.clientWidth + 1, alto: Math.round(r.height), dentro: r.right <= 412, campoTapa: Math.round(i.getBoundingClientRect().width) >= Math.round(r.width) - 1 }; });
     const y = await page.evaluate(() => new Date().getFullYear() + 1);
     await page.fill('#main [data-a="mon-set"]', y + '-01'); await page.waitForTimeout(200);
-    R.tras = await page.evaluate(() => (document.querySelector('#main .card.calmes h2') || {}).textContent || '');
+    R.tras = await page.evaluate(() => (document.querySelector('#main .upmtit') || {}).textContent || '');
     await page.click('#main [data-a="mon-today"]'); await page.waitForTimeout(200);
-    R.vuelve = await page.evaluate(() => (document.querySelector('#main .card.calmes h2') || {}).textContent || '');
+    R.vuelve = await page.evaluate(() => (document.querySelector('#main .upmtit') || {}).textContent || '');
     R.mesHoy = await page.evaluate(() => new Date().toLocaleDateString('es-ES', { month: 'long' }));
     await sueltaHoy(); await page.setViewportSize(vp);
     check('449g Mes · «otro mes» cabe entero (≥44 px de alto, sin cortar), elegir enero del año que viene lleva a enero y «hoy» vuelve al mes de hoy',
-      !!R.boton && R.boton.txt === 'otro mes' && R.boton.cabe && R.boton.alto >= 44 && R.boton.dentro && R.boton.campoTapa &&
-      new RegExp('enero de ' + y).test(R.tras) && R.vuelve.indexOf(R.mesHoy) >= 0, JSON.stringify(R));
+      !!R.boton && /^🗓️ .* ▾$/.test(R.boton.txt) && R.boton.cabe && R.boton.alto >= 44 && R.boton.dentro && R.boton.campoTapa &&
+      /enero/.test(R.tras) && R.vuelve.indexOf(R.mesHoy.slice(0, 3)) >= 0, JSON.stringify(R));
   }
 
   // 450) LA COMPETENCIA (450-459, un solo bloque: comparten la siembra) · S1 «Sueño de un toque + víspera» (412×915, hoy fijo a las 07:30). Bajo el cartel de La Noche, al despertar, una fila
@@ -18772,6 +18775,77 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('663 Mi planning · entrando desde Ajustes, el botón de volver dice «Ajustes» (el «‹ atrás» de la cabecera se oculta) y devuelve a Ajustes', p663.v.length === 1 && /Ajustes$/.test(p663.v[0]) && p663.atras && p663b === 'ajustes', JSON.stringify({ p663, p663b }));
     await restaura('hoy'); await page.evaluate((o) => document.documentElement.classList.toggle('dark', o), await page.evaluate(() => window.__osc655));
     await page.setViewportSize(vp); await sueltaHoy();
+  }
+
+  // 675) P1 MES · UNA SOLA PANTALLA (675-682, un solo bloque, prefijo upm), 412×915, hoy fijo
+  // Mes → una fila (título-selector, hoy, ✏️, ?, ⋯), la línea de guardias a la vista y la cuadrícula arriba (top ≤240, acaba antes de la barra a 850);
+  // tocar la línea despliega abono, R1 y vacaciones; «⋯» → imprimir y el aviso de modo plantilla; «Ver del 1 al N» bajo la cuadrícula.
+  // Cae con lo de antes (título + aviso + «otro mes» + abono/R1/vacaciones siempre a la vista) o sin el pliegue.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy();
+    const upmSiembra = (modo) => page.evaluate((modo) => { const P = window.PG, hoy = new Date(), ini = new Date(hoy.getFullYear(), hoy.getMonth(), 1), GU = P.store.shifts.filter(P.isGuardia)[0];
+      if (!window.__copiaUpm) window.__copiaUpm = JSON.parse(JSON.stringify(P.store)); else P.store = JSON.parse(JSON.stringify(window.__copiaUpm));
+      for (let i = 1; i <= 28; i += 3.5) if (modo === 'date') P.setDayOverride(P.iso(new Date(hoy.getFullYear(), hoy.getMonth(), Math.round(i))), GU.id, 'urg');
+      P.store.rotation.mode = modo; P.monthDate = new Date(hoy.getFullYear(), hoy.getMonth(), 1); P.ui.tab = 'month'; P.ui.upmMas = false; P.ui.upmMenu = false; P.ui.mesAtras = false; P.ui.monSel = null; P.ui.mesLey = false; P.save(); P.render(); }, modo);
+    const upmMide = () => page.evaluate(() => { window.scrollTo(0, 0); const q = (s) => document.querySelector('#main ' + s), r = (e) => { const b = e.getBoundingClientRect(); return { top: Math.round(b.top + scrollY), bot: Math.round(b.bottom + scrollY), h: Math.round(b.height), w: Math.round(b.width) }; };
+      const cal = q('.cal.ext'), gl = q('.mesgl'), tit = q('.upmtit'), fila = q('.upmfila');
+      return { cal: cal && r(cal), gl: gl && r(gl), glTxt: gl ? gl.querySelector('.mesgc').textContent.replace(/\s+/g, ' ').trim() : '', tit: tit && r(tit), titTxt: tit ? tit.textContent.trim() : '', fila: fila && r(fila),
+        btns: [...document.querySelectorAll('#main .upmfila [data-a]')].map((b) => b.dataset.a), carne: !!q('.carne'), r1: !!q('.r1g'), vac: !!q('.r1v'), mas: !!q('.upmmas'), oculto: !!q('.mesatras'),
+        ancho: document.documentElement.scrollWidth <= 412 }; });
+    await upmSiembra('date'); await page.waitForTimeout(250);
+    const A = await upmMide();
+    check('675 Mes · una pantalla: la cuadrícula empieza en ≤240 px y acaba antes de la barra (<850), con las casillas de 92 px y sin abono/R1/vacaciones a la vista',
+      A.cal && A.cal.top <= 240 && A.cal.bot < 850 && A.cal.h >= 5 * 92 && !A.carne && !A.r1 && !A.vac && A.ancho && A.oculto, JSON.stringify(A));
+    check('676 Mes · una sola fila de botones: título-selector «🗓️ mes ▾» (≥44 px), hoy, ✏️ editar (aria «editar un día»), ? y ⋯; la línea «Guardias de …» queda a la vista y entera',
+      A.btns.join() === 'mon-set,mon-today,dia-editar,mes-ley,upm-menu' && A.tit.h >= 44 && /^🗓️ [a-zñé]+( – [a-zñé]+)? ▾$/.test(A.titTxt) && A.fila.h <= 50 &&
+      /^Guardias de [a-zñé]+: \d+ hechas? · \d+ por hacer · \d+ en total$/.test(A.glTxt) && A.gl.h >= 44 && A.gl.bot <= A.cal.top, JSON.stringify(A));
+    // 677: tocar la línea → sale el abono (y R1/vacaciones si los hay), la cuadrícula baja; tocarla otra vez lo pliega
+    await page.click('#main .mesgl .upmgl'); await page.waitForTimeout(250);
+    const B = await upmMide();
+    await page.click('#main .mesgl .upmgl'); await page.waitForTimeout(250);
+    const C = await upmMide();
+    check('677 Mes · al tocar la línea de guardias salen el abono (y el R1/vacaciones si los hay), con el mismo texto de la línea, y al volver a tocar se pliegan',
+      B.mas && B.carne && B.cal.top > A.cal.top + 60 && B.glTxt === A.glTxt && !C.mas && !C.carne && C.cal.top === A.cal.top, JSON.stringify([A.cal, B.cal, C.cal, B.carne, B.r1, B.vac]));
+    // 678: ⋯ → imprimir llama a print; el menú no ensancha la página
+    await page.evaluate(() => { window.__print = 0; window.print = function () { window.__print++; }; });
+    await page.click('#main [data-a="upm-menu"]'); await page.waitForTimeout(200);
+    const D = await page.evaluate(() => ({ b: !!document.querySelector('#main .upmmenu [data-a="print"]'), exp: document.querySelector('#main [data-a="upm-menu"]').getAttribute('aria-expanded'), ancho: document.documentElement.scrollWidth <= 412 }));
+    await page.click('#main .upmmenu [data-a="print"]'); await page.waitForTimeout(900);
+    const D2 = await page.evaluate(() => ({ print: window.__print, grid: !!document.querySelector('#main .cal.ext') }));
+    check('678 Mes · «⋯» abre el menú con «Imprimir el mes»; tocarlo llama a imprimir (una vez) y el mes sigue en pantalla', D.b && D.exp === 'true' && D.ancho && D2.print === 1 && D2.grid, JSON.stringify([D, D2]));
+    await page.evaluate(() => { window.PG.ui.upmMenu = false; window.PG.render(); });
+    // 679: el título es el selector: elegir enero del año que viene lleva a enero y «hoy» vuelve
+    const y679 = await page.evaluate(() => new Date().getFullYear() + 1);
+    await page.fill('#main [data-a="mon-set"]', y679 + '-01'); await page.waitForTimeout(200);
+    const E = await page.evaluate(() => ({ t: (document.querySelector('#main .upmtit') || {}).textContent || '', cabe: (() => { const l = document.querySelector('#main .upmtit'); return l.scrollWidth <= l.clientWidth + 1; })(), campo: document.querySelector('#main [data-a="mon-set"]').value }));
+    await page.click('#main [data-a="mon-today"]'); await page.waitForTimeout(200);
+    const E2 = await page.evaluate(() => ({ t: (document.querySelector('#main .upmtit') || {}).textContent || '', mes: new Date().toLocaleDateString('es-ES', { month: 'long' }) }));
+    check('679 Mes · el título es el botón del selector: enero del año que viene → «🗓️ enero ▾», sin cortar, y «hoy» vuelve al mes de hoy', /enero/.test(E.t) && E.cabe && E.campo === y679 + '-01' && E2.t.indexOf(E2.mes.slice(0, 3)) >= 0, JSON.stringify([E, E2]));
+    // 680: «Ver del 1 al N» debajo de la cuadrícula, ≥44 px, y al tocarlo se ven esos días
+    await upmSiembra('date'); await page.waitForTimeout(200);
+    const F = await page.evaluate(() => { const b = document.querySelector('#main .mesatras'), c = document.querySelector('#main .cal.ext'); if (!b) return null; const r = b.getBoundingClientRect(), k = c.getBoundingClientRect(); return { debajo: r.top >= k.bottom - 1, alto: Math.round(r.height), txt: b.textContent.trim(), n: c.querySelectorAll('.dbox').length }; });
+    await page.click('#main .mesatras'); await page.waitForTimeout(250);
+    const F2 = await page.evaluate(() => ({ txt: document.querySelector('#main .mesatras').textContent.trim(), n: document.querySelectorAll('#main .cal.ext .dbox').length }));
+    check('680 Mes · «▲ Ver del 1 al N de …» pasa debajo de la cuadrícula (≥44 px) y sigue desplegando esos días', !!F && F.debajo && F.alto >= 44 && /^▲ Ver del 1 al \d+ de /.test(F.txt) && /^▼ Ocultar/.test(F2.txt) && F2.n > F.n, JSON.stringify([F, F2]));
+    // 681: modo plantilla sin guardias con fecha: la línea sigue explicando por qué marca 0 a la vista, y el aviso vive en «⋯» (con su punto)
+    await upmSiembra('template'); await page.waitForTimeout(250);
+    const G = await page.evaluate(() => ({ linea: document.querySelector('#main .mesgl').innerText.replace(/\s+/g, ' '), btn: !!document.querySelector('#main .mesgl [data-a="datos-vista"]'), avisoFuera: !document.querySelector('#main [data-a="mon-sync"]'), punto: !!document.querySelector('#main [data-a="upm-menu"] .upmpunto') }));
+    await page.click('#main [data-a="upm-menu"]'); await page.waitForTimeout(200);
+    const G2 = await page.evaluate(() => ({ sync: !!document.querySelector('#main .upmmenu [data-a="mon-sync"]'), txt: (document.querySelector('#main .upmmenu') || { innerText: '' }).innerText }));
+    check('681 Mes · en modo plantilla la línea marca «0 hechas…» y explica que es por el modo plantilla sin tocar nada; el aviso con «Usar las fechas del Mes» sale en «⋯» (con punto)',
+      /: 0 hechas · 0 por hacer · 0 en total Marca 0 porque tu semana está en modo plantilla/.test(G.linea) && G.btn && G.avisoFuera && G.punto && G2.sync && /modo plantilla/.test(G2.txt), JSON.stringify([G, G2]));
+    // 682: en papel (imprimir el mes) la fila, la línea de guardias y el pliegue no salen y sí el título y la cuadrícula
+    await page.evaluate(() => { window.PG.ui.upmMenu = false; window.PG.ui.upmMas = true; window.PG.render(); document.documentElement.classList.add('imp-mes'); });
+    await page.emulateMedia({ media: 'print' }); await page.waitForTimeout(200);
+    const H = await page.evaluate(() => { const vis = (s) => { const e = document.querySelector('#main ' + s); return !!e && getComputedStyle(e).display !== 'none'; };
+      return { fila: vis('.upmfila'), gl: vis('.mesgl'), mas: vis('.upmmas'), titulo: vis('.calmes>h2.upmimp'), cal: vis('.cal.ext'), t: (document.querySelector('#main .calmes>h2.upmimp') || {}).textContent }; });
+    await page.emulateMedia({ media: 'screen' }); await page.evaluate(() => { document.documentElement.classList.remove('imp-mes'); });
+    const H2 = await page.evaluate(() => getComputedStyle(document.querySelector('#main .calmes>h2.upmimp')).display);
+    check('682 Mes · al imprimir salen el título del mes y la cuadrícula, y no la fila, la línea de guardias ni el abono; en pantalla el título de papel no se ve',
+      !H.fila && !H.gl && !H.mas && H.titulo && H.cal && /de \d{4}$/.test(H.t) && H2 === 'none', JSON.stringify([H, H2]));
+    await page.evaluate(() => { const P = window.PG; if (window.__copiaUpm) { P.store = window.__copiaUpm; delete window.__copiaUpm; } P.ui.upmMas = true; P.ui.upmMenu = false; P.ui.mesAtras = false; P.save(); P.render(); });
+    await sueltaHoy(); await page.setViewportSize(vp);
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

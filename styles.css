@@ -1129,6 +1129,7 @@ ul.slots{list-style:none;margin:0;padding:0}
   html.imp-mes .calmes .row,
   html.imp-mes .calmes details,html.imp-mes .calmes .note,html.imp-mes .calmes .mini{display:none!important}
   html.imp-mes .calmes>h2{font-size:15px;margin:0 0 6px}
+  html.imp-mes .upmfila,html.imp-mes .upmmenu,html.imp-mes .mesgl,html.imp-mes .upmmas,html.imp-mes .upmbaja{display:none!important}
   html.imp-mes #foot{display:none!important}   /* el pie de la app no pinta nada colgado en la pared */
   /* la cuadrícula ocupa el alto de la hoja. Nada de break-inside:avoid aquí: con la altura justa,
      Chrome decidía que no cabía y empujaba el calendario ENTERO a la página siguiente —salían tres
@@ -4521,3 +4522,20 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
 /* RLP · contraste >=4,5:1 en claro (veredicto, punto 21): «Por qué:» de Hoy (4,44 -> 5,7). La hora de la Cena y «ahorras» ya pasaban (5,4 y 5,0): los 3,97 y 4,16 eran un fallo de medir fondos color-mix() */
 html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var(--ink))}
 .cjquedan{margin:6px 0 0}
+
+/* P1 Mes · una sola pantalla: una fila, la línea de guardias a la vista y lo demás plegado */
+.card.calmes>h2.upmimp{display:none}
+@media print{html.imp-mes .card.calmes>h2.upmimp{display:block!important}}
+.upmfila{margin-top:0}
+.upmfila .btn{min-height:44px;min-width:44px}
+.upmfila .upmtit{flex:1 1 auto;min-width:0;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.upmfila [data-a=upm-menu]{position:relative}
+.upmpunto{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--brand)}
+.upmmenu{display:flex;flex-direction:column;gap:8px;margin:6px 6px 0;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.upmmenu .row{margin:0!important}
+.upmgl{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:0 6px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.upmgl::after{content:"▾";flex:none;color:var(--muted)}
+.upmgl[aria-expanded=true]::after{content:"▴"}
+.mesgl{max-width:none;margin:0 6px}
+.upmmas{margin:0 6px}
+.upmbaja{min-height:44px;margin:4px 0 0}

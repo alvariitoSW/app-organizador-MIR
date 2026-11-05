@@ -9455,7 +9455,7 @@ function mesGuardiasLineaHTML(mo,a,svc){
   let porque='';
   if(!a.total){porque=store.rotation.mode!=='date'?'Marca 0 porque tu semana está en modo plantilla y aún no hay guardias con fecha.':'Marca 0 porque aún no has puesto guardias con fecha este mes.';
     if(svc.guardias)porque+=' Tu servicio pide '+svc.guardias+'.';}
-  return '<div class="mesgl"><p class="mesgc">Guardias de '+esc(MONTH_FULL[mo])+': '+mesGuardiasCuentaTxt(a)+'</p>'+
+  return '<div class="mesgl"><button class="upmgl" data-a="upm-mas" aria-expanded="'+!!ui.upmMas+'" title="ver el abono, el R1 y las vacaciones"><span class="mesgc">Guardias de '+esc(MONTH_FULL[mo])+': '+mesGuardiasCuentaTxt(a)+'</span></button>'+
     (porque?'<p class="mini">'+esc(porque)+'</p><button class="btn p" data-a="datos-vista" data-v="planning">Poner mis guardias</button>':'')+'</div>';}
 /* LAS GUARDIAS DEL MES, UNA POR LÍNEA: «¿qué guardias has hecho en octubre y qué días?» (lo preguntan en secretaría).
    Con su día, su tipo, sus horas y si ya está hecha; se puede enseñar tal cual */
@@ -9580,30 +9580,22 @@ function renderMonth(){
       (d.sleepH!=null?'<span class="dsl'+(d.sleepH<minS?' low':'')+'">🛌 '+fmtHM(d.sleepH*60)+
         (d.sleepH<minS?' ⚠':'')+'</span>':'')+
       '</button>');});
+  const upmCruza=rejilla.movil&&rejilla.length&&rejilla[rejilla.length-1].date.getMonth()!==mo,upmTit=upmCruza?MON[mo]+' – '+MON[rejilla[rejilla.length-1].date.getMonth()]:MONTH_FULL[mo];   /* cruzando meses, abreviado: «noviembre – diciembre» no cabe junto a los cuatro botones */
+  const upmAviso=modoAvisoHTML();
+  /* P1 Mes (una sola pantalla): título = botón del selector; una fila; la línea de guardias a la vista y, al tocarla, el abono, el R1 y las vacaciones */
   $('#main').innerHTML=`<div class="grid">
-    <div class="card calmes"><h2>🗓️ ${rejilla.movil&&rejilla.length&&rejilla[rejilla.length-1].date.getMonth()!==mo
-      ?MONTH_FULL[mo]+' – '+MONTH_FULL[rejilla[rejilla.length-1].date.getMonth()]:MONTH_FULL[mo]} de ${y}${
-      /* el servicio del mes: es lo primero que se mira para saber «dónde estoy este mes», y estaba
-         tres pantallas más abajo. En la casilla no cabe y además sería la misma palabra 30 veces. */
-      (function(){const sv=svc.service;
-        return sv?('<span class="mini" style="margin-left:auto">'+esc(sv)+'</span>'):'';})()}</h2>
-      ${modoAvisoHTML()}
-      <!-- las flechas de mes YA están en la barra de arriba, que en Mes mueven el mes: aquí eran
-           la segunda pareja de ‹ › de la misma pantalla. Se queda el selector, que es lo único
-           que esas flechas no hacen: saltar a un mes cualquiera. -->
-      <div class="mesnav">
-        <!-- el campo de mes enseñaba «noviembre de 20…» cortado (en 144 px no cabe y el mes ya está arriba):
-             ahora es un botón «otro mes» con el campo transparente encima, que abre el selector al tocarlo -->
-        <label class="btn s mesir">otro mes<input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" aria-label="ir a otro mes"></label>
+    <div class="card calmes"><h2 class="upmimp">🗓️ ${upmTit} de ${y}</h2>
+      <div class="mesnav upmfila">
+        <label class="btn s mesir upmtit" title="ir a otro mes">🗓️ ${esc(upmTit)} ▾<input type="month" value="${y}-${String(mo+1).padStart(2,'0')}" data-a="mon-set" aria-label="ir a otro mes (ahora ${esc(upmTit)} de ${y})"></label>
         <button class="btn s" data-a="mon-today">hoy</button>
-        <button class="btn p s" data-a="dia-editar" title="cambiar o añadir en un día (o mantén pulsada su casilla)">✏️ editar</button>
-        <!-- imprimir el mes es para colgarlo en la pared: el botón se ha traído aquí desde la
-             cabecera, que lo enseñaba en las 20 pantallas de la app para servir en dos -->
-        <button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨</button>
-        <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada color" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button></div>
-      ${mesCarneHTML(abono,y,mo,svc)}${mesGuardiasLineaHTML(mo,abono,svc)}${guardiasR1HTML()}${vacGastadosHTML()}
-      ${rejilla.oculto?'<button class="btn s mesatras" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+(rejilla.oculto===1?' el 1':' del 1 al '+rejilla.oculto)+' de '+MONTH_FULL[mo]+'</button>':''}
+        <button class="btn p s" data-a="dia-editar" aria-label="editar un día" title="cambiar o añadir en un día (o mantén pulsada su casilla)">✏️</button>
+        <button class="btn s${ui.mesLey?' p':''}" data-a="mes-ley" title="qué es cada color" aria-label="leyenda" aria-pressed="${!!ui.mesLey}">?</button>
+        <button class="btn s${ui.upmMenu?' p':''}" data-a="upm-menu" aria-label="más opciones: imprimir${upmAviso?' y aviso de modo plantilla':''}" aria-expanded="${!!ui.upmMenu}">⋯${upmAviso?'<i class="upmpunto"></i>':''}</button></div>
+      ${ui.upmMenu?'<div class="upmmenu"><button class="btn s" data-a="print" title="imprimir este mes para colgarlo" aria-label="imprimir este mes">🖨 Imprimir el mes</button>'+upmAviso+'</div>':''}
+      ${mesGuardiasLineaHTML(mo,abono,svc)}
+      ${ui.upmMas?'<div class="upmmas">'+mesCarneHTML(abono,y,mo,svc)+guardiasR1HTML()+vacGastadosHTML()+'</div>':''}
       <div class="cal ext${ui.mesModo?' enmodo':''}">${WDH.map(function(n){return '<span class="wd">'+n+'</span>';}).join('')}${cells.join('')}</div>
+      ${rejilla.oculto?'<button class="btn s mesatras upmbaja" data-a="mes-atras" aria-expanded="'+!!ui.mesAtras+'">'+(ui.mesAtras?'▼ Ocultar':'▲ Ver')+(rejilla.oculto===1?' el 1':' del 1 al '+rejilla.oculto)+' de '+MONTH_FULL[mo]+'</button>':''}
       ${ui.mesLey?'<div class="mleyenda">'+[['guardia','guardia 🚨'],['saliente','saliente'],['trabajo','trabajo'],['fuerza','entreno'],['libre','libre'],['vac','vacaciones']].map(function(x){return '<i class="mlc mt-'+x[0]+'"></i> '+x[1];}).join(' · ')+' · la línea amarilla es la frontera entre meses'+' · <b>15→9</b> entras→sales de la guardia · <b>→9</b> trabajas hasta el relevo · <b class="dgasto pend">€</b> toca pagar un recibo · <i class="dpt mlnota"></i> nota</div>':''}
       ${ui.monSel?dayPanelHTML(ui.monSel):''}
     </div>
@@ -27163,6 +27155,8 @@ function act(a,el){
         save();render();flash('mes vaciado (la plantilla manda otra vez)');});break;}
     case 'mes-hoja':ui.mesHoja=!ui.mesHoja;render();break;
     case 'mes-ley':ui.mesLey=!ui.mesLey;render();break;
+    case 'upm-mas':ui.upmMas=!ui.upmMas;render();break;
+    case 'upm-menu':ui.upmMenu=!ui.upmMenu;render();break;
     case 'mes-atras':ui.mesAtras=!ui.mesAtras;render();break;
     case 'mes-vac':ui.mesModo={tipo:'vac',de:''};ui.monSel='';ui.mesHoja=false;render();
       {const c=document.querySelector('#main .calmes');if(c)c.scrollIntoView({behavior:'smooth',block:'start'});}break;

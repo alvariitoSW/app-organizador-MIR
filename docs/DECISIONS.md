@@ -2854,3 +2854,11 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Supuestos**: «el tercer texto de 12,5 px» es el `<small>` de «alarma en tu parada…»; la frase de Comer sale en cualquier día que se mire (techo de ese día).
 
 **Cae con X revertido**: 656 sin la regla de `.coacht .mini` (4,44); 658 con `.snord small` a 12,5 px; 659 con `fig/conductor.js` a 12,5 px; 660-662 sin `cjeQuedanTxt`. Guardas que ya pasaban antes: 655, 657, 663, 664.
+
+## Tras el veredicto · P1 Mes (prefijo `upm`, prueba 675-682 en un bloque)
+**Elegido** (maqueta `maquetas/una-pantalla.html`, «Mes · después»): una sola fila `.upmfila` = título-selector «🗓️ noviembre ▾» (el `<input type=month data-a="mon-set">` transparente encima; si la rejilla cruza meses, abreviado «nov – dic» porque «noviembre – diciembre» no cabe junto a los cuatro botones), «hoy», «✏️» (aria «editar un día»), «?» y «⋯» (`upm-menu`: 🖨 Imprimir el mes y el aviso de modo plantilla, con un punto en el «⋯» si hay aviso). La línea «Guardias de <mes>: N hechas · N por hacer · N en total» queda a la vista (ahora un botón `.upmgl` con ▾ por CSS, mismo texto) y al tocarla (`upm-mas`, `ui.upmMas`) despliega abono, R1 y vacaciones. En plantilla, la línea sigue diciendo por qué marca 0 y el botón «Poner mis guardias». «Ver del 1 al N» (`mes-atras`) pasa bajo la cuadrícula (44 px). Medido a 412×915 (noviembre, 8 guardias): `.cal.ext` top 239, bottom 736 (antes 599 / 1096), casillas de 92 px.
+Imprimir: el título de papel es un `h2.upmimp` oculto en pantalla; en `@media print` se ocultan fila, línea, pliegue y «Ver del 1…».
+**Descartado:** `<details>` para el pliegue (el `render()` lo cerraría solo); encoger casillas; menú flotante absoluto (se come el toque de la cuadrícula).
+**Viejas que cambian:** 449g (el botón ya no dice «otro mes» sino «🗓️ mes ▾»; el título se lee de `.upmtit`); 373 (en Mes el aviso está en el menú «⋯»: la prueba lo abre y mide contra el botón de imprimir). Las que leen `.carne`, `.r1g`, `.r1v` parten de `ui.upmMas = true` (puesto una vez antes de la prueba 1).
+**Supuestos:** el servicio del mes sigue en el abono (plegado), ya no junto al título; «⋯» queda abierto hasta volver a tocarlo.
+**Cae con X revertido:** con `app.js`/`styles.css` de antes la 675 (y 676-682) no encuentran `.upmgl` y fallan.
