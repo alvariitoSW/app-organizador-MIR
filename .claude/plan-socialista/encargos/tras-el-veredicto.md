@@ -52,3 +52,21 @@ entrada en `docs/DECISIONS.md` por tanda y traspaso al final de este archivo.
 **Ajeno.** Con 5 trozos de la suite en 4 núcleos caen pruebas «de tiempo» distintas en cada pasada: la 604, la 401 y un clic sobre un elemento ya quitado en el trozo 4. A la cuarta pasada salió en verde. Conviene mirar si `tools/pruebas-corto.sh` debería lanzar 4 trozos y no 5.
 
 **Siguiente.** Una sesión nueva con las respuestas: construir P1, ajustar la foto del cuadrante y, si dice que sí, C1.
+
+## Traspaso (05/11, cierre de la sesión)
+
+**Hecho, en `main` (fed6e07, sellado).**
+- **P1 Hoy:** «Ahora» pasa de 1.111 px a 368-445 px, por encima del cartel. La víspera va plegada en «🩺 Mañana guardia · a la cama HH:MM ▾», el aviso de plantilla en «ℹ️ plantilla» y el selector al final. Pruebas 665-668.
+- **P1 Mes:** la cuadrícula va de 263 a 735 px y se ve entera. Hay una fila «🗓️ nov – dic ▾ · hoy · ✏️ · ? · ⋯», la línea de guardias se despliega y «Ver del 1 al N» va debajo. Pruebas 675-682.
+- **P3:** decidido. C1 ahora, C2 más adelante, la miniatura 30 días y el botón en la hoja «Apuntar» (lo eligió Transportes).
+
+**Pendiente.**
+- **Construir C1** de la foto del plato (~1,7 M), en una sesión nueva.
+- **La línea «Guardias de noviembre: …»** se parte en dos renglones a 412 px. Por eso la cuadrícula empieza en 263 y no en 239. Es estético; si molesta, letra de 13 px sin negrita o «8 en total» abreviado.
+- **El cuadrante real** ya está en la app del usuario y no ha contado fallos. Si los cuenta, se ajusta el lector con uno inventado.
+
+**Lo aprendido.**
+1. **Las pruebas que dependen de un `ui.x` puesto a mano se pierden al recargar la página.** Pasa en los trozos: hay que ponerlo con `context.addInitScript` (como `upmMas`).
+2. **`page.$(…)` + `handle.click()` cae si la pantalla se repinta entre medias:** mejor `page.click(selector)` (lo arreglado en la 326).
+
+**Gasto.** 5,1 M en toda la sesión, frente a 4,3-4,6 previstos (+11 % sobre el máximo).
