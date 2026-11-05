@@ -2838,3 +2838,19 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 - **Al desplegar:** la 604 caía en la suite a trozos (el resumen aún no se había pintado a los 200 ms): ahora espera a que tenga
   texto. Y un error suelto «Cannot set properties of null (setting 'estado')»: la respuesta de «traer la descripción» del
   importador llegaba con la pantalla ya cerrada (`ui.imp` en null); ahora se descarta.
+
+## Tras el veredicto · P2 (rlp, pruebas 655-664) · 05/11/2026
+
+**Elegido**
+- «Por qué:» del coach en Hoy, en claro: 4,44 → 5,74 con `color-mix(ink2 80%, ink)` solo en `html:not(.dark) .coach .coacht .mini`.
+- La hora de la Cena (Comer) y «ahorras» (Dinero) **no se tocan**: medidas bien (fondo mezclado con su transparencia y leyendo `color(srgb …)`), dan 5,4 y 5,0 en claro. Los 3,97 y 4,16 del veredicto salían de leer mal los fondos `color-mix()` de las tarjetas (la prueba 473 lo repite: su 4,16 es ese mismo error). Quedan pruebas de guarda (655, 657) que no cambian de rojo a verde.
+- Letra de 13 px: `.snord small` (víspera: «no hace falta siesta…», «antes, a las…» y el tercero, «alarma en tu parada y gafas de sol») y el dibujo del conductor (`.cd-rs2`, `.cd-rint`, `.cd-nxb` en `fig/conductor.js`).
+- Comer: `cjeQuedanTxt()` bajo el margen de «Ahora»: «Te quedan 1.350 kcal · 110 g de proteína»; pasado el techo, «Hoy ya llevas lo del día» (neutra, sin rojo). Usa el mismo techo del día que `cjeMargenHTML` (`nutTecho`: trabajo, guardia, saliente). No reutiliza la cuenta de Monchis: esa va contra el tope de Monchis, no contra el techo del día.
+- 4a: «Faltan 3 h en tus 2 últimas noches» **no es un fallo**: `suenoEstado` cuenta las noches apuntadas de las últimas 3 y el texto dice cuántas son; con dos apuntadas dice 2. Era la siembra.
+- 4b: Ajustes → «Importar mi planning» ya muestra «‹ Ajustes» (y oculta el «‹ atrás» de la cabecera); prueba de guarda 663.
+
+**Descartado**: oscurecer la hora de la Cena y el verde de «ahorras» (no fallaban); tocar `--ink2` global; cambiar los textos de 12,5 px dentro de los SVG (son unidades del dibujo, no píxeles de pantalla).
+
+**Supuestos**: «el tercer texto de 12,5 px» es el `<small>` de «alarma en tu parada…»; la frase de Comer sale en cualquier día que se mire (techo de ese día).
+
+**Cae con X revertido**: 656 sin la regla de `.coacht .mini` (4,44); 658 con `.snord small` a 12,5 px; 659 con `fig/conductor.js` a 12,5 px; 660-662 sin `cjeQuedanTxt`. Guardas que ya pasaban antes: 655, 657, 663, 664.

@@ -18696,6 +18696,84 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await sueltaHoy();
   }
 
+  // 655) (pruebas 655 a 664 en un bloque) Tras el veredicto · P2 (rlp): contraste en claro, letra de 13 px en la víspera y el dibujo, y la frase «Te quedan…» en Comer.
+  // Cada prueba cae con su arreglo revertido: 655 y 657 son de guarda (ya pasaban: el 3,97 y el 4,16 del veredicto eran un error al medir fondos color-mix()), 656 sin la de .coacht .mini, 658 con .snord small a 12,5 px,
+  // 659 con las reglas de conductor.js a 12,5 px, 660-662 sin cjeQuedanTxt, 663 sin el volver «Ajustes» de Mi planning, 664 si el oscuro cambia.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { window.__copia655 = JSON.stringify(window.PG.store); window.__osc655 = document.documentElement.classList.contains('dark');
+      window.__cr655 = (sel, re) => { const num = (c) => { const m = c.match(/[\d.]+/g).map(Number); return /^color\(/.test(c) ? [m[0] * 255, m[1] * 255, m[2] * 255, m[3] == null ? 1 : m[3]] : [m[0], m[1], m[2], m[3] == null ? 1 : m[3]]; };
+        const lum = (c) => { const m = num(c).slice(0, 3).map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+        const mezcla = (c, f) => { const m = num(c), a = m[3]; return 'rgb(' + [0, 1, 2].map((i) => m[i] * a + f[i] * (1 - a)).join(',') + ')'; };
+        const fondo = (e) => { const caps = []; for (; e; e = e.parentElement) { const m = num(getComputedStyle(e).backgroundColor), a = m[3]; if (a > 0) { caps.push(m); if (a >= 1) break; } }
+          let f = [255, 255, 255]; for (let i = caps.length - 1; i >= 0; i--) { const a = caps[i][3]; f = [0, 1, 2].map((j) => caps[i][j] * a + f[j] * (1 - a)); } return f; };
+        return [...document.querySelectorAll(sel)].filter((e) => re.test(e.textContent)).map((e) => { const f = fondo(e), x = lum(mezcla(getComputedStyle(e).color, f)), y = lum('rgb(' + f.join(',') + ')'); return +((Math.max(x, y) + .05) / (Math.min(x, y) + .05)).toFixed(2); }); }; });
+    // el tema de fábrica (sin preset ni colores propios): lo que dejaron las pruebas de antes cambia los grises
+    const claro = (v) => page.evaluate((v) => { const P = window.PG; document.documentElement.classList.toggle('dark', !v); P.store.tema = Object.assign({}, P.store.tema, { preset: '', propio: null, brand: '', brand2: '', ink: '' }); P.aplicarTema(); }, v);
+    const restaura = async (tab) => { await page.evaluate(([s, t]) => { const P = window.PG; P.store = JSON.parse(s); P.aplicarTema(); P.ui.tab = t; P.save(); P.render(); }, [await page.evaluate(() => window.__copia655), tab]); };
+    const comer = async (kcal, prot) => { await page.evaluate(([kc, pr]) => { const P = window.PG; P.food().objetivo = { kcal: 2150, prot: 150 }; P.food().diasEsp = {};
+        const k = P.iso(new Date()); P.store.food.log[k] = kc ? [{ id: 'f655', p: 'comida', nombre: 'Comida 655', kcal: kc, prot: pr, carb: 50, gresa: 10, rac: 1 }] : [];
+        P.ui.tab = 'hoy'; P.ui.foodVista = 'eje'; P.ui.cjeTab = ''; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.frase = null; P.ui.cmPl = {}; P.save(); P.render(); }, [kcal, prot]);
+      await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(300); };
+    // 655: claro → Comer → la hora de cada comida (14:00, 21:30…) pasa de 4,5:1
+    await claro(true); await comer(800, 40);
+    const c655 = await page.evaluate(() => window.__cr655('#main .cjmm .cjhr', /\d:\d\d/));
+    check('655 Contraste claro · Comer: la hora de cada comida («21:30» de la Cena) pasa de 4,5:1', c655.length >= 3 && c655.every((x) => x >= 4.5), JSON.stringify(c655));
+    // 664: oscuro → Comer: la hora sigue en el gris de siempre (--ink2 #8fa6c6) y con contraste de sobra
+    await claro(false); await page.waitForTimeout(100);
+    const o664 = await page.evaluate(() => ({ col: getComputedStyle(document.querySelector('#main .cjmm .cjhr')).color, c: window.__cr655('#main .cjmm .cjhr', /\d:\d\d/) }));
+    check('664 Contraste oscuro · Comer: la hora de la Cena no cambia (#8fa6c6) y sigue pasando de 4,5:1', o664.col === 'rgb(143, 166, 198)' && o664.c.every((x) => x >= 4.5), JSON.stringify(o664));
+    // 656: claro → Hoy → «Por qué:» del coach pasa de 4,5:1
+    await claro(true);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.render(); }); await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(300);
+    const c656 = await page.evaluate(() => window.__cr655('#main .coach .coacht .mini', /Por qué/));
+    check('656 Contraste claro · Hoy: «Por qué:» del coach pasa de 4,5:1', c656.length === 1 && c656[0] >= 4.5, JSON.stringify(c656));
+    // 657: claro → Dinero → «· ahorras N» pasa de 4,5:1; en oscuro sigue en #4ade80
+    await page.evaluate(() => { const Orig = window.__origDateFijo, fr = new Orig(2026, 9, 29, 10, 0, 0).getTime(); window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fr); else super(...a); } static now() { return fr; } };
+      const P = window.PG, a = P.ahorroS(), d = P.store.dinero || (P.store.dinero = {});
+      a.real = [{ id: 'r657', mes: '2026-10', fecha: '2026-10-20', gastos: 200, cats: {} }, { id: 'r657b', mes: '2026-09', fecha: '2026-09-28', gastos: 300, cats: {} }, { id: 'r657c', mes: '2026-08', fecha: '2026-08-28', gastos: 280, cats: {} }]; a.gastado = {}; a.cobrado = {};
+      d.gastos = [{ id: 'g657', nombre: 'Alquiler', importe: 550, dia: 1, cat: 'casa', on: true }]; d.pagos = []; P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000; P.ui.tmFijos = false; P.ui.tmGrande = null; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.save(); P.render(); }); await page.waitForTimeout(300);
+    const a657 = await page.evaluate(() => ({ n: document.querySelectorAll('#main .tm-a:not(.mal)').length, c: window.__cr655('#main .tm-a:not(.mal)', /ahorras/), col: getComputedStyle(document.querySelector('#main .tm-a:not(.mal)')).color }));
+    await claro(false); const o657 = await page.evaluate(() => getComputedStyle(document.querySelector('#main .tm-a:not(.mal)')).color);
+    check('657 Contraste claro · Dinero: «· ahorras N» pasa de 4,5:1 (verde #15803d) y en oscuro sigue en #4ade80', a657.n === 1 && a657.c.length === 1 && a657.c[0] >= 4.5 && a657.col === 'rgb(21, 128, 61)' && o657 === 'rgb(74, 222, 128)', JSON.stringify({ a657, o657 }));
+    await restaura('hoy'); await sueltaHoy(); await fijaHoy(12, 0, true);
+    // 658-659: la víspera de guardia (Hoy): «no hace falta siesta…» y «antes, a las…» a 13 px; el dibujo del conductor, sin 12,5 px
+    await page.evaluate(() => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren/i.test(x.name || ''))[0], GU = P.store.shifts.filter(P.isGuardia)[0];
+      for (let i = -3; i <= 3; i++) P.setDayOverride(d(i), SH.id, ''); P.setDayOverride(d(1), GU.id, 'urg'); P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(400);
+    const v658 = await page.evaluate(() => { const s = [...document.querySelectorAll('#main .nvis .snord small')]; return { n: s.length, t: s.map((x) => x.textContent), fs: s.map((x) => getComputedStyle(x).fontSize) }; });
+    check('658 Letra · Hoy, víspera de guardia: «no hace falta siesta antes de entrar» y «antes, a las…» a 13 px como mínimo',
+      v658.n >= 2 && v658.t.some((t) => /no hace falta siesta/.test(t)) && v658.t.some((t) => /^antes, a las/.test(t)) && v658.fs.every((f) => parseFloat(f) >= 13), JSON.stringify(v658));
+    const d659 = await page.evaluate(() => { const g = (s) => { const e = document.querySelector('#main ' + s); return e ? parseFloat(getComputedStyle(e).fontSize) : null; }; return { rs2: g('.cd-rs2'), rint: g('.cd-rint'), nxb: g('.cd-nxb') }; });
+    check('659 Letra · Hoy → Conductor: el texto de las emisoras («a la cama… · café hasta las…», «¿qué te propones hoy?») y el aviso siguiente, a 13 px',
+      d659.rs2 >= 13 && d659.rint >= 13 && (d659.nxb == null || d659.nxb >= 13), JSON.stringify(d659));
+    await restaura('hoy'); await page.evaluate(() => { window.PG.ui.hoyModo = 'reloj'; window.PG.render(); });
+    // 660-662: Comer → «Te quedan N kcal · N g de proteína» junto a lo de «Ahora»; pasado el techo, frase neutra y sin rojo; con guardia, el techo de ese día
+    await claro(false); await comer(800, 40);
+    const q660 = await page.evaluate(() => { const p = document.querySelector('#main .cjahora .cjquedan'), k = document.querySelector('#main .cjahora .cjmarg'); return { t: p ? p.textContent : '', dentro: !!p, junto: !!p && !!k && p.previousElementSibling === k }; });
+    check('660 Comer · con 800 kcal y 40 g apuntados, bajo «Ahora»: «Te quedan 1.350 kcal · 110 g de proteína», pegada al margen', q660.dentro && q660.junto && q660.t === 'Te quedan 1.350 kcal · 110 g de proteína', JSON.stringify(q660));
+    await comer(2600, 160);
+    const q661 = await page.evaluate(() => { const p = document.querySelector('#main .cjahora .cjquedan'); const m = p ? /rgb\((\d+), (\d+), (\d+)/.exec(getComputedStyle(p).color) : null; return { t: p ? p.textContent : '', rojo: !!m && +m[1] > 150 && +m[2] < 100 && +m[3] < 120, neg: p ? /[-−]\d|pas/i.test(p.textContent) : true }; });
+    check('661 Comer · pasado el techo: «Hoy ya llevas lo del día», sin rojo, sin negativos y sin «te pasas»', q661.t === 'Hoy ya llevas lo del día' && !q661.rojo && !q661.neg, JSON.stringify(q661));
+    await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), GU = P.store.shifts.filter(P.isGuardia)[0]; P.setDayOverride(k, GU.id, 'urg'); P.food().log[k] = [{ id: 'f655g', p: 'comida', nombre: 'Comida 655g', kcal: 800, prot: 40, carb: 50, gresa: 10, rac: 1 }]; window.__techo655 = P.nutTecho(k); P.ui.tab = 'food'; P.render(); });
+    await page.waitForTimeout(250);
+    const q662 = await page.evaluate(() => { const P = window.PG, T = window.__techo655, p = document.querySelector('#main .cjahora .cjquedan'); return { t: p ? p.textContent : '', techo: T && T.techo, esperado: 'Te quedan ' + String(Math.round(T.techo - 800)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' kcal' }; });
+    check('662 Comer · en día de guardia la frase usa el techo de ese día (nutTecho), no el objetivo normal', q662.techo > 0 && q662.t.indexOf(q662.esperado) === 0, JSON.stringify(q662));
+    await restaura('hoy');
+    // 663: Ajustes → «Importar mi planning» → el botón de volver dice «Ajustes» (no «atrás») y devuelve a Ajustes
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'ajustes'; P.ui.ajuVista = ''; P.ui.datosVista = ''; P.render(); });
+    await page.click('#main [data-a="datos-vista"][data-v="planning"]'); await page.waitForTimeout(250);
+    const p663 = await page.evaluate(() => ({ v: [...document.querySelectorAll('#main .subcab .volver')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()), atras: document.getElementById('navAtras').hidden }));
+    await page.click('#main .subcab .volver'); await page.waitForTimeout(250);
+    const p663b = await page.evaluate(() => window.PG.ui.tab);
+    check('663 Mi planning · entrando desde Ajustes, el botón de volver dice «Ajustes» (el «‹ atrás» de la cabecera se oculta) y devuelve a Ajustes', p663.v.length === 1 && /Ajustes$/.test(p663.v[0]) && p663.atras && p663b === 'ajustes', JSON.stringify({ p663, p663b }));
+    await restaura('hoy'); await page.evaluate((o) => document.documentElement.classList.toggle('dark', o), await page.evaluate(() => window.__osc655));
+    await page.setViewportSize(vp); await sueltaHoy();
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

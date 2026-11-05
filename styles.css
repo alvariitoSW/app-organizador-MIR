@@ -2331,7 +2331,7 @@ html:not(.dark){--sns:#2f63d6;--sng:#c4561a}
 .snord>div{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line)}
 .snord>div:first-child{border-top:0}
 .snord .h{min-width:46px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--brand)}
-.snord .t{display:flex;flex-direction:column;min-width:0}.snord .t small{color:var(--ink2);font-size:12.5px}
+.snord .t{display:flex;flex-direction:column;min-width:0}.snord .t small{color:var(--ink2);font-size:var(--suelo)}
 /* el banco del sueño: la figura de tu guardia a pantalla completa, encima de la app */
 .banco{position:fixed;inset:0;z-index:8000;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .bancobar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -4518,3 +4518,6 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
   #resPrint p{margin:4px 0;font-size:var(--t-13)}
   #resPrint section{break-inside:avoid}
 }
+/* RLP · contraste >=4,5:1 en claro (veredicto, punto 21): «Por qué:» de Hoy (4,44 -> 5,7). La hora de la Cena y «ahorras» ya pasaban (5,4 y 5,0): los 3,97 y 4,16 eran un fallo de medir fondos color-mix() */
+html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var(--ink))}
+.cjquedan{margin:6px 0 0}

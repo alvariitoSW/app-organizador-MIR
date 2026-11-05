@@ -55,7 +55,7 @@
 .cd-bar{fill:#1f2a3d}.cd-claro .cd-bar{fill:#dfe6ef}.cd-barf{fill:#5a78d0}.cd-barf.cd-kc{fill:#2f9e6b}.cd-barobj{stroke:#38e1ff;stroke-width:2}.cd-bv{fill:var(--cd-ink);font:700 11px ui-monospace,Menlo,monospace}
 .cd-bv.cd-sin{fill:#f2a33a}
 .cd-disp{fill:var(--cd-disp);stroke:var(--cd-dashe);stroke-width:1.4}.cd-nxl{fill:#b98c2c;font:800 10px ui-sans-serif,system-ui,sans-serif;letter-spacing:.14em}
-.cd-nxb{fill:#ffd66b;font:800 12.5px ui-sans-serif,system-ui,sans-serif}.cd-nxa{fill:#e9f2ff;font:600 12px ui-sans-serif,system-ui,sans-serif}
+.cd-nxb{fill:#ffd66b;font:800 13px ui-sans-serif,system-ui,sans-serif}.cd-nxa{fill:#e9f2ff;font:600 12px ui-sans-serif,system-ui,sans-serif}
 .cd-wheel{stroke:var(--cd-wheel);stroke-width:22;fill:none}.cd-spoke{fill:var(--cd-wheel)}.cd-horn{fill:var(--cd-dashe)}
 .cd-tkb{fill:#1b2333;stroke:#2a3448;stroke-width:1.2}.cd-tkp{fill:#f3efe4}.cd-tkt{fill:#1d2b40;font:800 11px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-note{fill:#ffe27a}.cd-notet{fill:#3a2a00;font:800 11px ui-sans-serif,system-ui,sans-serif}
@@ -79,7 +79,7 @@
 .cd-bicit{fill:var(--cd-ok);font:800 11px ui-sans-serif,system-ui,sans-serif}
 .cd-taxi{fill:#f2cf3a}.cd-taxid{fill:#b8961c}.cd-taxiv{fill:#0a1220}.cd-taxit{fill:#0d1726;font-weight:800;font-family:ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-taxil{fill:#7fe0a8}
 .cd-barra,.cd-barrap{stroke:#9aa6b8;fill:none;stroke-linecap:round}.cd-cuerpo{fill:#2f5fb3}.cd-piel{fill:#e3b08e}.cd-gorra{fill:#1d3a73}
-.cd-nxl{font-size:21px;letter-spacing:.04em}.cd-nxb{font-size:12.5px;font-weight:800}.cd-nxa{font-size:12px}
+.cd-nxl{font-size:21px;letter-spacing:.04em}.cd-nxb{font-size:13px;font-weight:800}.cd-nxa{font-size:12px}
 /* en los temas claros la pantallita es blanca: «Ahora: …» iba en blanco y lo siguiente en ámbar claro, y no se leían
    (de guardia la pantallita sigue oscura, aunque el tema sea claro) */
 .cd.cd-claro:not(.guardia) .cd-nxa{fill:var(--cd-ink)}.cd.cd-claro:not(.guardia) .cd-nxb{fill:#9a6700}
@@ -93,12 +93,12 @@
 .cd-ml.on,.cd-mw.on{fill:#ffd66b}.cd-palo{stroke:#5d6676;stroke-width:9;stroke-linecap:round}.cd-pomo{fill:#2a3448;stroke:#ffd66b;stroke-width:2.5}
 [data-r="palanca"]{transition:transform .35s ease}@media (prefers-reduced-motion:reduce){[data-r="palanca"]{transition:none}}
 .cd-rpanel{fill:#10151f;stroke:#ffd66b;stroke-width:2.5}.cd-rtt{fill:#7cf0b0;font:900 16px ui-sans-serif,system-ui,sans-serif}.cd-rs1{fill:#c8ffe0;font:800 20px ui-sans-serif,system-ui,sans-serif}.cd-rcaf{font:700 15px system-ui,sans-serif;fill:#ffd9a0}.cd-rcaf.tarde{fill:#ff6b6b}.cd-cfb{fill:#2a3442;stroke:#5c6b80;stroke-width:1.5;cursor:pointer}.cd-cfbt{font:800 17px system-ui,sans-serif;fill:#fff;text-anchor:middle;pointer-events:none}
-.cd-rs2{fill:#4ad08a;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
+.cd-rs2{fill:#4ad08a;font:700 13px ui-sans-serif,system-ui,sans-serif}
 .cd-rlink{fill:#0d2a1c;stroke:#4ad08a;stroke-width:1.5}.cd-rlinkt{fill:#7cf0b0;font:800 12px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd-rlab{fill:#8fa6c6;font:800 11.5px ui-sans-serif,system-ui,sans-serif;letter-spacing:.04em}.cd-rmini{fill:#5d7394;font:700 11px ui-sans-serif,system-ui,sans-serif}
 .cd-kb rect{fill:#1b2333;stroke:#3a4458;stroke-width:2}.cd-kb text{fill:#c9d4e4;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}.cd-kb.on rect{fill:#ffd66b;stroke:#ffd66b}.cd-kb.on text{fill:#06101a}
 .cd-ab circle{fill:#1b2333;stroke:#3a4458;stroke-width:2}.cd-ab text{font-size:17px;text-anchor:middle}.cd-ab.on circle{fill:#3a2f0a;stroke:#ffd66b}
-.cd-dial{fill:#2a3448;stroke:#38e1ff;stroke-width:2}.cd-dialm{stroke:#38e1ff;stroke-width:3;stroke-linecap:round}.cd-rint{fill:#e9f2ff;font:700 12.5px ui-sans-serif,system-ui,sans-serif}
+.cd-dial{fill:#2a3448;stroke:#38e1ff;stroke-width:2}.cd-dialm{stroke:#38e1ff;stroke-width:3;stroke-linecap:round}.cd-rint{fill:#e9f2ff;font:700 13px ui-sans-serif,system-ui,sans-serif}
 .cd-rx{fill:#1b2333;stroke:#ffd66b;stroke-width:2}.cd-rxt{fill:#ffd66b;font:900 18px ui-sans-serif,system-ui,sans-serif;text-anchor:middle}
 .cd.casa .cd-frame,.cd.casa .cd-seal,.cd.casa .cd-pillar,.cd.casa .cd-visor,.cd.casa [data-r="rot"],.cd.casa [data-o="atras"],.cd.casa .cd-espejo,.cd.casa [data-r="volante"]{display:none}
 .cd.casa{--cd-dash:#3b2a1f;--cd-dashe:#5c4330}.cd.come [data-r="volante"] .cd-mano,.cd.come [data-r="volante"] .cd-manga{display:none}
