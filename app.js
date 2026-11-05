@@ -16525,7 +16525,13 @@ function cjeMargenHTML(dk,ft,esHoy){
   const mk=Math.round(techo-(+ft.kcal||0)),mp=Math.round(po-(+ft.prot||0));
   return '<div class="cjmarg" role="group" aria-label="lo que queda hoy">'+
     '<span class="cjmk'+(mk>0?'':' tope')+'">'+(mk>0?'<b>'+fmtMil(mk)+' kcal</b><small>de margen hoy</small>':'<b>Has llegado a tu techo de hoy</b><small>'+fmtMil(techo)+' kcal</small>')+'</span>'+
-    (po?'<span class="cjmk'+(mp>0?'':' tope')+'">'+(mp>0?'<b>'+fmtMil(mp)+' g</b><small>de proteína por tomar</small>':'<b>Proteína cubierta</b><small>'+fmtMil(po)+' g</small>')+'</span>':'')+'</div>';}
+    (po?'<span class="cjmk'+(mp>0?'':' tope')+'">'+(mp>0?'<b>'+fmtMil(mp)+' g</b><small>de proteína por tomar</small>':'<b>Proteína cubierta</b><small>'+fmtMil(po)+' g</small>')+'</span>':'')+'</div>'+
+    '<p class="mini cjquedan">'+cjeQuedanTxt(mk,po?mp:0)+'</p>';}
+/* RLP: la frase de lo que queda, con el techo de ese día (guardias incluidas). Neutra: nunca «te pasas» ni rojo. */
+function cjeQuedanTxt(mk,mp){
+  if(mk<=0&&mp<=0)return 'Hoy ya llevas lo del día';
+  const a=mk>0?fmtMil(mk)+' kcal':'',b=mp>0?fmtMil(mp)+' g de proteína':'';
+  return a&&b?'Te quedan '+a+' · '+b:(a?'Te quedan '+a+' · la proteína ya está':'Las kcal del día ya están · te faltan '+b);}
 function cmPleg(id,def){const o=(ui.cmPl||{})[id];return o==null?def:!!o;}
 function cmPlegHTML(id,def,ico,tit,res,cuerpo,cls){
   /* C5: una fila que abre y cierra con un toque; el cuerpo sigue en la página (oculto) para no perder nada */
