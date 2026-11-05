@@ -64,3 +64,11 @@ segunda fase opcional, solo si él la pide.
 
 Un solo agente (opus) hizo mapa, dictámenes, acta y maqueta, sin ayudantes. Lo apunta quien dirige al cerrar:
 `node tools/gasto.mjs --apunta consejo-foto-plato --tipo estudio`.
+
+## Respuesta del usuario (05/11)
+
+1. **Camino b:** primero C1 (sin IA) y, más adelante, C2 (la IA con su propia clave, apagada por defecto).
+2. **La foto se guarda.** Como no dijo cuánto, se aplica lo recomendado: una miniatura 30 días en el móvil, fuera de las copias.
+3. **Dónde va el botón:** lo delegó en Transportes. **Transportes decide la opción a):** en la hoja «Apuntar» de Comer, junto a
+   escribir y al código de barras. Es donde ya se apunta la comida: no añade un botón más a Comer · Hoy ni hace falta un camino
+   nuevo. Si luego se usa mucho, se puede subir a Comer · Hoy.
