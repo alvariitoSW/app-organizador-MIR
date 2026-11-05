@@ -50,6 +50,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // «Hoy» abre de serie en la vista del conductor; las pruebas de antes son del reloj y la línea, que
   // siguen ahí: arrancan en el reloj como antes, y la 275 prueba el conductor
   await context.addInitScript(() => { try { if (!sessionStorage.getItem('__conductor')) localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} });
+  // P1 Mes (upm): el abono, el R1 y las vacaciones van plegados; las pruebas viejas los quieren a la vista también tras recargar
+  // (la 675 prueba el pliegue poniéndolo a false a mano)
+  await context.addInitScript(() => { Object.defineProperty(window, 'PG', { configurable: true, set(v) { Object.defineProperty(window, 'PG', { value: v, writable: true, configurable: true }); try { v.ui.upmMas = true; } catch (e) {} } }); });
   // la tarjeta «¿cómo has dormido?» y la tira de horas del pie ya no van en Hoy (las sustituye la pieza de la noche, N1);
   // las pruebas de esas dos piezas las montan a mano con estas funciones para seguir midiendo su lógica
   await context.addInitScript(() => { window.__snMonta = () => { const P = window.PG, g = document.querySelector('#main .grid'); if (!g) return;
@@ -7934,11 +7937,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       cab.nombreEnElHtml && !cab.nombreVisible && cab.flechas, JSON.stringify(cab));
 
     // imprimir no se ha perdido: está donde se imprime (Mes, para colgarlo en la pared)
-    const donde = await page.evaluate(() => ({
-      enElMes: !!document.querySelector('#main .mesnav [data-a="print"]'),
+    // P1 Mes: imprimir va dentro de «⋯» (upm-menu), en la fila del mes
+    const donde = await page.evaluate(() => { window.PG.ui.upmMenu = true; window.PG.render(); const r = {
+      enElMes: !!document.querySelector('#main .upmfila [data-a="upm-menu"]') && !!document.querySelector('#main .upmmenu [data-a="print"]'),
       // y las flechas de mes ya no se repiten dentro de la tarjeta
       flechasRepetidas: !!document.querySelector('#main [data-a="mon-prev"]'),
-      saltarAOtroMes: !!document.querySelector('#main [data-a="mon-set"]') }));
+      saltarAOtroMes: !!document.querySelector('#main [data-a="mon-set"]') }; window.PG.ui.upmMenu = false; window.PG.render(); return r; });
     check('imprimir vive en el Mes, que es lo que se imprime, y las flechas no salen dos veces',
       donde.enElMes && !donde.flechasRepetidas && donde.saltarAOtroMes, JSON.stringify(donde));
 
@@ -12999,7 +13003,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.ui.mesAtras = false; P.ui.mesHoja = false; P.ui.tab = 'month'; P.ui.calMode = 'month'; P.monthDate = new Date(d.getFullYear(), d.getMonth(), 1); P.render();
       const uno = new Date(d.getFullYear(), d.getMonth(), 1, 12), sig = new Date(d.getFullYear(), d.getMonth() + 1, 1, 12);
       return { uno: P.iso(uno), lunes: (uno.getDay() + 6) % 7 === 0, bajo: P.iso(new Date(d.getFullYear(), d.getMonth(), 1 + (7 - (uno.getDay() + 6) % 7) % 7 || 8, 12)), sig: P.iso(sig), dentro: P.iso(new Date(d.getFullYear(), d.getMonth(), 15, 12)) }; });
-    const b = await page.$('#main .mesatras'); if (b) { await b.click(); await page.waitForTimeout(250); }
+    const b = await page.$('#main .mesatras'); if (b) { await page.click('#main .mesatras');   /* el selector, no el nodo: si el Mes se repinta entre medias, el nodo ya no está */ await page.waitForTimeout(250); }
     const r = { a: { uno: await fr(ks.uno), dentro: await fr(ks.dentro), sig: await fr(ks.sig) } };
     await page.click('[data-a="wk-next"][aria-label="mes siguiente"]', { timeout: 4000 }).catch(() => {});
     await page.waitForTimeout(250);
