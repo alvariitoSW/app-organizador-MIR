@@ -2874,3 +2874,23 @@ Imprimir: el título de papel es un `h2.upmimp` oculto en pantalla; en `@media p
 397a (la primera `.mini` de Hoy ya no es la del aviso: pasa a «≥ 13 px»), 450-459 y 658 (`lee450` y la 658 abren la víspera plegada para leerla).
 **Supuestos:** «Ahora» solo sube con el Conductor/Estación y en el día de hoy (como ya salía); el texto del día queda «☀️ Hoy · Domingo 15 de noviembre» + chip + los dos botones en una fila a 412 px.
 **Cae con X revertido:** 665-668 caen con `app.js` revertido al de la rama base (la 665 no llega al final: no encuentra `.uph-vis`).
+
+## La foto del plato · C1 (prefijo `fp`, pruebas 683-685 en un bloque)
+
+**Elegido** (Consejo del 05/11 y respuesta del usuario; maqueta `maquetas/foto-plato.html`, pantallas 1-3): sin IA y sin salir del móvil.
+En el buscador «¿Qué has comido?» (la hoja «Apuntar» de Comer, a la que vuelven los «‹ Apuntar»), un chip «📸 foto del plato» delante de
+«📷 escanear» (un `<input type=file accept=image/* capture=environment>` dentro de la etiqueta) y la frase «La foto del plato se queda en tu
+móvil: la app no la manda a ningún sitio.». La foto se encoge en un `canvas` a 360 px de lado (JPEG 0,7, ~15-25 KB; el re-codificado quita
+también el EXIF/GPS) y abre la vista `foodVista='foto'` «¿Es esto?»: la foto con «🔒 solo en tu móvil», hasta 3 candidatos (`fpCandidatos`):
+lo que tocaba hoy en el plan (`cjeHoyPlan`), lo último que apuntaste en esa comida otro día (30 días) y lo que más repites (2+ veces en 60
+días, primero en esa comida); «Otra cosa: búscalo»; raciones ½ · 1 · 1 ½ · 2 con kcal/prot./carb./grasa; «Sí, apúntalo en <comida>».
+Todo se apunta con `addFoodEntry` (plato del plan o tuyo por `dishId`; lo demás con sus macros por ración), así que «Deshacer» funciona.
+La miniatura va a **otra base de IndexedDB** (`pg-fotos`, almacén `mini`), no a `store`: no entra en las copias locales ni en Google. Se
+carga en memoria al abrir (`fpCarga`), que borra lo de más de 30 días. Se ve en la fila de la comida (`fpMiniHTML`, 44×44); al tocarla, la
+hoja con la foto y «🗑️ Borrar la foto». Quitar la toma o deshacerla borra también su foto. Con «Otra cosa», la foto se queda pendiente
+15 min y va a lo siguiente que apuntes (`fpAdjunta`, en `addFoodEntry`).
+**Descartado:** C2 (IA con la clave del usuario): queda para más adelante, como pidió; guardar la foto original; ponerla en `store`
+(engordaría las copias y saldría a Google); un apuntador nuevo (se reutiliza `addFoodEntry`).
+**Supuestos:** «a esa hora» = la misma comida (desayuno, comida, cena…) otro día; los «más repetidos» se cuentan por nombre; la foto se
+guarda a 360 px, que vale como miniatura y para verla «en grande» en la hoja.
+**Cae con X revertido:** la 683 sin el chip; la 684 (y el bloque) sin `fpMiniHTML` en la fila; la 685 sin la caducidad de `fpCarga`.

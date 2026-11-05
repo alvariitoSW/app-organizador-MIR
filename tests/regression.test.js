@@ -18912,6 +18912,73 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
+  // 683) (pruebas 683 a 685) La foto del plato (C1, Consejo 05/11): sin IA, la foto no sale del móvil.
+  // 683 cae sin el chip «📸 foto del plato» o sin fpCandidatos/fpApunta; 684 sin fpMiniHTML o sin fp-borra; 685 sin la caducidad de fpCarga o sin fpAdjunta en addFoodEntry.
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(14, 30);
+    await page.evaluate(() => { const P = window.PG; window.__copia683 = JSON.stringify(P.store);
+      const hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)), lg = P.store.food.log;
+      for (let i = 0; i <= 6; i++) lg[d(-i)] = [];
+      lg[d(-1)] = [{ id: 'f683a', p: 'comida', nombre: 'Arroz con pollo 683', emoji: '🥘', kcal: 600, prot: 30, carb: 70, gresa: 15, rac: 1, ts: P.addDays(hoy, -1).getTime() }];
+      [-2, -3, -4].forEach((i) => { lg[d(i)] = [{ id: 'f683e' + i, p: 'comida', nombre: 'Ensalada de garbanzos 683', emoji: '🥗', kcal: 400, prot: 18, carb: 40, gresa: 12, rac: 1, ts: P.addDays(hoy, i).getTime() }]; });
+      P.ui.tab = 'hoy'; P.ui.foodVista = 'eje'; P.ui.cjeHoja = null; P.ui.foodDate = ''; P.ui.foodBusca = ''; P.ui.fp = null; P.ui.fpPend = null; P.save(); P.render(); });
+    const png = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 1200; c.height = 900; const x = c.getContext('2d');
+      x.fillStyle = '#c84'; x.fillRect(0, 0, 1200, 900); x.fillStyle = '#fff'; x.beginPath(); x.arc(600, 450, 380, 0, 7); x.fill(); return c.toDataURL('image/png').split(',')[1]; });
+    // Comer → Apuntar (buscador) → «📸 foto del plato» → «¿Es esto?» → la de «lo último» → 1 ½ → «Sí, apúntalo»
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(250);
+    await page.click('#main .cjfrtop [data-a="cje-busca"]'); await page.waitForTimeout(250);
+    const chip = await page.evaluate(() => { const l = document.querySelector('#main .fpchip'); const i = l && l.querySelector('input[type=file][data-a="fp-foto"]');
+      return { txt: l ? l.textContent.trim() : '', cap: i ? i.getAttribute('capture') : '', nota: /se queda en tu móvil/.test(document.querySelector('#main').innerText), alto: l ? Math.round(l.getBoundingClientRect().height) : 0 }; });
+    await page.setInputFiles('#main input[data-a="fp-foto"]', { name: 'plato.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+    await page.waitForSelector('#main .fpcand', { timeout: 4000 }).catch(() => {});
+    const es = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), pl = (P.cjeHoyPlan(k).comida || []).filter((x) => { const d = P.dishById(x.id); return d && !d.nada && !d.fuera && !d.hospital; });
+      return { tit: (document.querySelector('#main .subtit') || {}).textContent, loc: /🔒 solo en tu móvil/.test(document.querySelector('#main').innerText),
+        img: (document.querySelector('#main .fpfoto img') || {}).src || '', conPlan: pl.length > 0,
+        c: [...document.querySelectorAll('#main .fpcand')].map((b) => [b.querySelector('b').textContent, b.querySelector('small').textContent]), red: performance.getEntriesByType('resource').filter((r) => r.startTime > 0 && /^data:|blob:/.test(r.name) === false && /anthropic|openai|vision|upload/i.test(r.name)).length }; });
+    const iA = es.c.findIndex((x) => x[0] === 'Arroz con pollo 683');
+    if (iA >= 0) await page.click('#main .fpcand[data-i="' + iA + '"]');
+    await page.click('#main [data-a="fp-rac"][data-r="1.5"]'); await page.waitForTimeout(100);
+    const prev = await page.evaluate(() => (document.querySelector('#main .fpprev b') || {}).textContent);
+    await page.click('#main [data-a="fp-ok"]'); await page.waitForTimeout(400);
+    const tras = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()), e = (P.store.food.log[k] || []).filter((x) => x.nombre === 'Arroz con pollo 683')[0];
+      return { e: e ? { kcal: e.kcal, rac: e.rac, p: e.p } : null, mini: !!(e && P.FP_MINI[e.id]), fila: !!document.querySelector('#main .cjmm[data-p="comida"] .fpmini img'),
+        enStore: /data:image/.test(localStorage.getItem('guardias.v1') || JSON.stringify(P.store)) || /data:image/.test(JSON.stringify(P.store)), vista: P.ui.foodVista }; });
+    const idb = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('pg-fotos'); r.onsuccess = () => { const q = r.result.transaction('mini').objectStore('mini').getAll(); q.onsuccess = () => res(q.result.map((x) => ({ id: x.id, n: x.url.length, jpg: /^data:image\/jpeg/.test(x.url) }))); }; r.onerror = () => res(null); }));
+    check('683 Foto del plato · Comer → buscador → «📸 foto del plato» (cámara trasera, ≥44 px, «se queda en tu móvil») → «¿Es esto?» con «🔒 solo en tu móvil», «lo último que comiste a esta hora» y «de tus platos más repetidos» (y el plan si lo hay) → 1 ½ → «Sí, apúntalo»: 900 kcal en la comida, miniatura en la fila, en IndexedDB y nunca en tus datos',
+      /foto del plato/.test(chip.txt) && chip.cap === 'environment' && chip.nota && chip.alto >= 32 && es.tit === '¿Es esto?' && es.loc && /^data:image\/jpeg/.test(es.img) && es.red === 0 &&
+      iA >= 0 && es.c.some((x) => x[0] === 'Ensalada de garbanzos 683' && /de tus platos más repetidos/.test(x[1])) && es.c[iA][1] === 'lo último que comiste a esta hora' &&
+      (!es.conPlan || es.c[0][1] === 'lo que tocaba hoy en tu plan') && es.c.length <= 3 && prev === '900' &&
+      tras.e && tras.e.kcal === 900 && tras.e.rac === 1.5 && tras.e.p === 'comida' && tras.mini && tras.fila && !tras.enStore && tras.vista === 'eje' &&
+      idb && idb.length === 1 && idb[0].jpg && idb[0].n < 120000, JSON.stringify({ chip, es, iA, prev, tras, idb }));
+    // 684: tocar la miniatura → la foto en grande → «Borrar la foto»: fuera de la fila y de IndexedDB
+    await page.click('#main .cjmm[data-p="comida"] .fpmini'); await page.waitForTimeout(250);
+    const ver = await page.evaluate(() => ({ img: !!document.querySelector('.cjh .fpfoto img'), txt: /30 días en tu móvil y no entra en las copias/.test((document.querySelector('.cjh') || {}).textContent || '') }));
+    await page.click('.cjh [data-a="fp-borra"]'); await page.waitForTimeout(300);
+    const borr = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('pg-fotos'); r.onsuccess = () => { const q = r.result.transaction('mini').objectStore('mini').count(); q.onsuccess = () => res({ n: q.result, fila: !!document.querySelector('#main .cjmm .fpmini'), mem: Object.keys(window.PG.FP_MINI).length }); }; }));
+    check('684 Foto del plato · tocar la miniatura de la comida → la foto en grande con «30 días en tu móvil y no entra en las copias» → «Borrar la foto»: sale de la fila, de la memoria y de IndexedDB',
+      ver.img && ver.txt && borr.n === 0 && !borr.fila && borr.mem === 0, JSON.stringify({ ver, borr }));
+    // 685: «Otra cosa: búscalo» → lo que apuntes después se queda la foto; y al abrir, lo de más de 30 días se borra
+    await page.click('#main .cjfrtop [data-a="cje-busca"]'); await page.waitForTimeout(200);
+    await page.setInputFiles('#main input[data-a="fp-foto"]', { name: 'plato.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+    await page.waitForSelector('#main [data-a="fp-otra"]', { timeout: 4000 }).catch(() => {});
+    await page.click('#main [data-a="fp-otra"]'); await page.waitForTimeout(200);
+    const otra = await page.evaluate(async () => { const P = window.PG, k = P.iso(new Date()), v = P.ui.foodVista;
+      P.addFoodEntry(k, { macro: { nombre: 'Bocadillo 685', kcal: 500, prot: 20, carb: 60, gresa: 15 }, pos: 'comida' });
+      const e = P.store.food.log[k].filter((x) => x.nombre === 'Bocadillo 685')[0]; await new Promise((r) => setTimeout(r, 150));
+      const db = await new Promise((res) => { const r = indexedDB.open('pg-fotos'); r.onsuccess = () => res(r.result); });
+      await new Promise((res) => { const tx = db.transaction('mini', 'readwrite'); tx.objectStore('mini').put({ id: 'viejo685', ts: Date.now() - 31 * 864e5, url: 'data:image/jpeg;base64,AA' }); tx.oncomplete = res; });
+      await P.fpCarga();
+      const ids = await new Promise((res) => { const q = db.transaction('mini').objectStore('mini').getAllKeys(); q.onsuccess = () => res(q.result); });
+      return { v, foto: !!(e && P.FP_MINI[e.id]), ids, viejo: 'viejo685' in P.FP_MINI, eId: e && e.id }; });
+    check('685 Foto del plato · «¿Es esto?» → «Otra cosa: búscalo» lleva al buscador y lo que apuntas después se queda la foto; al abrir la app, la miniatura de hace 31 días se borra y la de hoy sigue',
+      otra.v === 'buscar' && otra.foto && otra.ids.indexOf('viejo685') < 0 && otra.ids.indexOf(otra.eId) >= 0 && !otra.viejo, JSON.stringify(otra));
+    await page.evaluate(() => new Promise((res) => { const P = window.PG; Object.keys(P.FP_MINI).forEach((k) => delete P.FP_MINI[k]);
+      const r = indexedDB.open('pg-fotos'); r.onsuccess = () => { const tx = r.result.transaction('mini', 'readwrite'); tx.objectStore('mini').clear(); tx.oncomplete = res; };
+      P.store = JSON.parse(window.__copia683); P.ui.fp = null; P.ui.fpPend = null; P.ui.foodVista = 'eje'; P.ui.cjeHoja = null; P.ui.tab = 'hoy'; P.save(); P.render(); }));
+    await page.setViewportSize(vp); await sueltaHoy();
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

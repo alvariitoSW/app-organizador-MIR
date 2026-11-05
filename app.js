@@ -5038,13 +5038,13 @@ function addFoodEntry(dateStr,opt){
   const r=addFoodEntry0(dateStr,opt);
   if(k){const nuevos=foodLog(k).filter(function(x){return antes.indexOf(x.id)<0;}).map(function(x){return x.id;});
     if(nuevos.length){if(_ultimoCambio&&_ultimoCambio.tipo==='add'&&_ultimoCambio.k===k&&Date.now()-_ultimoCambio.ts<1500)_ultimoCambio.ids=_ultimoCambio.ids.concat(nuevos);
-      else _ultimoCambio={tipo:'add',k:k,ids:nuevos,ts:Date.now()};_ultimoCambio.ts=Date.now();}}
+      else _ultimoCambio={tipo:'add',k:k,ids:nuevos,ts:Date.now()};_ultimoCambio.ts=Date.now();fpAdjunta(nuevos);}}
   return r;}
 function deshacerCambio(){
   const u=_ultimoCambio;_ultimoCambio=null;if(!u)return 'nada que deshacer';
   if(u.tipo==='priv'){consumoS().priv.privado=false;save();return 'deshecho: Privado quitado';}
   const l=foodLog(u.k);
-  if(u.tipo==='add'){l.forEach(function(x){if(u.ids.indexOf(x.id)>=0)cocinadoDevuelve(x);});const q=l.filter(function(x){return u.ids.indexOf(x.id)<0;});const n=l.length-q.length;l.length=0;q.forEach(function(x){l.push(x);});save();return n?'deshecho: quitado':'ya no estaba';}
+  if(u.tipo==='add'){l.forEach(function(x){if(u.ids.indexOf(x.id)>=0){cocinadoDevuelve(x);if(FP_MINI[x.id])fpBorra(x.id);}});const q=l.filter(function(x){return u.ids.indexOf(x.id)<0;});const n=l.length-q.length;l.length=0;q.forEach(function(x){l.push(x);});save();return n?'deshecho: quitado':'ya no estaba';}
   if(u.e&&u.e.dishId)u.e.tap=cocinadoGasta(u.e.dishId,+u.e.rac||1);   /* vuelve la toma: vuelve a coger del táper */
   l.splice(Math.min(u.i,l.length),0,u.e);save();return 'deshecho: '+u.e.nombre+' vuelve';}
 function addFoodEntry0(dateStr,opt){
@@ -5084,7 +5084,7 @@ function addFoodEntry0(dateStr,opt){
   return 'dime qué: un código guardado o un plato del catálogo';}
 function delFoodEntry(dateStr,id){const list=foodLog(foodKey(dateStr));
   const i=list.findIndex(function(x){return x.id===id;});if(i<0)return 'esa toma ya no estaba';
-  const nm=list[i].nombre;cocinadoDevuelve(list[i]);_ultimoCambio={tipo:'del',k:foodKey(dateStr),e:list[i],i:i,ts:Date.now()};list.splice(i,1);save();return 'quitado '+nm;}
+  const nm=list[i].nombre;cocinadoDevuelve(list[i]);if(FP_MINI[id])fpBorra(id);_ultimoCambio={tipo:'del',k:foodKey(dateStr),e:list[i],i:i,ts:Date.now()};list.splice(i,1);save();return 'quitado '+nm;}
 function bumpFoodEntry(dateStr,id,delta){
   const e=foodLog(foodKey(dateStr)).filter(function(x){return x.id===id;})[0];
   if(!e)return 'no encuentro esa toma';
@@ -13591,11 +13591,13 @@ function renderFoodBuscar(){
       (q?('<button class="btn s" data-a="food-busca-clear" style="margin-right:6px" aria-label="borrar">×</button>'):'')+
     '</div>'+
     '<div class="chips">'+
+      '<label class="chipx fpchip">📸 foto del plato<input type="file" accept="image/*" capture="environment" data-a="fp-foto" hidden></label>'+
       '<button class="chipx" data-a="food-panel2" data-k="scan">📷 escanear</button>'+
       '<button class="chipx" data-a="food-vista" data-v="fuera">🍔 comer fuera</button>'+
       '<button class="chipx" data-a="food-vista" data-v="alimnuevo">🥕 crear alimento</button>'+
       '<button class="chipx" data-a="plato-nuevo">🍲 crear plato</button>'+
       '<button class="chipx" data-a="food-panel2" data-k="mano">✏️ a mano</button></div>'+
+    '<p class="mini fpnota">La foto del plato se queda en tu móvil: la app no la manda a ningún sitio.</p>'+
     '<div class="ftabs">'+FOOD_TABS.map(function(t){
       return '<button class="ftab'+(tab===t[0]?' on':'')+'" data-a="food-tab" data-t="'+t[0]+'">'+esc(t[1])+'</button>';}).join('')+'</div>'+
     cuerpo+
@@ -13604,6 +13606,100 @@ function renderFoodBuscar(){
       '<button class="btn s" data-a="cje-gestion">⚙️ gestionar platos y alimentos</button>'+
     '</div></div>';
 }
+/* ---- La foto del plato (C1, Consejo 05/11): la foto NO sale del móvil y no hay IA. Se encoge en un
+   canvas; la miniatura vive 30 días en OTRA base de IndexedDB (fuera de las copias, que copian `store`,
+   y de Google). «¿Es esto?» propone lo que la app ya sabe: el plan de hoy, lo último a esa hora y tus
+   platos más repetidos; la cantidad, por raciones. Todo se apunta con addFoodEntry (deshacer incluido). ---- */
+const FP_DB='pg-fotos',FP_DIAS=30;
+let _fpDB=null;const FP_MINI={};
+function fpDB(){if(_fpDB)return _fpDB;return (_fpDB=new Promise(function(res,rej){
+  try{if(typeof indexedDB==='undefined')return rej('sin IndexedDB');
+    const r=indexedDB.open(FP_DB,1);
+    r.onupgradeneeded=function(){r.result.createObjectStore('mini',{keyPath:'id'});};
+    r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}})).catch(function(e){_fpDB=null;throw e;});}
+function fpCarga(){
+  /* al abrir: lo de más de 30 días se borra y lo demás queda en memoria para pintarlo sin esperar */
+  return fpDB().then(function(db){return new Promise(function(res){
+    const tx=db.transaction('mini','readwrite'),st=tx.objectStore('mini'),r=st.getAll(),lim=Date.now()-FP_DIAS*864e5;
+    r.onsuccess=function(){(r.result||[]).forEach(function(x){if(!(x.ts>=lim)){st.delete(x.id);delete FP_MINI[x.id];}else FP_MINI[x.id]=x.url;});};
+    tx.oncomplete=function(){res(true);};tx.onerror=function(){res(false);};});}).catch(function(){return false;});}
+function fpGuarda(id,url){FP_MINI[id]=url;
+  return fpDB().then(function(db){return new Promise(function(res){const tx=db.transaction('mini','readwrite');
+    tx.objectStore('mini').put({id:id,ts:Date.now(),url:url});tx.oncomplete=function(){res(true);};tx.onerror=function(){res(false);};});}).catch(function(){return false;});}
+function fpBorra(id){delete FP_MINI[id];
+  return fpDB().then(function(db){return new Promise(function(res){const tx=db.transaction('mini','readwrite');
+    tx.objectStore('mini').delete(id);tx.oncomplete=function(){res(true);};tx.onerror=function(){res(false);};});}).catch(function(){return false;});}
+function fpEncoge(file){
+  /* 360 px de lado como mucho, en JPEG: ~15-25 KB; el original no se guarda en ningún sitio */
+  return new Promise(function(res,rej){const u=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){const s=Math.min(1,360/Math.max(im.naturalWidth||1,im.naturalHeight||1)),c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(im.naturalWidth*s));c.height=Math.max(1,Math.round(im.naturalHeight*s));
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.7));};
+    im.onerror=function(){URL.revokeObjectURL(u);rej('no se pudo leer la foto');};im.src=u;});}
+function fpAdjunta(ids){
+  /* la foto pendiente va a lo primero que apuntes en los 15 min siguientes (también por «Otra cosa») */
+  const f=ui.fpPend;if(!f||!ids.length)return;ui.fpPend=null;
+  if(Date.now()-f.ts>15*60000)return;fpGuarda(ids[0],f.url);}
+function fpCandidatos(k,pos){
+  const g=cjeGrupo(pos),ps=cjeMom(g)[2],out=[],vis={},d0=parseDate(k)||new Date();
+  const pon=function(c){const n=alimTxt(c.nom);if(!n||vis[n]||out.length>=3)return false;vis[n]=1;out.push(c);return true;};
+  const mac=function(x){return {kcal:+x.kcal||0,prot:+x.prot||0,carb:+x.carb||0,gresa:+x.gresa||0};};
+  /* 1 · lo que tocaba hoy en el plan */
+  const pl=(cjeHoyPlan(k)[g]||[]).filter(function(x){const d=dishById(x.id);return d&&!d.nada&&!d.fuera&&!d.hospital;});
+  if(pl.length){const m={kcal:0,prot:0,carb:0,gresa:0};pl.forEach(function(x){const d=dishById(x.id),r=num(x.portions,1);
+      m.kcal+=(+d.kcal||0)*r;m.prot+=(+d.prot||0)*r;m.carb+=(+d.carb||0)*r;m.gresa+=(+d.fat||0)*r;});
+    pon({t:'plan',nom:pl.map(function(x){return dishById(x.id).name;}).join(' + '),e:dishById(pl[0].id).icon||'🍽',s:'lo que tocaba hoy en tu plan',pl:pl,m:m});}
+  /* 2 · lo último que apuntaste en esta comida otro día */
+  for(let i=1;i<=30&&out.length<2;i++){const l=[].concat(logDe(iso(addDays(d0,-i)))).reverse().filter(function(e){return ps.indexOf(e.p||'comida')>=0;});
+    if(l.some(function(e){return pon({t:'e',nom:e.nombre,e:e.emoji||'🍽',s:'lo último que comiste a esta hora',x:e,m:mac(e)});}))break;}
+  /* 3 · lo que más repites (en esta comida primero; si no llega, en cualquiera) */
+  [true,false].forEach(function(solo){const por={};
+    for(let i=0;i<60;i++){const dk=iso(addDays(d0,-i));logDe(dk).forEach(function(e){if(solo&&ps.indexOf(e.p||'comida')<0)return;const n=alimTxt(e.nombre);if(!n)return;
+      (por[n]||(por[n]={n:0,x:e,i:i})).n++;});}
+    Object.keys(por).map(function(n){return por[n];}).filter(function(o){return o.n>=2;}).sort(function(a,b){return b.n-a.n||a.i-b.i;})
+      .forEach(function(o){pon({t:'e',nom:o.x.nombre,e:o.x.emoji||'🍽',s:'de tus platos más repetidos · '+o.n+' veces',x:o.x,m:mac(o.x)});});});
+  return out;}
+function fpApunta(){
+  const f=ui.fp;if(!f)return '';const c=f.cands[f.sel];if(!c)return 'elige qué es o búscalo';
+  const r=+f.rac||1,k=f.k,pos=f.pos;let msg='';
+  ui.fpPend={url:f.url,ts:Date.now()};
+  if(c.t==='plan')c.pl.forEach(function(x){msg=addFoodEntry(k,{dishId:x.id,rac:num(x.portions,1)*r,pos:pos,plan:true});});
+  else if(c.x.dishId&&dishById(c.x.dishId))msg=addFoodEntry(k,{dishId:c.x.dishId,rac:(+c.x.rac||1)*r,pos:pos});
+  else{const e=c.x;msg=addFoodEntry(k,{macro:{nombre:e.nombre,marca:e.marca||'',emoji:e.emoji||'',kcal:e.kcal,prot:e.prot,carb:e.carb,gresa:e.gresa},rac:r,pos:pos});}
+  ui.fpPend=null;ui.fp=null;save();
+  return '✓ '+c.nom+' apuntado en '+(POS_TXT[pos]||pos).toLowerCase()+(msg&&/^dime|ya no|no tiene/.test(msg)?' · '+msg:'');}
+const FP_RAC=[[0.5,'½'],[1,'1 ración'],[1.5,'1 ½'],[2,'2']];
+function renderFoodFoto(){
+  const f=ui.fp;
+  if(!f){ui.foodVista='buscar';return renderFoodBuscar();}
+  const c=f.cands[f.sel],r=+f.rac||1,P=POS_TXT[f.pos]||f.pos;
+  $('#main').innerHTML='<div class="grid fpv">'+
+    '<div class="subcab"><button class="btn s volver" data-a="fp-volver">'+gymIco('atras','gico sm')+' Apuntar</button>'+
+      '<h2 class="subtit">¿Es esto?</h2>'+
+      '<label class="btn s">Repetir<input type="file" accept="image/*" capture="environment" data-a="fp-foto" hidden></label></div>'+
+    '<div class="fpfoto"><img src="'+esc(f.url)+'" alt="tu foto del plato"><span class="fploc">🔒 solo en tu móvil</span></div>'+
+    (f.cands.length?'<p class="mini">Te propongo lo que más encaja con '+esc(P.toLowerCase())+':</p>'+
+      '<div class="fpcands" role="radiogroup" aria-label="qué hay en la foto">'+f.cands.map(function(x,i){
+        return '<button class="fpcand'+(i===f.sel?' on':'')+'" role="radio" aria-checked="'+(i===f.sel)+'" data-a="fp-elige" data-i="'+i+'"><span class="e" aria-hidden="true">'+esc(x.e)+'</span>'+
+          '<span class="t"><b>'+esc(x.nom)+'</b><small>'+esc(x.s)+'</small></span>'+(i===f.sel?'<span class="ok" aria-hidden="true">✓</span>':'')+'</button>';}).join('')+'</div>':
+      '<p class="mini">Aún no sé qué sueles comer en '+esc(P.toLowerCase())+': búscalo y la foto se queda con lo que apuntes.</p>')+
+    '<button class="btn w fpotra" data-a="fp-otra">'+gymIco('lupa','gico sm')+' Otra cosa: búscalo</button>'+
+    (c?'<p class="mini"><b style="color:var(--ink)">¿Cuánto?</b> (un plato normal = 1 ración)</p>'+
+      '<div class="fprac">'+FP_RAC.map(function(x){return '<button class="btn'+(x[0]===r?' on':'')+'" aria-pressed="'+(x[0]===r)+'" data-a="fp-rac" data-r="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
+      '<div class="fpprev">'+[['kcal','kcal',1],['prot','prot. g',1],['carb','carb. g',1],['gresa','grasa g',1]].map(function(q){
+        return '<div><b>'+fmtMil(Math.round((c.m[q[0]]||0)*r))+'</b><span>'+q[1]+'</span></div>';}).join('')+'</div>'+
+      '<button class="btn p w" data-a="fp-ok">Sí, apúntalo en '+esc(P.toLowerCase())+'</button>':'')+
+    '</div>';}
+function fpVerHTML(h){
+  const u=FP_MINI[h.id];if(!u)return '';
+  const e=logDe(h.k).filter(function(x){return x.id===h.id;})[0];
+  return '<div class="cjst">'+esc(e?e.nombre:'Tu foto')+'</div>'+
+    '<div class="fpfoto"><img src="'+esc(u)+'" alt="foto de '+esc(e?e.nombre:'tu plato')+'"></div>'+
+    '<p class="mini">Se guarda 30 días en tu móvil y no entra en las copias.</p>'+
+    '<button class="btn w" data-a="fp-borra" data-id="'+esc(h.id)+'">🗑️ Borrar la foto</button>';}
+function fpMiniHTML(l,k){
+  const x=l.filter(function(e){return FP_MINI[e.id];})[0];if(!x)return '';
+  return '<button class="fpmini" data-a="fp-ver" data-id="'+esc(x.id)+'" data-k="'+esc(k)+'" aria-label="ver la foto de '+esc(x.nombre)+'"><img src="'+esc(FP_MINI[x.id])+'" alt=""></button>';}
 function offBloqueHTML(q){
   /* Open Food Facts en directo: con Mercadona (Hacendado) primero. Solo si pides buscarlo —en el
      hospital la red va como va y no se gasta sin preguntar—, y lo que eliges se queda guardado */
@@ -15679,7 +15775,7 @@ function cjeComidaHTML(r,k,sig){
   const rec=sig&&st==='no'&&!(d&&!d.nada)?fraseRecientes(1,cjeMom(r.p)[2])[0]:null,nom=rec?rec.nombre:(r.e.length?r.e.map(function(x){return x.nombre;}).join(' + '):(d?cjeNomPlan(d):'sin plan · toca para apuntar'));
   const sb=sig?'<div class="cjsigb">'+(d&&!d.nada?'<button class="btn p" data-a="cje-ok" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':(rec?'<button class="btn p" data-a="cje-siempre" data-p="'+r.p+'"'+K+'>✓ Hecho</button>':''))+
     '<button class="btn" data-a="cje-mom" data-p="'+r.p+'"'+K+'>Otra cosa</button></div>':'';
-  return '<div class="cjmm'+(sig?' cjsig':'')+(st==='no'?'':' hecho')+'" data-p="'+r.p+'"><span class="cjhr">'+cjeHoraMom(r.p,k)+'</span>'+q+'<div class="cjcu"><div class="cjfila"><button class="tx" data-a="cje-mom" data-lp="mom" data-p="'+r.p+'"'+K+'><span class="k">'+(sig?'LO SIGUIENTE · ':'')+esc(r.lbl.toUpperCase())+'</span>'+
+  return '<div class="cjmm'+(sig?' cjsig':'')+(st==='no'?'':' hecho')+'" data-p="'+r.p+'"><span class="cjhr">'+cjeHoraMom(r.p,k)+'</span>'+q+'<div class="cjcu"><div class="cjfila">'+fpMiniHTML(r.e,k)+'<button class="tx" data-a="cje-mom" data-lp="mom" data-p="'+r.p+'"'+K+'><span class="k">'+(sig?'LO SIGUIENTE · ':'')+esc(r.lbl.toUpperCase())+'</span>'+
     '<span class="n'+(r.e.length?'':' plan')+'">'+esc(nom)+'</span>'+
     (sub?'<span class="pl">'+sub+'</span>':'')+cjeTiposHTML(r.e)+'</button>'+
     '<span class="kc'+(r.e.length?'':' g')+'">'+(r.e.length?fmtMil(S.kcal)+'<small>'+S.prot+' g P</small>':(pk?fmtMil(pk):''))+'</span></div>'+sb+'</div></div>';}
@@ -16813,6 +16909,7 @@ function cjeHojaHTML(){
   else if(v==='tecnica')body=cjeHojaTecnica(h);
   else if(v==='horno')body=cjeHojaHorno(h);
   else if(v==='micro')body=microHTML(h);
+  else if(v==='fotover')body=fpVerHTML(h);
   if(!body)return '';
   return hojaMarco('cje-cerrar','cjh','Comer',body);}
 function cjeCambios(w,c){
@@ -17040,6 +17137,7 @@ function renderFood(){
   if(v==='nevera2')return renderNevera2();
   if(v==='hoycocino')return renderHoyCocino();
   if(v==='buscar')return renderFoodBuscar();
+  if(v==='foto')return renderFoodFoto();
   if(v==='fuera')return renderFuera();
   if(v==='pedido')return renderPedido();
   if(v==='fueracad')return renderFueraCad();
@@ -28225,6 +28323,13 @@ function act(a,el){
     case 'food-busca-clear':{ui.foodBusca='';render();
       setTimeout(function(){const i=document.getElementById('fbQ');if(i)i.focus();},40);break;}
     case 'food-panel2':{ui.foodPanel=el.dataset.k||'scan';ui.foodVista='add';render();window.scrollTo(0,0);break;}
+    case 'fp-elige':{if(!ui.fp)break;ui.fp.sel=+el.dataset.i;render();break;}
+    case 'fp-rac':{if(!ui.fp)break;ui.fp.rac=+el.dataset.r||1;render();break;}
+    case 'fp-ok':{const m=fpApunta();if(!m)break;ui.foodVista='eje';ui.cjeHoja=null;ui.foodBusca='';flash(m);render();window.scrollTo(0,0);break;}
+    case 'fp-otra':{if(ui.fp){ui.fpPend={url:ui.fp.url,ts:Date.now()};ui.foodPos=ui.fp.pos;}ui.fp=null;ui.foodVista='buscar';render();window.scrollTo(0,0);break;}
+    case 'fp-volver':ui.fp=null;ui.fpPend=null;ui.foodVista='buscar';render();window.scrollTo(0,0);break;
+    case 'fp-ver':ui.cjeHoja={v:'fotover',id:el.dataset.id,k:el.dataset.k||iso(new Date())};render();break;
+    case 'fp-borra':{fpBorra(el.dataset.id);ui.cjeHoja=null;flash('foto borrada');render();break;}
     case 'cocina-tab':{ui.cocinaTab=el.dataset.t||'';render();window.scrollTo(0,0);break;}
     case 'platos-tab':{ui.platosTab=el.dataset.t||'';render();window.scrollTo(0,0);break;}
     case 'prod-marca':{ui.prodMarca=el.dataset.m||'';render();break;}
@@ -30072,6 +30177,10 @@ document.addEventListener('change',e=>{
       const A=dinero3S().ahorro;A[k]=Math.round(v);if(k==='plazoMeses')A.desde=iso(new Date());save();render();break;}
     case 'tk-ocr':{const fs=el.files;if(fs&&fs.length)tkOcr(fs);break;}
     case 'ped-ocr':{const fs=el.files;if(fs&&fs.length)pedOcr(fs);el.value='';break;}
+    case 'fp-foto':{const f0=el.files&&el.files[0];el.value='';if(!f0||!/^image\//.test(f0.type||'image/'))break;
+      const pos=ui.fp?ui.fp.pos:(ui.foodPos||momentoEscribir()),k=ui.fp?ui.fp.k:foodCtx().sel;
+      fpEncoge(f0).then(function(url){const c=fpCandidatos(k,pos);ui.fp={url:url,k:k,pos:pos,cands:c,sel:c.length?0:-1,rac:1};
+        ui.foodVista='foto';render();window.scrollTo(0,0);}).catch(function(m){flash(String(m));});break;}
     case 'ped-tipo':{const it=ui.ped&&ui.ped.items[+el.dataset.i];if(!it)break;
       if(el.value==='@ing'&&(it.ings||[]).length)it.modo='ing';else if(PED_TIPO.some(function(t){return t[0]===el.value;}))it.tipo=el.value;render();break;}
     case 'fin-fecha':{if(ui.fin&&esFecha(el.value||''))ui.fin.fecha=el.value;render();break;}
@@ -30601,7 +30710,7 @@ function registrarSW(){
      (el sandbox del Artifact, file://, iOS) simplemente no pasa nada: la app va igual. */
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
-window.PG={fraseApuntarLee,pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
+window.PG={fpCandidatos,fpCarga,fpGuarda,FP_MINI,fraseApuntarLee,pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,
   shiftById,resolveCode,isGuardia,dayTotals,planBatches,shiftForDate,fmt,autofill,parseDate,mondayOf,addDays,ingredientsFor,editBatch,slotsFor,
@@ -30726,6 +30835,7 @@ impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
 avisarBackupSiToca();
 copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
+fpCarga().then(function(){if(Object.keys(FP_MINI).length&&ui.tab==='food')render();});   /* las miniaturas del plato (30 días, fuera de las copias) */
 programarAvisoHoy();programarAvisoCama();programarAvisoPant();programarAvisoViaje();snProgramaAvisos();
 /* al volver a la app (otra noche, otra hora) se recoloca el aviso de cama */
 document.addEventListener('visibilitychange',function(){if(document.hidden){ui.cnSeFue=Date.now();return;}
