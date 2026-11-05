@@ -22,6 +22,9 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## Por hacer
 
+### Tras el veredicto de La Competencia · pedido por el usuario el 05/11/2026
+[v3-tras-veredicto] Las 3 propuestas de `docs/veredicto-competencia-2026-11.md`, en una sesión aparte (encargo `encargos/tras-el-veredicto.md`): P1 Hoy y Mes en una pantalla, con maqueta (~2,5 M) · P2 contraste, letra, «te quedan…» y la foto del cuadrante con uno real (~1 M) · P3 Consejo sobre la foto del plato (~0,8 M).
+
 ### ~~Remate de La Competencia~~ ✅ hecho el 03/11 (ver «En marcha») · decidido por el usuario el 03/11/2026
 [v3-remate-competencia] En este orden, con constructores sonnet en paralelo donde no se pisen (prefijo propio y grep antes de usar un nombre):
 1. **Quitar la línea suelta `=======` de `styles.css`** (~4356, antes de «/* K1: la lanzadora */»): la regla `.snmovil .del` vuelve a aplicarse. Captura de Sueño a 412×915 al usuario antes de subir. Cierra [aparc-css-marca].
