@@ -33,3 +33,22 @@ de tu pantalla, una sola suite completa a la vez, reservar números mirando la s
 ## Presupuesto y cierre
 Total ~4,3-4,6 M. Si una parte va a pasar del 25 %, parar y decirlo. Medir al cerrar (`node tools/gasto.mjs --apunta …`),
 entrada en `docs/DECISIONS.md` por tanda y traspaso al final de este archivo.
+
+## Traspaso (05/11, primera sesión)
+
+**Hecho.**
+- **P2, en `main` (1c85c54, con su sello).** «Por qué:» pasa de 4,44 a 5,74 en claro. Los 3 textos de la víspera y el dibujo del conductor ya van a 13 px. Comer dice «Te quedan N kcal · N g de proteína» y, pasado el techo, «Hoy ya llevas lo del día». Pruebas 655-664.
+- **Lo que se dio por fallo y no lo era.** La Cena (5,4) y «ahorras» (5,0) ya pasaban: los 3,97 y 4,16 salían de medir mal los fondos `color-mix()`. «2 últimas noches» lo daba la siembra. «‹ Ajustes» ya estaba en Mi planning.
+- **P3: Consejo hecho.** El acta está en `consejo/2026-11-05-foto-plato.md` y la maqueta en `maquetas/foto-plato.html`. Recomienda la opción C1 (sin IA). Quedan 3 preguntas al usuario.
+- **P1: maqueta en `maquetas/una-pantalla.html`.** «Ahora» pasa a ~260 px y la cuadrícula del Mes empieza a ~175 px. **Espera el visto bueno: no se ha tocado `app.js`.**
+
+**Pendiente del usuario.**
+- El visto bueno de P1.
+- Cómo es su cuadrante real (sin foto).
+- Las 3 preguntas de P3.
+
+**Gasto.** 2,6 M. P2 costó 1,3 M frente a 1 M previsto (+30 %). Para P1 quedan unos 2 M previstos, así que el total iría a ~4,6-4,9 M.
+
+**Ajeno.** Con 5 trozos de la suite en 4 núcleos caen pruebas «de tiempo» distintas en cada pasada: la 604, la 401 y un clic sobre un elemento ya quitado en el trozo 4. A la cuarta pasada salió en verde. Conviene mirar si `tools/pruebas-corto.sh` debería lanzar 4 trozos y no 5.
+
+**Siguiente.** Una sesión nueva con las respuestas: construir P1, ajustar la foto del cuadrante y, si dice que sí, C1.
