@@ -4521,3 +4521,12 @@ html:not(.dark) .hoyahora .hoyfrase em{color:var(--ink);text-decoration:underlin
 /* RLP · contraste >=4,5:1 en claro (veredicto, punto 21): «Por qué:» de Hoy (4,44 -> 5,7). La hora de la Cena y «ahorras» ya pasaban (5,4 y 5,0): los 3,97 y 4,16 eran un fallo de medir fondos color-mix() */
 html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var(--ink))}
 .cjquedan{margin:6px 0 0}
+
+/* P1 Hoy · una pantalla: título y botones en una fila, plantilla y víspera plegadas */
+.uph-h2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap}
+.uph-t{min-width:0;flex:1}
+.uph-bt{display:flex;gap:6px;flex:none}
+.uph-bt .btn{min-width:44px;min-height:44px;justify-content:center}
+.uph-pl{min-height:44px;font-size:var(--suelo);white-space:nowrap}
+.uph-vis{display:block;width:100%;min-height:44px;margin-top:var(--e-8);padding:var(--e-8) var(--e-12);text-align:left;font:inherit;font-size:var(--t-14);font-weight:800;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:var(--r-12);cursor:pointer}
+.uph-vis+.nvis{margin-top:4px}

@@ -2854,3 +2854,15 @@ quizá ya absorbió la Gran Ley: a revisar en la próxima bitácora.
 **Supuestos**: «el tercer texto de 12,5 px» es el `<small>` de «alarma en tu parada…»; la frase de Comer sale en cualquier día que se mire (techo de ese día).
 
 **Cae con X revertido**: 656 sin la regla de `.coacht .mini` (4,44); 658 con `.snord small` a 12,5 px; 659 con `fig/conductor.js` a 12,5 px; 660-662 sin `cjeQuedanTxt`. Guardas que ya pasaban antes: 655, 657, 663, 664.
+
+## Tras el veredicto · P1 Hoy (tanda `uph`, pruebas 665-668)
+
+**Elegido** (la maqueta `maquetas/una-pantalla.html`, con el visto bueno del usuario): en Hoy con el Conductor, «Ahora» (frase, energía y lo de conducir, sin tocar sus textos) sube justo debajo de la línea de estado, por encima del cartel de la noche
+(medido a 412×915, hoy a las 12:00 con guardia mañana: `.hoyahora` a 350-449 px, `.ncartel` a 457, selector a 806; antes «Ahora» empezaba a 1.111). El título y los botones 🌿 y ＋ van en una sola fila
+(`.uph-h2`; ＋ con `aria-label="añadir"`, `data-a` `lloret` y `dia-add` intactos, 44 px de toque). El aviso de modo plantilla se queda en «ℹ️ plantilla» (`ui.uphPlant`, solo en Hoy; el Mes no se toca aquí). El plan de la víspera
+(`.nvis`) se pliega en «🩺 Mañana guardia · a la cama HH:MM ▾» (`ui.uphVis`; el día de guardia, «🩺 Hoy guardia · …»); al tocarla sale el bloque entero, no se quita nada. El selector Conductor·Estación·Reloj·Línea baja al final de la tarjeta (`uphSegHTML`).
+**Descartado:** ocultar con CSS (el bloque plegado no se pinta, así no queda texto invisible); tocar `renderMonth` (es del otro constructor); mover «Ahora» en Reloj y Línea (ahí no existe y no se inventa).
+**Pruebas viejas cambiadas por la decisión:** 27 (Hoy avisa con «ℹ️ plantilla» y al tocarla sale el texto), 373 / 471 / 472 (abren el aviso o la víspera con `ui.uphPlant`/`ui.uphVis` antes de medir o contar), 359 y 397b (el selector ya no va justo encima de la noche: ahora la noche va antes que él),
+397a (la primera `.mini` de Hoy ya no es la del aviso: pasa a «≥ 13 px»), 450-459 y 658 (`lee450` y la 658 abren la víspera plegada para leerla).
+**Supuestos:** «Ahora» solo sube con el Conductor/Estación y en el día de hoy (como ya salía); el texto del día queda «☀️ Hoy · Domingo 15 de noviembre» + chip + los dos botones en una fila a 412 px.
+**Cae con X revertido:** 665-668 caen con `app.js` revertido al de la rama base (la 665 no llega al final: no encuentra `.uph-vis`).
