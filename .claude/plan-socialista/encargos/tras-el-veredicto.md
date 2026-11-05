@@ -52,3 +52,12 @@ entrada en `docs/DECISIONS.md` por tanda y traspaso al final de este archivo.
 **Ajeno.** Con 5 trozos de la suite en 4 núcleos caen pruebas «de tiempo» distintas en cada pasada: la 604, la 401 y un clic sobre un elemento ya quitado en el trozo 4. A la cuarta pasada salió en verde. Conviene mirar si `tools/pruebas-corto.sh` debería lanzar 4 trozos y no 5.
 
 **Siguiente.** Una sesión nueva con las respuestas: construir P1, ajustar la foto del cuadrante y, si dice que sí, C1.
+
+## Traspaso (05/11, la foto del plato C1)
+
+**Hecho.** C1 en `main`: chip «📸 foto del plato» en el buscador «¿Qué has comido?» (la hoja «Apuntar» de Comer), pantalla «¿Es esto?»
+(plan de hoy · lo último en esa comida · lo que más repites; raciones ½–2) y miniatura 30 días en IndexedDB `pg-fotos`, fuera de las copias.
+Pruebas 683-685. `/revisa-seguridad`: sin `fetch` nuevo, todo escapado, el canvas quita el EXIF. Capturas del verificador a 412×915 sin pegas.
+**Gasto.** 1,2 M frente a 1,7 M previstos.
+**Pendiente.** C2 (IA con su propia clave) solo si la pide, en una ficha propia.
+**Siguiente.** Sesión nueva.
