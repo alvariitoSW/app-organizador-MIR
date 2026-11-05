@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoy y Mes en una pantalla</title>
+<style>
+:root{--bg:#070b14;--bg2:#0b1120;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+  --g:#7a1420;--gq:#e11d48;--sal:#f59e0b;--tra:#3b82f6;--fue:#a3e635;--lib:#334155}
+*{box-sizing:border-box}
+body{margin:0;background:#04070d;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px}
+h1{font-size:20px;margin:0 0 4px}.lead{color:var(--ink2);margin:0 0 20px;max-width:900px}
+.fila{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin-bottom:36px}
+.ab{width:412px}.ab h3{font-size:14px;margin:0 0 8px;color:var(--ink2);font-weight:600}.ab h3 b{color:var(--ink)}
+.tel{position:relative;width:412px;height:915px;background:var(--bg);border-radius:22px;overflow:hidden;outline:1px solid var(--line)}
+.top{height:56px;background:var(--bg2);display:flex;align-items:center;padding:0 16px;gap:10px;font-weight:700;border-bottom:1px solid var(--line)}
+.top .sp{flex:1}.top i{font-style:normal;color:var(--ink2)}
+.tabs{position:absolute;left:0;right:0;top:850px;height:65px;background:var(--bg2);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;color:var(--ink2);font-size:12px;z-index:3}
+.tabs b{color:var(--brand)}
+.pliegue{position:absolute;left:0;right:0;top:850px;border-top:2px dashed var(--warn);z-index:4}
+.pliegue span{position:absolute;right:8px;top:-22px;background:var(--warn);color:#000;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px}
+.cont{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+.btn{border:1px solid var(--line);background:#16223a;color:var(--ink);border-radius:12px;min-height:44px;padding:4px 12px;font:inherit;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.btn.p{background:var(--brand);color:#04121c;border-color:transparent}.btn.c{min-height:36px}
+.mini{color:var(--ink2);font-size:13px}
+.nav{display:flex;justify-content:space-between;align-items:center;height:48px;font-weight:700}
+.apunta{border:1px dashed var(--line);border-radius:12px;height:44px;display:flex;align-items:center;padding:0 12px;color:var(--ink2)}
+.h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px}
+.chip{font-size:12px;background:#1d2b47;color:var(--brand);border-radius:999px;padding:2px 8px}
+.aviso{background:#1a2438;border-radius:10px;padding:8px 10px;font-size:13px;color:var(--ink2)}
+.ahora{border:1px solid color-mix(in srgb,var(--brand) 45%,transparent);background:color-mix(in srgb,var(--brand) 8%,var(--card))}
+.ahora .k{font-size:12px;letter-spacing:.06em;color:var(--brand);font-weight:800}
+.ahora .f{font-size:17px;font-weight:800}
+.en{display:flex;gap:8px;align-items:center;font-size:13px}.bar{flex:1;height:8px;border-radius:9px;background:#1d2b47;overflow:hidden}.bar i{display:block;height:100%;width:78%;background:var(--ok)}
+.nocond{font-size:13px;color:var(--warn)}
+.cartel{background:#1b0d12;border:1px solid #3a1720;border-radius:14px;padding:10px 12px;font-family:ui-monospace,monospace;color:#ffb4a8;font-weight:800;letter-spacing:.04em}
+.cartel small{display:block;color:#f6a38f;font-weight:600;font-size:12px;letter-spacing:0}
+.anoche{display:flex;align-items:center;gap:8px;background:#141f33;border-radius:12px;padding:8px 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;font-size:13px}.chips span{background:#16223a;border-radius:999px;padding:4px 9px}
+.pleg{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:0 12px;min-height:44px;font-size:13px}
+.pleg b{color:var(--ink)}.pleg .sp{flex:1}.pleg em{font-style:normal;color:var(--ink2)}
+.vis{background:#1a1420;border-radius:12px;padding:10px;font-size:13px;color:#e6c9d2}
+.gris{opacity:.55}
+.nota{position:absolute;left:8px;right:8px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.5);color:#fde68a;font-size:12px;padding:4px 8px;border-radius:8px;z-index:5}
+.mrk{position:absolute;right:-2px;width:6px;background:var(--brand);border-radius:3px;z-index:5}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.wd{font-size:11px;color:var(--ink2);text-align:center;height:20px}
+.d{height:92px;border-radius:8px;padding:3px 4px;font-size:10px;display:flex;flex-direction:column;gap:1px;background:#162036}
+.d b{font-size:12px}.d .h{font-weight:700}
+.d.gu{background:var(--g)}.d.sa{background:#3b2a10}.d.tr{background:#13284a}.d.fu{background:#22300f}.d.li{background:#172033}.d.hoy{outline:2px solid var(--brand)}
+.lin{font-size:13px;font-weight:700}
+.det{background:#141f33;border-radius:12px;padding:8px 10px;font-size:13px;color:var(--ink2)}
+ul.cambios{max-width:1000px;color:var(--ink2);margin:6px 0 0;padding-left:18px}ul.cambios b{color:var(--ink)}
+</style></head><body>
+<h1>Hoy y Mes en una pantalla · maqueta (P1)</h1>
+<p class="lead">A 412×915, tema oscuro, con los datos de la pasada (domingo 15 de noviembre, guardia el lunes 16). La raya amarilla es donde empieza la barra de abajo (850 px): lo que queda por encima es lo que ves sin bajar. Las alturas de «Antes» son las medidas de verdad; las de «Después», las previstas.</p>
+
+<div class="fila">
+ <!-- HOY ANTES -->
+ <div class="ab"><h3><b>Hoy · antes</b> — «Ahora» empieza a 1.111 px</h3>
+ <div class="tel"><div class="top">☰<span class="sp"></span>Guardias<span class="sp"></span><i>⚙︎</i></div>
+  <div class="cont">
+   <div class="nav">‹ Sáb<span>Hoy · dom 15</span>Lun ›</div>
+   <div class="apunta">✏️ Apuntar algo… <span class="sp"></span>＋</div>
+   <div class="card">
+    <div class="h2">☀️ Hoy · Domingo 15 de noviembre <span class="chip">hoy</span></div>
+    <div class="row"><span class="sp"></span><span class="btn">🌿 ✓</span><span class="btn">＋ Añadir</span></div>
+    <div class="aviso">ℹ️ Tu semana está en modo plantilla: lo que ves sale de tu semana tipo, no de lo que has marcado día a día. Puedes cambiarlo en Ajustes…</div>
+    <div class="lin">🌿 Día libre</div>
+    <div class="row mini">🚌 Conductor · 🏗 Estación · ◷ Reloj · ☰ Línea</div>
+    <div class="cartel">SAL AL LLORET · 20:00<small>EN 8 H</small></div>
+    <div class="anoche">Anoche 1:00–8:30 · <b>7 h 30</b><span class="sp"></span><span class="btn p c">Vale</span></div>
+    <div class="chips"><span>🌿 23:40</span><span>🏠 00:15</span><span>🛌 00:30</span><span>⏰ 06:45 fijo ▾</span></div>
+    <div class="vis"><b>MAÑANA TIENES GUARDIA</b><br>22:35 Esta noche, a la cama · último café 16:00<br>Al llegar, siesta de 3 h<br>no hace falta siesta antes…<br><span class="btn c" style="margin-top:6px">Avisarme a esas horas</span></div>
+    <div class="card ahora"><span class="k">AHORA · 12:00</span><span class="f">Libre hasta las 14:00: luego Comida</span><div class="en">Energía <div class="bar"><i></i></div> Alta</div></div>
+   </div>
+  </div>
+  <div class="pliegue"><span>850 px · empieza la barra</span></div>
+  <div class="tabs"><b>Hoy</b><span>Mes</span><span>Comer</span><span>Entreno</span><span>Más</span></div>
+ </div></div>
+
+ <!-- HOY DESPUÉS -->
+ <div class="ab"><h3><b>Hoy · después</b> — «Ahora» a ~385 px</h3>
+ <div class="tel"><div class="top">☰<span class="sp"></span>Guardias<span class="sp"></span><i>⚙︎</i></div>
+  <div class="cont">
+   <div class="nav">‹ Sáb<span>Hoy · dom 15</span>Lun ›</div>
+   <div class="apunta">✏️ Apuntar algo… <span class="sp"></span>＋</div>
+   <div class="card">
+    <div class="h2">☀️ Domingo 15 <span class="chip">hoy</span><span class="sp"></span><span class="btn c">🌿 ✓</span><span class="btn c">＋</span></div>
+    <div class="row"><span class="lin">🌿 Día libre</span><span class="sp"></span><span class="mini">ℹ️ plantilla</span></div>
+    <div class="card ahora"><span class="k">AHORA · 12:00</span><span class="f">Libre hasta las 14:00: luego Comida</span><div class="en">Energía <div class="bar"><i></i></div> Alta</div><span class="nocond">🚗 Puedes conducir · mañana, al salir de guardia, no</span></div>
+    <div class="cartel">SAL AL LLORET · 20:00<small>EN 8 H</small></div>
+    <div class="anoche">Anoche 1:00–8:30 · <b>7 h 30</b><span class="sp"></span><span class="btn p c">Vale</span></div>
+    <div class="chips"><span>🌿 23:40</span><span>🏠 00:15</span><span>🛌 00:30</span><span>⏰ 06:45 fijo ▾</span></div>
+    <div class="pleg">🩺 <b>Mañana guardia</b> · a la cama 22:35<span class="sp"></span><em>ver el plan ▾</em></div>
+    <div class="row mini">🚌 Conductor · 🏗 Estación · ◷ Reloj · ☰ Línea</div>
+   </div>
+   <div class="card gris"><b>HÁBITOS DE HOY</b> Agua 2 L · Estirar…</div>
+  </div>
+  <div class="mrk" style="top:300px;height:150px"></div>
+  <div class="pliegue"><span>850 px · empieza la barra</span></div>
+  <div class="tabs"><b>Hoy</b><span>Mes</span><span>Comer</span><span>Entreno</span><span>Más</span></div>
+ </div></div>
+</div>
+<ul class="cambios">
+ <li><b>Sube «Ahora»</b> (frase, energía y si puedes conducir) justo debajo del día, <b>por encima del cartel de la noche</b>.</li>
+ <li>El título y los botones 🌿 y ＋ van <b>en una sola fila</b> (antes eran dos).</li>
+ <li>El aviso largo de «modo plantilla» se queda en una etiqueta <b>«ℹ️ plantilla»</b> que se toca para leerlo entero.</li>
+ <li>El plan de la víspera («Mañana tienes guardia», la cama, el café, la siesta, «Avisarme a esas horas») <b>se pliega en una línea</b> que se abre con un toque. No se quita nada: todo sigue dentro.</li>
+ <li>El selector Conductor · Estación · Reloj · Línea baja al final de la tarjeta.</li>
+ <li><b>No se toca:</b> el cartel «Sal al Lloret», la fila «Anoche … Vale», la cadena de la noche, el aviso de no conducir, «Para hoy», los hábitos y lo de abajo.</li>
+</ul>
+<br>
+
+<div class="fila">
+ <!-- MES ANTES -->
+ <div class="ab"><h3><b>Mes · antes</b> — la cuadrícula empieza a 599 px</h3>
+ <div class="tel"><div class="top">‹<span class="sp"></span>Mes<span class="sp"></span>›</div>
+  <div class="cont"><div class="card">
+   <div class="h2">🗓️ noviembre – diciembre de 2026</div>
+   <div class="aviso">ℹ️ Tu semana está en modo plantilla: lo que ves sale de tu semana tipo…</div>
+   <div class="row"><span class="btn">otro mes</span><span class="btn">hoy</span><span class="btn p">✏️ editar</span><span class="btn">🖨</span><span class="btn">?</span></div>
+   <div class="det" style="height:110px"><b style="color:var(--ink)">ABONO · NOVIEMBRE 2026</b><br>JORNADA 8–15 · 6 · CUPO 211 h…</div>
+   <div class="lin">Guardias de noviembre: 4 hechas · 4 por hacer · 8 en total</div>
+   <div class="det">🩺 R1 38/68 · quedan 30 · 16 Urg 14 UMI</div>
+   <div class="mini">🏖️ 0 de 22 días de vacaciones</div>
+   <span class="btn">▲ Ver del 1 al 8 de noviembre</span>
+   <div class="cal" id="calA"></div>
+  </div></div>
+  <div class="pliegue"><span>850 px · empieza la barra</span></div>
+  <div class="tabs"><span>Hoy</span><b>Mes</b><span>Comer</span><span>Entreno</span><span>Más</span></div>
+ </div></div>
+
+ <!-- MES DESPUÉS -->
+ <div class="ab"><h3><b>Mes · después</b> — la cuadrícula a ~230 px, entera</h3>
+ <div class="tel"><div class="top">‹<span class="sp"></span>Mes<span class="sp"></span>›</div>
+  <div class="cont"><div class="card">
+   <div class="row"><span class="btn">🗓️ noviembre ▾</span><span class="btn">hoy</span><span class="btn p">✏️</span><span class="sp"></span><span class="btn">?</span><span class="btn">⋯</span></div>
+   <div class="pleg" style="min-height:36px"><b>Guardias de noviembre: 4 hechas · 4 por hacer · 8 en total</b><span class="sp"></span><em>▾</em></div>
+   <div class="cal" id="calB"></div>
+   <div class="mini" style="text-align:center">▲ del 1 al 8 de noviembre</div>
+  </div></div>
+  <div class="mrk" style="top:76px;height:110px"></div>
+  <div class="pliegue"><span>850 px · empieza la barra</span></div>
+  <div class="tabs"><span>Hoy</span><b>Mes</b><span>Comer</span><span>Entreno</span><span>Más</span></div>
+ </div></div>
+</div>
+<ul class="cambios">
+ <li>El título del mes <b>es el propio botón</b> «🗓️ noviembre ▾» que abre el selector (antes había título y botón «otro mes»).</li>
+ <li>Fila de botones única: «hoy», «✏️» (editar), «?» (qué es cada color) y «⋯» con <b>imprimir</b> y el aviso de modo plantilla.</li>
+ <li><b>La línea «Guardias de noviembre: N hechas · N por hacer · N en total» se queda a la vista</b>; al tocarla se despliegan el abono, el contador R1 (Urg/UMI) y las vacaciones, que hoy ocupan ~240 px.</li>
+ <li>«Ver del 1 al 8» pasa a una línea fina debajo de la cuadrícula.</li>
+ <li>Con eso la cuadrícula (5 semanas, casillas de 92 px como ahora) <b>acaba a ~740 px, antes de la barra</b>: el mes se ve entero sin bajar.</li>
+ <li><b>No se toca:</b> el color por tipo de día, las horas en la casilla («8–15», «15→8»), los eventos, el «mantén pulsado» y la hoja del día.</li>
+</ul>
+<script>
+function pinta(id,desde){const t=['li','tr','tr','gu','sa','tr','li','tr','gu','sa','tr','fu','li','li'];const el=document.getElementById(id);
+ ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(n=>el.insertAdjacentHTML('beforeend','<span class="wd">'+n+'</span>'));
+ for(let i=0;i<35;i++){const dia=desde+i,k=t[(i+2)%t.length],n=dia>30?dia-30:dia;
+  const h=k==='gu'?'15→8':k==='sa'?'→9':k==='tr'?'8–15':k==='fu'?'🏋 18':'';
+  el.insertAdjacentHTML('beforeend','<div class="d '+k+(dia===15?' hoy':'')+'"><b>'+n+'</b><span class="h">'+h+'</span></div>');}}
+pinta('calA',9);pinta('calB',9);
+</script>
+</body></html>
