@@ -109,7 +109,7 @@
 /* EL DÍA CONTADO: el subtítulo dentro del parabrisas y, debajo del dibujo, el narrador (qué haces, qué viene, por qué)
    y la leyenda de lo que se ve. Sigue a la hora que mueves, no solo a la de ahora */
 .cd-vis{position:relative}
-.cd-sub{position:absolute;left:11%;right:11%;bottom:39.5%;display:block;text-align:left;border:0;border-radius:12px;padding:8px 46px 8px 11px;
+.cd-sub{position:absolute;left:11%;right:11%;bottom:39.5%;display:block;min-height:44px;text-align:left;border:0;border-radius:12px;padding:8px 46px 8px 11px;
   background:rgba(5,8,15,.8);color:#f2f6ff;font:800 14.5px/1.28 ui-sans-serif,system-ui,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .cd-sub small{display:block;margin-top:3px;font-size:var(--t-13);font-weight:600;color:#a9bad3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cd-sub i{position:absolute;right:9px;top:8px;font-style:normal;font-size:var(--t-13);font-weight:800;color:#7fecff}

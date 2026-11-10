@@ -22,7 +22,7 @@ html:not(.dark){
   --t-11:11px;--t-12:12.5px;--t-13:13px;--t-14:14px;--suelo:var(--t-13);--t-16:16px;--t-20:20px;--t-28:28px;--t-44:44px;
   --e-4:4px;--e-8:8px;--e-12:12px;--e-16:16px;--e-24:24px;--e-32:32px;
   --m-1:120ms;--m-2:200ms;--m-3:320ms;--ease-out:cubic-bezier(.23,1,.32,1);--curva-suave:cubic-bezier(.32,.72,0,1);--curva-muelle:cubic-bezier(.34,1.56,.64,1);
-  --toque:44px;--toque-grande:56px;
+  --toque:44px;--t-titulo:19px;--toque-grande:56px;
   --texto:var(--ink);--texto-2:var(--ink2);--borde:var(--line);--borde-fuerte:color-mix(in srgb,var(--line),var(--ink) 22%);
   --bien:var(--ok);--ojo:var(--warn);--mal:var(--bad);--info:#7cb4ff;
   --base-1:var(--card);--base-2:color-mix(in srgb,var(--card),var(--bg) 45%);--base-3:color-mix(in srgb,var(--card),var(--ink) 4%);
@@ -152,6 +152,7 @@ main.in{animation:viewIn .3s cubic-bezier(.2,.8,.2,1)}
 .card{position:relative;min-width:0;background:var(--superficie-1);border:0;border-radius:var(--r-16);
   box-shadow:inset 0 1px 0 0 var(--luz-borde),var(--cara-lateral),var(--sombra-2);padding:14px 16px}
 .card .card{box-shadow:inset 0 0 0 1px var(--borde);background:var(--superficie-2)}
+.card>h3{font-size:var(--t-16)}
 .card>h2{font-size:var(--t-16);margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;line-height:1.3;text-wrap:balance}
 .note{color:var(--ink2);font-size:var(--suelo);margin:0 0 12px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -374,7 +375,7 @@ nav button.on .tb{background:rgba(0,0,0,.18);border-color:transparent}
 .gico.sm{width:17px;height:17px;stroke-width:2}
 .subcab{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:2px}
 .volver{display:inline-flex;align-items:center;gap:5px;flex:none}
-.subtit{font-size:17px;font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
+.subtit{font-size:var(--t-titulo);font-weight:800;margin:0;letter-spacing:.02em;flex:1;min-width:0}
 .dots{display:flex;gap:4px;flex:none;flex-wrap:wrap;justify-content:flex-end;max-width:110px}
 /* más alto que un botón normal: se pulsa con la mano sudada y el móvil en la otra */
 .gbig{width:100%;justify-content:center;min-height:46px;font-size:14px;display:flex;align-items:center;gap:8px}
@@ -2715,7 +2716,7 @@ html:not(.dark) .cn{--bp:#2a6fc4;--bc:#946200;--bg3:#127a56;--bx:#b8461a}
 /* 4:20 v2: pestañas, ganas, cómo sentó, comparaciones con n, ciencia y plan */
 .cnvis{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:3px}
 .cnvis button{padding:8px 2px;border:0;border-radius:9px;background:none;color:var(--ink2);font:inherit;font-size:var(--suelo);font-weight:800;cursor:pointer;min-height:44px}
-.cn label.mini{min-height:44px}.cn label.mini input[type=checkbox]{width:16px;height:16px}
+.cn label.mini{min-height:44px}.cn label.mini input[type=checkbox]{width:22px;height:22px}
 .cnvis button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 0 var(--line)}
 .cnseg.mot,.cnseg.c3{grid-template-columns:repeat(3,1fr)}.cnseg.c5{grid-template-columns:repeat(5,1fr)}.cnseg.c2{grid-template-columns:repeat(2,1fr);margin-top:0}
 .cnseg.c5 button{font-size:18px;padding:6px 0}
@@ -2935,6 +2936,7 @@ details.cnci p{margin:0 12px 10px;font-size:var(--suelo);line-height:1.5}details
 /* ============ Ajustes y Hábitos: listas agrupadas ============ */
 .ajg{gap:0}
 .acap{font-size:var(--suelo);font-weight:900;letter-spacing:.13em;color:var(--ink2);margin:16px 4px 6px}
+.acap>.mini{margin-left:8px;letter-spacing:0;font-weight:500}
 .alst{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:10px}
 .acap+.alst{margin-top:0}
 .ali{display:flex;align-items:center;gap:11px;width:100%;padding:12px 14px;border:0;border-top:1px solid var(--line);background:none;
@@ -3766,8 +3768,8 @@ label.btn,summary.btn{display:inline-flex;align-items:center;justify-content:cen
 .cal.ext .dbox.mt-saliente{color:#e9f2ff}
 .cal.ext .dbox .dtop{gap:0}
 .cal.ext .dbox .dnum{font-size:24px;line-height:1;font-weight:900;letter-spacing:-.03em;color:inherit}
-.cal.ext .dbox .dnum small{font-size:10px;font-weight:800;margin-left:2px;letter-spacing:0}
-.cal.ext .dbox .dline{font-size:10px;font-weight:800;line-height:1.15;color:inherit;letter-spacing:-.03em;white-space:nowrap}
+.cal.ext .dbox .dnum small{font-size:11.5px;font-weight:800;margin-left:2px;letter-spacing:0}
+.cal.ext .dbox .dline{font-size:11.5px;font-weight:800;line-height:1.15;color:inherit;letter-spacing:-.03em;white-space:nowrap}
 .cal.ext .dbox .dline.mtag{white-space:nowrap}
 .cal.ext .dbox .dline.gym{margin-top:auto;align-self:stretch;border-radius:4px;padding:1px 3px;background:#a8c9ff;color:#0b0f17}
 .cal.ext .dbox.mt-fuerza .dline.gym{background:none;padding:0}
@@ -3938,7 +3940,7 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .cjs7 span.hoy{border-color:var(--brand)}.cjs7 b{font-size:var(--suelo);color:var(--ink2)}.cjs7 i{font-style:normal;font-size:16px}
 
 /* ===== COMER · SEMANA a mano y CASA (la nevera dibujada) ===== */
-.cstop{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 4px}  /* T1a · el título a 12 px como el resto (main da 8) */.cstit{margin:0;font-size:19px}
+.cstop{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 4px}  /* T1a · el título a 12 px como el resto (main da 8) */.cstit{margin:0;font-size:var(--t-titulo)}
 .cs-lg{text-align:center;margin:4px 0 10px}
 .cs-dia{padding:10px 12px;margin:0 0 8px}.cs-dia .row{display:flex;align-items:center;gap:8px}
 .cs-hueco{display:grid;place-items:center;width:100%;min-height:44px;margin-top:6px;border:2px dashed var(--brand2);border-radius:11px;background:none;color:var(--brand);font:inherit;font-weight:800;font-size:var(--suelo);cursor:pointer}

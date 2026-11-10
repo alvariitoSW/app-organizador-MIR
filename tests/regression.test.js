@@ -18979,6 +18979,49 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
+  // 686) El pulido de toda la app (10/11, «la cara se queda»): letra de las casillas del Mes, títulos de pantalla iguales,
+  // «PLANTILLAS» despegado de su nota, casilla «con tabaco» y botón de la cabina a tamaño de dedo.
+  // Cae con el pulido revertido en styles.css (--t-titulo, .dline a 11.5, .acap>.mini, casilla a 22) o en fig/conductor.js (.cd-sub min-height).
+  {
+    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
+    await fijaHoy(12, 0, true);
+    await page.evaluate(() => { const P = window.PG; window.__copia686 = JSON.stringify(P.store);
+      const hoy = new Date(), k = (n) => P.iso(P.addDays(hoy, n));
+      P.setDayOverride(k(1), 'sh-g', true); P.setDayOverride(k(2), 'sh-s', '');
+      const h = P.store.habitos || (P.store.habitos = { items: [] }); h.items = h.items || [];
+      h.items.push({ id: 'hb686', nombre: 'Agua 686', icono: '💧', color: '#38e1ff', dow: [0, 1, 2, 3, 4, 5, 6], creado: k(-3), noEn: [] });
+      P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.drawerOpen = false; P.save(); P.render(); });
+    // Hoy (cabina) → Mes → cajón → Hábitos → cajón → 4:20 → Comer · Casa
+    await page.click('[data-a="nav-cal"]'); await page.waitForTimeout(200);
+    await page.click('#calModes button[data-t="hoy"]'); await page.waitForSelector('.cd-sub', { state: 'attached', timeout: 4000 }).catch(() => {});
+    const cab = await page.evaluate(() => { const b = document.querySelector('.cd-sub'); return b ? parseFloat(getComputedStyle(b).minHeight) : -1; });
+    await page.click('#calModes button[data-t="month"]'); await page.waitForTimeout(300);
+    const mes = await page.evaluate(() => { const l = [...document.querySelectorAll('#main .cal.ext .dbox .dline')].filter((e) => e.textContent.trim() && e.getBoundingClientRect().width > 0);
+      const fuera = l.filter((e) => { const b = e.closest('.dbox').getBoundingClientRect(), r = document.createRange(); r.selectNodeContents(e); const q = r.getBoundingClientRect(); return q.right > b.right - 1 || q.bottom > b.bottom + 0.5; });
+      const altos = () => [...document.querySelectorAll('#main .cal.ext .dbox')].map((e) => Math.round(e.getBoundingClientRect().height)).join();
+      const con = altos(), st = document.createElement('style'); st.textContent = '.cal.ext .dbox .dline,.cal.ext .dbox .dnum small{font-size:10px!important}'; document.head.appendChild(st); const sin = altos(); st.remove();
+      return { n: l.length, min: Math.min(...l.map((e) => parseFloat(getComputedStyle(e).fontSize))), fuera: fuera.map((e) => e.textContent), igual: con === sin }; });
+    await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(250);
+    await page.click('[data-a="drawer-nav"][data-t="habitos"]'); await page.waitForTimeout(300);
+    const hab = await page.evaluate(() => { const c = document.querySelector('#main .habplant .acap'), a = c && c.children[0], b = c && c.children[1], t = document.querySelector('#main .subtit');
+      return { hueco: a && b ? Math.round(b.getBoundingClientRect().left - a.getBoundingClientRect().right) : -1, tit: t ? parseFloat(getComputedStyle(t).fontSize) : 0 }; });
+    await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(250);
+    await page.click('[data-a="drawer-nav"][data-t="consumo"]'); await page.waitForTimeout(300);
+    const cn = await page.evaluate(() => { const i = document.querySelector('#main input[data-a="cn-tabaco"]'), r = i && i.getBoundingClientRect(), l = i && i.closest('label').getBoundingClientRect();
+      return { caja: r ? Math.round(r.width) : 0, fila: l ? Math.round(l.height) : 0 }; });
+    await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(250);
+    await page.click('.cjseg2 [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(300);
+    const casa = await page.evaluate(() => { const t = document.querySelector('#main .cstit'); return t ? parseFloat(getComputedStyle(t).fontSize) : 0; });
+    check('686: en el Mes a 412×915 las horas y etiquetas de las casillas van a 11,5 px o más, caben en su casilla y las casillas no crecen respecto a los 10 px de antes',
+      mes.n > 3 && mes.min >= 11.5 && mes.fuera.length === 0 && mes.igual, JSON.stringify(mes));
+    check('686: el título de pantalla mide lo mismo en Hábitos y en Comer · Casa, y «PLANTILLAS» no se pega a su nota',
+      hab.tit === casa && casa >= 19 && hab.hueco >= 6, JSON.stringify({ hab, casa }));
+    check('686: la casilla «con tabaco» de 4:20 mide 22 px en una fila de 44, y el botón de la cabina de Hoy tiene 44 px de alto mínimo',
+      cn.caja >= 22 && cn.fila >= 44 && cab >= 44, JSON.stringify({ cn, cab }));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia686); P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.drawerOpen = false; P.save(); P.render(); });
+    await page.setViewportSize(vp);
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();
