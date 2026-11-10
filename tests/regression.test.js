@@ -18104,8 +18104,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       R.stt >= 12.99 && R.bus.svg.length > 0 && !R.bus.svg.some((x) => /LÍNEA DE HOY|PRÓXIMA PARADA/.test(x)), JSON.stringify({ stt: R.stt, svg: R.bus.svg.slice(0, 3) }));
     check('593 Letra mínima · conductor → línea → conductor con los botones: al volver, otra vez ≥13 px y sin scroll horizontal',
       R.h3 && R.bus2.n === 0 && R.bus2.ancho <= 412, JSON.stringify(R.bus2));
-    check('594 Letra mínima · los textos no cambian, solo el tamaño: «LÍNEA DE HOY» y «PRÓXIMA PARADA» en el conductor, «Desayuno pre-entreno» y «A casa» en la línea',
-      /LÍNEA DE HOY/.test(R.txtBus) && /PRÓXIMA PARADA/.test(R.txtBus) && /Desayuno pre-entreno/.test(R.txtLinea) && /A casa/.test(R.txtLinea), JSON.stringify({ b: R.txtBus.slice(0, 80), l: R.txtLinea.length }));
+    check('594 Letra mínima · los textos no cambian, solo el tamaño: «LÍNEA DE HOY» y «PRÓXIMA PARADA» en el conductor, el desayuno (se llama «pre-entreno» solo si ese miércoles toca entreno temprano) y «A casa» en la línea',
+      /LÍNEA DE HOY/.test(R.txtBus) && /PRÓXIMA PARADA/.test(R.txtBus) && /Desayuno/.test(R.txtLinea) && /A casa/.test(R.txtLinea), JSON.stringify({ ok: [/LÍNEA DE HOY/.test(R.txtBus), /PRÓXIMA PARADA/.test(R.txtBus), /Desayuno/.test(R.txtLinea), /A casa/.test(R.txtLinea)], b: R.txtBus.slice(0, 80), lin: R.txtLinea.replace(/\s+/g, ' ').slice(0, 600) }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia590; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
