@@ -9,6 +9,7 @@ arriba. Lo lleva la habilidad `tarea-a-fondo`.
 **Descartado:** acortar Hoy (3,3 pantallas), Comer·Casa (3,2) y Comer·Hoy (2,5) y reordenar la portada de Entreno: cambian cosas de sitio y piden maquetas (el usuario eligió solo el pulido). Subir la letra de dentro de los dibujos (cabina, carretera, panel de Entreno: rótulos de 2 a 11 px reales): es rehacer los dibujos, y cada uno tiene ya su texto para lectores de pantalla. Dos alarmas del primer barrido que no lo eran: los 19 «botones de 34 px» de Hoy son la lista `.cd-sr`/`.ct-sr` (solo lectores de pantalla) y los 8,6 px de la barra de abajo son el número del icono del calendario.
 **Supuestos:** (a) 19 px (el de Comer) y no 17 como tamaño común: separa mejor el título de los `h2` de tarjeta (16). (b) 11,5 px en el Mes y no el suelo de 13: a 13 «saliente» no cabe en una casilla de 53 px. (c) Dinero, Estudio y Eventos se midieron vacíos.
 **Pruebas:** 686 (Hoy → Mes → Hábitos → 4:20 → Comer·Casa). **Cae con X revertido:** con `styles.css` y `fig/conductor.js` de antes caen sus 3 comprobaciones (10 px; título 17 ≠ 19 y hueco 0; casilla 16 y cabina sin mínimo) — comprobado.
+**Pruebas viejas cambiadas (por lo decidido):** la 397a esperaba casillas de 16 px en el 4:20; ahora 22.
 
 ## 2026-11-03 · La Competencia · T2a Entreno (C7·c y X3)
 

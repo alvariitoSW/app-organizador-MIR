@@ -15547,9 +15547,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       return { seg: seg, chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), minLetra: Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))), ancho: document.documentElement.scrollWidth };
     });
     await gotoTab('hoy');
-    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 13 px (suelo C1), pestañas y botones de potencia de 44 px y casillas de 16 px en filas de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
+    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 13 px (suelo C1), pestañas y botones de potencia de 44 px y casillas de 22 px (pulido del 10/11) en filas de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
       r.hoyMini >= 13 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.seg.length > 0 && r.plan.seg.every((h) => h >= 44) && r.plan.chk.length >= 3 &&
-      r.plan.chk.every((c) => c.w === 16 && c.h === 16 && c.fila >= 44) && r.plan.mini === 13 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
+      r.plan.chk.every((c) => c.w === 22 && c.h === 22 && c.fila >= 44) && r.plan.mini === 13 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
     await page.setViewportSize(vp);
   }
   // (b) sueño en Hoy (S1: antes había una fila «Te faltan N noches»; ya no): con «He vuelto» y «En pie» dados sale la fila «Anoche … Vale · cambiar · otras noches»
