@@ -181,6 +181,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Ideas (dichas, sin ordenar ni aclarar)
 
+- [aparc-pulido-largas] (10/11, de la auditoría a 412×915) Acortar Hoy (3,3 pantallas), Comer·Casa (3,2: compra de 34 filas sin plegar, accesos al final) y Comer·Hoy (2,5), y ordenar la portada de Entreno sin rutinas; con maquetas. El usuario eligió solo el pulido; no pedido aún.
 - [v3-competencia-algun-dia] (02/11, «algún día, sin prisa») Lo que el Consejo de La Competencia dejó fuera: importar el planning en PDF y Excel (librería nueva y tocar `sw.js`: decide el usuario; «para más adelante», 02/11), deslizar para cambiar de día, «+» flotante y récords en gráfico. El widget pasó a la K4 del Lanzador (02/11). Acta `consejo/2026-11-02-competencia.md`.
 - [v3-foto-plato] (02/11, el usuario: «estaría muy bien») (Consejo, 05/11) → **C1 construido (05/11, pruebas 683-685)**; C2 pendiente, solo si lo pide. Decidido: C1 ya (miniatura 30 días; botón en la hoja «Apuntar», lo eligió Transportes) y C2 más adelante. Foto a lo que comes para apuntarlo en Comer. Recomendado **C1** (~1,7 M, 0 €): la foto se queda en el móvil y la app propone «¿Es esto?» con lo que ya sabe (lo del plan de hoy, lo último a esa hora, tus platos), cantidad por raciones. **C2** opcional (+1,5 M): IA con tu propia clave, apagada por defecto y con aviso (céntimos por foto). Descartados: reconocer en el móvil (10-150 MB y flojo con comida española) y una clave del proyecto (sería pública). Acta `consejo/2026-11-05-foto-plato.md`, maqueta `maquetas/foto-plato.html`.
 - [v3-mapa-comidas] (2026-10-30) Un mapamundi tipo Google Maps que vea dónde estoy ahora, poder decir «en este sitio he comido aquí» y guardar una foto de lo que he comido (de vacaciones o al salir de trabajar). A futuro. Ojo, regla 3: la ubicación y las fotos se quedan en el móvil (IndexedDB, no localStorage); los mosaicos del mapa (OpenStreetMap) se piden por red y dejan ver por dónde andas, así que decide el usuario.
@@ -199,6 +200,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 
 ## Hecha
 
+- [v3-pulido-app] Pulido de toda la app (la cara se queda) · 10/11 · main 2c89126 (Mes a 11,5 px, títulos de pantalla a 19 px, «Plantillas» despegado, casilla de 4:20 a 22 px, botón de la cabina a 44 px; prueba 686)
 - [v3-mananas] «Las Mañanas» LM1-LM5 · 31/10 · main cfc43b6 (marcas «En pie»/«Vestido», hoja del móvil, «Tu semana», pausa con recuento; LM6 condicional sin hacer)
 - [v3-chef] «El Chef» CH1-CH11 · 30/10-01/11 · main (recetario sin gluten de 341 platos, modo cocina, semana y compra con el recetario, pulido CH10b)
 
