@@ -2902,3 +2902,9 @@ hoja con la foto y «🗑️ Borrar la foto». Quitar la toma o deshacerla borra
 **Supuestos:** «a esa hora» = la misma comida (desayuno, comida, cena…) otro día; los «más repetidos» se cuentan por nombre; la foto se
 guarda a 360 px, que vale como miniatura y para verla «en grande» en la hoja.
 **Cae con X revertido:** la 683 sin el chip; la 684 (y el bloque) sin `fpMiniHTML` en la fila; la 685 sin la caducidad de `fpCarga`.
+
+## Salud · prueba 322 del aviso del Mes (18/11/2026)
+- **Elegido:** arreglar la prueba, no la app. El aviso «Mantén pulsado un día…» solo vive 3 días desde `meta.pulsarDesde` (a propósito); la 322 no lo ponía a cero y en la suite entera otra prueba lo dejaba viejo, así que el aviso no salía. Ahora la 322 borra `pulsarDesde` al empezar y lo devuelve al acabar.
+- **Comprobado:** con `pulsarDesde = 2020-01-01` la 322 cae con el mismo mensaje que en la revisión de salud; con el arreglo pasa sola y en la suite completa (1101/1101).
+- **Descartado:** tocar `mhintVigente()` (los 3 días son lo pedido).
+- **Supuestos:** las 324 y 205 se cierran: no han vuelto a caer desde el 30/10.

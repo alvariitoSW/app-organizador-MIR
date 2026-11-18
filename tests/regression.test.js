@@ -12847,8 +12847,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 322) EL AVISO DEL MES SE VA CON EL MES, EN CADENA: con el aviso «Mantén pulsado un día…» aún por ver, se abre el Mes
   // y se espera a que salga; entonces se toca Comer y luego Calendario → Hoy: el aviso no aparece en ninguna de las dos.
   // Fija: se quedaba hasta 4,5 s tapando Hoy o Comer si cambiabas de pantalla justo al abrir el Mes.
+  // (18/11) Pone a cero pulsarDesde: el aviso solo vive 3 días desde que se vio, y en la suite entera otra prueba lo dejaba viejo.
   {
-    await page.evaluate(() => { const P = window.PG; P.__t322 = P.store.meta.pulsarVisto; P.store.meta.pulsarVisto = false; P.ui.mhintDicho = false; P.ui.mesModo = null;
+    await page.evaluate(() => { const P = window.PG; P.__t322 = P.store.meta.pulsarVisto; P.__t322d = P.store.meta.pulsarDesde; P.store.meta.pulsarVisto = false; delete P.store.meta.pulsarDesde; P.ui.mhintDicho = false; P.ui.mesModo = null;
       P.ui.tab = 'hoy'; P.save(); P.render(); const f = document.querySelector('#flash'); if (f) f.remove(); });
     await page.click('#tabs [data-a="nav-cal"]');
     await page.click('#calModes button[data-t="month"]');
@@ -12859,7 +12860,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.comer = await aviso();
     await page.click('#tabs [data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(150);
     r.hoy = await aviso();
-    await page.evaluate(() => { const P = window.PG; P.store.meta.pulsarVisto = P.__t322; delete P.__t322; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store.meta.pulsarVisto = P.__t322; if (P.__t322d) P.store.meta.pulsarDesde = P.__t322d; else delete P.store.meta.pulsarDesde; delete P.__t322; delete P.__t322d; P.save(); P.render(); });
     check('el aviso de mantener pulsado sale en el Mes y no se queda encima al ir a Comer ni a Hoy',
       r.mes.tab === 'month' && r.mes.aviso && r.comer.tab === 'food' && !r.comer.aviso && r.hoy.tab === 'hoy' && !r.hoy.aviso, JSON.stringify(r));
   }
