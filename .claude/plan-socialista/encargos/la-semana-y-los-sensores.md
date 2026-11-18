@@ -24,6 +24,16 @@ prototipo de menú semanal**.
 - **Maqueta primero** (skill `redisena-seccion`), la elige él. Reutilizar lo que ya calcula la app; no escribir otro motor.
 - Asunto para Consejo (`/bitacora`): cambia lo que ve y pasa de 2 M.
 
+## Contestado por el usuario (18/11, tras la maqueta `maquetas/la-semana.html`)
+- **Maqueta: ninguna de las tres tal cual.** Dijo: «Habría que rehacer Hoy entero para hacer una buena maqueta». O sea: La Semana no
+  se cuelga de Hoy como una tarjeta más; **el siguiente paso es una maqueta de Hoy rehecho entero con La Semana dentro** (skill
+  `redisena-seccion`: medir Hoy a 412×915 antes; maquetas primero; esperar su visto bueno). Sin tocar `app.js` hasta entonces.
+- **Asoci: solo un contador** («este mes: X de 3»), sin días fijos ni escalones. **Tras el PIN del 4:20** (con la cortina, palabras discretas).
+- **Presupuesto:** «los millones que sean necesarios para hacerlo bien de una vez y sin divergir». Aprobado sin tope fijo para La Semana;
+  a cambio, no abrir frentes nuevos ni salirse del encargo, y comparecer si una pieza se pasa un 25 %.
+- **Sin contestar:** si se retiran «✨ Móntamela» y «✨ Montar la semana sola» cuando esté (preguntárselo con la maqueta de Hoy).
+- Antes: cama = la necesaria para ≥8 h (se calcula); Lloret sin hora propia (sale de la cama); con el menú «no encontré por dónde» y «me cansé a mitad».
+
 ## Pieza 2 · Los sensores (reabre «El Lanzador», K2-K4 aparcados el 03/11)
 - Qué pide: horas de móvil; último apagado y primer encendido de pantalla (hora real de dormir y despertar); la próxima
   alarma; dónde está (casa, gym, Lloret, asoci) con entrada y salida; avisos en el momento.
@@ -44,4 +54,4 @@ prototipo de menú semanal**.
   la app cuente con ello y no lo marque como fracaso. Vive dentro del 4:20 (cortina con PIN, G10).
 
 ## Siguiente paso
-Sesión nueva: `/plan-socialista` → `/bitacora` convoca el Consejo sobre la pieza 1 con el estudio previo hecho → maqueta.
+Sesión nueva: `/plan-socialista` → **maqueta de Hoy rehecho entero con La Semana dentro** (el Consejo del 18/11 ya está hecho: `consejo/2026-11-18.md`; no repetirlo) → su visto bueno → ficha y construir S1 → S3 → S2 → S5.
