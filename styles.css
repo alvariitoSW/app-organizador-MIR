@@ -4604,3 +4604,15 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .cndos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .cn2 .mini{color:var(--t-ink2);font-size:var(--suelo)}
 .cnfc{gap:10px;min-height:44px}.cnfc input{width:22px;height:22px}
+/* el mini menú del «···» y sus pantallas (historial, cómo me afecta) */
+.cnmenu{display:grid;border:1px solid var(--t-line);border-radius:14px;margin-top:8px;overflow:hidden}
+.cnmi{appearance:none;background:transparent;border:0;border-top:1px solid var(--t-line);color:var(--t-on);font:400 15px var(--t-mono);
+  min-height:48px;text-align:left;padding:0 14px;cursor:pointer}
+.cnmi:first-child{border-top:0}
+.cnarriba{justify-content:flex-start}
+.cnlista{display:grid}
+.cnfila,.cnaf2{display:flex;align-items:center;gap:10px;border-top:1px solid var(--t-line);min-height:44px;font-size:14px;color:var(--t-ink)}
+.cnfila:first-child,.cnaf2:first-child{border-top:0}
+.cnfila span{flex:1}
+.cnaf2{flex-direction:column;align-items:flex-start;gap:2px;padding:8px 0}
+.cnaf2 b{font-weight:400;color:var(--t-on)}.cnaf2 span{color:var(--t-ink2)}.cnaf2 small{font-size:var(--suelo)}

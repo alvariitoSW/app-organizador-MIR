@@ -12285,6 +12285,7 @@ function renderConsumo(){
       '<label class="row mini cnfc"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(pv.fueraCopia?' checked':'')+'> dejar '+CN_CLAVE+' fuera de la copia que compartes</label>'+
       '<p class="mini">¿lo olvidaste? Ajustes → Copia de seguridad → «Quitar la contraseña…». no se borra nada.</p></div>'+
       '<div class="cnpie">'+lnk('volver','cn-aj')+'</div></div>';return;}
+  if(ui.cnVer==='hist'||ui.cnVer==='efectos')return cnVerPinta(ui.cnVer);
   if(G){eti='respira';grande='<span id="cnReloj">'+cnRelojTxt()+'</span>';sub='sal a andar o bebe agua. en 15 minutos baja solo.';
     pie=btn('ya pasó','cn-ganas-res',1,' data-v="aguante"')+'<div class="cnlnks">'+lnk('cerrar','cn-ganas')+'</div>';}
   else if(E.e==='plan'){const P=CN_PASOS[E.dia-1];eti='zen '+E.dia+'/'+CN_PLAN_D;pts=cnPuntosPlan(E.desde);grande=P[0];sub=P[1];
@@ -12302,10 +12303,32 @@ function renderConsumo(){
   if(ui.cnFumo)pie='<div class="cnhoja" role="group" aria-label="Apuntar un registro"><b>¿cuándo?</b><div class="cndos">'+
     btn('hoy','cn-fumo-dia',0,' data-v="0"')+btn('ayer','cn-fumo-dia',0,' data-v="1"')+'</div><div class="cnlnks">'+lnk('cancelar','cn-fumo')+'</div></div>';
   $('#main').innerHTML='<div class="grid mt cn cn2" data-estado="'+(G?'ganas':E.e)+'"><div class="subcab"><h2 class="subtit">'+CN_CLAVE+'</h2><span class="sp"></span>'+
-      '<button class="cncand" data-a="cn-aj" aria-label="Código y privacidad">···</button></div>'+
+      '<button class="cncand" data-a="cn-menu" aria-label="Menú" aria-expanded="'+!!ui.cnMenu+'">···</button></div>'+cnMenuHTML(E)+
     '<div class="cnmid"><p class="cneti">'+esc(eti)+'</p>'+pts+'<p class="cngrande">'+grande+'</p><p class="cnsub">'+esc(sub)+'</p></div>'+
     '<div class="cnpie">'+pie+'</div></div>';
   if(G)cnRelojVa();}
+/* el mini menú del «···» (18/11, el usuario: «debería haber un mini menú»): historial, cómo me afecta, el plan y el código */
+function cnMenuHTML(E){
+  if(!ui.cnMenu)return '';
+  const it=function(t,a,x){return '<button class="cnmi" role="menuitem" data-a="'+a+'"'+(x||'')+'>'+t+'</button>';};
+  return '<div class="cnmenu" role="menu" aria-label="Menú">'+it('historial','cn-ver',' data-v="hist"')+it('cómo me afecta','cn-ver',' data-v="efectos"')+
+    (E.e==='plan'?it('parar el zen','cn-dejar-fin'):it('empezar el zen','cn-dejar'))+it('código','cn-aj')+'</div>';}
+function cnVerPinta(v){
+  /* historial: lo apuntado en 30 días, con × para borrar · cómo me afecta: días con frente a días a cero (mediana y n, como antes) */
+  const c=consumoS(),hoyK=iso(new Date()),desde=iso(addDays(new Date(),-29));let tit,cuerpo;
+  if(v==='hist'){tit='historial';
+    const L=c.ses.filter(function(x){return x.fecha>=desde&&x.fecha<=hoyK;});
+    cuerpo=L.length?'<div class="cnlista">'+L.map(function(x){return '<div class="cnfila"><span>'+esc(fechaCorta(x.fecha)+(x.hora?' · '+x.hora:''))+'</span>'+
+      '<button class="cnlnk" data-a="cn-del" data-id="'+esc(x.id)+'" aria-label="borrar el de '+esc(fechaCorta(x.fecha))+'">×</button></div>';}).join('')+'</div>'+
+      '<p class="cnsub">'+L.length+' en 30 días.</p>':'<p class="cngrande">nada en 30 días.</p>';}
+  else{tit='cómo me afecta';
+    /* sin «monchis» ni «cómo te sentó»: sus nombres delatan; el resto se queda */
+    const F=cnAfecta(28).filter(function(f){return f.ok&&f.id!=='monchis'&&f.id!=='sento';});
+    cuerpo=F.length?'<div class="cnlista">'+F.map(function(f){return '<div class="cnaf2"><b>'+esc(f.t.toLowerCase())+'</b><span>con '+esc(cnFmt(f,f.mCon))+' · a cero '+esc(cnFmt(f,f.mSin))+
+      ' <small>(n '+f.nCon+'/'+f.nSin+')</small></span></div>';}).join('')+'</div><p class="cnsub">medianas de las últimas 4 semanas. tus datos, no consejo médico.</p>':
+      '<p class="cngrande">aún no hay datos.</p><p class="cnsub">hacen falta 5 días de cada lado en las últimas 4 semanas.</p>';}
+  $('#main').innerHTML='<div class="grid mt cn cn2" data-estado="'+v+'"><div class="subcab"><h2 class="subtit">'+CN_CLAVE+' · '+tit+'</h2></div>'+
+    '<div class="cnmid cnarriba">'+cuerpo+'</div><div class="cnpie"><div class="cnlnks"><button class="cnlnk" data-a="cn-ver" data-v="">volver</button></div></div></div>';}
 /* ---- la semana con lo que hay en la nevera ----
    «Móntamela» y «Hoy cocino» solo sabían usar los platos de tus menús: sin menú, no ponían nada
    aunque la nevera estuviera llena. Ahora también montan con lo que tienes (plato, bowl, bocata y
@@ -26190,7 +26213,7 @@ function renderNow(){
     /* reiniciar la animación sin forzar un reflow síncrono (antes: void mm.offsetWidth) */
     requestAnimationFrame(function(){mm.classList.add('in');});}
   pintaBotonTema();
-  if(ui.tab!=='consumo'){ui.cnAbierto=false;ui.cnPin=null;}   /* la cortina se cierra al salir del 4:20 */
+  if(ui.tab!=='consumo'){ui.cnAbierto=false;ui.cnPin=null;ui.cnMenu=null;ui.cnVer='';ui.cnAj=null;}   /* la cortina se cierra al salir del 4:20 */
   ({hoy:renderHoy,month:renderMonth,food:renderFood,gym:renderGym,notas:renderNotas,habitos:renderHabitos,types:renderTypes,batches:renderBatches,import:renderImport,shop:renderShop,dinero:renderDinero,consumo:renderConsumo,eventos:renderEventos,estudio:renderEstudio,cfg:renderCfg,data:renderData,ajustes:renderAjustes}[ui.tab]||renderMonth)();
   /* el aviso de versión nueva se pega arriba del todo, salga la pantalla que salga: es lo único
      que importa en ese momento y no puede depender de en qué pestaña estés */
@@ -27511,12 +27534,16 @@ function act(a,el){
     case 'cn-cortina-quita':confirmar('¿Quitar la contraseña de Schumacher? La próxima vez que entres te pedirá una nueva. No se borra ningún dato.','Sí, quitarla').then(function(ok){
       if(!ok)return;delete consumoS().priv.pin;ui.cnAbierto=false;ui.cnPin=null;save();flash('Contraseña quitada: tus datos siguen ahí');render();});break;
     case 'cn-ganas':ui.cnGanas=ui.cnGanas?null:{int:2,t0:Date.now()};ui.cnFumo=null;render();break;
-    case 'cn-aj':ui.cnAj=!ui.cnAj;ui.cnFumo=null;ui.cnGanas=null;render();break;
+    case 'cn-aj':ui.cnAj=!ui.cnAj;ui.cnMenu=null;ui.cnFumo=null;ui.cnGanas=null;render();break;
+    case 'cn-menu':ui.cnMenu=!ui.cnMenu;ui.cnFumo=null;render();break;
+    case 'cn-ver':ui.cnVer=el.dataset.v||'';ui.cnMenu=null;ui.cnFumo=null;ui.cnGanas=null;render();window.scrollTo(0,0);break;
+    case 'cn-del':{const c=consumoS();c.ses=c.ses.filter(function(x){return x.id!==el.dataset.id;});save();flash('borrado');render();break;}
+    case 'cn-dejar-fin':{consumoS().plan.dejar=null;ui.cnMenu=null;save();flash('parado. cuando quieras, otra vez');render();break;}
     case 'cn-fumo':ui.cnFumo=!ui.cnFumo;render();break;
     case 'cn-fumo-dia':{const c=consumoS(),u=c.ses[0]||{},plan=cnEstado().e==='plan';
       consumoApuntar({dia:el.dataset.v==='1'?'1':'0',forma:u.forma,g:u.g,ctx:u.ctx});ui.cnFumo=null;
       flash(plan?'Apuntada. Seguimos desde aquí':'Apuntada');render();break;}
-    case 'cn-dejar':{const p=consumoS().plan;p.dejar={desde:iso(new Date())};p.dejarNo='';save();flash('Día 1 de '+CN_PLAN_D);render();window.scrollTo(0,0);break;}
+    case 'cn-dejar':{const p=consumoS().plan;p.dejar={desde:iso(new Date())};p.dejarNo='';ui.cnMenu=null;save();flash('Día 1 de '+CN_PLAN_D);render();window.scrollTo(0,0);break;}
     case 'cn-dejar-no':{consumoS().plan.dejarNo=iso(addDays(new Date(),3));save();render();break;}   /* lo vuelve a proponer a los 3 días */
     case 'cn-vale':{const c=consumoS();c.plan.vale=c.ses.reduce(function(m,x){return x.fecha>m?x.fecha:m;},'');save();render();break;}
     case 'cn-ganas-res':{const c=consumoS(),d=new Date(),G=ui.cnGanas||{int:2};

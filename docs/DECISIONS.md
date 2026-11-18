@@ -2943,3 +2943,9 @@ Web (`app.js`, junto a `usoEntrante`): `accionLee()` al arrancar y en `hashchang
   - **Supuestos:** «norte» = un rumbo, sobrio y solo suyo; la paleta oscura fija aunque la app esté en tema claro (así no llama la atención); letra ≥ 13 px (pasada por `suelo-letra`, 0 cambios en seco).
   - **Pruebas:** 696, 697 y la 399 (cajón: candado y «Norte») con los textos nuevos; **cae con X revertido:** con el `app.js` de antes caen 399, 696 y 697 (comprobado).
   - **Nombre en clave: «Schumacher» (18/11, el usuario en esta sesión: «no menciones a la planta… llamarlo Schumacher»).** Sustituye a «norte» en todo (`CN_CLAVE`, Más, Ajustes, contraseña, asistente, hábito «🏁 Schumacher a cero», Tu semana); 🧭 → 🏁. Pruebas 399, 696 y 697 con el nombre nuevo.
+
+## Schumacher · mini menú del «···» (18/11/2026)
+- **Elegido** (el usuario: «debería haber un mini menú en el apartado minimalista»; eligió historial, cómo me afecta y empezar/dejar el plan, en una lista que baja del «···»): el «···» (`cn-menu`) abre `cnMenuHTML` con 4 líneas de 48 px: **historial** (lo de 30 días, fecha y hora, con × para borrar uno), **cómo me afecta** (`cnAfecta(28)`: medianas con n, solo las filas con ≥ 5 días por lado, «con» frente a «a cero»), **empezar el zen / parar el zen** (`cn-dejar` / `cn-dejar-fin`, sin culpa) y **código** (el panel de antes). Cada pantalla, con «volver». Al salir de la sección se cierra todo.
+- **Descartado:** pestañas fijas abajo; las filas «monchis» y «cómo te sentó» en «cómo me afecta» (sus nombres delatan).
+- **Supuestos:** «código» va en el menú aunque no se eligió: es la única forma de cambiar la contraseña desde dentro. Borrar del historial no pide confirmación (es una línea y se ve al momento).
+- **Pruebas:** 699 nueva; 397 y 698 abren el menú antes del código. **Cae con X revertido:** con el «···» abriendo solo el código cae la 699 y la 698 sigue pasando (comprobado).
