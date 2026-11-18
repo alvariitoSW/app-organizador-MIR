@@ -2915,3 +2915,8 @@ Web (`app.js`, junto a `usoEntrante`): `accionLee()` al arrancar y en `hashchang
 **Descartado:** un esquema nuevo de enlaces; que el widget lea el uso él solo (lo hace MainActivity, como siempre); abrir la hoja con `data-a` simulado para anoche/comida (se reutilizan los estados que ya pone cada acción); widget redimensionable.
 **Supuestos:** el widget no se ha podido compilar aquí (sin SDK): lo compila el CI al subir; «Anoche» abre la hoja del día de hoy (como el botón «Anotar anoche» de Hoy); un botón del widget con permiso de uso sin dar sigue pasando por la pantalla de permiso.
 **Cae con X revertido:** las pruebas 690-694 caen sin `accionLee`/`accionEjecuta` (comprobado: las 5); la 694 también cae si se acepta un valor distinto de los 4 o no se vacía el hash.
+
+## Lanzador · el widget sin pasar por el permiso (18/11/2026)
+- **Elegido:** si falta «Acceso al uso», un botón del widget abre la app directa en su gesto (`#accion=X`, sin `#uso`); la pantalla del permiso sale solo desde el icono. En HyperOS el permiso queda bloqueado por «ajustes restringidos» (Android 13+) y Xiaomi esconde la opción para quitarlo.
+- **Descartado:** quitar la pantalla del permiso también del icono (es la única forma de pedirlo).
+- **Supuestos:** no se puede probar aquí (sin SDK de Android); lo compila el CI y lo comprueba el usuario en el móvil.

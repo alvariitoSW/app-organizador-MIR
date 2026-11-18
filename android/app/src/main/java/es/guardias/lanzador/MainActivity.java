@@ -55,7 +55,12 @@ public class MainActivity extends Activity {
   @Override protected void onResume() {
     super.onResume();
     if (abriendo) return;
-    if (!tieneAcceso()) { pantallaPermiso(); return; }
+    if (!tieneAcceso()) {
+      /* un botón del widget va directo a su gesto aunque falte «Acceso al uso» (en HyperOS el permiso
+         puede quedar bloqueado por «ajustes restringidos»); la pantalla del permiso, solo desde el icono */
+      if (accion() != null) { abriendo = true; abre(null); return; }
+      pantallaPermiso(); return;
+    }
     abriendo = true;
     pantalla(getString(R.string.leyendo), null, null);
     new Thread(() -> {
