@@ -4573,7 +4573,7 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .cn2 .subcab .sp{flex:1}
 .cncand{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink2);font-size:16px;cursor:pointer}
 .cnmid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:20px 4px}
-.cneti{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0}
+.cneti{font-size:var(--suelo);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0}
 .cngrande{font-size:30px;line-height:1.15;font-weight:800;margin:0;text-wrap:balance;color:var(--ink)}
 .cnsub{color:var(--ink2);margin:0;font-size:15px;line-height:1.45;max-width:34ch}
 .cnpie{display:grid;gap:8px;padding:0 4px 8px}
@@ -4588,7 +4588,7 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .cnpts i.f{background:var(--ink2);border-color:var(--ink2);opacity:.55}
 .cnpts i.hoy{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--brand)}
 .cnpts.mes{gap:5px}.cnpts.mes i{width:13px;height:13px;border-radius:3px}
-.cnley{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
+.cnley{display:flex;gap:14px;flex-wrap:wrap;font-size:var(--suelo);color:var(--ink2)}
 .cnley span{display:inline-flex;align-items:center;gap:6px}.cnley i{width:12px;height:12px}
 .cnhoja{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:10px}
 .cnhoja b{font-size:16px}
