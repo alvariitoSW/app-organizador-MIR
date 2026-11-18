@@ -68,4 +68,7 @@ prototipo de menú semanal**.
   la app cuente con ello y no lo marque como fracaso. Vive dentro del 4:20 (cortina con PIN, G10).
 
 ## Siguiente paso
-Su visto bueno (o cambios) a `maquetas/hoy-rehecho.html` → sesión nueva: `/plan-socialista` → ficha (skill `ficha-de-tarea`) y construir S1 → S3 → S2 → S5 (S5 = rehacer Hoy). El Consejo del 18/11 ya está hecho; no repetirlo.
+**Ficha escrita (18/11, tercera sesión): `fichas/la-semana.md`** (8 pasos, ~4,8 M en 3 sesiones; sin tocar `app.js`). Espera sus tres
+respuestas (parte 2 de la ficha): visto bueno a `maquetas/hoy-rehecho.html` · el bus a «Más de hoy» y fuera Estación/Reloj/Línea ·
+un solo botón «He salido». Con ellas → sesión nueva: `/plan-socialista` → apuntar la respuesta en la ficha y construir P1-P3
+(S1 y S3). Después P4-P5 (S2) y P6-P8 (S5 = rehacer Hoy y poner al día sus pruebas). El Consejo del 18/11 ya está hecho; no repetirlo.
