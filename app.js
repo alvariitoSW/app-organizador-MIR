@@ -12217,7 +12217,7 @@ function cnPinHTML(P){
     (bloq?'<p class="mini" role="alert">Demasiados intentos. Espera un momento y prueba otra vez.</p>':(P.mal?'<p class="mini" role="alert">'+(P.modo==='nuevo'?'No coincidían. Elígela otra vez.':'Esa no es. Prueba otra vez.')+'</p>':''))+
     '<div class="cnpad">'+[1,2,3,4,5,6,7,8,9].map(function(d){return '<button data-a="cn-pin" data-v="'+d+'" aria-label="'+d+'">'+d+'</button>';}).join('')+
       '<span></span><button data-a="cn-pin" data-v="0" aria-label="0">0</button><button data-a="cn-pin" data-v="x" aria-label="Borrar">⌫</button></div>'+
-    '<p class="mini" style="margin-top:14px">'+(P.obl?'4:20 va siempre con contraseña. ':'')+'Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>'+
+    '<p class="mini" style="margin-top:14px">'+(P.obl?'Norte va siempre con contraseña. ':'')+'Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>'+
     (P.modo==='entrar'?'<details class="cnolv"><summary>¿La olvidaste?</summary><p class="mini">Se quita desde Ajustes → Copia de seguridad. No pierdes ningún dato.</p></details>':
       '<button class="btn s" data-a="cn-pin-x">Cancelar</button>')+'</div></div>';}
 function cnPinPantalla(){
@@ -12233,14 +12233,16 @@ function cnPinPantalla(){
    borra nada); recaída puntual (1-3 días en 7 viniendo de dejarlo) → «no pasa nada, pero no sigas», sin
    volver al plan salvo que llegue a 4 de 7. Lo apuntado antes (forma, g, motivo, T-break, CUDIT) se conserva. */
 const CN_EPOCA=4,CN_PLAN_D=7,CN_PLAN_BAJA=2;
+/* Opción C · Terminal (18/11): nombre en clave «norte», el plan es «zen» y «a cero» es ninguna. Nada dice lo que es. */
+const CN_CLAVE='norte';
 const CN_PASOS=[   /* día del plan → [lo de hoy, una frase] */
-  ['Hoy: como mucho una, después de cenar.','Mañana, igual. Luego, ninguna.'],
-  ['Hoy: como mucho una, después de cenar.','Mañana empieza lo de ninguna.'],
-  ['Hoy: ninguna.','Las ganas suben y bajan solas: el pico dura 15–20 minutos.'],
-  ['Hoy: ninguna.','Si duermes peor estos días, es normal: pasa en una semana.'],
-  ['Hoy: ninguna.','Si duermes peor estos días, es normal: pasa en una semana.'],
-  ['Hoy: ninguna.','Ya casi.'],
-  ['Hoy: ninguna. Último día.','Mañana ya lo has dejado.']];
+  ['hoy: una como mucho, tarde.','mañana, igual. luego, a cero.'],
+  ['hoy: una como mucho, tarde.','mañana empieza lo de a cero.'],
+  ['hoy: a cero.','las ganas suben y bajan solas: el pico dura 15–20 minutos.'],
+  ['hoy: a cero.','si duermes peor estos días, es normal: pasa en una semana.'],
+  ['hoy: a cero.','si duermes peor estos días, es normal: pasa en una semana.'],
+  ['hoy: a cero.','ya casi.'],
+  ['hoy: a cero. último día.','mañana, zen hecho.']];
 function cnDiasConEntre(a,b){let n=0;for(let i=a;i<=b;i++)if(consumoDe(iso(addDays(new Date(),-i))).length)n++;return n;}   /* días con sesión entre hace a y hace b días (0 = hoy) */
 function cnPlanDejar(){
   const d=consumoS().plan.dejar;if(!d||!esFecha(d.desde))return null;
@@ -12265,7 +12267,7 @@ function cnPuntosPlan(desde){
   for(let i=0;i<CN_PLAN_D;i++){const k=iso(addDays(parseDate(desde),i)),f=consumoDe(k).length>0;
     h+='<i class="'+(k>hoyK?'':(f?'f':(k===hoyK?'':(i<CN_PLAN_BAJA?'m':'h'))))+(k===hoyK?' hoy':'')+'"></i>';}
   return '<div class="cnpts" role="img" aria-label="los '+CN_PLAN_D+' días del plan">'+h+'</div>'+
-    '<div class="cnley"><span><i class="m"></i>bajando</span><span><i class="h"></i>sin</span></div>';}
+    '<div class="cnley"><span><i class="m"></i>a medio gas</span><span><i class="h"></i>a cero</span></div>';}
 function cnRelojTxt(){const G=ui.cnGanas;if(!G)return '';const s=Math.max(0,900-Math.floor((Date.now()-(G.t0||Date.now()))/1000));return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
 let _cnReloj=null;
 function cnRelojVa(){clearInterval(_cnReloj);_cnReloj=setInterval(function(){const el=document.getElementById('cnReloj');
@@ -12273,34 +12275,34 @@ function cnRelojVa(){clearInterval(_cnReloj);_cnReloj=setInterval(function(){con
 function renderConsumo(){
   if(cnPinPantalla())return;
   const E=cnEstado(),G=ui.cnGanas,btn=function(t,a,p,x){return '<button class="btn'+(p?' p':'')+'" data-a="'+a+'"'+(x||'')+'>'+t+'</button>';};
-  const lnk=function(t,a,x){return '<button class="cnlnk" data-a="'+a+'"'+(x||'')+'>'+t+'</button>';},fumo=lnk('He fumado','cn-fumo');
+  const lnk=function(t,a,x){return '<button class="cnlnk" data-a="'+a+'"'+(x||'')+'>'+t+'</button>';},fumo=lnk('registro','cn-fumo');
   let eti='',pts='',grande='',sub='',pie='';
   if(ui.cnAj){
     const pv=consumoS().priv;
-    $('#main').innerHTML='<div class="grid mt cn cn2"><div class="subcab"><h2 class="subtit">🔒 Contraseña</h2></div><div class="cnmid">'+
-      '<p class="cnsub">La contraseña tapa 4:20 aquí y fuera de aquí: en Hoy, en Más y en los avisos. No cifra tus datos; todo sigue solo en tu móvil.</p>'+
-      '<button class="btn" data-a="cn-pin-cambia">Cambiar la contraseña</button>'+
-      '<label class="row mini cnfc"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(pv.fueraCopia?' checked':'')+'> dejar 4:20 fuera de la copia que compartes</label>'+
-      '<p class="mini">¿La olvidaste? Ajustes → Copia de seguridad → «Quitar la contraseña…». No se borra nada.</p></div>'+
-      '<div class="cnpie">'+lnk('Volver','cn-aj')+'</div></div>';return;}
-  if(G){eti='Las ganas suben y bajan solas';grande='<span id="cnReloj">'+cnRelojTxt()+'</span>';sub='Sal a andar o bebe agua. En 15 minutos casi siempre han bajado.';
-    pie=btn('Ya han pasado','cn-ganas-res',1,' data-v="aguante"')+'<div class="cnlnks">'+lnk('Cerrar','cn-ganas')+'</div>';}
-  else if(E.e==='plan'){const P=CN_PASOS[E.dia-1];eti='Día '+E.dia+' de '+CN_PLAN_D;pts=cnPuntosPlan(E.desde);grande=P[0];sub=P[1];
-    pie=btn('Tengo ganas','cn-ganas',E.dia>CN_PLAN_BAJA)+'<div class="cnlnks">'+fumo+'</div>';}
-  else if(E.e==='epoca'||E.e==='poco'){const pro=E.e==='epoca'&&!E.luego;eti='Últimos 7 días';pts=cnPuntosHTML(7);
-    grande='Has fumado '+E.d7+' de 7 días.';
-    sub=pro?'Buen momento para dejarlo. Te propongo '+CN_PLAN_D+' días: '+CN_PLAN_BAJA+' bajando y '+(CN_PLAN_D-CN_PLAN_BAJA)+' sin.':'Cuando quieras: '+CN_PLAN_D+' días para dejarlo.';
-    pie=btn('Empezar hoy','cn-dejar',pro)+'<div class="cnlnks">'+(pro?lnk('Ahora no','cn-dejar-no'):'')+fumo+'</div>';}
-  else if(E.e==='recaida'){eti='Últimos 30 días';pts=cnPuntosHTML(30,true);grande='Bueno, no pasa nada.';
-    sub=(E.d7===1?'Una vez':'Esto')+' no te devuelve al principio: siguen siendo '+E.sin30+' de 30 días sin. Pero no sigas: mañana, ninguna.';
-    pie=btn('Vale','cn-vale',1)+'<div class="cnlnks">'+fumo+'</div>';}
-  else{eti=E.planHecho?'Plan hecho · últimos 30 días':'Últimos 30 días';pts=E.nada?'':cnPuntosHTML(30,true);
-    grande=E.nada?'Nada apuntado.':(E.sin30===1?'1 día sin.':E.sin30+' días sin.');sub=E.nada?'Si fumas, toca «He fumado»: la app te acompaña para dejarlo.':'Nada que hacer hoy.';
+    $('#main').innerHTML='<div class="grid mt cn cn2"><div class="subcab"><h2 class="subtit">'+CN_CLAVE+' · código</h2></div><div class="cnmid">'+
+      '<p class="cnsub">el código tapa '+CN_CLAVE+' aquí y fuera de aquí: en Hoy, en Más y en los avisos. no cifra tus datos; todo sigue solo en tu móvil.</p>'+
+      '<button class="btn" data-a="cn-pin-cambia">cambiar el código</button>'+
+      '<label class="row mini cnfc"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(pv.fueraCopia?' checked':'')+'> dejar '+CN_CLAVE+' fuera de la copia que compartes</label>'+
+      '<p class="mini">¿lo olvidaste? Ajustes → Copia de seguridad → «Quitar la contraseña…». no se borra nada.</p></div>'+
+      '<div class="cnpie">'+lnk('volver','cn-aj')+'</div></div>';return;}
+  if(G){eti='respira';grande='<span id="cnReloj">'+cnRelojTxt()+'</span>';sub='sal a andar o bebe agua. en 15 minutos baja solo.';
+    pie=btn('ya pasó','cn-ganas-res',1,' data-v="aguante"')+'<div class="cnlnks">'+lnk('cerrar','cn-ganas')+'</div>';}
+  else if(E.e==='plan'){const P=CN_PASOS[E.dia-1];eti='zen '+E.dia+'/'+CN_PLAN_D;pts=cnPuntosPlan(E.desde);grande=P[0];sub=P[1];
+    pie=btn('me apetece','cn-ganas',E.dia>CN_PLAN_BAJA)+'<div class="cnlnks">'+fumo+'</div>';}
+  else if(E.e==='epoca'||E.e==='poco'){const pro=E.e==='epoca'&&!E.luego;eti='últimos 7 días';pts=cnPuntosHTML(7);
+    grande=CN_CLAVE+': '+E.d7+'/7';
+    sub=pro?'¿modo zen? '+CN_PLAN_D+' días: '+CN_PLAN_BAJA+' a medio gas y '+(CN_PLAN_D-CN_PLAN_BAJA)+' a cero.':'cuando quieras: '+CN_PLAN_D+' días de modo zen.';
+    pie=btn('empezar','cn-dejar',pro)+'<div class="cnlnks">'+(pro?lnk('luego','cn-dejar-no'):'')+fumo+'</div>';}
+  else if(E.e==='recaida'){eti='últimos 30 días';pts=cnPuntosHTML(30,true);grande='bueno, no pasa nada.';
+    sub=(E.d7===1?'una':'esto')+' no te devuelve al principio: siguen siendo '+E.sin30+'/30 a cero. pero no sigas: mañana, a cero.';
+    pie=btn('vale','cn-vale',1)+'<div class="cnlnks">'+fumo+'</div>';}
+  else{eti=E.planHecho?'zen hecho · últimos 30 días':'últimos 30 días';pts=E.nada?'':cnPuntosHTML(30,true);
+    grande=E.nada?'nada apuntado.':E.sin30+'/30 a cero.';sub=E.nada?'si hace falta, toca «registro».':'nada que hacer hoy.';
     pie='<div class="cnlnks">'+fumo+'</div>';}
-  if(ui.cnFumo)pie='<div class="cnhoja" role="group" aria-label="Apuntar que has fumado"><b>¿Cuándo?</b><div class="cndos">'+
-    btn('Hoy','cn-fumo-dia',0,' data-v="0"')+btn('Ayer','cn-fumo-dia',0,' data-v="1"')+'</div><div class="cnlnks">'+lnk('Cancelar','cn-fumo')+'</div></div>';
-  $('#main').innerHTML='<div class="grid mt cn cn2" data-estado="'+(G?'ganas':E.e)+'"><div class="subcab"><h2 class="subtit">🌿 4:20</h2><span class="sp"></span>'+
-      '<button class="cncand" data-a="cn-aj" aria-label="Contraseña y privacidad">🔒</button></div>'+
+  if(ui.cnFumo)pie='<div class="cnhoja" role="group" aria-label="Apuntar un registro"><b>¿cuándo?</b><div class="cndos">'+
+    btn('hoy','cn-fumo-dia',0,' data-v="0"')+btn('ayer','cn-fumo-dia',0,' data-v="1"')+'</div><div class="cnlnks">'+lnk('cancelar','cn-fumo')+'</div></div>';
+  $('#main').innerHTML='<div class="grid mt cn cn2" data-estado="'+(G?'ganas':E.e)+'"><div class="subcab"><h2 class="subtit">'+CN_CLAVE+'</h2><span class="sp"></span>'+
+      '<button class="cncand" data-a="cn-aj" aria-label="Código y privacidad">···</button></div>'+
     '<div class="cnmid"><p class="cneti">'+esc(eti)+'</p>'+pts+'<p class="cngrande">'+grande+'</p><p class="cnsub">'+esc(sub)+'</p></div>'+
     '<div class="cnpie">'+pie+'</div></div>';
   if(G)cnRelojVa();}
@@ -19913,7 +19915,7 @@ const HAB_AUTO={
   estudio:{lab:'📚 30 min de estudio',estado:function(key){const m=estMinDe(key);return m>=30?'ok':(m>0?'min':'');}},
   prot:{lab:'🍗 llegar a la proteína',estado:function(key){const ob=+objetivoMacros().prot||0;if(!ob||!logDe(key).length)return '';const p=foodTotals(key).prot;
     return p>=ob?'ok':(p>=ob*0.75&&key<iso(new Date())?'min':'');}},
-  sin420:{get lab(){return cnTapado()?'🌙 Plan privado':'🌿 día sin 4:20';},estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
+  sin420:{get lab(){return cnTapado()?'🌙 Plan privado':'🧭 Norte a cero';},estado:function(key){return habCerrado(key)&&!consumoDe(key).length?'ok':'';}},
   /* de la hora apuntada al salir y del plan del viaje, sin pasar por las escenas (que a su vez leen los hábitos) */
   puerta:{lab:'🚪 salir de casa a tiempo',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P||s==null)return '';return s<=P.plan+1e-6?'ok':(s<=P.ultimo+1e-6?'min':'');}},
   taxi:{lab:'🚕 taxi al trabajo (a reducir)',estado:function(key){const P=mananaPlan(),s=mananaSalio(key);if(!P)return '';
@@ -20293,7 +20295,7 @@ const CN_R=[
       acc:[['Probar 7 días antes de las 22:00','exp-start',' data-v="antes22"',1]]};},
   function dejar(){ /* 9 · época de fumar: te propone los 7 días para dejarlo */
     const E=cnEstado();if(E.e!=='epoca'||E.luego)return null;
-    return {id:'dejar',ico:'🌿',t:'Has fumado '+E.d7+' de 7 días',txt:'Buen momento para dejarlo: '+CN_PLAN_D+' días, '+CN_PLAN_BAJA+' bajando y '+(CN_PLAN_D-CN_PLAN_BAJA)+' sin.',acc:[['Verlo','ir-cn','',1]]};},
+    return {id:'dejar',ico:'🧭',t:'Norte: '+E.d7+'/7',txt:'¿Modo zen? '+CN_PLAN_D+' días: '+CN_PLAN_BAJA+' a medio gas y '+(CN_PLAN_D-CN_PLAN_BAJA)+' a cero.',acc:[['Verlo','ir-cn','',1]]};},
   function ganas(){ /* 10 · ganas aguantadas */
     const ag=cnGanasSemana().filter(cnAguanto).length;if(ag<3)return null;
     return {id:'ganas',ico:'👏',t:ag+' ganas aguantadas esta semana',txt:'Es la cifra que mejor dice si estás reduciendo, más que los gramos.',acc:[]};}];
@@ -20346,7 +20348,7 @@ function renderRevision(){
   subPantalla('hab-vista','Hábitos','Tu semana',
     '<div class="card"><div class="cap">LOS ÚLTIMOS 7 DÍAS, FRENTE A LOS 7 DE ANTES</div><div class="rvg">'+
       n('😴 Sueño',S.sueno==null?null:String(S.sueno).replace('.',','),P.sueno==null?null:String(P.sueno).replace('.',','),' h',1,S.nS+' noches',S.sueno,P.sueno)+
-      (cnTapado()?'':n('🌿 4:20',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj))+
+      (cnTapado()?'':n('🧭 Norte',S.ses,P.ses,'',-1,S.mg+' mg · objetivo ≤ '+c.obj))+
       n('✅ Hábitos',S.hab,P.hab,' %',1,'de los días que tocaban')+
       n('📚 Estudio',fmtHM(S.est||0),fmtHM(P.est||0),'',1,'',S.est||0,P.est||0)+
       n('💪 Entrenos',S.ent,P.ent,'',1)+
@@ -25706,7 +25708,7 @@ function renderData(){
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
         <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
           <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
-      ${cnPin()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Contraseña del 4:20</b>
+      ${cnPin()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Contraseña de Norte</b>
         <span class="note" style="flex:1 1 100%">Tapa la sección ante quien coja el móvil; no cifra tus datos. La copia lleva tus datos privados y la contraseña. Si la olvidaste, quítala aquí: al volver a entrar te pedirá una nueva. No se borra ningún dato.</span>
         <button class="btn" data-a="cn-cortina-quita">Quitar la contraseña…</button></div>`:''}
       <details class="plegable" style="margin-top:12px" data-tg="copiaInfo"${ui.copiaInfo||_almacen.estado==='no'?' open':''}><summary>dónde se guarda todo esto y qué lo borra</summary>
@@ -25914,7 +25916,7 @@ ${pat||'—'}`;
   $('#applyBtn').disabled=false;
 }
 /* ===================== render ===================== */
-const TABS=[['hoy','Hoy'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','4:20'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
+const TABS=[['hoy','Hoy'],['month','Mes'],['gym','Entreno'],['shop','Compra'],['food','Comer'],['habitos','Hábitos'],['dinero','Dinero'],['consumo','Norte'],['types','Menú'],['batches','Tandas'],['import','Importar receta'],['cfg','Turno y rotación'],['data','Datos'],['ajustes','Ajustes']];
 const CAL_SET=new Set(['hoy','month']);
 const CAL_MODES=[['month','Mes'],['hoy','Hoy']];
 /* Comer: lo que comes, lo que planeas, lo que cocinas y lo que compras eran tres destinos que no
@@ -25928,7 +25930,7 @@ function comerModosHTML(){
     return '<button data-a="comer-modo" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('');}
 /* «Más»: seis recuadros que ya dicen algo de lo suyo y UNA entrada a Ajustes (que junta Turno y
    rotación, Ajustes y Datos). Antes eran 9 líneas de texto y media pantalla vacía. */
-const CAJON=[['habitos','✅','Hábitos','planta'],['dinero','💶','Dinero','hucha'],['estudio','📚','Estudio','libro'],['consumo','🌿','4:20','hoja420'],['eventos','📌','Eventos','eventos'],['notas','📝','Notas','notas']];
+const CAJON=[['habitos','✅','Hábitos','planta'],['dinero','💶','Dinero','hucha'],['estudio','📚','Estudio','libro'],['consumo','🔒','Norte','candado'],['eventos','📌','Eventos','eventos'],['notas','📝','Notas','notas']];
 /* icono vivo (decorativo: el texto de al lado ya lo nombra) o, si fig/iconos.js no cargó, el emoji de siempre */
 function icoOEmoji(n,emoji,tam){return n&&typeof window.ico==='function'&&window.ico(n,{decorativo:true,tam:tam||22})||emoji||'';}
 function cajonVivo(t){
@@ -27506,7 +27508,7 @@ function act(a,el){
       render();cnPinSigue(P);break;}
     case 'cn-pin-cambia':ui.cnPin={modo:'actual',t:''};render();break;
     case 'cn-pin-x':ui.cnPin=null;if(!cnPin())ui.tab='hoy';render();break;   /* sin contraseña no se entra: «Cancelar» saca del 4:20 */
-    case 'cn-cortina-quita':confirmar('¿Quitar la contraseña del 4:20? La próxima vez que entres te pedirá una nueva. No se borra ningún dato.','Sí, quitarla').then(function(ok){
+    case 'cn-cortina-quita':confirmar('¿Quitar la contraseña de Norte? La próxima vez que entres te pedirá una nueva. No se borra ningún dato.','Sí, quitarla').then(function(ok){
       if(!ok)return;delete consumoS().priv.pin;ui.cnAbierto=false;ui.cnPin=null;save();flash('Contraseña quitada: tus datos siguen ahí');render();});break;
     case 'cn-ganas':ui.cnGanas=ui.cnGanas?null:{int:2,t0:Date.now()};ui.cnFumo=null;render();break;
     case 'cn-aj':ui.cnAj=!ui.cnAj;ui.cnFumo=null;ui.cnGanas=null;render();break;

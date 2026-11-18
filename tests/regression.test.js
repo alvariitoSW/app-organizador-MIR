@@ -15667,9 +15667,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#drawer .cti[data-t="notas"]'); await page.waitForTimeout(350);
     const luego = await page.evaluate(() => ({ tab: window.PG.ui.tab, abierto: !!window.PG.ui.drawerOpen }));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia399; P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render(); });
-    check('399 Iconos en vez de emojis: la tira de la mañana lleva un svg por ficha (taxi, no 🚕), «Más» enseña 6 recuadros con planta/hucha/libro/hoja420/eventos/notas + su nombre, Ajustes con su icono y el ✕ svg de 44×44; tocar Notas abre Notas y cierra el cajón',
+    check('399 Iconos en vez de emojis: la tira de la mañana lleva un svg por ficha (taxi, no 🚕), «Más» enseña 6 recuadros con planta/hucha/libro/candado/eventos/notas + su nombre, Ajustes con su icono y el ✕ svg de 44×44; tocar Notas abre Notas y cierra el cajón',
       fichas.n >= 3 && fichas.svg === fichas.n && fichas.emoji === 0 && fichas.nombres.includes('taxi') && fichas.w >= 54 && fichas.h >= 56 && fichas.letra >= 11 &&
-      cajon.n === 6 && cajon.svg === 6 && cajon.ico.join() === 'planta,hucha,libro,hoja420,eventos,notas' && cajon.txt.join() === 'Hábitos,Dinero,Estudio,4:20,Eventos,Notas' && cajon.x && cajon.xw >= 44 && cajon.xh >= 44 && cajon.aj && cajon.ajIco === 'ajustes' &&
+      cajon.n === 6 && cajon.svg === 6 && cajon.ico.join() === 'planta,hucha,libro,candado,eventos,notas' && cajon.txt.join() === 'Hábitos,Dinero,Estudio,Norte,Eventos,Notas' && cajon.x && cajon.xw >= 44 && cajon.xh >= 44 && cajon.aj && cajon.ajIco === 'ajustes' &&
       luego.tab === 'notas' && !luego.abierto, JSON.stringify({ fichas, cajon, luego }));
   }
 
@@ -19035,23 +19035,23 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(100);
     const txt = () => page.$eval('#main', (m) => m.textContent.replace(/\s+/g, ' '));
     const r = {};
-    r.epoca = await txt(); r.epocaOk = /Has fumado 5 de 7 días\./.test(r.epoca) && /Te propongo 7 días: 2 bajando y 5 sin/.test(r.epoca) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 1;
+    r.epoca = await txt(); r.epocaOk = /norte: 5\/7/.test(r.epoca) && /¿modo zen\? 7 días: 2 a medio gas y 5 a cero/.test(r.epoca) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 1;
     await cl6('#main [data-a="cn-dejar"]'); await page.waitForTimeout(100);
-    r.d1 = await txt(); r.d1Ok = /Día 1 de 7/.test(r.d1) && /como mucho una, después de cenar/.test(r.d1);
+    r.d1 = await txt(); r.d1Ok = /zen 1\/7/.test(r.d1) && /hoy: una como mucho, tarde/.test(r.d1);
     await cl6('#main [data-a="cn-fumo"]'); await page.waitForTimeout(80);
     await cl6('#main [data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(100);
-    r.trasFumar = await txt(); r.sigue = /Día 1 de 7/.test(r.trasFumar);
+    r.trasFumar = await txt(); r.sigue = /zen 1\/7/.test(r.trasFumar);
     r.ses = await page.evaluate(() => window.PG.consumoS().ses.filter((x) => x.fecha === window.PG.iso(new Date())).length);
     await page.evaluate(() => { const P = window.PG, p = P.consumoS().plan; p.dejar = { desde: P.iso(P.addDays(new Date(), -2)) }; P.save(); P.render(); });
-    r.d3 = await txt(); r.d3Ok = /Día 3 de 7/.test(r.d3) && /Hoy: ninguna\./.test(r.d3) && (await page.$$('#main .cnpts i')).length === 7;
+    r.d3 = await txt(); r.d3Ok = /zen 3\/7/.test(r.d3) && /hoy: a cero\./.test(r.d3) && (await page.$$('#main .cnpts i')).length === 7;
     await cl6('#main [data-a="cn-ganas"]'); await page.waitForTimeout(80);
     r.reloj = await page.$$eval('#cnReloj', (e) => e.length ? e[0].textContent : '');
     await cl6('#main [data-a="cn-ganas-res"]'); await page.waitForTimeout(100);
     r.ganas = await page.evaluate(() => { const g = window.PG.consumoS().ganas[0]; return g && g.res; });
-    r.vuelve = /Día 3 de 7/.test(await txt());
+    r.vuelve = /zen 3\/7/.test(await txt());
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia696); delete window.__copia696; P.ui.cnAbierto = false; P.ui.cnGanas = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await sueltaHoy();
-    check('696) 4:20 · época de fumar (5 de 7) propone 7 días; «Empezar hoy» → Día 1 «como mucho una»; «He fumado» no reinicia; día 3 «Hoy: ninguna» con 7 puntos; «Tengo ganas» 15:00 y apunta ganas aguantadas',
+    check('696) norte · época (5/7) propone el modo zen de 7 días; «empezar» → zen 1/7 «una como mucho»; «registro» no reinicia; zen 3/7 «hoy: a cero» con 7 puntos; «me apetece» 15:00 y apunta ganas aguantadas',
       r.epocaOk && r.d1Ok && r.sigue && r.ses === 2 && r.d3Ok && r.reloj === '15:00' && r.ganas === 'aguante' && r.vuelve, JSON.stringify(Object.assign({}, r, { epoca: r.epoca.slice(0, 160), d1: undefined, trasFumar: undefined, d3: r.d3.slice(0, 160) })));
   }
   // 697) 4:20 REINVENTADO · recaída puntual, encadenada: viniendo de dejarlo (nada en 20 días; una de hace 25), «He fumado» → «Hoy»
@@ -19066,19 +19066,19 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(100);
     const txt = () => page.$eval('#main', (m) => m.textContent.replace(/\s+/g, ' '));
     const r = {};
-    r.dejado = /30 días sin\./.test(await txt());
+    r.dejado = /30\/30 a cero\./.test(await txt());
     await cl6('#main [data-a="cn-fumo"]'); await page.waitForTimeout(80);
     await cl6('#main [data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(100);
-    r.rec = await txt(); r.recOk = /Bueno, no pasa nada\./.test(r.rec) && /Pero no sigas: mañana, ninguna\./.test(r.rec) && /29 de 30/.test(r.rec) && !/Empezar hoy/.test(r.rec);
+    r.rec = await txt(); r.recOk = /bueno, no pasa nada\./.test(r.rec) && /pero no sigas: mañana, a cero\./.test(r.rec) && /29\/30/.test(r.rec) && !/empezar/.test(r.rec);
     await cl6('#main [data-a="cn-vale"]'); await page.waitForTimeout(100);
-    r.vale = /29 días sin\./.test(await txt());
+    r.vale = /29\/30 a cero\./.test(await txt());
     await page.evaluate(() => { const P = window.PG; [1, 2, 3].forEach((i) => P.consumoApuntar({ fecha: P.iso(P.addDays(new Date(), -i)) })); P.render(); });
-    r.otra = await txt(); r.otraOk = /Has fumado 4 de 7 días\./.test(r.otra) && /Te propongo 7 días/.test(r.otra);
+    r.otra = await txt(); r.otraOk = /norte: 4\/7/.test(r.otra) && /¿modo zen\? 7 días/.test(r.otra);
     await cl6('#main [data-a="cn-dejar-no"]'); await page.waitForTimeout(100);
-    r.luego = await txt(); r.luegoOk = /Cuando quieras: 7 días para dejarlo/.test(r.luego) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 0 && (await page.$$('#main [data-a="cn-dejar"]')).length === 1;
+    r.luego = await txt(); r.luegoOk = /cuando quieras: 7 días de modo zen/.test(r.luego) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 0 && (await page.$$('#main [data-a="cn-dejar"]')).length === 1;
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia697); delete window.__copia697; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await sueltaHoy();
-    check('697) 4:20 · recaída puntual tras dejarlo: «no pasa nada, pero no sigas» sin plan; «Vale» → 29 días sin; con 4 de 7 vuelve a proponer el plan; «Ahora no» → «Cuando quieras»',
+    check('697) norte · recaída puntual tras dejarlo: «no pasa nada, pero no sigas» sin plan; «vale» → 29/30 a cero; con 4/7 vuelve a proponer el zen; «luego» → «cuando quieras»',
       r.dejado && r.recOk && r.vale && r.otraOk && r.luegoOk, JSON.stringify({ dejado: r.dejado, rec: r.rec.slice(0, 200), vale: r.vale, otra: r.otra.slice(0, 160), luego: r.luego.slice(0, 160) }));
   }
   // 698) 4:20 REINVENTADO · minimalista y sin perder nada: a 412×915 la sección cabe en una pantalla, con ≤ 3 botones a 44 px o más

@@ -4568,29 +4568,39 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .fpprev b{display:block;font-size:16px;font-variant-numeric:tabular-nums}.fpprev span{font-size:var(--t-13);font-weight:700;color:var(--ink2)}
 .fpmini{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:10px;overflow:hidden;background:var(--bg2);cursor:pointer}
 .fpmini img{width:100%;height:100%;object-fit:cover;display:block}
-/* 4:20 reinventado (18/11/2026): una pantalla, una frase, un botón y un enlace; los puntos enseñan el camino */
-.cn2{min-height:calc(100dvh - 210px);display:flex;flex-direction:column}
+/* 4:20 reinventado (18/11/2026), opción C · Terminal: oscura, letra de consola y sin colores, con el nombre en clave «norte».
+   La paleta es fija (no sigue el tema) para que se vea igual de discreta de día y de noche. */
+.cn2{--t-bg:#0b0d10;--t-on:#e9ebee;--t-ink:#d6d9de;--t-ink2:#8a9099;--t-line:#262b32;
+  --t-mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+  min-height:calc(100dvh - 210px);display:flex;flex-direction:column;background:var(--t-bg);color:var(--t-ink);
+  border:1px solid var(--t-line);border-radius:24px;padding:14px 16px 18px;font-family:var(--t-mono);color-scheme:dark}
 .cn2 .subcab .sp{flex:1}
-.cncand{min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink2);font-size:16px;cursor:pointer}
-.cnmid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:20px 4px}
-.cneti{font-size:var(--suelo);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0}
-.cngrande{font-size:30px;line-height:1.15;font-weight:800;margin:0;text-wrap:balance;color:var(--ink)}
-.cnsub{color:var(--ink2);margin:0;font-size:15px;line-height:1.45;max-width:34ch}
-.cnpie{display:grid;gap:8px;padding:0 4px 8px}
-.cnpie .btn,.cnmid .btn{min-height:52px;font-size:16px;width:100%;justify-content:center}
-.cnlnks{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 18px}
-.cnlnk{appearance:none;background:none;border:0;color:var(--ink2);font:inherit;font-size:15px;min-height:44px;min-width:44px;padding:0 6px;
-  text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.cnpts{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0}
-.cnpts i,.cnley i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);display:block;box-sizing:border-box}
-.cnpts i.h,.cnley i.h{background:var(--ok);border-color:var(--ok)}
-.cnpts i.m,.cnley i.m{background:linear-gradient(90deg,var(--brand) 50%,transparent 50%);border-color:var(--brand)}
-.cnpts i.f{background:var(--ink2);border-color:var(--ink2);opacity:.55}
-.cnpts i.hoy{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--brand)}
-.cnpts.mes{gap:5px}.cnpts.mes i{width:13px;height:13px;border-radius:3px}
-.cnley{display:flex;gap:14px;flex-wrap:wrap;font-size:var(--suelo);color:var(--ink2)}
-.cnley span{display:inline-flex;align-items:center;gap:6px}.cnley i{width:12px;height:12px}
-.cnhoja{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:10px}
-.cnhoja b{font-size:16px}
+.cn2 .subtit{font:400 15px var(--t-mono);color:var(--t-ink2);letter-spacing:.04em}
+.cncand{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--t-line);background:transparent;color:var(--t-ink2);font:400 15px var(--t-mono);cursor:pointer}
+.cnmid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:20px 2px}
+.cneti{font-size:var(--suelo);color:var(--t-ink2);margin:0}
+.cngrande{font-size:19px;line-height:1.4;font-weight:400;margin:0;color:var(--t-on)}
+.cngrande::before{content:"> ";color:var(--t-ink2)}
+.cngrande #cnReloj{font-size:34px;font-variant-numeric:tabular-nums}
+.cnsub{color:var(--t-ink2);margin:0;font-size:14px;line-height:1.5;max-width:36ch}
+.cnpie{display:grid;gap:8px;padding:0 2px 4px}
+.cn2 .btn{min-height:48px;font:400 15px var(--t-mono);width:100%;justify-content:center;border-radius:10px;
+  border:1px solid var(--t-line);background:transparent;color:var(--t-on);box-shadow:none}
+.cn2 .btn.p{border-color:var(--t-ink2)}
+.cnlnks{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 20px}
+.cnlnk{appearance:none;background:none;border:0;color:var(--t-ink2);font:400 14px var(--t-mono);min-height:44px;min-width:44px;padding:0 6px;cursor:pointer}
+.cn2 :focus-visible{outline:1px solid var(--t-on);outline-offset:2px}
+.cnpts{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0}
+.cnpts i,.cnley i{width:12px;height:12px;border-radius:50%;border:1px solid var(--t-line);display:block;box-sizing:border-box}
+.cnpts i.h,.cnley i.h{border-color:var(--t-ink2)}
+.cnpts i.m,.cnley i.m{background:linear-gradient(90deg,var(--t-ink2) 50%,transparent 50%);border-color:var(--t-ink2)}
+.cnpts i.f{background:var(--t-on);border-color:var(--t-on)}
+.cnpts i.hoy{outline:1px solid var(--t-on);outline-offset:2px}
+.cnpts.mes{gap:5px}.cnpts.mes i{width:8px;height:8px}
+.cnley{display:flex;gap:14px;flex-wrap:wrap;font-size:var(--suelo);color:var(--t-ink2)}
+.cnley span{display:inline-flex;align-items:center;gap:6px}.cnley i{width:10px;height:10px}
+.cnhoja{background:transparent;border:1px solid var(--t-line);border-radius:14px;padding:14px;display:grid;gap:10px}
+.cnhoja b{font-size:15px;font-weight:400;color:var(--t-on)}
 .cndos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cn2 .mini{color:var(--t-ink2);font-size:var(--suelo)}
 .cnfc{gap:10px;min-height:44px}.cnfc input{width:22px;height:22px}
