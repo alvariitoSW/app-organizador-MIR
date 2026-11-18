@@ -68,7 +68,7 @@ prototipo de menú semanal**.
   la app cuente con ello y no lo marque como fracaso. Vive dentro del 4:20 (cortina con PIN, G10).
 
 ## Siguiente paso
-**Ficha escrita (18/11, tercera sesión): `fichas/la-semana.md`** (8 pasos, ~4,8 M en 3 sesiones; sin tocar `app.js`). Espera sus tres
-respuestas (parte 2 de la ficha): visto bueno a `maquetas/hoy-rehecho.html` · el bus a «Más de hoy» y fuera Estación/Reloj/Línea ·
-un solo botón «He salido». Con ellas → sesión nueva: `/plan-socialista` → apuntar la respuesta en la ficha y construir P1-P3
-(S1 y S3). Después P4-P5 (S2) y P6-P8 (S5 = rehacer Hoy y poner al día sus pruebas). El Consejo del 18/11 ya está hecho; no repetirlo.
+**Maqueta `maquetas/hoy-rehecho.html` APROBADA tal cual por el usuario (18/11, tercera sesión)**, con: el bus a «Más de hoy» y fuera
+Estación, Reloj y Línea; un solo botón «He salido». Ficha: `fichas/la-semana.md` (8 pasos, ~4,8 M en 3 sesiones). Siguiente: sesión
+nueva → `/plan-socialista` → construir P1-P3 (S1 `planSemana` y el cambio de `nocheCadena`, S3 dato de asoci). Después P4-P5 (S2) y
+P6-P8 (S5 = rehacer Hoy y poner al día sus pruebas). El Consejo del 18/11 ya está hecho; no repetirlo.

@@ -2927,3 +2927,12 @@ Conductor como portada (mide más de una pantalla); preguntarle bloque a bloque 
 **Supuestos:** quitar los modos Estación, Reloj y Línea y dejar los cuatro botones de salir de casa en uno son propuesta nuestra: lo
 confirma con el visto bueno; la salida del Lloret se calcula desde la cama de 8 h (hoy `nocheCadena` da cama 00:30 con Lloret); los
 datos son de ejemplo (guardia sáb 21).
+
+## La Semana · ficha y visto bueno de la maqueta (18/11/2026; sin tocar `app.js`)
+**Elegido:** el usuario aprueba `maquetas/hoy-rehecho.html` tal cual y confirma lo que eran supuestos: el Conductor pasa a «Más de hoy»,
+se quitan los modos Estación, Reloj y Línea, y de los cuatro botones de la mañana queda «He salido». Ficha en
+`.claude/plan-socialista/fichas/la-semana.md`: 8 pasos, ~4,8 M en 3 sesiones; el Hoy de ahora se conserva entero como «El día como línea».
+**Descartado:** construir en esta sesión (una sesión por tarea); reescribir el bus.
+**Supuestos:** la cama y la salida del Lloret del plan salen de la cama de 8 h y el escalón de 15 min queda solo como sugerencia en
+Sueño; sin PIN puesto el contador de tardes fuera no sale; tope 3 al mes; si montar el menú de la semana siguiente pide mucho código,
+esos días salen de la plantilla del tipo de día.

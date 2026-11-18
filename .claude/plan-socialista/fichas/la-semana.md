@@ -1,6 +1,6 @@
 # Ficha · La Semana (pieza 1) · rehacer Hoy con la semana dentro
 Encargo `encargos/la-semana-y-los-sensores.md` · acta `consejo/2026-11-18.md` · maqueta **`maquetas/hoy-rehecho.html`**
-(6 marcos a 412×915). **ESTADO: la maqueta NO tiene el visto bueno. No se construye nada hasta que conteste la parte 2.**
+(6 marcos a 412×915). **ESTADO: maqueta aprobada tal cual por el usuario (18/11). Se construye en sesiones nuevas.**
 Líneas de `app.js` comprobadas el 18/11 sobre la rama (= `main` 2c89126; `app.js` 30.854 líneas). Pruebas: la última es la 686.
 
 ## 1 · Qué y para qué
@@ -23,7 +23,7 @@ Líneas de `app.js` comprobadas el 18/11 sobre la rama (= `main` 2c89126; `app.j
 2. El bus (Conductor) deja de ser la portada y va a «Más de hoy», y se quitan Estación, Reloj y Línea: (a) las dos cosas
    (recomendada) · (b) el bus a «Más de hoy» pero conservar los otros modos allí · (c) el bus sigue de portada.
 3. Salir de casa: (a) un solo botón «He salido» (recomendada; «Tu mañana por tramos» deja de medir En pie y Vestido) ·
-   (b) conservar los cuatro dentro de «Más de hoy». **Respuesta:** _(pendiente)_
+   (b) conservar los cuatro dentro de «Más de hoy». **Respuesta (18/11):** 1a · 2a · 3a: maqueta tal cual; bus a «Más de hoy» y fuera Estación, Reloj y Línea; solo «He salido».
 ## 3 · Dónde se toca (`app.js`)
 - **Hoy de ahora:** `renderHoy` 8739-8804 (montaje: `diaNavHTML` 5773, `hoyAhoraHTML` 6405, `protHoyHTML` 12572, `hoyDiaHTML`
   6418, `uphSegHTML` 5593 = selector de 4 modos, `coachHTML` 8182, `pantHTML` 8202, `informeTocaHTML` 8467, `asistHoyHTML`
@@ -70,7 +70,7 @@ Líneas de `app.js` comprobadas el 18/11 sobre la rama (= `main` 2c89126; `app.j
 Semana era una vista aparte; rehacer Hoy y sus pruebas lo sube. Presupuesto aprobado sin tope; se comparece si una pieza pasa un 25 %.
 ## 5 · Comprobación antes de construir
 - Historia → paso → prueba: H1 P1+P6 (692) · H2 P6 (693) · H3 P2+P6 (688, 694) · H4 P4+P5+P6 (690, 691, 695) · H5 P3+P6
-  (689, 696) · H6 P1+P6 (687, 692). Ningún paso sin historia (P7 y P8 son de «Terminado»). **Abierto:** las 3 dudas de la parte 2 → no se puede construir todavía. P7 cambia según las respuestas 2 y 3.
+  (689, 696) · H6 P1+P6 (687, 692). Ningún paso sin historia (P7 y P8 son de «Terminado»). Dudas cerradas (18/11): en P7 se borran las pruebas de Estación/Reloj/Línea y de En pie/Vestido.
 ## Qué se añade, qué se quita y qué no se toca
 - **Se añade:** `planSemana`, `store.semana`, `asociMes`, `semanaMontaSiFalta`, el Hoy nuevo y sus dos hojas, CSS `.hs-`.
 - **Se quita:** «✨ Móntamela», «✨ Montar la semana sola» y su pantalla; el selector de modos de la portada; (según dudas)
