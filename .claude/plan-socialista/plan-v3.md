@@ -1,5 +1,9 @@
 # Plan de la versión 3.0
 
+**El fin último, dicho por el usuario (18/11):** que la app le sirva para estudiarse a sí mismo y sus comportamientos y, con ella,
+cambiar su conducta como él decida o planee. Su vida es caótica: no puede tener una rutina fija por el trabajo, las guardias y su
+vida en sí. Necesita que la app le organice **rutinas o minirrutinas dentro de ese caos** y sea un gran apoyo. Toda pieza se mide contra esto.
+
 El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo lee `/bitacora` (para contarlo) y
 `/plan-socialista` (para proponer la siguiente); lo escribe Claude al cerrar cada tarea (traspaso, paso 7 de
 `cierra-y-despliega`) y cuando el usuario dice algo nuevo («apunta en el plan…»). El usuario puede tocarlo a mano.

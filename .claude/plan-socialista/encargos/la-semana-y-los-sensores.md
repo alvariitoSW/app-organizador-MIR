@@ -1,5 +1,9 @@
 # Encargo · «Que la app me estudie y me monte la semana» (pedido por el usuario el 18/11/2026)
 
+**El fin último, dicho por el usuario (18/11):** que la app le sirva para estudiarse a sí mismo y sus comportamientos y, con ella,
+cambiar su conducta como él decida o planee. Su vida es caótica: no puede tener una rutina fija por el trabajo, las guardias y su
+vida en sí. Necesita que la app le organice **rutinas o minirrutinas dentro de ese caos** y sea un gran apoyo. Toda pieza se mide contra esto.
+
 El usuario: «la app está estancada». Diagnóstico de la sesión del 18/11: no faltan funciones; (1) todo depende de que él
 lo apunte y cuando peor va (llega tarde, saliente) no apunta; (2) las piezas no se hablan: ninguna pantalla dice «esta semana,
 con estas guardias, tu plan es este». Lo que le duele ahora: se acuesta tarde, se levanta cansado, tarda en salir de casa,
