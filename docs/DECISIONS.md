@@ -2913,3 +2913,17 @@ de pie (≥8 h); la asoci, un contador mensual sin castigo. Tres variantes en `m
 cuadrante) o `menuAutoSemana` (por tipo de día, machaca menús); pedirle una hora fija de cama o de vuelta.
 **Supuestos:** «asoci» = tardes fuera, se nombra con palabras discretas hasta que él diga si va tras el PIN; el Lloret sin hora propia
 le vale si sale de la cama; los datos de la maqueta son de ejemplo (guardia mié 18 y sáb 21).
+
+## Hoy rehecho con La Semana dentro · maqueta (18/11/2026; sin tocar `app.js`)
+**Elegido** (`maquetas/hoy-rehecho.html`, espera el visto bueno): el usuario pidió que la reforma la decidiéramos nosotros y que Hoy
+fuese minimalista. Hoy cabe en una pantalla (antes 3.034 px a 412×915): tira de 7 días desde hoy (eso es La Semana; tocar un día enseña
+su plan ahí mismo), «Ahora» con una frase y un solo paso con su hora, tres filas (Dormir · Moverse · Comer), la compra y «Más de hoy».
+Se fusionan: barra de días + «Lo que viene» → tira; los tres «Ahora», el cartel de salir, el despertador y «Vete del Lloret» → «Ahora»;
+«Radio sueño»/«Anoche»/«a la cama» → Dormir; los dos «Para hoy» → una línea. Se guardan en «Más de hoy»: energía y coach, «¿Anoche lo
+cumpliste?», hábitos, el Conductor y el contador de asoci (solo con el 4:20 abierto con PIN). Se quitan: «✨ Móntamela» y «✨ Montar la
+semana sola» (dicho por él) y los modos Estación, Reloj y Línea del selector.
+**Descartado:** La Semana como vista aparte con tarjeta de entrada (acuerdo del Consejo: él pidió rehacer Hoy entero); mantener el
+Conductor como portada (mide más de una pantalla); preguntarle bloque a bloque (pidió que decidiéramos).
+**Supuestos:** quitar los modos Estación, Reloj y Línea y dejar los cuatro botones de salir de casa en uno son propuesta nuestra: lo
+confirma con el visto bueno; la salida del Lloret se calcula desde la cama de 8 h (hoy `nocheCadena` da cama 00:30 con Lloret); los
+datos son de ejemplo (guardia sáb 21).

@@ -1,0 +1,133 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoy rehecho · maqueta</title>
+<style>
+:root{--bg:#070b14;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--ok:#34d399;--warn:#fbbf24;--gua:#c2283b;--r:16px}
+*{box-sizing:border-box}
+body{margin:0;background:#03060c;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px 48px}
+h1{font-size:18px;margin:0 0 4px;text-align:center}.lead{text-align:center;color:var(--ink2);font-size:13px;margin:0 auto 20px;max-width:640px}
+.wrapf{display:flex;gap:28px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.col{width:412px;flex:none}.col h2{font-size:16px;margin:0 0 8px}
+.nota{font-size:13px;color:var(--ink2);margin:10px 0 24px}.nota b{color:var(--ink)}
+@media(max-width:444px){body{padding-left:0;padding-right:0}.col h2,.nota{padding:0 12px}}
+.frame{width:412px;height:915px;background:var(--bg);border:1px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.hd{height:56px;flex:none;display:flex;align-items:center;padding:0 8px 0 16px}
+.hd .t{flex:1;font-size:19px;font-weight:800}.hd .t small{font-size:13px;font-weight:600;color:var(--ink2);margin-left:6px}
+.hd button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--brand);font-size:22px;font-family:inherit}
+.body{flex:1;min-height:0;overflow:hidden;padding:0 12px;display:flex;flex-direction:column;gap:10px}
+.tabs{height:64px;flex:none;display:flex;border-top:1px solid var(--line);background:var(--card)}
+.tabs span{flex:1;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--ink2)}.tabs .on{color:var(--brand)}
+/* tira de 7 días: La Semana */
+.tira{display:flex;gap:4px;flex:none}
+.tira button{flex:1;min-width:0;height:64px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-family:inherit;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;cursor:pointer}
+.tira button b{font-size:16px}.tira i{width:8px;height:8px;border-radius:50%;background:transparent;border:1px solid var(--ink2)}
+.tira .g i{background:var(--gua);border-color:var(--gua)}.tira .s i{background:var(--warn);border-color:var(--warn)}
+.tira .sel{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card));box-shadow:0 0 0 1px var(--brand) inset}
+.ley{flex:none;font-size:13px;color:var(--ink2);margin:-4px 2px 0}.ley b{color:var(--ink)}.ley .g{color:#f08a95;font-weight:800}.ley .s{color:var(--warn);font-weight:800}
+/* ahora */
+.ah{flex:none;background:color-mix(in srgb,var(--brand) 9%,var(--card));border:1px solid var(--brand);border-radius:var(--r);padding:14px 16px}
+.ah .e{font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--ink2)}
+.ah .f{font-size:16px;margin:2px 0 10px}
+.ah .sig{display:flex;align-items:center;gap:12px;border-top:1px dashed var(--line);padding-top:10px}
+.ah .sig .h{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.ah .sig .q{flex:1;font-size:14px}.ah .sig .q small{display:block;color:var(--ink2);font-size:13px}
+.ah .ok{min-height:44px;padding:0 14px;border-radius:12px;border:0;background:var(--brand);color:#04121c;font:800 14px inherit;font-family:inherit}
+/* las tres filas */
+.fila{flex:none;display:flex;align-items:center;gap:12px;min-height:64px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;cursor:pointer}
+.fila .i{width:28px;text-align:center;font-size:20px;flex:none}
+.fila .v{flex:1;min-width:0}.fila .v b{display:block;font-size:13px;color:var(--ink2);font-weight:700}
+.fila .v span{display:block;font-size:15px}.fila .v small{display:block;font-size:13px;color:var(--ink2)}
+.fila .ch{color:var(--ink2);font-size:20px}
+.fila.lin{min-height:48px;background:none;border-style:dashed}.fila.lin .v span{font-size:14px}
+.hueco{flex:1}
+/* hoja */
+.velo{position:absolute;inset:0;background:#000a}
+.hoja{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);border-radius:24px 24px 0 0;padding:8px 16px 20px}
+.hoja::before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+.hoja h3{margin:0 0 8px;font-size:17px}
+.pl{display:flex;align-items:center;gap:10px;min-height:56px;border-top:1px solid var(--line)}
+.pl .v{flex:1;min-width:0}.pl .v b{display:block;font-size:13px;color:var(--ink2)}.pl .v span{font-size:15px}.pl .v small{display:block;font-size:13px;color:var(--ink2)}
+.pl a{min-height:44px;display:flex;align-items:center;color:var(--brand);font-weight:700;padding:0 4px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font:700 14px inherit;font-family:inherit;margin-top:8px}
+.btn.p{background:var(--brand);border:0;color:#04121c}
+/* tabla de destino */
+table{border-collapse:collapse;max-width:880px;margin:8px auto 0;font-size:13px}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{color:var(--ink2)}
+h2.s{text-align:center;font-size:16px;margin:32px 0 4px}
+</style></head><body>
+<h1>Hoy rehecho · con La Semana dentro</h1>
+<p class="lead">Una sola pantalla, sin deslizar: los 7 días arriba, qué toca ahora, y tres filas (dormir, moverse, comer). Todo lo demás, guardado en «Más de hoy». Los marcos miden 412×915. En el 1 puedes tocar los días.</p>
+<div class="wrapf">
+ <div class="col"><h2>1 · Hoy por la mañana</h2><div class="frame" id="f1"></div>
+  <p class="nota"><b>Antes:</b> 3.034 px (3,3 pantallas). <b>Ahora:</b> cabe en una. A las 07:00 el paso grande sería «07:31 · Sal de casa» con un solo botón «He salido».</p></div>
+ <div class="col"><h2>2 · Hoy por la noche, en el Lloret</h2><div class="frame" id="f2"></div>
+  <p class="nota">La hora de irte <b>sale de la cama</b>: cama 22:40 para dormir 8 h → en casa 22:25 → te vas 21:50. No se te pide ninguna hora.</p></div>
+ <div class="col"><h2>3 · Hoy saliente</h2><div class="frame" id="f3"></div>
+  <p class="nota">Saliente: siesta corta y cama normal. La noche de guardia no cuenta como fallo ni lleva objetivo.</p></div>
+ <div class="col"><h2>4 · Tocas otro día de la tira</h2><div class="frame" id="f4"></div>
+  <p class="nota">La misma pantalla enseña el plan de ese día. Sin «Ahora» (no es hoy) y con «‹ Volver a hoy».</p></div>
+ <div class="col"><h2>5 · Tocas «Comer»</h2><div class="frame" id="f5"></div>
+  <p class="nota"><b>Un solo camino al menú.</b> Sale ya montado con el motor de «¿Me la propones?». Se retiran «✨ Móntamela» y «✨ Montar la semana sola». Lo que cambies a mano no se pisa.</p></div>
+ <div class="col"><h2>6 · Tocas «Más de hoy»</h2><div class="frame" id="f6"></div>
+  <p class="nota">Aquí va lo que hoy está siempre a la vista. El contador de tardes fuera solo aparece <b>con el 4:20 abierto con tu PIN</b>.</p></div>
+</div>
+
+<h2 class="s">Qué pasa con cada cosa del Hoy de ahora</h2>
+<table>
+<tr><th>Lo de ahora</th><th>Qué se hace</th><th>Dónde queda</th></tr>
+<tr><td>Barra «‹ Mar · Jue ›» y «🛣️ Lo que viene»</td><td>Se fusionan</td><td>La tira de 7 días</td></tr>
+<tr><td>«Ahora» (sale 3 veces), cartel «¿Ya en el trabajo?», despertador, «Vete del Lloret»</td><td>Se fusionan</td><td>La tarjeta «Ahora»: una frase y un solo paso con su hora</td></tr>
+<tr><td>«En pie · Vestido · He salido · He llegado»</td><td>Se reduce</td><td>Un solo botón en el paso («He salido»), solo cuando toca</td></tr>
+<tr><td>«Radio sueño», «Anoche: sin apuntar», «a la cama 22:40»</td><td>Se fusionan</td><td>La fila «Dormir»; al tocarla, apuntar la noche</td></tr>
+<tr><td>Comidas con solo la hora</td><td>Se actualiza</td><td>La fila «Comer», con el nombre del plato</td></tr>
+<tr><td>Entreno (hoy no tiene tarjeta)</td><td>Se añade</td><td>La fila «Moverse»</td></tr>
+<tr><td>«✅ Para hoy» y «Para hoy · 0 de 1» del bus</td><td>Se fusionan</td><td>Una línea: la compra y lo pendiente</td></tr>
+<tr><td>«✏️ Apuntar algo…»</td><td>Se conserva</td><td>El botón ＋ de arriba</td></tr>
+<tr><td>«⚡ Tu energía de hoy» y el coach</td><td>Se guarda</td><td>«Más de hoy» (una palabra de energía queda en «Ahora»)</td></tr>
+<tr><td>«¿Anoche lo cumpliste?», hábitos, informe</td><td>Se guardan</td><td>«Más de hoy»</td></tr>
+<tr><td>El Conductor (el bus) y los modos Estación, Reloj y Línea</td><td>Se guarda el bus; se quitan los otros tres del selector</td><td>«Más de hoy» → «Ver el día como línea»</td></tr>
+<tr><td>«✨ Móntamela» y «✨ Montar la semana sola»</td><td>Se quitan</td><td>—</td></tr>
+</table>
+
+<script>
+const D=[
+{k:'mié',n:18,t:'t',tn:'trabajo 8–15',up:'06:50',cama:'22:40',en:'Fuerza · 17:00 · 60 min',de:'Tostada con huevo',co:'Merluza con verduras',ce:'Tortilla y ensalada'},
+{k:'jue',n:19,t:'t',tn:'trabajo 8–15',up:'06:50',cama:'22:40',en:'Descanso',de:'Avena con plátano',co:'Ensalada de pollo y garbanzos',ce:'Merluza con verduras'},
+{k:'vie',n:20,t:'t',tn:'trabajo 8–15',up:'06:30',cama:'22:10',cn:'mañana tienes guardia: por eso antes',en:'Piscina · 17:00 · 45 min',de:'Tostada con huevo',co:'Pollo al curry',ce:'Potaje de vigilia',coc:'cocinas esta noche: 4&nbsp;raciones'},
+{k:'sáb',n:21,t:'g',tn:'GUARDIA',up:null,cama:null,en:'Sin entreno: es guardia',de:'Avena con plátano',co:'Potaje de vigilia (táper)',ce:'Menú del hospital'},
+{k:'dom',n:22,t:'s',tn:'SALIENTE',up:'06:50',siesta:'13:00',cama:'22:40',en:'Movilidad · 20 min',de:'Desayuno al llegar',co:'Potaje de vigilia',ce:'Marmitako',coc:'cocinas esta noche: 4&nbsp;raciones'},
+{k:'lun',n:23,t:'t',tn:'trabajo 8–15',up:'06:50',cama:'22:40',en:'Fuerza · 17:00 · 60 min',de:'Tostada con huevo',co:'Marmitako',ce:'Yogur, fruta y nueces'},
+{k:'mar',n:24,t:'t',tn:'trabajo 8–15',up:'06:50',cama:'22:40',en:'Descanso',de:'Avena con plátano',co:'Pollo al curry',ce:'Tortilla y ensalada'},
+{k:'mié',n:25,t:'t'},{k:'jue',n:26,t:'t'},{k:'vie',n:27,t:'t'},{k:'sáb',n:28,t:'l'}];
+const NM={mié:'Miércoles',jue:'Jueves',vie:'Viernes',sáb:'Sábado',dom:'Domingo',lun:'Lunes',mar:'Martes'};
+const AH={
+ man:{e:'AHORA · 08:00 · energía buena',f:'En el trabajo hasta las 15:00.',h:'15:20',q:'Comida en casa',s:'Merluza con verduras'},
+ noc:{e:'AHORA · 21:30 · en el Lloret',f:'Te quedan 20 minutos.',h:'21:50',q:'Vete del Lloret',s:'en casa 22:25 · cama&nbsp;22:40',b:'Ya me voy'},
+ sal:{e:'AHORA · 09:10 · energía baja',f:'Saliente. Anoche dormiste 2 h: hoy toca recuperar.',h:'13:00',q:'Siesta hasta esta hora',s:'con despertador, para dormir bien esta noche'}};
+const fila=(i,t,v,s)=>'<div class="fila"><span class="i">'+i+'</span><div class="v"><b>'+t+'</b><span>'+v+'</span>'+(s?'<small>'+s+'</small>':'')+'</div><span class="ch">›</span></div>';
+function hoy(el,base,sel,esc,extra){
+ const d=D[sel],esHoy=sel===base,nx=D[sel+1]||{};
+ const tira='<div class="tira">'+D.slice(base,base+7).map((x,j)=>'<button class="'+x.t+(base+j===sel?' sel':'')+'" data-i="'+(base+j)+'"><span>'+x.k[0].toUpperCase()+'</span><b>'+x.n+'</b><i></i></button>').join('')+'</div>';
+ const ley='<p class="ley"><b>'+NM[d.k]+' '+d.n+'</b> · <span class="'+d.t+'">'+d.tn+'</span>'+(esHoy?'':' · <span style="color:var(--brand);font-weight:700">‹ Volver a hoy</span>')+'</p>';
+ const a=AH[esc],ah=esHoy?'<div class="ah"><div class="e">'+a.e+'</div><div class="f">'+a.f+'</div><div class="sig"><span class="h">'+a.h+'</span><div class="q">'+a.q+'<small>'+a.s+'</small></div>'+(a.b?'<button class="ok">'+a.b+'</button>':'')+'</div></div>':'';
+ const dorm=d.t==='g'?fila('🛌','DORMIR','Noche de guardia: sin hora','duerme lo que puedas; mañana, siesta'):
+  fila('🛌','DORMIR',(d.siesta?'Siesta hasta '+d.siesta+' · cama '+d.cama:'Cama '+d.cama+' · en pie '+(nx.up||'06:50')),d.cn||(d.siesta?'siesta corta para no robarle a la noche':'para dormir 8 h'));
+ const mov=fila('💪','MOVERSE',d.en);
+ const com=fila('🍽','COMER',(esHoy&&esc!=='sal'?'✓ Desayuno · ':'')+'Comida: '+d.co,'Cena: '+d.ce+(d.coc?' · '+d.coc:''));
+ const comp='<div class="fila lin"><span class="i">🛒</span><div class="v"><span>'+(esHoy?'Hoy: hacer la compra · 24 cosas':'Compra de la semana · 24 cosas')+'</span></div><span class="ch">›</span></div>';
+ const mas='<div class="fila lin"><span class="i">＋</span><div class="v"><span>Más de hoy</span></div><span class="ch">›</span></div>';
+ el.innerHTML='<div class="hd"><span class="t">'+(esHoy?'Hoy':NM[d.k])+'<small>'+d.k+' '+d.n+' nov</small></span><button aria-label="Apuntar algo">＋</button></div><div class="body">'+tira+ley+ah+dorm+mov+com+comp+(esHoy?mas:'')+'<div class="hueco"></div></div><div class="tabs"><span class="on">Hoy</span><span>Mes</span><span>Comer</span><span>Más</span></div>'+(extra||'');
+ el.querySelectorAll('.tira button').forEach(b=>b.onclick=()=>hoy(el,base,+b.dataset.i,esc,extra));
+}
+hoy(f1,0,0,'man');hoy(f2,0,0,'noc');hoy(f3,4,4,'sal');hoy(f4,0,3,'man');
+hoy(f5,0,0,'man','<div class="velo"></div><div class="hoja"><h3>Comer · miércoles 18</h3>'+
+ '<div class="pl"><div class="v"><b>DESAYUNO · apuntado ✓</b><span>Tostada con huevo</span></div></div>'+
+ '<div class="pl"><div class="v"><b>COMIDA · 15:20</b><span>Merluza con verduras</span><small>táper de ayer</small></div><a>Cambiar</a></div>'+
+ '<div class="pl"><div class="v"><b>CENA · 19:15</b><span>Tortilla y ensalada</span></div><a>Cambiar</a></div>'+
+ '<button class="btn p">Apuntar lo que he comido</button><button class="btn">🛒 Compra de la semana · 24 cosas</button><button class="btn">Volver a montar el menú de la semana</button></div>');
+hoy(f6,0,0,'man','<div class="velo"></div><div class="hoja"><h3>Más de hoy</h3>'+
+ '<div class="pl"><div class="v"><b>ENERGÍA</b><span>Buena · sin siesta hoy</span></div><a>Ver ›</a></div>'+
+ '<div class="pl"><div class="v"><b>ANOCHE</b><span>Sin apuntar</span></div><a>Apuntar ›</a></div>'+
+ '<div class="pl"><div class="v"><b>HÁBITOS</b><span>2 de 5 hechos</span></div><a>Ver ›</a></div>'+
+ '<div class="pl"><div class="v"><b>EL DÍA COMO LÍNEA</b><span>El Conductor 🚌</span></div><a>Abrir ›</a></div>'+
+ '<div class="pl"><div class="v"><b>🔓 4:20 · abierto con tu PIN</b><span>Tardes fuera · este mes: 1 de 3</span></div><a>Hoy he ido</a></div></div>');
+</script></body></html>

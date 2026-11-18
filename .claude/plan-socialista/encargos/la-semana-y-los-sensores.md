@@ -34,6 +34,20 @@ prototipo de menú semanal**.
 - **Sin contestar:** si se retiran «✨ Móntamela» y «✨ Montar la semana sola» cuando esté (preguntárselo con la maqueta de Hoy).
 - Antes: cama = la necesaria para ≥8 h (se calcula); Lloret sin hora propia (sale de la cama); con el menú «no encontré por dónde» y «me cansé a mitad».
 
+## Maqueta de Hoy rehecho (18/11, segunda sesión) · `maquetas/hoy-rehecho.html` · ESPERA SU VISTO BUENO
+- Él contestó: «Deberías hacer tú la reforma y ver qué es lo mejor para conservar, actualizar, fusionar»; «Hoy tiene ya muchísimas
+  cosas, me gustaría hacer esa parte minimalista para no abrumarme»; **retirar los dos botones: sí**.
+- Medido antes (verificador, 412×915, modo Conductor): mañana 3.034 px (3,3 pantallas), noche 2.754, saliente 2.768. «Ahora» sale
+  3 veces, el sueño 3, la lista del día 3; el bus (`hoyBusHTML`) mide ~1.075 px. No hay tarjeta de entreno ni nombre de los platos.
+- La maqueta (6 marcos, todos caben en 915 con 134-388 px libres): tira de 7 días → «Ahora» (frase + un paso con hora) → Dormir ·
+  Moverse · Comer → compra → «Más de hoy». Tocar otro día enseña su plan en la misma pantalla. «Comer» abre una hoja con los platos,
+  «Cambiar» y «Volver a montar el menú de la semana» (el único camino). Asoci: «Tardes fuera · este mes: 1 de 3» dentro de «Más de
+  hoy», solo con el 4:20 abierto con PIN.
+- Cambio respecto al Consejo: La Semana no es una vista aparte (`ui.hoyVista='semana'`) con tarjeta de entrada: **es la tira de Hoy**.
+  S5 pasa a ser «rehacer `renderHoy`» y crece; rehacer la ficha y el reparto con su visto bueno.
+- Ojo al construir: hoy `nocheCadena` con Lloret da cama 00:30 (menos de 8 h); la maqueta enseña lo decidido (la salida del Lloret
+  sale de la cama: 22:40 → en casa 22:25 → vete 21:50). Es un cambio de cálculo, no solo de pantalla.
+
 ## Pieza 2 · Los sensores (reabre «El Lanzador», K2-K4 aparcados el 03/11)
 - Qué pide: horas de móvil; último apagado y primer encendido de pantalla (hora real de dormir y despertar); la próxima
   alarma; dónde está (casa, gym, Lloret, asoci) con entrada y salida; avisos en el momento.
@@ -54,4 +68,4 @@ prototipo de menú semanal**.
   la app cuente con ello y no lo marque como fracaso. Vive dentro del 4:20 (cortina con PIN, G10).
 
 ## Siguiente paso
-Sesión nueva: `/plan-socialista` → **maqueta de Hoy rehecho entero con La Semana dentro** (el Consejo del 18/11 ya está hecho: `consejo/2026-11-18.md`; no repetirlo) → su visto bueno → ficha y construir S1 → S3 → S2 → S5.
+Su visto bueno (o cambios) a `maquetas/hoy-rehecho.html` → sesión nueva: `/plan-socialista` → ficha (skill `ficha-de-tarea`) y construir S1 → S3 → S2 → S5 (S5 = rehacer Hoy). El Consejo del 18/11 ya está hecho; no repetirlo.
