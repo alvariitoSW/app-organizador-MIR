@@ -2920,3 +2920,19 @@ Web (`app.js`, junto a `usoEntrante`): `accionLee()` al arrancar y en `hashchang
 - **Elegido:** si falta «Acceso al uso», un botón del widget abre la app directa en su gesto (`#accion=X`, sin `#uso`); la pantalla del permiso sale solo desde el icono. En HyperOS el permiso queda bloqueado por «ajustes restringidos» (Android 13+) y Xiaomi esconde la opción para quitarlo.
 - **Descartado:** quitar la pantalla del permiso también del icono (es la única forma de pedirlo).
 - **Supuestos:** no se puede probar aquí (sin SDK de Android); lo compila el CI y lo comprueba el usuario en el móvil.
+
+## 4:20 reinventado · para dejarlo (18/11/2026)
+*Pedido por el usuario: «reinventa toda la parte del 4:20… muy minimalista… enfocada en dejarlo… en época de fumar, que me reconduzca… una semana o 2… si recaigo, “bueno, no pasa nada, pero no sigas”… y pon lo de la contraseña». Maqueta `maquetas/420-dejarlo.html`; eligió **B · El camino**, **4 de 7 días**, **plan de 7 días** y **contraseña obligatoria**.*
+- **Elegido:** una sola pantalla (`renderConsumo`): una etiqueta, una fila de puntos, una frase grande, una frase pequeña, un botón y uno o dos enlaces. El estado sale solo de lo apuntado (`cnEstado`):
+  - **Época de fumar:** 4 días o más con sesión en los últimos 7 → «Has fumado N de 7 días.» y te propone 7 días (2 bajando + 5 sin). «Ahora no» lo deja en «Cuando quieras» 3 días.
+  - **Plan** (`consumo.plan.dejar.desde`): «Día N de 7», un paso por día (`CN_PASOS`), 7 puntos (bajando / sin / gris si fumaste). «He fumado» no lo reinicia («Seguimos desde aquí»).
+  - **Dejado:** «N días sin.» de los últimos 30 (sin rachas: una vez no borra nada).
+  - **Recaída puntual:** 1-3 días en 7 viniendo de dejarlo (como mucho 1 día con sesión en los 14 de antes) → «Bueno, no pasa nada… Pero no sigas: mañana, ninguna.», sin volver al plan; «Vale» lo cierra. Con 4 de 7 vuelve la propuesta.
+  - **Con 1-3 días sin venir de dejarlo** («poco»): los puntos y «Cuando quieras: 7 días para dejarlo».
+  - «He fumado» = dos toques (Hoy / Ayer), sin formulario; copia forma y cantidad de la última. «Tengo ganas» = 15 minutos que bajan y «Ya han pasado» (apunta unas ganas aguantadas).
+  - **Contraseña obligatoria:** sin ella, entrar pide ponerla («Cancelar» vuelve a Hoy); la de siempre (sal + SHA-256, 5 fallos = 30 s, se cierra al salir). 🔒 arriba: «Cambiar la contraseña» y «4:20 fuera de la copia». Si se olvida: Ajustes → Copia de seguridad → «Quitar la contraseña…» (al volver pide una nueva).
+- **Se quita (de la pantalla; los datos se quedan):** las 4 pestañas, el formulario de sesión, mg de THC, gasto, objetivo, hora tope, potencia, la gráfica de la semana, T-break, CUDIT-R, Descanso, «¿qué tal te sentó?», la banda y el interruptor «Privado» (la contraseña obligatoria ya tapa; `priv.privado` guardado sigue tapando). En el asistente: fuera la tarjeta del T-break y «Ver ciencia»; «Siete de siete» pasa a «Has fumado N de 7 días · Verlo».
+- **No se toca:** lo neutro fuera de la sección (`cnTapado`, `cnOculta`, «Plan privado»), `consumo.ses`, ganas, CUDIT y T-break guardados, la copia y `normalize` (añade `plan.dejar`, `dejarNo`, `vale`).
+- **Descartado:** opción A (sin puntos); umbral 3 de 7; plan de 14 días; contraseña opcional; un aviso neutro en Hoy (con la contraseña puesta Hoy no habla del 4:20).
+- **Supuestos:** «recaída» = venías de dejarlo si en los 14 días anteriores a la última semana hubo como mucho un día con sesión; los días sin datos cuentan como «sin»; los puntos grises (nunca rojos) son los días con sesión.
+- **Pruebas:** 695-698. **Cae con X revertido:** sin la rama «sin contraseña → ponla» de `cnPinPantalla` cae la 695; sin la rama de recaída de `cnEstado` cae la 697; sin la de época caen 696 y 697; con la portada vieja caen las cuatro (comprobado).

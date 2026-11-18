@@ -1,0 +1,201 @@
+<title>4:20 para dejarlo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Maqueta: un móvil por estado, apilados; arriba se elige A o B. Piel de styles.css (mismos tokens). */
+:root{
+  --bg:#eef2f9; --card:#ffffff; --ink:#0d1729; --ink2:#5a6d8a; --line:#dbe4f2;
+  --brand:#2563eb; --ok:#15803d; --calma:#0e7490; --suave:#e6ecf7;
+  --f:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#070b14; --card:#111a2b; --ink:#e9f2ff; --ink2:#8fa6c6; --line:#1e2b44;
+  --brand:#38e1ff; --ok:#34d399; --calma:#67e8f9; --suave:#0b1120; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#070b14; --card:#111a2b; --ink:#e9f2ff; --ink2:#8fa6c6; --line:#1e2b44;
+  --brand:#38e1ff; --ok:#34d399; --calma:#67e8f9; --suave:#0b1120; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:18px}
+h1{font-size:22px;margin:0;text-wrap:balance}
+.intro{color:var(--ink2);margin:0;max-width:62ch}
+.elige{display:flex;gap:8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:8px;z-index:5}
+.elige button{flex:1;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 15px var(--f);cursor:pointer}
+.elige button[aria-pressed="true"]{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand) inset}
+.elige button:focus-visible,.m button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.desc{margin:0;color:var(--ink2)}
+.moviles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.est{display:grid;gap:6px;min-width:0}
+.est>b{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.est>small{font-size:13px;color:var(--ink2)}
+/* el móvil */
+.m{background:var(--bg);border:1px solid var(--line);border-radius:26px;padding:18px 18px 22px;min-height:520px;
+  display:flex;flex-direction:column;max-width:412px;width:100%;box-shadow:0 14px 30px -24px rgba(0,0,0,.6)}
+.cab{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px}
+.cab .sp{flex:1}
+.cand{font-size:13px;font-weight:500;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;min-height:32px;display:inline-flex;align-items:center;gap:4px}
+.cuerpo{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding-block:20px}
+.eti{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0}
+.grande{font-size:30px;line-height:1.15;font-weight:700;margin:0;text-wrap:balance}
+.sub{color:var(--ink2);margin:0;font-size:15px;max-width:34ch}
+.pie{display:grid;gap:10px}
+.btn{min-height:52px;border-radius:14px;border:0;background:var(--brand);color:var(--card);font:700 16px var(--f);cursor:pointer;width:100%}
+.btn.sec{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.lnk{background:none;border:0;color:var(--ink2);font:500 15px var(--f);min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+/* B: puntos */
+.puntos{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.puntos i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);display:block}
+.puntos i.h{background:var(--ok);border-color:var(--ok)}            /* día hecho sin */
+.puntos i.m{background:linear-gradient(90deg,var(--calma) 50%,transparent 50%);border-color:var(--calma)}  /* día de bajar */
+.puntos i.f{background:var(--ink2);border-color:var(--ink2);opacity:.55} /* día con: gris, no rojo */
+.puntos i.hoy{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--brand)}
+.puntos.mes i{width:12px;height:12px;border-radius:3px}
+.leyenda{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
+.leyenda span{display:inline-flex;align-items:center;gap:5px}
+.leyenda i{width:11px;height:11px;border-radius:50%;display:inline-block}
+/* PIN */
+.pin{display:flex;gap:14px;justify-content:center;margin:6px 0}
+.pin i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink2)}
+.pin i.l{background:var(--ink)}
+.tec{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tec button{min-height:56px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 20px var(--f)}
+/* hoja «He fumado» */
+.hoja{margin-top:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:10px}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.velo{opacity:.35}
+.lista{margin:0;padding-left:20px;display:grid;gap:4px}
+.lista li{max-width:70ch}
+section.tx{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:grid;gap:8px}
+section.tx h2{font-size:17px;margin:0}
+</style>
+
+<div class="wrap">
+  <h1>4:20 · para dejarlo</h1>
+  <p class="intro">Dos maneras de la misma idea. La app mira lo que apuntas y te enseña <b>una sola cosa</b>: proponerte dejarlo, el paso de hoy, cuántos días llevas sin, o un «no pasa nada» si recaes una vez. Elige A o B arriba; los textos son los mismos en las dos.</p>
+
+  <div class="elige" role="group" aria-label="Opción">
+    <button id="bA" aria-pressed="true" onclick="ver('a')">A · Una frase</button>
+    <button id="bB" aria-pressed="false" onclick="ver('b')">B · El camino</button>
+  </div>
+  <p class="desc" id="dA">A: casi nada en pantalla. Una frase grande, un botón y un enlace pequeño.</p>
+  <p class="desc" id="dB" hidden>B: lo mismo, más una fila de puntos que enseña el camino (los 14 días del plan o los últimos 30). Los días con son grises, nunca rojos.</p>
+
+  <!-- ===================== A ===================== -->
+  <div class="moviles" id="A">
+    <div class="est"><b>1 · Época de fumar</b><small>5 días con sesión en los últimos 7</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Últimos 7 días</p><p class="grande">Has fumado 5 de 7 días.</p>
+          <p class="sub">Buen momento para dejarlo. Te propongo 14 días: 3 bajando y 11 sin.</p></div>
+        <div class="pie"><button class="btn">Empezar hoy</button><button class="lnk">Ahora no</button></div></div></div>
+
+    <div class="est"><b>2 · Plan · bajando</b><small>días 1 a 3</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Día 2 de 14</p><p class="grande">Hoy: como mucho una, después de cenar.</p>
+          <p class="sub">Mañana es el último día de bajar.</p></div>
+        <div class="pie"><button class="btn sec">Tengo ganas</button><button class="lnk">He fumado</button></div></div></div>
+
+    <div class="est"><b>2 · Plan · sin</b><small>días 4 a 14</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Día 6 de 14</p><p class="grande">Hoy: ninguna.</p>
+          <p class="sub">Si duermes peor estos días, es normal: pasa en una semana.</p></div>
+        <div class="pie"><button class="btn">Tengo ganas</button><button class="lnk">He fumado</button></div></div></div>
+
+    <div class="est"><b>2 · «Tengo ganas»</b><small>al tocar el botón</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Las ganas suben y bajan solas</p><p class="grande">14:32</p>
+          <p class="sub">Sal a andar o bebe agua. En 15 minutos casi siempre han bajado.</p></div>
+        <div class="pie"><button class="btn">Ya han pasado</button><button class="lnk">Cerrar</button></div></div></div>
+
+    <div class="est"><b>3 · Dejado</b><small>acabado el plan, o 7 días sin</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Últimos 30 días</p><p class="grande">29 días sin.</p>
+          <p class="sub">Nada que hacer hoy.</p></div>
+        <div class="pie"><button class="lnk">He fumado</button></div></div></div>
+
+    <div class="est"><b>4 · Recaída puntual</b><small>justo después de «He fumado», estando dejado</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Apuntada · hoy</p><p class="grande">Bueno, no pasa nada.</p>
+          <p class="sub">Una vez no te devuelve al principio. Pero no sigas: mañana, ninguna.</p></div>
+        <div class="pie"><button class="btn">Vale</button></div></div></div>
+
+    <div class="est"><b>«He fumado»</b><small>un toque, sin formulario</small>
+      <div class="m"><div class="cab velo">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo velo"><p class="eti">Día 6 de 14</p><p class="grande">Hoy: ninguna.</p></div>
+        <div class="hoja"><b>¿Cuándo?</b><div class="dos"><button class="btn sec">Hoy</button><button class="btn sec">Ayer</button></div><button class="lnk">Cancelar</button></div></div></div>
+
+    <div class="est"><b>Contraseña</b><small>al entrar, si está puesta</small>
+      <div class="m"><div class="cab">🔒 Privado</div>
+        <div class="cuerpo" style="justify-content:flex-start;padding-top:28px"><p class="grande" style="font-size:22px;text-align:center">Contraseña</p>
+          <div class="pin"><i class="l"></i><i class="l"></i><i></i><i></i></div></div>
+        <div class="tec"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button style="font-size:14px">¿La olvidaste?</button><button>0</button><button>⌫</button></div></div></div>
+  </div>
+
+  <!-- ===================== B ===================== -->
+  <div class="moviles" id="B" hidden>
+    <div class="est"><b>1 · Época de fumar</b><small>5 días con sesión en los últimos 7</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Últimos 7 días</p>
+          <div class="puntos"><i class="f"></i><i class="f"></i><i></i><i class="f"></i><i class="f"></i><i></i><i class="f hoy"></i></div>
+          <p class="grande">Has fumado 5 de 7 días.</p>
+          <p class="sub">Buen momento para dejarlo. Te propongo 14 días: 3 bajando y 11 sin.</p></div>
+        <div class="pie"><button class="btn">Empezar hoy</button><button class="lnk">Ahora no</button></div></div></div>
+
+    <div class="est"><b>2 · Plan · sin</b><small>día 6 de 14</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Día 6 de 14</p>
+          <div class="puntos"><i class="m"></i><i class="m"></i><i class="m"></i><i class="h"></i><i class="h"></i><i class="hoy"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="leyenda"><span><i style="background:var(--calma)"></i>bajando</span><span><i style="background:var(--ok)"></i>sin</span></div>
+          <p class="grande">Hoy: ninguna.</p>
+          <p class="sub">Si duermes peor estos días, es normal: pasa en una semana.</p></div>
+        <div class="pie"><button class="btn">Tengo ganas</button><button class="lnk">He fumado</button></div></div></div>
+
+    <div class="est"><b>3 · Dejado</b><small>acabado el plan, o 7 días sin</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Últimos 30 días</p>
+          <div class="puntos mes"><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="f"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h hoy"></i></div>
+          <p class="grande">29 días sin.</p>
+          <p class="sub">Nada que hacer hoy.</p></div>
+        <div class="pie"><button class="lnk">He fumado</button></div></div></div>
+
+    <div class="est"><b>4 · Recaída puntual</b><small>justo después de «He fumado», estando dejado</small>
+      <div class="m"><div class="cab">🌿 4:20<span class="sp"></span><span class="cand">🔒</span></div>
+        <div class="cuerpo"><p class="eti">Últimos 30 días</p>
+          <div class="puntos mes"><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="h"></i><i class="f hoy"></i></div>
+          <p class="grande">Bueno, no pasa nada.</p>
+          <p class="sub">Una vez no te devuelve al principio: siguen siendo 29 de 30. Pero no sigas: mañana, ninguna.</p></div>
+        <div class="pie"><button class="btn">Vale</button></div></div></div>
+
+    <div class="est"><b>Contraseña</b><small>igual que en A</small>
+      <div class="m"><div class="cab">🔒 Privado</div>
+        <div class="cuerpo" style="justify-content:flex-start;padding-top:28px"><p class="grande" style="font-size:22px;text-align:center">Contraseña</p>
+          <div class="pin"><i class="l"></i><i class="l"></i><i></i><i></i></div></div>
+        <div class="tec"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button style="font-size:14px">¿La olvidaste?</button><button>0</button><button>⌫</button></div></div></div>
+  </div>
+
+  <section class="tx"><h2>Cómo decide la app en qué estado estás (valores por defecto)</h2>
+    <ul class="lista">
+      <li><b>Época de fumar:</b> 3 días o más con sesión en los últimos 7. Te propone el plan; si dices «Ahora no», vuelve a proponerlo a los 3 días.</li>
+      <li><b>Plan:</b> 14 días. Días 1-3, como mucho una y tarde; días 4-14, ninguna. Un paso por día. Si fumas en el plan, no se reinicia: «seguimos desde aquí».</li>
+      <li><b>Dejado:</b> al acabar el plan, o con 7 días seguidos sin. Cuenta los días sin de los últimos 30: una vez no borra nada.</li>
+      <li><b>Recaída puntual:</b> estando dejado, 1 o 2 días con sesión en 7. Sale el «no pasa nada, pero no sigas». Si llega a 3 en 7, vuelve a ser época y te propone el plan otra vez.</li>
+    </ul>
+  </section>
+
+  <section class="tx"><h2>Lo que se quita de la pantalla (los datos se quedan guardados)</h2>
+    <ul class="lista">
+      <li>Las 4 pestañas (Hoy, Cómo me afecta, Ciencia, Plan): queda una sola pantalla.</li>
+      <li>El formulario de cada sesión (forma, cantidad, sitio, por qué, con tabaco), los mg de THC, el gasto, el objetivo semanal, la gráfica de la semana, el T-break, el test CUDIT y «¿qué tal te sentó?».</li>
+      <li>Lo que ya tienes apuntado no se borra: sigue en el móvil y en la copia de seguridad, y cuenta para saber en qué estado estás.</li>
+      <li>Se queda: la contraseña (la de ahora, con «Cambiar» y «Quitar»), «Privado» (4:20 tapado fuera de aquí) y el 🔒 de arriba para llegar a eso.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+function ver(o){
+  const a=o==='a';
+  document.getElementById('A').hidden=!a;document.getElementById('B').hidden=a;
+  document.getElementById('dA').hidden=!a;document.getElementById('dB').hidden=a;
+  document.getElementById('bA').setAttribute('aria-pressed',a);document.getElementById('bB').setAttribute('aria-pressed',!a);
+}
+</script>

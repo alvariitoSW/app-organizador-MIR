@@ -969,6 +969,7 @@ function normalize(o){
     c.plan={pot:[10,15,20].indexOf(+pl.pot)>=0?+pl.pot:15,ventana:/^\d{2}:\d{2}$/.test(pl.ventana||'')?pl.ventana:'',guardia:pl.guardia!==false,
       tb:pl.tb&&esFecha(pl.tb.desde||'')&&[3,7,28].indexOf(+pl.tb.dias)>=0?{desde:pl.tb.desde,dias:+pl.tb.dias}:null,
       tbHist:(Array.isArray(pl.tbHist)?pl.tbHist:[]).filter(function(h){return h&&esFecha(h.desde||'');}).slice(-30).map(function(h){return {desde:h.desde,dias:+h.dias||0,roto:!!h.roto};}),
+      dejar:pl.dejar&&esFecha(pl.dejar.desde||'')?{desde:pl.dejar.desde}:null,dejarNo:esFecha(pl.dejarNo||'')?pl.dejarNo:'',vale:esFecha(pl.vale||'')?pl.vale:'',
       desc:pl.desc&&esFecha(pl.desc.desde||'')?{desde:pl.desc.desde,dias:[7,14,21].indexOf(+pl.desc.dias)>=0?+pl.desc.dias:14,mitad:!!pl.desc.mitad,base:Math.max(0,Math.min(99,+pl.desc.base||0))}:null};
     const pv0=c.priv||{};c.priv={oculto:!!pv0.oculto,fueraCopia:!!pv0.fueraCopia,privado:pv0.privado===true};   /* C6: «Privado» (tapa sin PIN): campo añadido, no migración */
     /* la cortina del 4:20: solo sal y hash (nunca el PIN) */
@@ -5042,7 +5043,6 @@ function addFoodEntry(dateStr,opt){
   return r;}
 function deshacerCambio(){
   const u=_ultimoCambio;_ultimoCambio=null;if(!u)return 'nada que deshacer';
-  if(u.tipo==='priv'){consumoS().priv.privado=false;save();return 'deshecho: Privado quitado';}
   const l=foodLog(u.k);
   if(u.tipo==='add'){l.forEach(function(x){if(u.ids.indexOf(x.id)>=0){cocinadoDevuelve(x);if(FP_MINI[x.id])fpBorra(x.id);}});const q=l.filter(function(x){return u.ids.indexOf(x.id)<0;});const n=l.length-q.length;l.length=0;q.forEach(function(x){l.push(x);});save();return n?'deshecho: quitado':'ya no estaba';}
   if(u.e&&u.e.dishId)u.e.tap=cocinadoGasta(u.e.dishId,+u.e.rac||1);   /* vuelve la toma: vuelve a coger del táper */
@@ -12041,11 +12041,7 @@ function monchisCardHTML(sel){
    estimados; «tengo ganas» apunta las que aguantas; «Cómo me afecta» compara con mediana y con
    su n (sin n no hay barra); «Ciencia» explica la farmacología con tu dato al lado; «Plan» junta
    el objetivo, la hora tope, el T-break y el CUDIT-R. Sin sermones y todo en tu móvil. */
-const CN_FORMAS=[['dry','🌬️','Dry (vapo)'],['porro','🚬','Porro'],['comestible','🍪','Comestible']];
-const CN_CANT=[[0.1,'0,1 g'],[0.25,'0,2–0,3 g'],[0.5,'0,5 g+']];
-const CN_CTX=[['lloret','🌿','Lloretazo'],['casa','🏠','Casa'],['amigos','👥','Amigos']];
 const CN_MOT=[['relajar','😌','relajar'],['social','👥','social'],['aburr','🥱','aburrimiento'],['dormir','😴','dormir'],['dolor','🤕','dolor'],['costumbre','🔁','costumbre']];
-const CN_VISTAS=[['','Hoy'],['efectos','Cómo me afecta'],['ciencia','Ciencia'],['plan','Plan']];
 function consumoS(){if(!store.consumo||typeof store.consumo!=='object')store.consumo={};const c=store.consumo;
   if(!Array.isArray(c.ses))c.ses=[];if(!(+c.obj>=0))c.obj=4;if(!(+c.eurG>0))c.eurG=7;
   if(!Array.isArray(c.ganas))c.ganas=[];if(!Array.isArray(c.cudit))c.cudit=[];
@@ -12061,14 +12057,11 @@ function consumoDe(k){
   const ses=consumoS().ses,x=_cnIdx;
   if(!x||x.ses!==ses||x.n!==ses.length||x.t!==_renderTick){const m={};ses.forEach(function(q){(m[q.fecha]||(m[q.fecha]=[])).push(q);});_cnIdx={ses:ses,n:ses.length,t:_renderTick,m:m};}
   return _cnIdx.m[k]||[];}
-function cnSes(dias){const d=iso(addDays(new Date(),-(dias-1)));return consumoS().ses.filter(function(x){return x.fecha>=d;});}
-function cnDiasCon(dias){let n=0;for(let i=0;i<dias;i++)if(consumoDe(iso(addDays(new Date(),-i))).length)n++;return n;}
 function cnAguanto(g){return g.res!=='sesion';}   /* unas ganas que no acabaron en sesión */
 function suenoH(k){const t=suenoTotal(suenoReal(k));return t||null;}   /* horas dormidas, con la siesta */
 function estMinDe(desde,hasta){return estS().sesiones.filter(function(s){return s.fecha>=desde&&s.fecha<=(hasta||desde);}).reduce(function(a,s){return a+(+s.min||0);},0);}
 function logDe(k){return food().log[foodKey(k)]||[];}   /* leer sin crear el día vacío (foodLog lo crea) */
 function serie(desde,hasta,fn){const v=[];for(let d=parseDate(desde);iso(d)<=hasta;d=addDays(d,1)){const x=fn(iso(d));if(x!=null)v.push(x);}return {m:cnMediana(v),n:v.length};}
-const CN_DIA=[['0','Hoy'],['1','Ayer'],['2','Anteayer']];
 function cnFechaDe(o){
   /* el día de la sesión: hoy, ayer, anteayer o el que elijas (nunca en el futuro) */
   const hoy=iso(new Date());
@@ -12090,8 +12083,6 @@ function consumoApuntar(o){
      «me voy a dar un paseo» (antes solo se marcaba si no habías contestado, y siempre habías contestado) */
   const g0=c.ganas[0];if(g0&&g0.res!=='sesion'&&hoy&&d.getTime()-g0.ts<3*3600000)g0.res='sesion';
   save();return x;}
-function cnDiaTxt(k){const n=-diasHasta(k);
-  if(n===0)return 'hoy';if(n===1)return 'ayer';if(n===2)return 'anteayer';const d=parseDate(k);return DIA3[d.getDay()]+' '+d.getDate();}
 function consumoSemana(lunK){
   const l=parseDate(lunK),dias=[];let n=0,g=0,mg=0;
   for(let i=0;i<7;i++){const k=iso(addDays(l,i)),s=consumoDe(k);dias.push({k:k,n:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});n+=s.length;g+=dias[i].g;
@@ -12176,11 +12167,6 @@ function cnTB(){
   const finTB=iso(addDays(parseDate(tb.desde),tb.dias-1)),hastaK=iso(new Date())<finTB?iso(new Date()):finTB;
   const roto=consumoS().ses.some(function(x){return x.fecha>=tb.desde&&x.fecha<=hastaK;});
   return {desde:tb.desde,dias:tb.dias,dia:dia,fin:dia>tb.dias,roto:roto};}
-function cnTBResumen(tb){
-  /* al acabar: las dos semanas de antes frente a los días del T-break */
-  const antesDe=iso(addDays(parseDate(tb.desde),-14)),antesA=iso(addDays(parseDate(tb.desde),-1)),fin=iso(addDays(parseDate(tb.desde),tb.dias-1));
-  const gan=function(de,a){return consumoS().ganas.filter(function(g){return g.fecha>=de&&g.fecha<=a;}).length;};
-  return {kss:[serie(antesDe,antesA,cnKss),serie(tb.desde,fin,cnKss)],sueno:[serie(antesDe,antesA,suenoH),serie(tb.desde,fin,suenoH)],ganas:[gan(antesDe,antesA),gan(tb.desde,fin)]};}
 /* ---------- CUDIT-R (Adamson 2010): 8 preguntas, 0–4 cada una ---------- */
 const CN_FREQ=['Nunca','Menos de una vez al mes','Cada mes','Cada semana','Cada día o casi'];
 const CUDIT=[
@@ -12193,13 +12179,7 @@ const CUDIT=[
   ['¿Cuántas veces consumes en situaciones de riesgo (conducir, máquinas, cuidar de alguien)?',CN_FREQ],
   ['¿Has pensado alguna vez en reducir o dejarlo?',['Nunca','Sí, pero no en los últimos 6 meses','Sí, en los últimos 6 meses']]];
 function cuditPuntos(r){return r.reduce(function(a,v,i){return a+(i===7?[0,2,4][v]||0:(+v||0));},0);}
-function cuditLectura(p){return p>=13?'13 o más: el cuestionario sugiere un trastorno por consumo probable':(p>=8?'8–12: el cuestionario lo cuenta como consumo de riesgo':'menos de 8: por debajo del umbral de riesgo');}
-function cuditToca(){const l=consumoS().cudit;return !l.length||l[l.length-1].fecha<iso(addDays(new Date(),-28));}
 /* ---------- pantallas ---------- */
-function cnCab(v){
-  return '<div class="subcab"><h2 class="subtit">🌿 4:20</h2></div>'+
-    (consumoS().priv.privado?'<div class="cnbanda" role="status"><div><b>Privado está activado</b><span>4:20 no sale en Hoy, ni en Más, ni en los avisos. Aquí dentro sí lo ves todo.</span></div><button class="btn s" data-a="cn-privado-quita">Quitar privado</button></div>':'')+
-    '<div class="cnvis" role="tablist">'+CN_VISTAS.map(function(x){return '<button role="tab" aria-selected="'+(v===x[0])+'" class="'+(v===x[0]?'on':'')+'" data-a="cn-vista" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';}
 /* ---------- la cortina (PIN de 4 cifras) y el descanso ----------
    La cortina tapa la sección ante quien coja el móvil; NO cifra nada. Se guarda sal + hash SHA-256, nunca el PIN.
    Abierta = en memoria (ui.cnAbierto): se cierra al salir de la sección, al cerrar la app o tras 2 min en segundo plano. */
@@ -12221,223 +12201,109 @@ async function cnPinPone(pin){const v=crypto.getRandomValues(new Uint8Array(16))
 async function cnPinSigue(P){
   /* con las 4 cifras puestas: según el paso, comprueba, pide el nuevo o lo guarda */
   const t=P.t;P.t='';P.mal=false;
-  if(P.modo==='entrar'||P.modo==='actual'||P.modo==='quita'){
-    if(await cnPinOk(t)){if(P.modo==='entrar'){ui.cnAbierto=true;ui.cnPin=null;ui.cnFallos=0;}else if(P.modo==='quita'){ui.cnPin=null;ui.cnFallos=0;cnPrivadoPon(false);}else P.modo='nuevo';}
+  if(P.modo==='entrar'||P.modo==='actual'){
+    if(await cnPinOk(t)){if(P.modo==='entrar'){ui.cnAbierto=true;ui.cnPin=null;ui.cnFallos=0;}else P.modo='nuevo';}
     else{P.mal=true;ui.cnFallos=(ui.cnFallos||0)+1;if(ui.cnFallos>=5){ui.cnBloq=Date.now()+30000;ui.cnFallos=0;}}
   }else if(P.modo==='nuevo'){P.nuevo=t;P.modo='repite';}
   else if(P.modo==='repite'){
-    if(t===P.nuevo){await cnPinPone(t);ui.cnAbierto=true;ui.cnPin=null;flash('Cortina puesta');}
+    if(t===P.nuevo){await cnPinPone(t);ui.cnAbierto=true;ui.cnPin=null;ui.cnAj=null;flash('Contraseña puesta');}
     else{P.mal=true;P.modo='nuevo';P.nuevo='';}}
   render();}
 function cnPinHTML(P){
-  const tit={entrar:'Escribe tu PIN para entrar',quita:'Escribe tu PIN para quitar «Privado»',actual:'Escribe tu PIN actual',nuevo:'Elige un PIN de 4 cifras',repite:'Repítelo para confirmar'}[P.modo]||'',n=P.t.length,
+  const tit={entrar:'Escribe tu contraseña para entrar',actual:'Escribe tu contraseña actual',nuevo:P.obl?'Pon una contraseña de 4 cifras para entrar':'Elige la contraseña nueva (4 cifras)',repite:'Repítela para confirmar'}[P.modo]||'',n=P.t.length,
     bloq=Date.now()<(ui.cnBloq||0);
-  return '<div class="grid mt cn"><div class="subcab"><h2 class="subtit">🌿 4:20</h2></div><div class="card cnpin">'+
+  return '<div class="grid mt cn"><div class="subcab"><h2 class="subtit">🔒 Privado</h2></div><div class="card cnpin">'+
     '<p class="cnpt">'+esc(tit)+'</p><div class="cnpd" role="img" aria-label="'+n+' de 4 cifras">'+[0,1,2,3].map(function(i){return '<b'+(i<n?' class="f"':'')+'></b>';}).join('')+'</div>'+
-    (bloq?'<p class="mini" role="alert">Demasiados intentos. Espera un momento y prueba otra vez.</p>':(P.mal?'<p class="mini" role="alert">'+(P.modo==='nuevo'?'No coincidían. Elige el PIN otra vez.':'Ese no es. Prueba otra vez.')+'</p>':''))+
+    (bloq?'<p class="mini" role="alert">Demasiados intentos. Espera un momento y prueba otra vez.</p>':(P.mal?'<p class="mini" role="alert">'+(P.modo==='nuevo'?'No coincidían. Elígela otra vez.':'Esa no es. Prueba otra vez.')+'</p>':''))+
     '<div class="cnpad">'+[1,2,3,4,5,6,7,8,9].map(function(d){return '<button data-a="cn-pin" data-v="'+d+'" aria-label="'+d+'">'+d+'</button>';}).join('')+
       '<span></span><button data-a="cn-pin" data-v="0" aria-label="0">0</button><button data-a="cn-pin" data-v="x" aria-label="Borrar">⌫</button></div>'+
-    '<p class="mini" style="margin-top:14px">Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>'+
-    (P.modo==='entrar'?'<details class="cnolv"><summary>¿Lo olvidaste?</summary><p class="mini">Se quita desde Ajustes → Copia de seguridad. No pierdes ningún dato.</p></details>':
+    '<p class="mini" style="margin-top:14px">'+(P.obl?'4:20 va siempre con contraseña. ':'')+'Tapa la sección ante quien coja el móvil; no cifra tus datos.</p>'+
+    (P.modo==='entrar'?'<details class="cnolv"><summary>¿La olvidaste?</summary><p class="mini">Se quita desde Ajustes → Copia de seguridad. No pierdes ningún dato.</p></details>':
       '<button class="btn s" data-a="cn-pin-x">Cancelar</button>')+'</div></div>';}
-/* «Privado»: tapa a la vista, sin PIN. Se pone y se quita desde el interruptor (4:20 → Plan), la banda de dentro y «Deshacer» (unos segundos).
-   Con PIN puesto, quitarlo desde la banda o el interruptor pide el PIN; «Deshacer» no (acabas de ponerlo). */
-function cnPrivadoPon(on,deshacible){
-  const pv=consumoS().priv;pv.privado=!!on;
-  if(on&&deshacible)_ultimoCambio={tipo:'priv',ts:Date.now()};
-  save();flash(on?'Privado puesto: tapado en Hoy, en Más y en los avisos':'Privado quitado');render();}
-function cnPrivadoQuita(){
-  if(cnPin()){ui.cnPin={modo:'quita',t:''};render();return;}
-  cnPrivadoPon(false);}
 function cnPinPantalla(){
-  /* ¿hay que pintar el teclado en vez de la sección? */
+  /* ¿hay que pintar el teclado en vez de la sección? La contraseña es obligatoria (18/11): sin ella, se pone al entrar */
   if(cnPin()&&!ui.cnAbierto)ui.cnPin=ui.cnPin&&ui.cnPin.modo==='entrar'?ui.cnPin:{modo:'entrar',t:''};
+  else if(!cnPin()&&!(ui.cnPin&&(ui.cnPin.modo==='nuevo'||ui.cnPin.modo==='repite')))ui.cnPin={modo:'nuevo',t:'',obl:true};
   if(!ui.cnPin)return false;
   $('#main').innerHTML=cnPinHTML(ui.cnPin);return true;}
-/* el descanso: 7, 14 o 21 días, o bajar a la mitad (14 días con la mitad de tu media de antes) */
-function cnDesc(){
-  const d=consumoS().plan.desc;if(!d||!esFecha(d.desde))return null;
-  const dias=d.dias||14,dia=1-diasHasta(d.desde),ses=consumoS().ses.filter(function(x){return x.fecha>=d.desde;}),sem=cnSes(7).filter(function(x){return x.fecha>=d.desde;}).length;
-  const meta=d.mitad?Math.round(d.base/2*10)/10:0,pasa=d.mitad?sem>meta:ses.length>0;
-  return {desde:d.desde,dias:dias,mitad:!!d.mitad,base:d.base||0,meta:meta,dia:Math.max(1,Math.min(dia,dias)),fin:dia>dias,n:ses.length,sem:sem,pasa:pasa};}
-function cnDescHTML(){
-  const D=cnDesc(),btn=function(v,t){return '<button data-a="cn-desc" data-v="'+v+'">'+t+'</button>';};
-  if(!D)return '<div class="card"><div class="cap">DESCANSO</div><p class="cntx">Unos días con menos o sin, a tu ritmo.</p>'+
-    '<div class="cnseg c2">'+btn(7,'7 días')+btn(14,'14 días')+btn(21,'21 días')+btn('mitad','Bajar a la mitad')+'</div>'+
-    '<p class="cntx">Los primeros 7 días al bajar se duerme peor; es normal y pasa.</p></div>';
-  return '<div class="card cndesc"><div class="cap">DESCANSO</div>'+
-    '<p class="cnbig">'+(D.fin?'Terminaste los '+D.dias+' días':'Día '+D.dia+' de '+D.dias)+'</p>'+
-    '<div class="cnprog" role="img" aria-label="'+D.dia+' de '+D.dias+' días"><i style="width:'+Math.round(D.dia/D.dias*100)+'%"></i></div>'+
-    (D.mitad?'<p class="cntx">Tu media de antes: '+String(D.base).replace('.',',')+' sesiones por semana. Tu mitad: '+String(D.meta).replace('.',',')+'. Esta semana: '+D.sem+'.</p>':'')+
-    (D.pasa?'<p class="cntx">Recaer no borra nada: seguimos desde aquí.</p>':'<p class="cntx">Cada día cuenta. Sigues bien.</p>')+
-    (D.fin?'':'<p class="cntx">Los primeros 7 días al bajar se duerme peor; es normal y pasa.</p>')+
-    '<div class="cap" style="margin-top:10px">PARA DORMIR MEJOR</div><ul class="cnul"><li><b>Rutina:</b> misma hora de cama, aunque tardes en dormirte.</li><li><b>Luz:</b> sal a la calle por la mañana; por la noche, luz baja.</li><li><b>Sin pantallas</b> desde 45 min antes de la cama.</li></ul>'+
-    '<button class="btn" data-a="cn-desc-fin">'+(D.fin?'Cerrar':'Dejarlo por ahora')+'</button>'+(D.fin?'':'<p class="cntx">Sin culpa: cuando quieras, empiezas otro.</p>')+'</div>';}
+/* ---------- 4:20 reinventado (18/11/2026): una pantalla, enfocada en dejarlo ----------
+   «Muy minimalista y enfocada en dejarlo». La app mira lo apuntado y enseña UNA cosa:
+   época de fumar (4+ días con sesión en los últimos 7) → te propone 7 días para dejarlo; el plan (2 días
+   bajando + 5 sin, un paso por día; fumar no lo reinicia); dejado (días sin de los últimos 30: una vez no
+   borra nada); recaída puntual (1-3 días en 7 viniendo de dejarlo) → «no pasa nada, pero no sigas», sin
+   volver al plan salvo que llegue a 4 de 7. Lo apuntado antes (forma, g, motivo, T-break, CUDIT) se conserva. */
+const CN_EPOCA=4,CN_PLAN_D=7,CN_PLAN_BAJA=2;
+const CN_PASOS=[   /* día del plan → [lo de hoy, una frase] */
+  ['Hoy: como mucho una, después de cenar.','Mañana, igual. Luego, ninguna.'],
+  ['Hoy: como mucho una, después de cenar.','Mañana empieza lo de ninguna.'],
+  ['Hoy: ninguna.','Las ganas suben y bajan solas: el pico dura 15–20 minutos.'],
+  ['Hoy: ninguna.','Si duermes peor estos días, es normal: pasa en una semana.'],
+  ['Hoy: ninguna.','Si duermes peor estos días, es normal: pasa en una semana.'],
+  ['Hoy: ninguna.','Ya casi.'],
+  ['Hoy: ninguna. Último día.','Mañana ya lo has dejado.']];
+function cnDiasConEntre(a,b){let n=0;for(let i=a;i<=b;i++)if(consumoDe(iso(addDays(new Date(),-i))).length)n++;return n;}   /* días con sesión entre hace a y hace b días (0 = hoy) */
+function cnPlanDejar(){
+  const d=consumoS().plan.dejar;if(!d||!esFecha(d.desde))return null;
+  const dia=1-diasHasta(d.desde);return {desde:d.desde,dia:dia,activo:dia>=1&&dia<=CN_PLAN_D,hecho:dia>CN_PLAN_D};}
+function cnEstado(){
+  /* en qué estado estás, solo por lo apuntado: plan · epoca · poco · recaida · dejado */
+  const c=consumoS(),p=c.plan,hoyK=iso(new Date()),d7=cnDiasConEntre(0,6),P=cnPlanDejar();
+  if(P&&P.activo)return {e:'plan',dia:P.dia,desde:P.desde,d7:d7};
+  if(d7>=CN_EPOCA)return {e:'epoca',d7:d7,luego:!!(p.dejarNo&&p.dejarNo>=hoyK)};
+  const ult=c.ses.reduce(function(m,x){return x.fecha>m?x.fecha:m;},'');
+  if(d7&&cnDiasConEntre(7,20)<=1){if(!(p.vale&&p.vale>=ult))return {e:'recaida',d7:d7,sin30:30-cnDiasConEntre(0,29)};}   /* venías de dejarlo */
+  else if(d7)return {e:'poco',d7:d7};
+  return {e:'dejado',d7:d7,sin30:30-cnDiasConEntre(0,29),nada:!c.ses.length,planHecho:!!(P&&P.hecho&&P.dia<=CN_PLAN_D+7)};}
+function cnPuntosHTML(n,mes){
+  /* los últimos n días, del más viejo a hoy: gris el día con (nunca rojo); en el mes, verde el día sin */
+  let h='',con=0;const hoyK=iso(new Date());
+  for(let i=n-1;i>=0;i--){const k=iso(addDays(new Date(),-i)),f=consumoDe(k).length>0;if(f)con++;
+    h+='<i class="'+(f?'f':(mes?'h':''))+(k===hoyK?' hoy':'')+'"></i>';}
+  return '<div class="cnpts'+(mes?' mes':'')+'" role="img" aria-label="'+(n-con)+' de '+n+' días sin">'+h+'</div>';}
+function cnPuntosPlan(desde){
+  let h='';const hoyK=iso(new Date());
+  for(let i=0;i<CN_PLAN_D;i++){const k=iso(addDays(parseDate(desde),i)),f=consumoDe(k).length>0;
+    h+='<i class="'+(k>hoyK?'':(f?'f':(k===hoyK?'':(i<CN_PLAN_BAJA?'m':'h'))))+(k===hoyK?' hoy':'')+'"></i>';}
+  return '<div class="cnpts" role="img" aria-label="los '+CN_PLAN_D+' días del plan">'+h+'</div>'+
+    '<div class="cnley"><span><i class="m"></i>bajando</span><span><i class="h"></i>sin</span></div>';}
+function cnRelojTxt(){const G=ui.cnGanas;if(!G)return '';const s=Math.max(0,900-Math.floor((Date.now()-(G.t0||Date.now()))/1000));return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
+let _cnReloj=null;
+function cnRelojVa(){clearInterval(_cnReloj);_cnReloj=setInterval(function(){const el=document.getElementById('cnReloj');
+  if(!el||!ui.cnGanas){clearInterval(_cnReloj);_cnReloj=null;return;}el.textContent=cnRelojTxt();},1000);}
 function renderConsumo(){
   if(cnPinPantalla())return;
-  const v=ui.cnVista||'';
-  if(v==='efectos')return renderConsumoEfectos();
-  if(v==='ciencia')return renderConsumoCiencia();
-  if(v==='plan')return renderConsumoPlan();
-  const c=consumoS(),lun=iso(mondayOf(new Date())),S=consumoSemana(lun),f=ui.cnF||(ui.cnF={forma:'dry',g:0.25,ctx:lloretDe(iso(new Date()))&&new Date().getHours()>=19?'lloret':'casa',tabaco:false,motivo:c.ultMotivo||''});   /* el Lloretazo es por la noche: por la mañana, «Casa» */
-  if(f.motivo==null)f.motivo=c.ultMotivo||'';
-  const guardiaMan=c.plan.guardia&&esDiaGuardia(iso(addDays(new Date(),1)));
-  const desde=iso(addDays(new Date(),-6)),recS=c.ses.filter(function(x){return x.fecha>=desde;}),max=Math.max(2,Math.max.apply(null,S.dias.map(function(d){return d.n;})));
-  const seg=function(lista,key,cls){return '<div class="cnseg'+(cls?' '+cls:'')+'">'+lista.map(function(x){const on=String(f[key])===String(x[0]);
-    return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="'+key+'" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+(x.length>2?x[1]+' '+x[2]:x[1])+'</button>';}).join('')+'</div>';};
-  const sin=consumoSin(),tb=cnTB(),ll=cnLloret(iso(new Date()).slice(0,7)),aguant=cnGanasSemana().filter(cnAguanto).length;
-  /* pasada la medianoche también es tarde (con tope a las 23:00, a las 00:30 llevas hora y media) */
-  const vt=c.plan.ventana?mins(c.plan.ventana):null,nt=hoyNow(true);
-  const tarde=vt!=null&&(nt>=vt||(vt>=12*60&&nt<6*60));
-  /* ¿qué tal te sentó la última? (a partir de 2 h después, o al día siguiente) */
-  const pend=c.ses.filter(function(x){return !x.sento&&x.fecha>=iso(addDays(new Date(),-2))&&(x.fecha<iso(new Date())||(x.ts&&Date.now()-x.ts>2*3600000));})[0];
-  const G=ui.cnGanas;
-  const cnT=cnTarjeta(iso(new Date()));
-  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('')+(cnT?'<div class="card asist">'+asistTjHTML(cnT,'cn')+'</div>':'')+
-    '<div class="mskpi"><div><b class="'+(c.obj&&S.n>c.obj?'ex':'')+'">'+S.n+'</b><span>sesiones esta semana'+(c.obj?' · objetivo ≤ '+c.obj:'')+'</span></div>'+
-      '<div><b>'+(S.mg||0)+' mg</b><span>THC esta semana · '+String(S.g).replace('.',',')+' g</span></div>'+
-      '<div><b>'+sin+'</b><span>'+(sin===1?'día sin':'días seguidos sin')+(sin>=2?' · tolerancia −'+cnTolerancia(sin)+' %':'')+'</span></div></div>'+
-    (cnDesc()&&!cnDesc().fin?'<button class="card cndl" data-a="cn-vista" data-v="plan">Descanso · Día '+cnDesc().dia+' de '+cnDesc().dias+'</button>':'')+
-    (tb&&!tb.fin?'<div class="card cntb"><b>T-break · día '+tb.dia+' de '+tb.dias+'</b>'+(tb.roto?' <span class="mini">(con alguna sesión: sigue contando)</span>':'')+'<p class="mini" style="margin:4px 0 0">'+esc(cnAbstinencia(tb.dia))+'</p></div>':
-      (sin>=1&&!tb?'<p class="mini cnlinea">'+esc(cnAbstinencia(sin))+'</p>':''))+
-    (pend?'<div class="card cnsento"><span>¿Qué tal te sentó la de '+esc(cnDiaTxt(pend.fecha)+(pend.hora?' '+pend.hora:''))+'?</span><div class="cnseg c5">'+[1,2,3,4,5].map(function(n){
-      return '<button data-a="cn-sento" data-id="'+esc(pend.id)+'" data-v="'+n+'" aria-label="'+n+' de 5">'+ANIMO[n]+'</button>';}).join('')+'</div></div>':'')+
-    '<div class="card"><div class="row"><span class="cap">APUNTAR UNA SESIÓN</span><span class="sp"></span><button class="btn s" data-a="cn-ganas">'+(G?'cerrar':'tengo ganas')+'</button></div>'+
-      (G?'<div class="cnganas"><p class="mini" style="margin:6px 0">Las ganas suben y bajan solas: el pico dura 15–20 min. Apúntalas y elige qué hacer.</p>'+
-        '<div class="cnseg">'+[[1,'Pocas'],[2,'Bastantes'],[3,'Muchas']].map(function(x){return '<button class="'+(G.int===x[0]?'on':'')+'" data-a="cn-ganas-int" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
-        '<div class="cnseg">'+[['paseo','🚶 Paseo 15 min'],['nadar','🏊 Nadar / moverme'],['comer','🥣 Comer algo']].map(function(x){return '<button data-a="cn-ganas-res" data-v="otra" data-q="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>'+
-        '<div class="row" style="margin-top:8px;gap:8px"><button class="btn p s" data-a="cn-ganas-res" data-v="aguante">Las he aguantado</button><span class="sp"></span><span class="mini">'+aguant+' aguantadas esta semana</span></div></div>':'')+
-      '<div class="cnseg cndia">'+CN_DIA.map(function(x){const on=!f.fecha&&String(f.dia||'0')===x[0];
-        return '<button class="'+(on?'on':'')+'" data-a="cn-f" data-k="dia" data-v="'+x[0]+'"'+(on?' aria-pressed="true"':'')+'>'+x[1]+'</button>';}).join('')+
-        '<label class="'+(f.fecha?'on':'')+'"><span>'+(f.fecha?esc(cnDiaTxt(f.fecha)):'otro día')+'</span><input type="date" data-a="cn-fecha" max="'+iso(new Date())+'" value="'+esc(f.fecha||'')+'" aria-label="otro día"></label></div>'+
-      seg(CN_FORMAS,'forma')+seg(CN_CANT,'g')+seg(CN_CTX,'ctx')+
-      '<div class="hcap" style="margin-top:8px">POR QUÉ</div>'+seg(CN_MOT,'motivo','mot')+
-      '<div class="row" style="margin-top:8px"><label class="mini cntab"><input type="checkbox" data-a="cn-tabaco"'+(f.tabaco?' checked':'')+'> con tabaco</label><span class="sp"></span>'+
-        '<span class="mini">≈ '+cnThc(f.g,f.forma)+' mg</span><button class="btn p" data-a="cn-add">Apuntar</button></div>'+
-      (guardiaMan?'<p class="mini" style="margin:6px 0 0;color:var(--warn)">Mañana tienes guardia: hoy, mejor no (o poco y pronto).</p>':'')+
-      (tarde?'<p class="mini" style="margin:6px 0 0;color:var(--warn)">Pasada tu hora tope ('+esc(c.plan.ventana)+').</p>':'')+
-      (recS.length?'<div class="hcap">ÚLTIMOS 7 DÍAS</div>'+recS.map(function(x){const F=CN_FORMAS.filter(function(q){return q[0]===x.forma;})[0]||CN_FORMAS[0],C=CN_CTX.filter(function(q){return q[0]===x.ctx;})[0]||CN_CTX[1],Mo=CN_MOT.filter(function(q){return q[0]===x.motivo;})[0];
-        return '<div class="cnrow"><span>'+F[1]+'</span><span>'+esc(cnDiaTxt(x.fecha)+(x.hora?' '+x.hora:''))+' · '+esc(F[2])+' · '+String(x.g).replace('.',',')+' g · '+C[1]+' '+esc(C[2])+(x.tabaco?' · con tabaco':'')+(Mo?' · '+Mo[1]+' '+esc(Mo[2]):'')+(x.sento?' · '+ANIMO[x.sento]:'')+'</span><button class="x" data-a="cn-del" data-id="'+esc(x.id)+'" aria-label="quitar">×</button></div>';}).join(''):'')+'</div>'+
-    '<div class="card"><div class="row"><span class="cap">LA SEMANA</span><span class="sp"></span><span class="mini">sesiones por día · '+S.n+(c.obj?' de ≤ '+c.obj:'')+'</span></div>'+
-      '<div class="d6m cnwk" role="img" aria-label="sesiones de cada día de la semana">'+S.dias.map(function(d){const pasa=c.obj&&d.n>Math.ceil(c.obj/3);
-        return '<div class="'+(!d.n?'v':(pasa?'x':''))+'"><em>'+(d.n||'')+'</em><i style="height:'+(d.n?Math.max(6,Math.round(d.n/max*60)):3)+'px"></i><span'+(d.k===iso(new Date())?' class="hoy"':'')+'>'+'LMXJVSD'[S.dias.indexOf(d)]+'</span></div>';}).join('')+'</div>'+
-      (ll.n?'<p class="mini" style="margin:8px 0 0">🌿 Lloretazos de este mes: <b style="color:var(--ink)">'+ll.n+'</b> · <b style="color:var(--ok)">'+ll.sin+' sin sesión</b></p>':'')+
-      '<div class="row" style="margin-top:8px"><span class="mini">objetivo semanal</span><span class="sp"></span><div class="d4step"><button data-a="cn-obj" data-d="-1" aria-label="bajar objetivo">−</button><b>≤ '+c.obj+'</b><button data-a="cn-obj" data-d="1" aria-label="subir objetivo">+</button></div></div></div>'+
-  '</div>';}
-function renderConsumoEfectos(){
-  const c=consumoS(),dias=ui.cnDias||28,F=cnAfecta(dias),hoy=new Date();
-  const meses=[];for(let i=2;i>=0;i--){const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1),ym=ahoMk(d.getFullYear(),d.getMonth());
-    const s=c.ses.filter(function(x){return x.fecha.slice(0,7)===ym;});meses.push({n:MON[d.getMonth()],s:s.length,g:s.reduce(function(a,x){return a+(+x.g||0);},0)});}
-  const mx=Math.max(1,Math.max.apply(null,meses.map(function(m){return m.s;})));
-  const fmtV=cnFmt;
-  const fmtD=function(f){if(f.dif==null)return '';if(Math.abs(f.dif)<0.05)return '= igual';const s=f.dif>0?'+':'−',a=Math.abs(f.dif);
-    return s+(f.u==='min'?(a>=60?fmtHM(a):Math.round(a)+' min'):(f.u==='%'?Math.round(a)+' pts':String(Math.round(a*10)/10).replace('.',',')+(f.u==='kcal'?' kcal':(f.u==='g'?' g':''))));};
-  const fila=function(f){const et=f.etq||['con sesión','sin'];
-    return '<div class="cnaf'+(f.ok?'':' nc')+'"><div class="t"><b>'+esc(f.t)+'</b><span>'+(f.ok?'<em class="'+(f.malo?'lo':'ok')+'">'+fmtD(f)+'</em> · ':'')+
-      esc(et[0])+' '+fmtV(f,f.mCon)+' <small>(n '+f.nCon+')</small> · '+esc(et[1])+' '+fmtV(f,f.mSin)+' <small>(n '+f.nSin+')</small></span></div>'+
-      (f.ok?'':'<span class="mini">aún no concluye</span>')+'</div>';};
-  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('efectos')+
-    '<div class="card"><div class="row"><span class="cap">LOS DÍAS CON SESIÓN, FRENTE A LOS DÍAS SIN</span><span class="sp"></span>'+
-      '<div class="cnseg c2">'+[[28,'4 sem'],[90,'3 meses']].map(function(x){return '<button class="'+(dias===x[0]?'on':'')+'" data-a="cn-dias" data-v="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div></div>'+
-      '<p class="mini" style="margin:4px 0 6px">Medianas, con cuántos días hay en cada lado (n). Con menos de 5 en uno, no se saca conclusión.</p>'+
-      F.map(fila).join('')+'</div>'+
-    '<div class="card"><div class="cap">MES A MES</div>'+meses.map(function(m){return '<div class="femic"><span>'+m.n+'</span><span class="t"><i style="width:'+Math.round(m.s/mx*100)+'%"></i></span><b>'+m.s+'</b></div>';}).join('')+
-      '<p class="mini" style="margin:6px 0 0">sesiones al mes · gasto aprox. '+fmtMil(meses[2].g*c.eurG)+' € este mes (a '+c.eurG+' €/g · '+
-        '<button class="dlink" data-a="cn-eur" data-d="-1">−</button> <button class="dlink" data-a="cn-eur" data-d="1">+</button>)</p></div>'+
-    '<p class="mini">Tus datos, sin interpretación clínica: no consejo médico. La ciencia de cada cosa, en «Ciencia».</p>'+
-  '</div>';}
-function cnTusDatos(s28,sin,dias7){
-  /* lo tuyo que acompaña a cada tarjeta de ciencia (s28, sin y dias7 los calcula la pantalla una vez) */
-  const c=consumoS(),hoy=new Date(),F=cnAfectaPor(28),S=consumoSemana(iso(mondayOf(hoy)));
-  const horas=s28.filter(function(x){return x.hora;}).map(function(x){let m=mins(x.hora);if(m<12*60)m+=1440;return m;});
-  const dry=s28.length?Math.round(100*s28.filter(function(x){return x.forma==='dry';}).length/s28.length):0;
-  const tab=s28.filter(function(x){return x.tabaco;}).length,dormir=s28.filter(function(x){return x.motivo==='dormir';}).length;
-  /* ¿hay menos sesiones los días que entrenas? */
-  let eC=0,eN=0,nC=0,nN=0;for(let i=1;i<=28;i++){const k=iso(addDays(hoy,-i)),e=gymHechoEn(k),s=consumoDe(k).length>0;if(e){eN++;if(s)eC++;}else{nN++;if(s)nC++;}}
-  const cu=c.cudit[c.cudit.length-1];
-  const dif=function(f,u){return f&&f.ok?(f.dif>0?'+':'')+(u==='min'?Math.round(f.dif)+' min':String(Math.round(f.dif*10)/10).replace('.',','))+' (n '+f.nCon+'/'+f.nSin+')':'';};
-  return {tiempos:s28.length?dry+' % de tus sesiones son dry · hora mediana '+(horas.length?hm(Math.round(cnMediana(horas))%1440):'—'):'',
-    tolerancia:sin>=1?'Llevas '+sin+' día'+(sin===1?'':'s')+' sin: tolerancia recuperada ~'+cnTolerancia(sin)+' % (si venías de uso frecuente).':'',
-    sueno:F.cama&&F.cama.ok?'Los días con sesión te acuestas '+dif(F.cama,'min')+(F.sueno&&F.sueno.ok?' y duermes '+dif(F.sueno,'min'):'')+'.'+(dormir?' '+dormir+' sesiones «para dormir» en 4 semanas.':''):(dormir?dormir+' sesiones «para dormir» en 4 semanas.':''),
-    abstinencia:sin>=1?cnAbstinencia(sin):'Si paras: el pico de lo incómodo cae entre el día 2 y el 6.',
-    cognicion:F.estudio&&F.estudio.ok?'Estudio al día siguiente: '+dif(F.estudio,'min')+' los días con sesión.':'',
-    dependencia:cu?'Tu último CUDIT-R: '+cu.p+' ('+fechaCorta(cu.fecha)+'). '+cuditLectura(cu.p)+'.':'Aún no lo has hecho: está en «Plan», son 8 toques.',
-    tabaco:s28.length?tab+' de '+s28.length+' sesiones con tabaco en 4 semanas.':'',
-    dosis:'Esta semana ≈ '+S.mg+' mg de THC ('+(Math.round(S.mg/5))+' unidades de 5 mg) con potencia '+c.plan.pot+' %.',
-    riesgo:'Días con sesión en los últimos 7: '+dias7+' de 7.',
-    apetito:F.monchis&&F.monchis.ok?'Monchis: '+dif(F.monchis)+' kcal los días con sesión.':'',
-    ejercicio:eN>=3&&nN>=3?'Los días que entrenas consumes '+Math.round(100*eC/eN)+' % de las veces; los que no, '+Math.round(100*nC/nN)+' %.':''};}
-const CN_CIENCIA=[
-  ['tiempos','⏱','Inhalado frente a comestible','Inhalado, el pico llega en 5–10 min y dura 2–4 h. Un comestible tarda 30–120 min en empezar y dura 4–8 h o más: es donde más fácil es pasarse, porque se repite antes de notar la primera.','Huestis, Chem Biodivers 2007; Grotenhermen, Clin Pharmacokinet 2003'],
-  ['tolerancia','📉','La tolerancia baja en 2–4 semanas','Con uso diario, los receptores CB1 bajan de densidad. A los 2 días sin empiezan a volver y a las 4 semanas casi del todo. «2–3 días sin» la bajan solo en parte.','Hirvonen, Mol Psychiatry 2012; D\'Souza, Biol Psychiatry 2016'],
-  ['sueno','😴','Ayuda a dormirte, estropea el resto','Al principio acorta lo que tardas en dormirte, pero reduce el sueño REM, el efecto se pierde con el uso regular y al dejarlo hay rebote (sueños vívidos, insomnio) 1–2 semanas. Usarlo para dormir es la trampa más frecuente.','Babson, Curr Psychiatry Rep 2017; Kesner y Lovinger, Front Mol Neurosci 2020'],
-  ['abstinencia','📆','Qué esperar cuando paras','Irritabilidad, ansiedad, peor sueño, menos hambre e inquietud. Empieza a las 24–72 h, el pico entre el día 2 y el 6, y remite en 1–2 semanas. La tiene alrededor de la mitad de quien consume a menudo.','Bonnet y Preuss, Subst Abuse Rehabil 2017; Bahji, JAMA Netw Open 2020'],
-  ['cognicion','🧠','Concentración: aguda sí, crónica poco','Durante 3–6 h bajan la memoria de trabajo, la atención y el tiempo de reacción. En adultos, el efecto que queda es pequeño y se va tras unos días sin consumir. Estudiar antes compensa más que después.','Scott, JAMA Psychiatry 2018; Broyd, Biol Psychiatry 2016'],
-  ['dependencia','🧭','Dependencia: el CUDIT-R','Alrededor de 1 de cada 10 personas que consumen desarrolla trastorno por consumo; el uso diario lo multiplica. El CUDIT-R son 8 preguntas: 8 o más es consumo de riesgo; 13 o más, trastorno probable.','Adamson, Drug Alcohol Depend 2010; Leung, Addict Behav 2020'],
-  ['tabaco','🚬','El tabaco es lo que más daño añade','La nicotina crea su propia dependencia y la combustión irrita el bronquio. Vaporizar en seco reduce los síntomas respiratorios frente a fumar.','Hindocha, Front Psychiatry 2016; Earleywine y Barnwell, Harm Reduct J 2007'],
-  ['dosis','⚖️','Gramos no es THC','La unidad de investigación son 5 mg de THC. Un cuarto de gramo al 15–20 % son 37–50 mg en la flor, de los que inhalado se absorbe quizá un 25–50 %. Por eso la app cuenta en mg: es lo comparable entre formas.','NIDA, unidad estándar de THC 2021; Volkow, NEJM 2014'],
-  ['riesgo','❤️','Corazón y cabeza','Agudo: la frecuencia cardiaca sube un 20–50 %. Con uso diario de alta potencia sube el riesgo de psicosis (a más dosis, más riesgo) y la ansiedad empeora con dosis altas aunque alivie con bajas.','Di Forti, Lancet Psychiatry 2019; Page, Circulation 2020'],
-  ['apetito','🍫','Los monchis son farmacología','El THC activa CB1 en el hipotálamo y sube la grelina: el hambre no es falta de voluntad. Lo que funciona es tener la opción buena preparada ANTES de la sesión.','Kirkham, Behav Pharmacol 2005; Koch, Nature 2015'],
-  ['ejercicio','🏊','Moverte baja las ganas','El ejercicio aeróbico sube la anandamida (parte del «subidón del corredor» es endocannabinoide) y en estudios pequeños bajó las ganas y el consumo durante semanas.','Buchowski, PLoS One 2011; Raichlen, J Exp Biol 2012']];
-function cnPautas(s28,sin,dias7){
-  /* las pautas de menor riesgo (Fischer 2017, actualizadas en 2022), cada una con tu cifra */
-  const porro=s28.filter(function(x){return x.forma==='porro';}).length,tab=s28.filter(function(x){return x.tabaco;}).length;
-  const gu=s28.filter(function(x){return esDiaGuardia(iso(addDays(parseDate(x.fecha),1)));}).length;
-  return [['No a diario',dias7+' de los últimos 7 días',dias7>=6],
-    ['Sin combustión (vapo o comestible)',porro+' porros en 4 semanas',porro>0],
-    ['Sin tabaco',tab+' sesiones con tabaco en 4 semanas',tab>0],
-    ['No retener el humo','no añade efecto, sí alquitrán',false],
-    ['Nada de coche ni moto en 6 h','no conduces: ✓',false],
-    ['Antes de una guardia, no',gu+' sesiones la víspera de guardia en 4 semanas',gu>0],
-    ['Si la tolerancia sube, unos días sin','llevas '+sin+' día'+(sin===1?'':'s')+' sin',false]];}
-function renderConsumoCiencia(){
-  const s28=cnSes(28),sin=consumoSin(),d7=cnDiasCon(7),T=cnTusDatos(s28,sin,d7),P=cnPautas(s28,sin,d7);
-  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('ciencia')+
-    '<div class="card"><div class="cap">PAUTAS DE MENOR RIESGO · CON TUS CIFRAS</div>'+P.map(function(p){
-      return '<div class="cnpa'+(p[2]?' w':'')+'"><b>'+esc(p[0])+'</b><span>'+esc(p[1].trim())+'</span></div>';}).join('')+
-      '<p class="mini" style="margin:6px 0 0">Fischer et al., Am J Public Health 2017; actualización, Int J Drug Policy 2022.</p></div>'+
-    CN_CIENCIA.map(function(x){const d=T[x[0]];
-      return '<details class="card cnci" data-tg="cnci_'+x[0]+'"'+(ui['cnci_'+x[0]]?' open':'')+'><summary><span class="e">'+x[1]+'</span><span class="t"><b>'+esc(x[2])+'</b>'+(d?'<em>'+esc(d)+'</em>':'')+'</span></summary>'+
-        '<p>'+esc(x[3])+'</p><p class="mini">'+esc(x[4])+'</p></details>';}).join('')+
-    '<p class="mini">Ciencia general y tus datos: no es consejo médico ni un diagnóstico.</p>'+
-  '</div>';}
-function renderConsumoPlan(){
-  const c=consumoS(),p=c.plan,tb=cnTB(),Q=ui.cnCudit;
-  const cu=c.cudit.slice(-6);
-  let cuerpoTB='';
-  if(tb&&!tb.fin)cuerpoTB='<p style="margin:4px 0"><b>Día '+tb.dia+' de '+tb.dias+'</b>'+(tb.roto?' · con alguna sesión':'')+'</p><p class="mini">'+esc(cnAbstinencia(tb.dia))+'</p>'+
-    '<button class="btn s" data-a="cn-tb-fin">terminar ya</button>';
-  else if(tb&&tb.fin){const R=cnTBResumen(p.tb),f=function(x,d){return x.m==null?'—':String(Math.round(x.m*10)/10).replace('.',',')+(d||'')+' (n '+x.n+')';};
-    cuerpoTB='<p style="margin:4px 0"><b>T-break de '+tb.dias+' días terminado'+(tb.roto?' (con alguna sesión)':'')+'</b></p>'+
-      '<div class="cnaf"><div class="t"><b>Despierto por la mañana (KSS)</b><span>antes '+f(R.kss[0])+' · durante '+f(R.kss[1])+'</span></div></div>'+
-      '<div class="cnaf"><div class="t"><b>Horas dormidas</b><span>antes '+f(R.sueno[0],' h')+' · durante '+f(R.sueno[1],' h')+'</span></div></div>'+
-      '<div class="cnaf"><div class="t"><b>Ganas apuntadas</b><span>2 semanas antes '+R.ganas[0]+' · durante '+R.ganas[1]+'</span></div></div>'+
-      '<button class="btn p s" data-a="cn-tb-fin">guardarlo y cerrar</button>';}
-  else cuerpoTB='<p class="mini" style="margin:4px 0 8px">Unos días sin con lo esperable cada día y, al acabar, la comparación con las dos semanas de antes.</p>'+
-    '<div class="cnseg">'+[3,7,28].map(function(n){return '<button data-a="cn-tb" data-v="'+n+'">'+n+' días</button>';}).join('')+'</div>'+
-    (p.tbHist.length?'<p class="mini" style="margin:8px 0 0">Hechos: '+p.tbHist.slice(-4).map(function(h){return h.dias+' d ('+fechaCorta(h.desde)+(h.roto?', con sesión':'')+')';}).join(' · ')+'</p>':'');
-  $('#main').innerHTML='<div class="grid mt cn">'+cnCab('plan')+
-    '<div class="card"><div class="cap">MI PLAN</div>'+
-      '<div class="row" style="margin-top:6px"><span class="mini">sesiones por semana</span><span class="sp"></span><div class="d4step"><button data-a="cn-obj" data-d="-1" aria-label="bajar objetivo">−</button><b>≤ '+c.obj+'</b><button data-a="cn-obj" data-d="1" aria-label="subir objetivo">+</button></div></div>'+
-      '<div class="row" style="margin-top:6px"><span class="mini">hora tope<small style="display:block">aviso si apuntas después</small></span><span class="sp"></span><input type="time" data-a="cn-ventana" value="'+esc(p.ventana)+'" aria-label="hora tope" style="width:auto"></div>'+
-      '<div class="row" style="margin-top:6px"><span class="mini">potencia aproximada<small style="display:block">para los mg de THC</small></span><span class="sp"></span><div class="cnseg c3">'+[10,15,20].map(function(n){return '<button class="'+(p.pot===n?'on':'')+'" data-a="cn-pot" data-v="'+n+'">'+n+' %</button>';}).join('')+'</div></div>'+
-      '<label class="row mini" style="margin-top:8px;gap:6px"><input type="checkbox" data-a="cn-guardia"'+(p.guardia?' checked':'')+'> avisarme la víspera de una guardia</label></div>'+
-    cnDescHTML()+'<div class="card"><div class="cap">T-BREAK</div>'+cuerpoTB+'</div>'+
-    '<div class="card"><div class="row"><span class="cap">CUDIT-R · UNA VEZ AL MES</span><span class="sp"></span>'+(Q?'':'<button class="btn '+(cuditToca()?'p ':'')+'s" data-a="cn-cudit">'+(cuditToca()?'hacerlo':'repetir')+'</button>')+'</div>'+
-      (Q?'<div class="cncu"><p class="mini" style="margin:4px 0">'+(Q.i+1)+' de 8</p><b>'+esc(CUDIT[Q.i][0])+'</b><div class="cncuo">'+CUDIT[Q.i][1].map(function(t,j){return '<button data-a="cn-cudit-r" data-v="'+j+'">'+esc(t)+'</button>';}).join('')+'</div>'+
-        '<button class="dlink" data-a="cn-cudit-x">cancelar</button></div>':
-      (cu.length?'<div class="cncuh">'+cu.map(function(x){return '<div><b>'+x.p+'</b><span>'+esc(fechaCorta(x.fecha))+'</span></div>';}).join('')+'</div><p class="mini" style="margin:6px 0 0">'+esc(cuditLectura(cu[cu.length-1].p))+'. Es lo que dice el cuestionario, no un diagnóstico.</p>':
-        '<p class="mini" style="margin:4px 0 0">8 preguntas sobre los últimos 6 meses. Se guarda la puntuación y la tendencia; nada sale del móvil.</p>'))+'</div>'+
-    '<div class="card"><div class="cap">PRIVACIDAD</div>'+
-      '<label class="row cnprivsw" style="gap:10px"><input type="checkbox" data-a="cn-priv" data-k="privado"'+(c.priv.privado?' checked':'')+' aria-describedby="cnPrivTx"> <b>Privado</b></label>'+
-      '<p class="mini" id="cnPrivTx" style="margin:0 0 6px">Tapa 4:20 en Hoy, en Más y en los avisos. No cifra tus datos.</p>'+
-      '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="oculto"'+(c.priv.oculto?' checked':'')+'> en «Más», mostrar como «🔒 Privado», sin cifras</label>'+
-      '<label class="row mini" style="margin-top:6px;gap:6px"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(c.priv.fueraCopia?' checked':'')+'> dejar 4:20 fuera de la copia que compartes</label>'+
-      '<div class="cap" style="margin-top:10px">CORTINA CON PIN</div>'+
-      (cnPin()?'<p class="cntx">Puesta. Para quitarla: Ajustes → Copia de seguridad.</p><button class="btn" data-a="cn-pin-cambia">Cambiar el PIN</button>':
-        '<p class="cntx">Si además quieres pedir un número para entrar. Tapa la sección; no cifra tus datos.</p><button class="btn" data-a="cn-pin-nuevo">Poner cortina con PIN</button>')+
-      '<p class="mini" style="margin:6px 0 0">Todo vive en tu móvil; nada se manda a ningún servidor.</p></div>'+
-  '</div>';}
+  const E=cnEstado(),G=ui.cnGanas,btn=function(t,a,p,x){return '<button class="btn'+(p?' p':'')+'" data-a="'+a+'"'+(x||'')+'>'+t+'</button>';};
+  const lnk=function(t,a,x){return '<button class="cnlnk" data-a="'+a+'"'+(x||'')+'>'+t+'</button>';},fumo=lnk('He fumado','cn-fumo');
+  let eti='',pts='',grande='',sub='',pie='';
+  if(ui.cnAj){
+    const pv=consumoS().priv;
+    $('#main').innerHTML='<div class="grid mt cn cn2"><div class="subcab"><h2 class="subtit">🔒 Contraseña</h2></div><div class="cnmid">'+
+      '<p class="cnsub">La contraseña tapa 4:20 aquí y fuera de aquí: en Hoy, en Más y en los avisos. No cifra tus datos; todo sigue solo en tu móvil.</p>'+
+      '<button class="btn" data-a="cn-pin-cambia">Cambiar la contraseña</button>'+
+      '<label class="row mini cnfc"><input type="checkbox" data-a="cn-priv" data-k="fueraCopia"'+(pv.fueraCopia?' checked':'')+'> dejar 4:20 fuera de la copia que compartes</label>'+
+      '<p class="mini">¿La olvidaste? Ajustes → Copia de seguridad → «Quitar la contraseña…». No se borra nada.</p></div>'+
+      '<div class="cnpie">'+lnk('Volver','cn-aj')+'</div></div>';return;}
+  if(G){eti='Las ganas suben y bajan solas';grande='<span id="cnReloj">'+cnRelojTxt()+'</span>';sub='Sal a andar o bebe agua. En 15 minutos casi siempre han bajado.';
+    pie=btn('Ya han pasado','cn-ganas-res',1,' data-v="aguante"')+'<div class="cnlnks">'+lnk('Cerrar','cn-ganas')+'</div>';}
+  else if(E.e==='plan'){const P=CN_PASOS[E.dia-1];eti='Día '+E.dia+' de '+CN_PLAN_D;pts=cnPuntosPlan(E.desde);grande=P[0];sub=P[1];
+    pie=btn('Tengo ganas','cn-ganas',E.dia>CN_PLAN_BAJA)+'<div class="cnlnks">'+fumo+'</div>';}
+  else if(E.e==='epoca'||E.e==='poco'){const pro=E.e==='epoca'&&!E.luego;eti='Últimos 7 días';pts=cnPuntosHTML(7);
+    grande='Has fumado '+E.d7+' de 7 días.';
+    sub=pro?'Buen momento para dejarlo. Te propongo '+CN_PLAN_D+' días: '+CN_PLAN_BAJA+' bajando y '+(CN_PLAN_D-CN_PLAN_BAJA)+' sin.':'Cuando quieras: '+CN_PLAN_D+' días para dejarlo.';
+    pie=btn('Empezar hoy','cn-dejar',pro)+'<div class="cnlnks">'+(pro?lnk('Ahora no','cn-dejar-no'):'')+fumo+'</div>';}
+  else if(E.e==='recaida'){eti='Últimos 30 días';pts=cnPuntosHTML(30,true);grande='Bueno, no pasa nada.';
+    sub=(E.d7===1?'Una vez':'Esto')+' no te devuelve al principio: siguen siendo '+E.sin30+' de 30 días sin. Pero no sigas: mañana, ninguna.';
+    pie=btn('Vale','cn-vale',1)+'<div class="cnlnks">'+fumo+'</div>';}
+  else{eti=E.planHecho?'Plan hecho · últimos 30 días':'Últimos 30 días';pts=E.nada?'':cnPuntosHTML(30,true);
+    grande=E.nada?'Nada apuntado.':(E.sin30===1?'1 día sin.':E.sin30+' días sin.');sub=E.nada?'Si fumas, toca «He fumado»: la app te acompaña para dejarlo.':'Nada que hacer hoy.';
+    pie='<div class="cnlnks">'+fumo+'</div>';}
+  if(ui.cnFumo)pie='<div class="cnhoja" role="group" aria-label="Apuntar que has fumado"><b>¿Cuándo?</b><div class="cndos">'+
+    btn('Hoy','cn-fumo-dia',0,' data-v="0"')+btn('Ayer','cn-fumo-dia',0,' data-v="1"')+'</div><div class="cnlnks">'+lnk('Cancelar','cn-fumo')+'</div></div>';
+  $('#main').innerHTML='<div class="grid mt cn cn2" data-estado="'+(G?'ganas':E.e)+'"><div class="subcab"><h2 class="subtit">🌿 4:20</h2><span class="sp"></span>'+
+      '<button class="cncand" data-a="cn-aj" aria-label="Contraseña y privacidad">🔒</button></div>'+
+    '<div class="cnmid"><p class="cneti">'+esc(eti)+'</p>'+pts+'<p class="cngrande">'+grande+'</p><p class="cnsub">'+esc(sub)+'</p></div>'+
+    '<div class="cnpie">'+pie+'</div></div>';
+  if(G)cnRelojVa();}
 /* ---- la semana con lo que hay en la nevera ----
    «Móntamela» y «Hoy cocino» solo sabían usar los platos de tus menús: sin menú, no ponían nada
    aunque la nevera estuviera llena. Ahora también montan con lo que tienes (plato, bowl, bocata y
@@ -20420,19 +20286,14 @@ const CN_R=[
       if(!esDiaGuardia(d1))continue;const x=cnKss(d1);if(x==null)continue;(consumoDe(d).length?con:sin).push(x);}
     const dato=con.length>=2&&sin.length>=2?' Las vísperas de guardia con sesión amaneces a '+cnFmt({u:'KSS'},cnMediana(con))+' de 9 (n '+con.length+'); sin, a '+cnFmt({u:'KSS'},cnMediana(sin))+' (n '+sin.length+').':' Antes de una guardia, mejor sin.';
     return {id:'guardia',ico:'🩺',t:'Mañana guardia',txt:'Hoy hay Lloretazo.'+dato,acc:[['Lloretazo sin','asist-int',' data-v="lloretsin" data-t="🌿 Lloretazo sin" data-k="'+X.k+'"',1]]};},
-  function tbreak(X){ /* 3 · T-break en marcha o terminado */
-    const tb=cnTB();if(!tb)return null;
-    if(tb.fin)return {id:'tbfin',ico:'✅',t:'T-break terminado',txt:'Ya tienes la comparación con las dos semanas de antes.',acc:[['Verla','ir-cn',' data-v="plan"',1]]};
-    const g=cnGanasSemana().length;
-    return {id:'tbreak',ico:'📆',t:'T-break · día '+tb.dia+' de '+tb.dias,txt:cnAbstinencia(tb.dia)+(g?' Esta semana has apuntado '+g+' ganas.':''),acc:[['Ver ciencia','ir-cn',' data-v="ciencia"']]};},
   function dormir(X){ /* 5 · usar para dormir */
     const d7=iso(addDays(X.hoy,-6)),n=X.c.ses.filter(function(x){return x.fecha>=d7&&x.motivo==='dormir';}).length;if(n<3)return null;
     const S=cnAfectaPor(28).sueno;
     return {id:'dormir',ico:'😴',t:n+' sesiones para dormir esta semana',txt:'Ayuda a dormirte pero recorta el REM y se pierde con el uso.'+(S&&S.ok?' Los días con sesión duermes '+(S.dif>0?'+':'−')+Math.abs(Math.round(S.dif))+' min (n '+S.nCon+'/'+S.nSin+').':''),
-      acc:[['Probar 7 días antes de las 22:00','exp-start',' data-v="antes22"',1],['Ver ciencia','ir-cn',' data-v="ciencia"']]};},
-  function siete(X){ /* 9 · siete de siete */
-    if(X.c.obj>4||cnTB()||cnDiasCon(7)<7)return null;
-    return {id:'siete',ico:'🌿',t:'Siete de siete esta semana',txt:'Tu objetivo es ≤ '+X.c.obj+'. Unos días sin ya bajan algo la tolerancia (con 3, ~'+cnTolerancia(3)+' %).',acc:[['T-break de 3 días','cn-tb',' data-v="3"',1]]};},
+      acc:[['Probar 7 días antes de las 22:00','exp-start',' data-v="antes22"',1]]};},
+  function dejar(){ /* 9 · época de fumar: te propone los 7 días para dejarlo */
+    const E=cnEstado();if(E.e!=='epoca'||E.luego)return null;
+    return {id:'dejar',ico:'🌿',t:'Has fumado '+E.d7+' de 7 días',txt:'Buen momento para dejarlo: '+CN_PLAN_D+' días, '+CN_PLAN_BAJA+' bajando y '+(CN_PLAN_D-CN_PLAN_BAJA)+' sin.',acc:[['Verlo','ir-cn','',1]]};},
   function ganas(){ /* 10 · ganas aguantadas */
     const ag=cnGanasSemana().filter(cnAguanto).length;if(ag<3)return null;
     return {id:'ganas',ico:'👏',t:ag+' ganas aguantadas esta semana',txt:'Es la cifra que mejor dice si estás reduciendo, más que los gramos.',acc:[]};}];
@@ -25845,9 +25706,9 @@ function renderData(){
       <div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px">
         <label class="fld" style="max-width:250px">Avisarme si llevo sin copia (d\u00edas)
           <input type="number" min="1" max="90" value="${avisoBackupD()}" data-a="backup-aviso-d"></label>
-      ${cnPin()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Cortina con PIN</b>
-        <span class="note" style="flex:1 1 100%">Tapa la sección ante quien coja el móvil; no cifra tus datos. La copia lleva tus datos privados y la cortina. Si olvidaste el PIN, quítala aquí: no se borra ningún dato.</span>
-        <button class="btn" data-a="cn-cortina-quita">Quitar la cortina…</button></div>`:''}
+      ${cnPin()?`<div class="row" style="margin-top:12px;border-top:1px solid var(--line);padding-top:11px;flex-wrap:wrap;gap:8px"><b style="flex:1 1 100%">Contraseña del 4:20</b>
+        <span class="note" style="flex:1 1 100%">Tapa la sección ante quien coja el móvil; no cifra tus datos. La copia lleva tus datos privados y la contraseña. Si la olvidaste, quítala aquí: al volver a entrar te pedirá una nueva. No se borra ningún dato.</span>
+        <button class="btn" data-a="cn-cortina-quita">Quitar la contraseña…</button></div>`:''}
       <details class="plegable" style="margin-top:12px" data-tg="copiaInfo"${ui.copiaInfo||_almacen.estado==='no'?' open':''}><summary>dónde se guarda todo esto y qué lo borra</summary>
       <p class="note"><b>En este móvil y en ningún sitio más.</b> Tus rutinas, tus menús, lo que apuntas de comer y tus guardias
       se guardan dentro de la propia app, en este aparato. No hay cuenta, no hay servidor, no viaja a ninguna parte:
@@ -27238,7 +27099,7 @@ function act(a,el){
       flash(el.dataset.v==='1'?'hoy, versión corta: el ✓ marca el mínimo':'hoy, entero');render();break;}
     case 'asist-sil':{asistS().sil[el.dataset.id]=iso(addDays(new Date(),14));save();render();break;}
     case 'asist-nunca':{asistS().nunca[el.dataset.id]=1;save();flash('no te lo vuelvo a decir');render();break;}
-    case 'ir-cn':ui.tab='consumo';ui.cnVista=el.dataset.v||'';render();window.scrollTo(0,0);break;
+    case 'ir-cn':ui.tab='consumo';render();window.scrollTo(0,0);break;
     case 'exp-start':{const A=asistS(),id=el.dataset.v,x=expActivo();if(!EXP[id])break;if(x&&!x.fin){flash('ya tienes uno en marcha: uno a la vez');break;}
       if(x)expArchivar(x);
       A.exp.act={id:id,desde:iso(new Date()),dias:+el.dataset.d===14?14:7};save();flash('experimento: «'+EXP[id].t+'», '+A.exp.act.dias+' días desde hoy');render();break;}
@@ -27638,46 +27499,29 @@ function act(a,el){
     case 'mc-add':{const op=monchisOpciones(),x=(el.dataset.t==='c'?op.caprichos:op.sanos)[+el.dataset.i];if(!x)break;
       flash(fraseApuntar(x.fr,'monchis'));render();break;}
     case 'mc-tope':{const f=food(),t=monchisTope(foodCtx().sel);f.monchisTope=Math.max(50,Math.min(3000,t+(+el.dataset.d||0)));save();render();break;}
-    case 'cn-f':{const f=ui.cnF||{};const k=el.dataset.k;f[k]=k==='g'?+el.dataset.v:el.dataset.v;if(k==='dia')delete f.fecha;ui.cnF=f;render();break;}
-    case 'cn-add':{const x=consumoApuntar(ui.cnF||{});flash('apuntada '+cnDiaTxt(x.fecha)+(x.hora?' '+x.hora:'')+' · '+String(x.g).replace('.',',')+' g');
-      {const D=cnDesc();if(D&&!D.fin&&D.pasa)setTimeout(function(){flash('Recaer no borra nada: seguimos desde aquí');},1800);}
-      if(ui.cnF){delete ui.cnF.fecha;ui.cnF.dia='0';}render();break;}
-    case 'cn-del':{const c=consumoS();c.ses=c.ses.filter(function(x){return x.id!==el.dataset.id;});save();render();break;}
-    case 'cn-obj':{const c=consumoS();c.obj=Math.max(0,Math.min(21,(+c.obj||0)+(+el.dataset.d||0)));save();render();break;}
-    case 'cn-eur':{const c=consumoS();c.eurG=Math.max(1,Math.min(30,(+c.eurG||7)+(+el.dataset.d||0)));save();render();break;}
     case 'cn-pin':{const P=ui.cnPin;if(!P)break;
       if(Date.now()<(ui.cnBloq||0)){render();break;}
       const v=el.dataset.v;if(v==='x'){P.t=P.t.slice(0,-1);render();break;}
       if(P.t.length>=4)break;P.t+=v;if(P.t.length<4){render();break;}
       render();cnPinSigue(P);break;}
-    case 'cn-privado-quita':cnPrivadoQuita();break;
-    case 'cn-pin-nuevo':ui.cnPin={modo:'nuevo',t:''};render();break;
     case 'cn-pin-cambia':ui.cnPin={modo:'actual',t:''};render();break;
-    case 'cn-pin-x':ui.cnPin=null;render();break;
-    case 'cn-cortina-quita':confirmar('¿Quitar la cortina con PIN? Quedará abierto para quien coja el móvil. No se borra ningún dato.','Sí, quitarla').then(function(ok){
-      if(!ok)return;delete consumoS().priv.pin;ui.cnAbierto=false;ui.cnPin=null;save();flash('Cortina quitada: tus datos siguen ahí');render();});break;
-    case 'cn-desc':{const p=consumoS().plan;if(cnDesc()&&!cnDesc().fin)break;const m=el.dataset.v==='mitad',d=iso(addDays(new Date(),-14));
-      const n14=consumoS().ses.filter(function(x){return x.fecha>=d&&x.fecha<iso(new Date());}).length;
-      p.desc={desde:iso(new Date()),dias:m?14:(+el.dataset.v||14),mitad:m,base:Math.round(n14/2*10)/10};save();flash('Descanso: empieza hoy');render();break;}
-    case 'cn-desc-fin':{consumoS().plan.desc=null;save();flash('Hecho. Cuando quieras, empiezas otro');render();break;}
-    case 'cn-vista':ui.cnVista=el.dataset.v||'';ui.cnCudit=null;render();window.scrollTo(0,0);break;
-    case 'cn-sento':{const x=consumoS().ses.filter(function(q){return q.id===el.dataset.id;})[0];if(x){x.sento=+el.dataset.v||0;save();flash('apuntado: '+ANIMO[x.sento]);}render();break;}
-    case 'cn-ganas':ui.cnGanas=ui.cnGanas?null:{int:2};render();break;
-    case 'cn-ganas-int':if(ui.cnGanas)ui.cnGanas.int=+el.dataset.v||2;render();break;
+    case 'cn-pin-x':ui.cnPin=null;if(!cnPin())ui.tab='hoy';render();break;   /* sin contraseña no se entra: «Cancelar» saca del 4:20 */
+    case 'cn-cortina-quita':confirmar('¿Quitar la contraseña del 4:20? La próxima vez que entres te pedirá una nueva. No se borra ningún dato.','Sí, quitarla').then(function(ok){
+      if(!ok)return;delete consumoS().priv.pin;ui.cnAbierto=false;ui.cnPin=null;save();flash('Contraseña quitada: tus datos siguen ahí');render();});break;
+    case 'cn-ganas':ui.cnGanas=ui.cnGanas?null:{int:2,t0:Date.now()};ui.cnFumo=null;render();break;
+    case 'cn-aj':ui.cnAj=!ui.cnAj;ui.cnFumo=null;ui.cnGanas=null;render();break;
+    case 'cn-fumo':ui.cnFumo=!ui.cnFumo;render();break;
+    case 'cn-fumo-dia':{const c=consumoS(),u=c.ses[0]||{},plan=cnEstado().e==='plan';
+      consumoApuntar({dia:el.dataset.v==='1'?'1':'0',forma:u.forma,g:u.g,ctx:u.ctx});ui.cnFumo=null;
+      flash(plan?'Apuntada. Seguimos desde aquí':'Apuntada');render();break;}
+    case 'cn-dejar':{const p=consumoS().plan;p.dejar={desde:iso(new Date())};p.dejarNo='';save();flash('Día 1 de '+CN_PLAN_D);render();window.scrollTo(0,0);break;}
+    case 'cn-dejar-no':{consumoS().plan.dejarNo=iso(addDays(new Date(),3));save();render();break;}   /* lo vuelve a proponer a los 3 días */
+    case 'cn-vale':{const c=consumoS();c.plan.vale=c.ses.reduce(function(m,x){return x.fecha>m?x.fecha:m;},'');save();render();break;}
     case 'cn-ganas-res':{const c=consumoS(),d=new Date(),G=ui.cnGanas||{int:2};
       c.ganas.unshift({id:uid('cg'),ts:d.getTime(),fecha:iso(d),hora:horaLocal(d),int:G.int||2,res:el.dataset.v||'aguante',q:el.dataset.q||''});c.ganas=c.ganas.slice(0,2000);save();
       ui.cnGanas=null;const q=el.dataset.q;
       if(q==='comer'){ui.tab='food';ui.foodVista='';ui.cjeHoja={v:'mom',p:'monchis',k:iso(d)};flash('apuntadas las ganas: aquí tienes lo de tu nevera');}
       else flash(q==='paseo'?'apuntado: 15 minutos fuera y las ganas bajan solas':(q==='nadar'?'apuntado: moverte baja las ganas':'apuntadas: '+cnGanasSemana().filter(cnAguanto).length+' aguantadas esta semana'));
-      render();break;}
-    case 'cn-dias':ui.cnDias=+el.dataset.v||28;render();break;
-    case 'cn-pot':{const p=consumoS().plan;p.pot=+el.dataset.v||15;save();render();break;}
-    case 'cn-tb':{const p=consumoS().plan;p.tb={desde:iso(new Date()),dias:+el.dataset.v||7};save();flash('T-break de '+p.tb.dias+' días: empieza hoy');render();break;}
-    case 'cn-tb-fin':{const p=consumoS().plan,tb=cnTB();if(tb)p.tbHist.push({desde:tb.desde,dias:tb.fin?tb.dias:tb.dia-1,roto:tb.roto});p.tb=null;save();render();break;}
-    case 'cn-cudit':ui.cnCudit={i:0,r:[]};render();break;
-    case 'cn-cudit-x':ui.cnCudit=null;render();break;
-    case 'cn-cudit-r':{const Q=ui.cnCudit;if(!Q)break;Q.r[Q.i]=+el.dataset.v||0;Q.i++;
-      if(Q.i>=CUDIT.length){const c=consumoS(),p=cuditPuntos(Q.r);c.cudit.push({fecha:iso(new Date()),r:Q.r.slice(),p:p});c.cudit=c.cudit.slice(-60);ui.cnCudit=null;save();flash('CUDIT-R: '+p+' · '+cuditLectura(p));}
       render();break;}
     case 'fe-ver':ui.feVer=el.dataset.id||'';ui.feCorr=false;render();break;
     case 'fe-cerrar':HOJAS.fe.cerrar();render();break;
@@ -30260,13 +30104,7 @@ document.addEventListener('change',e=>{
     case 'fr-gset':{const c=el.dataset.c,fr=lecFr(c),x=fr&&fr.items[+el.dataset.i];
       if(x){if(frEsRac(x))x.rac=Math.max(0.25,Math.min(10,Math.round((+el.value||x.rac||1)*4)/4));
         else{x.g=Math.max(1,Math.min(2000,Math.round(+el.value||x.g)));x.gCorr=true;}x.corr=true;}lecRepinta(c);break;}
-    case 'cn-tabaco':{const f=ui.cnF||(ui.cnF={});f.tabaco=!!el.checked;break;}
-    case 'cn-ventana':{const p=consumoS().plan;p.ventana=/^\d{2}:\d{2}$/.test(el.value||'')?el.value:'';save();render();break;}
-    case 'cn-guardia':{consumoS().plan.guardia=!!el.checked;save();render();break;}
-    case 'cn-priv':{const pv=consumoS().priv;
-      if(el.dataset.k==='privado'){if(el.checked)cnPrivadoPon(true,true);else cnPrivadoQuita();break;}
-      pv[el.dataset.k==='fueraCopia'?'fueraCopia':'oculto']=!!el.checked;save();render();break;}
-    case 'cn-fecha':{const f=ui.cnF||(ui.cnF={});if(el.value&&parseDate(el.value)){f.fecha=el.value>iso(new Date())?iso(new Date()):el.value;delete f.dia;}else delete f.fecha;render();break;}
+    case 'cn-priv':{consumoS().priv[el.dataset.k==='fueraCopia'?'fueraCopia':'oculto']=!!el.checked;save();render();break;}
     case 'fe-campo':{flash(feCampo(el.dataset.key,el.dataset.id,el.dataset.k,el.value));ui.feCorr=true;render();break;}
     case 'fe-mover':{const x=foodLog(foodCtx().sel).filter(function(e){return e.id===el.dataset.id;})[0];if(x&&el.value){x.p=el.value;save();flash('movido a '+(POS_TXT[el.value]||el.value).toLowerCase());}render();break;}
     case 'sh-f':{const s=shiftById(el.dataset.id);if(s){s[el.dataset.f]=el.value;save();render();}break;}
@@ -30871,7 +30709,7 @@ pedirPersistencia();   /* que el navegador no pueda borrarlo por falta de espaci
 claudeBuscar();
 /* para las pruebas: la frase, la lectura en vivo y el repintado que no suelta el campo */
 Object.assign(window.PG,{recetarioTodo,recetarioCarga,recReventados,plmReglas,plmOllaMax,plmOllas,recPuede,snNocheEventos,mananaTramos,MICRO,colaAdd,recTexto,antojoElige,plmNuevo,plmReparto,plmUsar,plmCands,plGrupo,plmPlato,comboADish,nutInforme,nutLectura,nutCenaLloret,nutHistoria,nutTecho,nutSemanaActual,nutEsChoco,nutSoloCafe,tpLeer,tpTodos,tpAlim,tpGuardar,tpTenerLista,fraseApuntar,nutSemana,nutSuma,nutComida,nutConsejosDia,nutConsejosSemana,despensaAdd,frCambiaItem,fbLectura,fbRecetaPegada,fbLecturaReceta,FR_PLATOS,alimPorNombre,buscarRepinta,frEligeDuda,fraseLecturaHTML,alimIdx,frEnter,frIdx,
-  cnTapado,cnPin,cnOculta,cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
+  cnTapado,cnPin,cnOculta,cnEstado,cnPinPone,cnAfecta,cnTolerancia,cnAbstinencia,cnTB,cnLloret,cuditPuntos,cnThc,habitoEstado,habitoAuto,rachaHabito,habPct,habCorto,
   asistS,asistTarjeta,asistHecho,cnKss,kssPon,expResultado,expActivo,storeParaCopia,semNumeros});
 registrarSW();
 vigilarVersion();   /* al volver a la app, comprobar si hay algo nuevo desplegado */

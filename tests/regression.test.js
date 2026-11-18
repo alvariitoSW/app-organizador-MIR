@@ -9035,20 +9035,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         tope: /500/.test(c ? c.innerText : '') }; });
     await page.click('.mcard [data-a="mc-add"]'); await page.waitForTimeout(150);
     const tras = await page.evaluate(() => { const P = window.PG, l = P.foodLog(P.iso(new Date())); return { pos: l.map((x) => x.p).join(), m: P.monchisKcal(P.iso(new Date())) }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.tab = 'consumo'; P.render(); });
-    await page.click('[data-a="cn-f"][data-k="forma"][data-v="dry"]'); await page.click('[data-a="cn-f"][data-k="g"][data-v="0.1"]'); await page.click('[data-a="cn-add"]'); await page.waitForTimeout(120);
-    const cn = await page.evaluate(() => { const P = window.PG, s = P.consumoS().ses, n = P.normalize(JSON.parse(JSON.stringify(P.store)));
-      return { n: s.length, ses: s[0] && (s[0].forma + ' ' + s[0].g + ' ' + s[0].ctx), semana: P.consumoSemana(P.iso(P.mondayOf(new Date()))).n, vuelta: (n.consumo || { ses: [] }).ses.length,
-        kpi: (document.querySelector('#main .mskpi') || {}).innerText || '' }; });
-    await page.click('[data-a="cn-vista"][data-v="efectos"]'); await page.waitForTimeout(100);
-    const ef = await page.evaluate(() => /DÍAS CON SESIÓN/.test(document.querySelector('#main').innerText) && /no consejo médico/.test(document.querySelector('#main').innerText));
+    // 4:20 (reinventado 18/11): con contraseña puesta, «He fumado» → «Hoy» apunta una sesión copiando forma y g de la última
+    await page.evaluate(async () => { const P = window.PG; await P.cnPinPone('1234'); P.ui.cnAbierto = true; P.consumoApuntar({ dia: '1', forma: 'dry', g: 0.1, ctx: 'casa' });
+      P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.cnAj = null; P.ui.tab = 'consumo'; P.render(); });
+    await page.click('[data-a="cn-fumo"]'); await page.click('[data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(120);
+    const cn = await page.evaluate(() => { const P = window.PG, s = P.consumoS().ses, hoy = P.consumoDe(P.iso(new Date())), n = P.normalize(JSON.parse(JSON.stringify(P.store)));
+      return { n: s.length, hoy: hoy.length, ses: hoy[0] && (hoy[0].forma + ' ' + hoy[0].g + ' ' + hoy[0].ctx), vuelta: (n.consumo || { ses: [] }).ses.length }; });
     const cajon = await page.evaluate(() => [...document.querySelectorAll('#drawer [data-a="drawer-nav"]')].some((b) => b.dataset.t === 'consumo'));
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia227; P.save(); P.ui.cnVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia227; P.save(); P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.tab = 'hoy'; P.render(); });
     check('Lloretazo hoy: aviso y monchis con tope (500) y opciones de tu nevera, lo que sacia primero; «＋» lo apunta en Monchis',
       r.aviso && r.card && r.tope && r.sanos >= 2 && r.capr >= 1 && /Yogur griego/.test(r.primero) && tras.pos === 'monchis' && tras.m > 100, JSON.stringify({ r, tras }));
-    check('🌿 Consumo: una sesión en dos toques (dry, 0,1 g, Lloretazo), la semana la cuenta, sobrevive a recargar, «cómo te afecta» y está en el cajón',
-      // el Lloretazo es de noche: antes de las 19:00 el sitio por defecto es «casa»
-      cn.n === 1 && cn.ses === 'dry 0.1 ' + (new Date().getHours() >= 19 ? 'lloret' : 'casa') && cn.semana === 1 && cn.vuelta === 1 && /objetivo ≤ 4/.test(cn.kpi) && ef && cajon, JSON.stringify({ cn, ef, cajon }));
+    check('🌿 Consumo: «He fumado» → «Hoy» apunta una sesión en dos toques con la forma y los g de la última, cuenta hoy, sobrevive a recargar y está en el cajón',
+      cn.n === 2 && cn.hoy === 1 && cn.ses === 'dry 0.1 casa' && cn.vuelta === 2 && cajon, JSON.stringify({ cn, cajon }));
   }
 
   // 228) PLAN DE LA SEMANA CON LO QUE HAY y DINERO EDITABLE: con el menú vacío, «Móntamela» rellena las
@@ -9094,7 +9092,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 229) LA SEMANA LLEGA A LA PROTEÍNA: «Móntamela» reparte la proteína (desayunos con proteína de
   // verdad, más de lo que tiene proteína y extras de la nevera) y todos los días llegan; lo hecho con
   // la nevera cuenta como «en casa»; un día que no llega dice cuánto falta y «＋ ponerlo» lo sube.
-  // En Consumo se apunta una sesión de ayer o de otro día
+  // En Consumo se apunta una sesión de ayer
   {
     const NOMS = ['pechuga pollo ajillo', 'carrilladas al vino', 'fritada pisto', 'gouda lonchas', 'lenteja cocida', 'salmón marinado', 'pollo extrafino',
       'jamón extrafino', 'maria sin gluten', 'entrecot novillo', 'picada de vacuno', 'leche desnatada, prot p6', 'nuez natural', 'proteina 0% natural',
@@ -9120,21 +9118,18 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const antes = await page.evaluate(() => window.PG.protSemana().filter((x) => x.w === 1)[0].v);
     await page.click('#main .prav [data-a="prot-extra"]'); await page.waitForTimeout(120);
     const despues = await page.evaluate(() => window.PG.protSemana().filter((x) => x.w === 1)[0].v);
-    await page.evaluate(() => { const P = window.PG; delete P.store.consumo; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.tab = 'consumo'; P.render(); });
-    await page.click('[data-a="cn-f"][data-k="dia"][data-v="1"]'); await page.click('[data-a="cn-add"]'); await page.waitForTimeout(100);
-    const otro = await page.evaluate(() => { const d = new Date(); d.setDate(d.getDate() - 5); return window.PG.iso(d); });
-    const inp = await page.$('input[data-a="cn-fecha"]'); await inp.fill(otro); await inp.dispatchEvent('change'); await page.waitForTimeout(80);
-    await page.click('[data-a="cn-add"]'); await page.waitForTimeout(100);
-    const cn = await page.evaluate((otro) => { const P = window.PG, d = new Date(); d.setDate(d.getDate() - 1);
-      const f = P.consumoS().ses.map((x) => x.fecha); return { ayer: f.includes(P.iso(d)), otro: f.includes(otro), filas: document.querySelectorAll('#main .cnrow').length,
-        futuro: P.cnFechaDe({ fecha: '2999-01-01' }) === P.iso(new Date()) }; }, otro);
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia229; P.save(); P.ui.cnF = null; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(async () => { const P = window.PG; delete P.store.consumo; await P.cnPinPone('1234'); P.ui.cnAbierto = true; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.cnAj = null; P.ui.tab = 'consumo'; P.render(); });
+    await page.click('[data-a="cn-fumo"]'); await page.click('[data-a="cn-fumo-dia"][data-v="1"]'); await page.waitForTimeout(100);
+    const cn = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() - 1);
+      const f = P.consumoS().ses.map((x) => x.fecha); return { ayer: f.includes(P.iso(d)), n: f.length, hoy: f.includes(P.iso(new Date())),
+        futuro: P.cnFechaDe({ fecha: '2999-01-01' }) === P.iso(new Date()) }; });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia229; P.save(); P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.tab = 'hoy'; P.render(); });
     check('«Móntamela» llega a la proteína todos los días, con desayunos distintos',
       sem.cortos === 0 && sem.v.every((v) => v >= 120) && sem.des >= 3 && sem.llegan, JSON.stringify(sem));
     check('un día que no llega dice cuánto falta y con qué, y «＋ ponerlo» lo sube',
       /te faltan \d+ g/.test(aviso) && /Añade/.test(aviso) && despues > antes, JSON.stringify({ aviso, antes, despues }));
-    check('Consumo: se apunta una sesión de ayer y de otro día (nunca en el futuro) y salen en los últimos 7 días',
-      cn.ayer && cn.otro && cn.filas === 2 && cn.futuro, JSON.stringify(cn));
+    check('Consumo: «He fumado» → «Ayer» apunta la sesión de ayer (y solo esa) y una fecha futura nunca cuenta',
+      cn.ayer && cn.n === 1 && !cn.hoy && cn.futuro, JSON.stringify(cn));
   }
 
   // 230) AJUSTAR LO DE AYER: en Comer se va al día anterior y en la hoja de una toma apuntada a mano
@@ -10147,21 +10142,14 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       out.sinAuto = [P.habitoEstado('hs', k(3)), P.habitoEstado('hs', k(1))];
       out.norm = (() => { const n = P.normalize(JSON.parse(JSON.stringify(P.store))); return { min: n.habitos.items[0].min, ancla: n.habitos.items[0].ancla.v, reg: n.habitos.registro[k(5)].hx, mot: n.consumo.ses[0].motivo }; })();
       P.save(); P.render(); return out; });
-    // 4:20 en la pantalla: motivo, ganas, las cuatro vistas, CUDIT-R y T-break
-    await page.evaluate(() => { const P = window.PG; P.ui.cnF = null; P.ui.cnGanas = null; P.ui.cnVista = ''; P.ui.tab = 'consumo'; P.render(); });
+    // 4:20 en la pantalla (reinventado 18/11: una sola pantalla): la sesión lleva motivo y mg; «tengo ganas» → «Ya han pasado» apunta la aguantada
+    await page.evaluate(async () => { const P = window.PG; await P.cnPinPone('1234'); P.ui.cnAbierto = true; P.ui.cnFumo = null; P.ui.cnAj = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.render(); });
     const cl = async (sel) => { const e = await page.$(sel); if (e) { await e.click(); await page.waitForTimeout(80); return true; } return false; };
     const pasos = [];
-    pasos.push(await cl('[data-a="cn-f"][data-k="motivo"][data-v="dormir"]')); pasos.push(await cl('[data-a="cn-add"]'));
+    await page.evaluate(() => window.PG.consumoApuntar({ forma: 'dry', g: 0.25, ctx: 'casa', motivo: 'dormir' }));
     pasos.push(await cl('[data-a="cn-ganas"]')); pasos.push(await cl('[data-a="cn-ganas-res"][data-v="aguante"]'));
     const ses = await page.evaluate(() => { const s = window.PG.consumoS(); return { mot: s.ses[0].motivo, thc: s.ses[0].thc, ganas: s.ganas.length }; });
-    pasos.push(await cl('[data-a="cn-vista"][data-v="efectos"]'));
-    const ef = await page.evaluate(() => ({ filas: document.querySelectorAll('#main .cnaf').length, n: /\(n \d+\)/.test(document.querySelector('#main').innerText), nc: /aún no concluye/.test(document.querySelector('#main').innerText) }));
-    pasos.push(await cl('[data-a="cn-vista"][data-v="ciencia"]'));
-    const ci = await page.evaluate(() => ({ tarjetas: document.querySelectorAll('#main details.cnci').length, pautas: document.querySelectorAll('#main .cnpa').length }));
-    pasos.push(await cl('[data-a="cn-vista"][data-v="plan"]')); pasos.push(await cl('[data-a="cn-cudit"]'));
-    for (let i = 0; i < 8; i++) pasos.push(await cl('[data-a="cn-cudit-r"][data-v="1"]'));
-    pasos.push(await cl('[data-a="cn-tb"][data-v="7"]'));
-    const plan = await page.evaluate(() => { const c = window.PG.consumoS(); return { cudit: c.cudit.length && c.cudit[0].p, tb: !!(c.plan.tb && c.plan.tb.dias === 7) }; });
+    await page.evaluate(() => { window.PG.ui.cnAbierto = false; });
     // el check-in de la mañana no sale antes de las 5: se fija la hora a las 12:00 de hoy (mismo patrón que la 75) para que no dependa de cuándo corre la suite
     await page.evaluate(() => { const Orig = Date, n = new Orig(); const fijo = new Orig(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0).getTime();
       window.__origDate257 = Orig; window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fijo); else super(...a); } static now() { return fijo; } }; });
@@ -10181,13 +10169,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const rev = await page.evaluate(() => document.querySelectorAll('#main .rvn').length);
     pasos.push(await cl('[data-a="hab-vista"][data-v="exp"]')); pasos.push(await cl('[data-a="exp-start"][data-v="pantallas"][data-d="7"]'));
     const ex = await page.evaluate(() => { const x = window.PG.expActivo(); return x && x.id === 'pantallas' && x.dias === 7; });
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia257; P.save(); P.ui.habVista = ''; P.ui.cnVista = ''; P.ui.tab = 'hoy'; P.render(); });
-    check('4:20: «Cómo me afecta» compara con mediana y n, y sin 5 días por lado no concluye; tolerancia, abstinencia, CUDIT-R, mg y copia sin 4:20',
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia257; P.save(); P.ui.habVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    check('4:20 (datos): la comparación con mediana y n, y sin 5 días por lado no concluye; tolerancia, abstinencia, CUDIT-R, mg y copia sin 4:20',
       r.kss.ok && r.kss.dif === 3 && r.kss.n[0] >= 5 && r.animoNC && r.efectos.cama === 60 && r.tol[0] >= 45 && r.tol[0] <= 55 && r.tol[1] >= 99 && r.abst && r.cudit === 18 && r.thc === 38 && r.copia, JSON.stringify(r));
     check('hábitos: la racha aguanta un fallo, el mínimo cuenta, «día sin 4:20» se marca solo y todo sobrevive a normalize',
       r.racha === 5 && r.min === 'min' && r.sinAuto[0] === 'ok' && r.sinAuto[1] === '' && r.norm.min === '3 posturas' && r.norm.ancla === 'cama' && r.norm.reg === 'min' && r.norm.mot === 'relajar', JSON.stringify(r));
-    check('4:20 en pantalla: motivo y mg al apuntar, ganas aguantadas, 9 comparaciones con n, 11 tarjetas de ciencia y 7 pautas, CUDIT-R de 8 toques y T-break',
-      pasos.every(Boolean) && ses.mot === 'dormir' && ses.thc > 0 && ses.ganas === 1 && ef.filas === 9 && ef.n && ci.tarjetas === 11 && ci.pautas === 7 && plan.cudit === 9 && plan.tb, JSON.stringify({ pasos, ses, ef, ci, plan }));
+    check('4:20 en pantalla: motivo y mg al apuntar y «tengo ganas» → «Ya han pasado» deja una aguantada',
+      pasos.every(Boolean) && ses.mot === 'dormir' && ses.thc > 0 && ses.ganas === 1, JSON.stringify({ pasos, ses }));
     check('asistente: check-in en Hoy y UNA tarjeta; el × la silencia y sale la siguiente; Tu semana con 6 números y un experimento a la vez',
       asist.check && asist.tarjetas === 1 && ck.kss === 4 && ck.animo === 4 && ck.hecho && antes && antes !== despues && rev === 6 && ex, JSON.stringify({ asist, ck, antes, despues, rev, ex }));
   }
@@ -10606,14 +10594,13 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.c5 = await card();
     const vuelve = await page.$('#main .astj [data-a="hab-prueba"][data-v="0"]'); if (vuelve) { await vuelve.click(); await page.waitForTimeout(120); }
     r.tras = await page.evaluate(() => { const h = window.PG.habitosS().items.filter((x) => x.id === 'ha')[0]; return (h.ancla.v || 'sin') + '|' + !!h.prueba; });
-    // las de 4:20, en su sección: un T-break en marcha sale allí y no en la tarjeta de hábitos
+    // 4:20 ya no pinta tarjetas del asistente (reinventado 18/11): un T-break guardado no sale como tarjeta de hábitos
     r.cn = await page.evaluate(() => { const P = window.PG, c = P.consumoS(); c.plan = c.plan || {}; c.plan.tb = { desde: P.iso(new Date()), dias: 7 };
-      P.ui.tab = 'consumo'; P.ui.cnVista = ''; P.render(); const enCn = (document.querySelector('#main .card.asist .astj.cn') || {}).innerText || '';
-      const hab = (P.asistTarjeta(P.iso(new Date())) || {}).id || ''; delete c.plan.tb; return { enCn: enCn.replace(/\s+/g, ' ').slice(0, 80), hab }; });
+      const hab = (P.asistTarjeta(P.iso(new Date())) || {}).id || ''; delete c.plan.tb; return { hab }; });
     // Tu semana: sin objetivos del trimestre y con la puerta a los experimentos
     r.sem = await page.evaluate(() => { const P = window.PG; P.ui.tab = 'habitos'; P.ui.habVista = 'rev'; P.render(); const t = document.querySelector('#main').innerText;
       return { obj: /OBJETIVOS DEL TRIMESTRE/.test(t), exp: !!document.querySelector('#main [data-a="hab-vista"][data-v="exp"]'), tocaban: /de los días que tocaban/.test(t) }; });
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia264; P.save(); P.ui.habVista = ''; P.ui.habEd = null; P.ui.cnVista = ''; P.ui.tab = 'hoy'; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia264; P.save(); P.ui.habVista = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.render(); });
     check('Hábitos: en marcha 2 de 3 con «día 34 de ~66» y su mínimo, los que salen solos sin marcar y los que esperan turno',
       /EN MARCHA · 2 DE 3/.test(r.portada) && /día 34 de ~66/.test(r.portada) && /día malo: 2 páginas/.test(r.portada) && /YA TE SALEN SOLOS/.test(r.portada) && /Cama a su hora/.test(r.portada) && /ESPERAN TURNO/.test(r.portada),
       r.portada.slice(0, 400));
@@ -10627,8 +10614,8 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.nuevos.join() === 'Meditar 10 minutos:marcha:2 minutos:despertar,Inglés 20 min:espera:4 min:despertar', JSON.stringify(r.nuevos));
     check('«probar 14 días» va dentro del hábito: el cambio se prueba, a los 14 días pregunta con su % y «volver» lo deja como estaba',
       /después de comer/.test(r.prueba || '') && /14 días con/.test(r.c5) && /% hecho/.test(r.c5) && r.tras === 'sin|false', JSON.stringify({ prueba: r.prueba, c5: r.c5, tras: r.tras }));
-    check('las señales de 4:20 salen en su sección y no en la de hábitos; Tu semana sin objetivos del trimestre y con experimentos',
-      /T-break/.test(r.cn.enCn) && !/tbreak/.test(r.cn.hab) && !r.sem.obj && r.sem.exp && r.sem.tocaban, JSON.stringify({ cn: r.cn, sem: r.sem }));
+    check('las señales de 4:20 no salen como tarjeta de hábitos; Tu semana sin objetivos del trimestre y con experimentos',
+      !/tbreak/.test(r.cn.hab) && !r.sem.obj && r.sem.exp && r.sem.tocaban, JSON.stringify({ cn: r.cn, sem: r.sem }));
   }
 
   // 265) QUE NADA SE PIERDA, EN CADENA (tanda 1 del informe de código): (a) unos datos que no se leen
@@ -15247,49 +15234,34 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.hayOk1 && r.l1 && r.l1.dudas === 0 && r.l1.k === 1170 && r.l1.p === 42 && r.a1 && r.a1.kcal === 1170 && r.a1.prot === 42 &&
       r.hayOk2 && r.l2 && r.l2.dudas === 0 && r.l2.k === 840 && r.a2 && r.a2.cuenta === 2 && r.a2.kcal === 840, JSON.stringify(r));
   }
-  // 393) 4:20 · G10 — la cortina con PIN y el descanso, encadenados por la interfaz. Fija: (a) con cortina, salir y volver a
-  // entrar pide el PIN (el malo no abre, el bueno sí) y el PIN no se guarda en claro; (b) fuera del 4:20 la cortina deja lo del
-  // 4:20 neutro (el cajón no lo nombra y el conductor no fuma); (c) quitar la cortina desde Copia de seguridad conserva los
-  // datos; (d) el descanso de 14 días sigue en pie tras apuntar un consumo («seguimos desde aquí»), sin reiniciar.
+  // 393) 4:20 · G10 — la contraseña, encadenada por la interfaz. Fija: (a) sin contraseña, entrar en el 4:20 enseña el teclado; al ponerla,
+  // salir y volver a entrar la pide (la mala no abre, la buena sí) y no se guarda en claro; (b) fuera del 4:20 la contraseña deja lo del
+  // 4:20 neutro (el cajón no lo nombra y el conductor no fuma); (c) quitar la contraseña desde Copia de seguridad conserva los datos y al
+  // volver a entrar pide una nueva. (Reinventado el 18/11: ya no hay descanso de 14 días ni formulario de sesión; «He fumado» → «Hoy» apunta.)
   {
     const r = {};
     const pin = async (d) => { for (const c of d) { await page.click('[data-a="cn-pin"][data-v="' + c + '"]'); } await page.waitForTimeout(250); };
-    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia393', JSON.stringify(P.store)); delete P.store.consumo; P.ui.cnF = null; P.ui.cnVista = ''; P.ui.cnPin = null; P.ui.cnAbierto = false; P.ui.tab = 'consumo'; P.render(); });
-    await page.click('[data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(100);
-    // (d) primero: empezar 14 días y apuntar un consumo
-    r.d0 = await page.$$eval('[data-a="cn-desc"]', (b) => b.length);
-    if (r.d0 === 4) await page.click('[data-a="cn-desc"][data-v="14"]');
+    await page.evaluate(() => { const P = window.PG; localStorage.setItem('__copia393', JSON.stringify(P.store)); delete P.store.consumo; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.cnAj = null; P.ui.cnPin = null; P.ui.cnAbierto = false; P.ui.tab = 'consumo'; P.render(); });
     await page.waitForTimeout(100);
-    r.dDia = await page.evaluate(() => (document.querySelector('#main .cndesc .cnbig') || {}).textContent || '');
-    await page.click('[data-a="cn-vista"][data-v=""]'); await page.waitForTimeout(100);
-    r.dLinea = await page.$$eval('[data-a="cn-vista"].cndl', (b) => b.length);
-    r.dAdd = await page.$$eval('[data-a="cn-add"]', (b) => b.length);
-    if (r.dAdd) await page.click('[data-a="cn-add"]');
-    await page.waitForTimeout(2300);
-    r.dFlash = await page.evaluate(() => (document.querySelector('#flash') || {}).textContent || '');
-    await page.click('[data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(100);
-    r.dTxt = await page.evaluate(() => (document.querySelector('#main .cndesc') || {}).innerText || '');
-    r.dPlan = await page.evaluate(() => { const d = window.PG.consumoS().plan.desc; return d && d.dias; });
-    check('393d 4:20 · descanso: empezar 14 días y apuntar una sesión no reinicia ni castiga: sigue «Día 1 de 14» y dice «seguimos desde aquí»',
-      r.d0 === 4 && /Día 1 de 14/.test(r.dDia) && r.dLinea === 1 && r.dAdd === 1 && /seguimos desde aquí/.test(r.dTxt) && /seguimos desde aquí/.test(r.dFlash) && r.dPlan === 14 && !/fallaste|has fallado|recaíste/i.test(r.dTxt), JSON.stringify(r));
-    // (a) poner la cortina, salir, entrar
-    r.aBtn = await page.$$eval('[data-a="cn-pin-nuevo"]', (b) => b.length);
-    if (r.aBtn) await page.click('[data-a="cn-pin-nuevo"]');
-    await page.waitForTimeout(80);
+    // (a) sin contraseña: el teclado; ponerla (dos veces), salir y entrar
+    r.aBtn = await page.$$eval('#main', (b) => /Pon una contraseña de 4 cifras para entrar/.test(b[0].textContent) ? 1 : 0);
     r.aTec = await page.$$eval('[data-a="cn-pin"]', (b) => b.map((x) => Math.round(x.getBoundingClientRect().height)));
     await pin('4821'); await pin('4821');
+    r.aSec = await page.$$eval('#main .cn2', (b) => b.length);
     r.aHash = await page.evaluate(() => { const p = window.PG.consumoS().priv.pin; return p && { s: p.s.length, h: p.h.length }; });
     r.aClaro = await page.evaluate(() => { const q = '"4821"'; return JSON.stringify(window.PG.store).indexOf(q) >= 0 || Object.keys(localStorage).some((k) => (localStorage.getItem(k) || '').indexOf(q) >= 0); });
+    // con la sección abierta, «He fumado» → «Hoy» apunta una sesión (para que (b) y (c) tengan datos)
+    await page.click('[data-a="cn-fumo"]'); await page.click('[data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(150);
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); }); await page.waitForTimeout(80);
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.render(); }); await page.waitForTimeout(80);
     r.aTeclado = await page.$$eval('[data-a="cn-pin"]', (b) => b.length);
-    r.aSinSeccion = await page.$$eval('#main .cnvis', (b) => b.length);
+    r.aSinSeccion = await page.$$eval('#main .cn2', (b) => b.length);
     if (r.aTeclado) { await pin('1111'); }
-    r.aMalCierra = (await page.$$eval('#main .cnvis', (b) => b.length)) === 0 && (await page.$$eval('[data-a="cn-pin"]', (b) => b.length)) > 0;
+    r.aMalCierra = (await page.$$eval('#main .cn2', (b) => b.length)) === 0 && (await page.$$eval('[data-a="cn-pin"]', (b) => b.length)) > 0;
     if (r.aTeclado) { await pin('4821'); }
-    r.aAbre = await page.$$eval('#main .cnvis', (b) => b.length);
-    check('393a 4:20 · cortina: tras ponerla, salir y entrar pide el PIN; uno malo no abre, el bueno sí; teclas ≥ 44 px; solo se guarda sal + hash (nunca el PIN)',
-      r.aBtn === 1 && r.aTec.length === 11 && r.aTec.every((h) => h >= 44) && r.aHash && r.aHash.s === 32 && r.aHash.h === 64 && !r.aClaro &&
+    r.aAbre = await page.$$eval('#main .cn2', (b) => b.length);
+    check('393a 4:20 · contraseña: sin ella pide ponerla; tras ponerla, salir y entrar la pide; una mala no abre, la buena sí; teclas ≥ 44 px; solo se guarda sal + hash (nunca la contraseña)',
+      r.aBtn === 1 && r.aTec.length === 11 && r.aTec.every((h) => h >= 44) && r.aSec === 1 && r.aHash && r.aHash.s === 32 && r.aHash.h === 64 && !r.aClaro &&
       r.aTeclado > 0 && r.aSinSeccion === 0 && r.aMalCierra && r.aAbre === 1, JSON.stringify(r));
     // (b) fuera del 4:20, neutro (con una sesión de hoy apuntada)
     await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.drawerOpen = false; P.render(); }); await page.waitForTimeout(80);
@@ -15299,9 +15271,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.bCajon = await page.evaluate(() => (document.querySelector('#drawer') || {}).innerText || '');
     r.bFuma = await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); return P.conductorEscenas(k).fumar; });
     await page.click('[data-a="drawer-close"]'); await page.waitForTimeout(150);
-    check('393b 4:20 · con la cortina puesta, fuera de su sección (el cajón «Más» y el conductor) se ve neutro, sin nombrar el 4:20 ni el consumo',
+    check('393b 4:20 · con la contraseña puesta, fuera de su sección (el cajón «Más» y el conductor) se ve neutro, sin nombrar el 4:20 ni el consumo',
       r.bTog === 1 && /Privado/.test(r.bCajon) && !/4:20/.test(r.bCajon) && r.bFuma === false, JSON.stringify(r));
-    // (c) quitar la cortina desde Copia de seguridad: los datos se conservan
+    // (c) quitar la contraseña desde Copia de seguridad: los datos se conservan y al entrar pide una nueva
     await page.evaluate(() => { const P = window.PG; P.ui.drawerOpen = false; P.ui.tab = 'data'; P.ui.datosVista = 'copia'; P.render(); }); await page.waitForTimeout(100);
     r.cBtn = await page.$$eval('[data-a="cn-cortina-quita"]', (b) => b.length);
     if (r.cBtn) await page.click('[data-a="cn-cortina-quita"]');
@@ -15309,12 +15281,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.cConf = await page.$$eval('[data-a="confirm-yes"]', (b) => b.length);
     if (r.cConf) await page.click('[data-a="confirm-yes"]');
     await page.waitForTimeout(200);
-    r.cEstado = await page.evaluate(() => { const c = window.PG.consumoS(); return { pin: !!c.priv.pin, ses: c.ses.length, desc: !!c.plan.desc }; });
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.ui.cnVista = ''; P.render(); }); await page.waitForTimeout(100);
-    r.cAbre = await page.$$eval('[data-a="cn-add"]', (b) => b.length);
-    check('393c 4:20 · quitar la cortina desde Ajustes → Copia de seguridad (con aviso) abre el 4:20 y conserva las sesiones y el descanso',
-      r.cBtn === 1 && r.cConf === 1 && r.cEstado.pin === false && r.cEstado.ses === 1 && r.cEstado.desc === true && r.cAbre === 1, JSON.stringify(r));
-    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia393')); localStorage.removeItem('__copia393'); P.ui.cnVista = ''; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    r.cEstado = await page.evaluate(() => { const c = window.PG.consumoS(); return { pin: !!c.priv.pin, ses: c.ses.length }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.render(); }); await page.waitForTimeout(100);
+    r.cPide = await page.$eval('#main', (m) => /Pon una contraseña de 4 cifras para entrar/.test(m.textContent));
+    check('393c 4:20 · quitar la contraseña desde Ajustes → Copia de seguridad (con aviso) conserva las sesiones; al entrar pide una nueva',
+      r.cBtn === 1 && r.cConf === 1 && r.cEstado.pin === false && r.cEstado.ses === 1 && r.cPide, JSON.stringify(r));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia393')); localStorage.removeItem('__copia393'); P.ui.cnPin = null; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
   }
   // 394) G11 · coach, energía del día y «sin pantallas», encadenados por la interfaz. Fija: (a) el coach del saliente y su coherencia con Entreno; (b) la franja sin pantallas, sin botón para quitarla y sin guardia; (c) el ✓ de la mañana.
   {
@@ -15537,20 +15509,25 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = {};
     await gotoTab('hoy'); await page.waitForTimeout(200);
     r.hoyMini = await page.evaluate(() => { const e = document.querySelector('#main .mini'); return e ? parseFloat(getComputedStyle(e).fontSize) : -1; });
+    // 4:20 reinventado (18/11): contraseña puesta y abierta; la pantalla única y el panel de la contraseña
+    await page.evaluate(async () => { const P = window.PG; localStorage.setItem('__copia397a', JSON.stringify(P.store)); await P.cnPinPone('1234'); P.ui.cnAbierto = true; P.ui.cnAj = null; P.ui.cnFumo = null; P.ui.cnGanas = null; });
     await gotoTab('consumo'); await page.waitForTimeout(200);
-    r.vis = await page.evaluate(() => [...document.querySelectorAll('#main .cnvis button')].map((b) => Math.round(b.getBoundingClientRect().height)));
-    // y ninguna letra de la portada del 4:20 por debajo de 11 px (el verificador vio 9,5-10,5 en sus cifras y días)
-    r.minPortada = await page.evaluate(() => Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))));
-    await page.click('#main [data-a="cn-vista"][data-v="plan"]'); await page.waitForTimeout(200);
+    const letraMin = () => page.evaluate(() => Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))));
+    r.enCn = await page.$$eval('#main .cn2', (b) => b.length);
+    r.vis = await page.evaluate(() => [...document.querySelectorAll('#main .cn2 button')].map((b) => Math.round(b.getBoundingClientRect().height)));
+    // y ninguna letra de la pantalla del 4:20 por debajo de 11 px
+    r.minPortada = await letraMin();
+    await page.click('#main [data-a="cn-aj"]'); await page.waitForTimeout(200);
     r.plan = await page.evaluate(() => {
-      const seg = [...document.querySelectorAll('#main .cnseg button')].map((b) => Math.round(b.getBoundingClientRect().height));
       const chk = [...document.querySelectorAll('#main .cn label.mini input[type=checkbox]')].map((i) => ({ w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), fila: Math.round(i.closest('label').getBoundingClientRect().height) }));
-      return { seg: seg, chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), minLetra: Math.min(...[...document.querySelectorAll('#main *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getClientRects().length).map((e) => parseFloat(getComputedStyle(e).fontSize))), ancho: document.documentElement.scrollWidth };
+      return { chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), ancho: document.documentElement.scrollWidth };
     });
+    r.minLetraAj = await letraMin();
     await gotoTab('hoy');
-    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su plan: .mini a 13 px (suelo C1), pestañas y botones de potencia de 44 px y casillas de 22 px (pulido del 10/11) en filas de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
-      r.hoyMini >= 13 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.seg.length > 0 && r.plan.seg.every((h) => h >= 44) && r.plan.chk.length >= 3 &&
-      r.plan.chk.every((c) => c.w === 22 && c.h === 22 && c.fila >= 44) && r.plan.mini === 13 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.plan.minLetra >= 11, JSON.stringify(r));
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(localStorage.getItem('__copia397a')); localStorage.removeItem('__copia397a'); P.ui.cnAj = null; P.ui.cnAbierto = false; P.ui.cnPin = null; P.save(); P.render(); });
+    check('397a Letra y botones · tras ir de Hoy al 4:20 y a su panel de contraseña: .mini a 13 px (suelo C1), botones de 44 px, casilla de 22 px en fila de 44 px, ninguna letra del 4:20 bajo 11 px, sin desbordar a 412',
+      r.hoyMini >= 13 && r.enCn === 1 && r.vis.length > 0 && r.vis.every((h) => h >= 44) && r.plan.chk.length >= 1 &&
+      r.plan.chk.every((c) => c.w === 22 && c.h === 22 && c.fila >= 44) && r.plan.mini === 13 && r.plan.ancho <= 412 && r.minPortada >= 11 && r.minLetraAj >= 11, JSON.stringify(r));
     await page.setViewportSize(vp);
   }
   // (b) sueño en Hoy (S1: antes había una fila «Te faltan N noches»; ya no): con «He vuelto» y «En pie» dados sale la fila «Anoche … Vale · cambiar · otras noches»
@@ -17487,7 +17464,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
 
   // ===== C6 · «PRIVADO», HÁBITOS Y «ESPERAN TURNO» (510-519) =====
-  // prepara: un día de trabajo con Lloretazo puesto, tres hábitos (uno de 4:20 que se marca solo), sin PIN y sin «Privado»
+  // prepara: un día de trabajo con Lloretazo puesto, tres hábitos (uno de 4:20 que se marca solo), sin contraseña y sin «Privado» (el campo priv.privado se pone a mano: ya no hay interruptor ni banda desde el 18/11, pero sigue tapando)
   const c6Prepara = () => page.evaluate(() => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)),
       SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren/i.test(x.name || ''))[0];
     if (!window.__copiaC6) window.__copiaC6 = JSON.parse(JSON.stringify(P.store));
@@ -17497,91 +17474,29 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: [], auto: n[2], min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' })), registro: {} };
     const c = P.consumoS(); delete c.priv.pin; c.priv.privado = false; c.priv.oculto = false;
     P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = Object.assign({}, P.store.lloret, { diario: false, salta: {} }); P.lloretPoner(d(0));
-    P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.cnVista = ''; P.ui.habVista = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); });
+    P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.habVista = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); });
   const c6Suelta = () => page.evaluate(() => { const P = window.PG; if (window.__copiaC6) { P.store = window.__copiaC6; delete window.__copiaC6; } P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.habEd = null; P.ui.tab = 'hoy'; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
   const c6Ve = (tab, extra) => page.evaluate(([tab, extra]) => { const P = window.PG; P.ui.tab = tab; P.ui.cnAbierto = false; P.ui.cnPin = null; Object.assign(P.ui, extra || {}); P.render(); }, [tab, extra]);
   // todo lo que se ve o se lee en pantalla: texto, aria-label, title y el aviso de abajo
   const c6Texto = () => page.evaluate(() => { const m = document.getElementById('main'); return (m.innerText + ' ' + [...m.querySelectorAll('[aria-label],[title]')].map((e) => (e.getAttribute('aria-label') || '') + ' ' + (e.getAttribute('title') || '')).join(' ') + ' ' + ((document.querySelector('#flash') || {}).textContent || '')); });
-  const c6Plan = () => c6Ve('consumo', { cnVista: 'plan' });
-  const c6Priv = () => page.evaluate(() => window.PG.consumoS().priv.privado === true);
-  const c6Pin = async (d) => { for (const c of d) await page.click('[data-a="cn-pin"][data-v="' + c + '"]'); await page.waitForTimeout(300); };
   const REVELA = /lloretazo|4:20|🌿 ✓|día sin 4/i;
 
-  // 510) C6 · «PRIVADO» SIN PIN TAPA 4:20 EN HOY: con el interruptor de 4:20 → Plan puesto y sin PIN, Hoy (texto, aria-label y títulos), los hábitos y el aviso no nombran «Lloretazo» ni «4:20»; el hábito sale como «Plan privado». Antes de ponerlo sí salían.
+  // 510) C6 · «PRIVADO» TAPA 4:20 EN HOY: con priv.privado=true (puesto a mano: ya no hay interruptor, 18/11), Hoy (texto, aria-label y títulos), los hábitos y el aviso no nombran «Lloretazo» ni «4:20»; el hábito sale como «Plan privado». Antes de ponerlo sí salían; al quitarlo (a mano) Hoy vuelve a nombrar el Lloretazo.
+  // (511-513 probaban el interruptor, el «Deshacer» y la banda «Quitar privado», quitados por decisión del usuario; el teclado y la contraseña los cubren la 393 y la 695.)
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
     await c6Prepara(); await page.waitForTimeout(250);
     const antes = await c6Texto();
-    await c6Plan(); await page.waitForTimeout(150);
-    const swTxt = await page.evaluate(() => (document.querySelector('#main .cnprivsw') || {}).innerText || '');
-    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
-    const f = await page.evaluate(() => ({ t: (document.querySelector('#flash') || {}).textContent || '', und: !!document.querySelector('#flash [data-a="deshacer"]') }));
-    const st = await page.evaluate(() => { const c = window.PG.consumoS(); return { priv: c.priv.privado === true, pin: !!c.priv.pin, tapado: window.PG.cnTapado(), pedir: window.PG.cnPin() }; });
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
+    const st = await page.evaluate(() => { const c = window.PG.consumoS(); return { priv: c.priv.privado === true, pin: !!c.priv.pin, tapado: window.PG.cnTapado() }; });
     await c6Ve('hoy'); await page.waitForTimeout(250);
     const hoy = await c6Texto();
     const tira = await page.evaluate(() => [...document.querySelectorAll('#main .habtira-b')].map((b) => b.textContent + '|' + b.getAttribute('aria-label')).join(' ; '));
-    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
-    check('510 Privado sin PIN · con el interruptor puesto (y sin PIN) Hoy no nombra «Lloretazo» ni «4:20» (texto, aria-label, títulos), el hábito sale «Plan privado» y avisa con «Deshacer»; sin Privado sí salían',
-      REVELA.test(antes) && /Privado/.test(swTxt) && /Privado puesto/.test(f.t) && f.und && st.priv && !st.pin && st.tapado && !st.pedir && !REVELA.test(hoy) && /Plan privado/.test(tira) && !/4:20/.test(tira), JSON.stringify({ antes: antes.slice(0, 200), swTxt, f, st, hoy: hoy.slice(0, 300), tira }));
-  }
-
-  // 511) C6 · «DESHACER» Y EL INTERRUPTOR QUITAN «PRIVADO» SIN PIN: recién puesto, «Deshacer» lo quita; luego se pone otra vez y el mismo interruptor lo quita; Hoy vuelve a nombrar el Lloretazo.
-  {
-    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
-    await c6Prepara(); await c6Plan(); await page.waitForTimeout(150);
-    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(200);
-    const puesto = await c6Priv();
-    await page.click('#flash [data-a="deshacer"]'); await page.waitForTimeout(250);
-    const trasDeshacer = await c6Priv(); const flash1 = await page.evaluate(() => (document.querySelector('#flash') || {}).textContent || '');
+    await page.evaluate(() => { window.PG.consumoS().priv.privado = false; window.PG.save(); });
     await c6Ve('hoy'); await page.waitForTimeout(200); const hoyVuelve = await c6Texto();
-    await c6Plan(); await page.waitForTimeout(150);
-    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(200);
-    const otraVez = await c6Priv();
-    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
-    const trasInterruptor = await c6Priv(); const marcado = await page.$eval('#main input[data-a="cn-priv"][data-k="privado"]', (i) => i.checked);
     await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
-    check('511 Privado · «Deshacer» (unos segundos) y el interruptor lo quitan sin PIN, y Hoy vuelve a nombrar el Lloretazo',
-      puesto && !trasDeshacer && /Privado quitado/.test(flash1) && /Lloretazo/.test(hoyVuelve) && otraVez && !trasInterruptor && !marcado, JSON.stringify({ puesto, trasDeshacer, flash1, otraVez, trasInterruptor, marcado }));
-  }
-
-  // 512) C6 · LA BANDA «QUITAR PRIVADO»: con Privado y sin PIN, entrar en 4:20 no pide nada, enseña todo y una banda fija «Quitar privado» que lo quita de un toque.
-  {
-    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
-    await c6Prepara(); await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
-    await c6Ve('consumo', { cnVista: '' }); await page.waitForTimeout(250);
-    const a = await page.evaluate(() => ({ banda: (document.querySelector('#main .cnbanda') || {}).innerText || '', pad: document.querySelectorAll('#main .cnpin, [data-a="cn-pin"]').length, vistas: document.querySelectorAll('#main .cnvis button').length, apunta: document.querySelectorAll('#main [data-a="cn-add"]').length,
-      h: Math.round((document.querySelector('#main .cnbanda [data-a="cn-privado-quita"]') || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height) }));
-    await page.click('#main [data-a="cn-privado-quita"]'); await page.waitForTimeout(250);
-    const b = await page.evaluate(() => ({ priv: window.PG.consumoS().priv.privado === true, banda: document.querySelectorAll('#main .cnbanda').length, flash: (document.querySelector('#flash') || {}).textContent || '' }));
-    await c6Ve('hoy'); await page.waitForTimeout(200); const hoy = await c6Texto();
-    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
-    check('512 Privado · sin PIN entrar en 4:20 no pide PIN y trae la banda «Privado está activado» con «Quitar privado» (≥44 px) que lo quita; Hoy vuelve a nombrar el Lloretazo',
-      /Privado está activado/.test(a.banda) && /Quitar privado/.test(a.banda) && a.pad === 0 && a.vistas === 4 && a.apunta >= 1 && a.h >= 44 && !b.priv && b.banda === 0 && /Privado quitado/.test(b.flash) && /Lloretazo/.test(hoy), JSON.stringify({ a, b }));
-  }
-
-  // 513) C6 · CON PIN PUESTO: «Privado» + PIN. Salir y entrar pide el PIN; dentro, «Quitar privado» lo pide otra vez (uno malo no lo quita, el bueno sí) y el PIN sigue puesto. «Deshacer» recién puesto no lo pide.
-  {
-    const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 }); await fijaHoy(12, 0);
-    await c6Prepara(); await c6Plan(); await page.waitForTimeout(150);
-    await page.click('[data-a="cn-pin-nuevo"]'); await page.waitForTimeout(150); await c6Pin('1234'); await c6Pin('1234');
-    await page.evaluate(() => { window.PG.ui.cnVista = 'plan'; window.PG.render(); }); await page.waitForTimeout(150);
-    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
-    const conPin = await page.evaluate(() => ({ priv: window.PG.consumoS().priv.privado === true, pin: window.PG.cnPin() }));
-    await page.click('#flash [data-a="deshacer"]'); await page.waitForTimeout(250);
-    const deshaceSinPin = !(await c6Priv()) && (await page.$$('[data-a="cn-pin"]')).length === 0;
-    await page.click('#main input[data-a="cn-priv"][data-k="privado"]'); await page.waitForTimeout(250);
-    await c6Ve('hoy'); await c6Ve('consumo', { cnVista: '' }); await page.waitForTimeout(250);
-    const pideEntrar = await page.evaluate(() => ({ pad: document.querySelectorAll('[data-a="cn-pin"]').length, t: (document.querySelector('.cnpt') || {}).textContent || '', banda: document.querySelectorAll('#main .cnbanda').length }));
-    await c6Pin('1234'); await page.waitForTimeout(200);
-    const dentro = await page.evaluate(() => ({ banda: document.querySelectorAll('#main .cnbanda').length, pad: document.querySelectorAll('[data-a="cn-pin"]').length }));
-    await page.click('#main [data-a="cn-privado-quita"]'); await page.waitForTimeout(250);
-    const pideQuitar = await page.evaluate(() => ({ t: (document.querySelector('.cnpt') || {}).textContent || '', pad: document.querySelectorAll('[data-a="cn-pin"]').length, priv: window.PG.consumoS().priv.privado === true }));
-    await c6Pin('9999'); const malo = await c6Priv();
-    await c6Pin('1234'); await page.waitForTimeout(250);
-    const fin = await page.evaluate(() => ({ priv: window.PG.consumoS().priv.privado === true, pin: window.PG.cnPin(), banda: document.querySelectorAll('#main .cnbanda').length }));
-    await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
-    check('513 Privado con PIN · poner Privado, entrar pide el PIN y «Quitar privado» lo pide otra vez (el malo no lo quita, el bueno sí); el PIN sigue puesto; «Deshacer» recién puesto no lo pide',
-      conPin.priv && conPin.pin && deshaceSinPin && pideEntrar.pad > 0 && /entrar/.test(pideEntrar.t) && pideEntrar.banda === 0 && dentro.banda === 1 && dentro.pad === 0 && /quitar/i.test(pideQuitar.t) && pideQuitar.pad > 0 && pideQuitar.priv && malo && !fin.priv && fin.pin && fin.banda === 0, JSON.stringify({ conPin, deshaceSinPin, pideEntrar, dentro, pideQuitar, malo, fin }));
+    check('510 Privado · con priv.privado puesto Hoy no nombra «Lloretazo» ni «4:20» (texto, aria-label, títulos) y el hábito sale «Plan privado»; sin Privado sí salían y Hoy vuelve a nombrar el Lloretazo',
+      REVELA.test(antes) && st.priv && !st.pin && st.tapado && !REVELA.test(hoy) && /Plan privado/.test(tira) && !/4:20/.test(tira) && /Lloretazo/.test(hoyVuelve), JSON.stringify({ antes: antes.slice(0, 200), st, hoy: hoy.slice(0, 300), tira }));
   }
 
   // 514) C6 · EL CAMPO NUEVO Y SU SANEADO: «privado» es un campo añadido (no una migración): una copia vieja sin él carga como no privado, solo un verdadero se conserva, y el PIN se sanea aparte. Y «Privado» no pide un PIN que no existe.
@@ -17592,12 +17507,11 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       con = (pv) => { const o = base(); o.consumo.priv = pv; return P.normalize(o).consumo.priv; };
       return { viejo: con({ oculto: true, fueraCopia: false }), si: con({ privado: true }), texto: con({ privado: 'sí' }), uno: con({ privado: 1 }), basura: con({ privado: true, pin: { s: 'x', h: 'y' } }) }; });
     await page.evaluate(() => { window.PG.consumoS().priv.privado = true; window.PG.save(); });
-    await c6Ve('consumo', { cnVista: 'plan' }); await page.waitForTimeout(250);
-    const s = await page.evaluate(() => ({ tapado: window.PG.cnTapado(), pin: window.PG.cnPin(), pad: document.querySelectorAll('[data-a="cn-pin"]').length, nuevo: document.querySelectorAll('[data-a="cn-pin-nuevo"]').length, txt: (document.getElementById('main').innerText || '') }));
+    const s = await page.evaluate(() => ({ tapado: window.PG.cnTapado(), pin: window.PG.cnPin() }));
     await c6Suelta(); await page.setViewportSize(vp); await sueltaHoy();
-    check('514 Privado · campo añadido con su saneado en la carga (solo «true» vale; el PIN malo se tira) y sin PIN no se pide ninguno; el texto es honesto: «tapa … no cifra»',
+    check('514 Privado · campo añadido con su saneado en la carga (solo «true» vale; el PIN malo se tira) y con el campo puesto y sin contraseña la sección queda tapada',
       r.viejo.privado === false && r.viejo.oculto === true && r.si.privado === true && r.texto.privado === false && r.uno.privado === false && r.basura.privado === true && !r.basura.pin
-      && s.tapado && !s.pin && s.pad === 0 && s.nuevo === 1 && /Tapa 4:20 en Hoy, en Más y en los avisos\. No cifra tus datos/.test(s.txt), JSON.stringify({ r, s: { ...s, txt: s.txt.slice(0, 200) } }));
+      && s.tapado && !s.pin, JSON.stringify({ r, s }));
   }
 
   // 515) C6 · HÁBITOS Y AVISOS TAPADOS: con Privado, la pantalla de Hábitos, su hoja, «Experimentos» y «Tu semana» no nombran el 4:20 ni el Lloretazo (el hábito sale «Plan privado»); sin Privado sí.
@@ -18981,7 +18895,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   }
 
   // 686) El pulido de toda la app (10/11, «la cara se queda»): letra de las casillas del Mes, títulos de pantalla iguales,
-  // «PLANTILLAS» despegado de su nota, casilla «con tabaco» y botón de la cabina a tamaño de dedo.
+  // «PLANTILLAS» despegado de su nota y botón de la cabina a tamaño de dedo.
   // Cae con el pulido revertido en styles.css (--t-titulo, .dline a 11.5, .acap>.mini, casilla a 22) o en fig/conductor.js (.cd-sub min-height).
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
@@ -18992,7 +18906,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const h = P.store.habitos || (P.store.habitos = { items: [] }); h.items = h.items || [];
       h.items.push({ id: 'hb686', nombre: 'Agua 686', icono: '💧', color: '#38e1ff', dow: [0, 1, 2, 3, 4, 5, 6], creado: k(-3), noEn: [] });
       P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.drawerOpen = false; P.save(); P.render(); });
-    // Hoy (cabina) → Mes → cajón → Hábitos → cajón → 4:20 → Comer · Casa
+    // Hoy (cabina) → Mes → cajón → Hábitos → Comer · Casa
     await page.click('[data-a="nav-cal"]'); await page.waitForTimeout(200);
     await page.click('#calModes button[data-t="hoy"]'); await page.waitForSelector('.cd-sub', { state: 'attached', timeout: 4000 }).catch(() => {});
     const cab = await page.evaluate(() => { const b = document.querySelector('.cd-sub'); return b ? parseFloat(getComputedStyle(b).minHeight) : -1; });
@@ -19006,10 +18920,6 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('[data-a="drawer-nav"][data-t="habitos"]'); await page.waitForTimeout(300);
     const hab = await page.evaluate(() => { const c = document.querySelector('#main .habplant .acap'), a = c && c.children[0], b = c && c.children[1], t = document.querySelector('#main .subtit');
       return { hueco: a && b ? Math.round(b.getBoundingClientRect().left - a.getBoundingClientRect().right) : -1, tit: t ? parseFloat(getComputedStyle(t).fontSize) : 0 }; });
-    await page.click('[data-a="drawer-toggle"]'); await page.waitForTimeout(250);
-    await page.click('[data-a="drawer-nav"][data-t="consumo"]'); await page.waitForTimeout(300);
-    const cn = await page.evaluate(() => { const i = document.querySelector('#main input[data-a="cn-tabaco"]'), r = i && i.getBoundingClientRect(), l = i && i.closest('label').getBoundingClientRect();
-      return { caja: r ? Math.round(r.width) : 0, fila: l ? Math.round(l.height) : 0 }; });
     await page.click('[data-a="nav-comer"]'); await page.waitForTimeout(250);
     await page.click('.cjseg2 [data-a="cje-tab"][data-v="casa"]'); await page.waitForTimeout(300);
     const casa = await page.evaluate(() => { const t = document.querySelector('#main .cstit'); return t ? parseFloat(getComputedStyle(t).fontSize) : 0; });
@@ -19017,8 +18927,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       mes.n > 3 && mes.min >= 11.5 && mes.fuera.length === 0 && mes.igual, JSON.stringify(mes));
     check('686: el título de pantalla mide lo mismo en Hábitos y en Comer · Casa, y «PLANTILLAS» no se pega a su nota',
       hab.tit === casa && casa >= 19 && hab.hueco >= 6, JSON.stringify({ hab, casa }));
-    check('686: la casilla «con tabaco» de 4:20 mide 22 px en una fila de 44, y el botón de la cabina de Hoy tiene 44 px de alto mínimo',
-      cn.caja >= 22 && cn.fila >= 44 && cab >= 44, JSON.stringify({ cn, cab }));
+    // (la casilla «con tabaco» del 4:20 se quitó con el formulario de sesión, 18/11)
+    check('686: el botón de la cabina de Hoy tiene 44 px de alto mínimo',
+      cab >= 44, JSON.stringify({ cab }));
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia686); P.ui.tab = 'hoy'; P.ui.foodVista = ''; P.ui.drawerOpen = false; P.save(); P.render(); });
     await page.setViewportSize(vp);
   }
@@ -19081,6 +18992,119 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const C = await p.evaluate((a) => ({ hash: location.hash, uso: !!(window.PG.store.uso || {})[a], modal: !!document.querySelector('#mPgImporte') }), ayer); await p.close();
     check('694) K4 · acciones desconocidas o mal escritas (<script>, mayúsculas, vacía, __proto__) no hacen nada y vacían el #; «#uso=…&accion=gasto» guarda el uso y abre el gasto',
       !malos.length && C.hash === '' && C.uso && C.modal, JSON.stringify({ malos, C }));
+  }
+
+  // 695) 4:20 REINVENTADO · contraseña obligatoria (18/11/2026), encadenada por la interfaz: sin contraseña, entrar en 4:20
+  // pide ponerla y «Cancelar» te saca a Hoy; ponerla (dos veces) abre la sección; salir y volver la pide; la mala no abre, la
+  // buena sí; solo se guarda sal + hash. Cae con la contraseña opcional de antes (cnPinPantalla sin la rama «!cnPin()»).
+  {
+    const cl6 = async (q) => { const e = await page.$(q); if (e) await e.click(); return !!e; };
+    await fijaHoy();
+    const t695 = async (d) => { for (const c of d) await cl6('#main [data-a="cn-pin"][data-v="' + c + '"]'); await page.waitForTimeout(200); };
+    await page.evaluate(() => { const P = window.PG; window.__copia695 = JSON.stringify(P.store); delete P.store.consumo;
+      P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.cnAj = null; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.save(); P.render(); });
+    await page.waitForTimeout(100);
+    const r = {};
+    r.pide = await page.$eval('#main', (m) => /Pon una contraseña de 4 cifras/.test(m.textContent) && !!m.querySelector('[data-a="cn-pin"]') && !m.querySelector('.cn2'));
+    await cl6('#main [data-a="cn-pin-x"]'); await page.waitForTimeout(100);
+    r.cancelaSale = await page.evaluate(() => window.PG.ui.tab);
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'consumo'; P.render(); }); await page.waitForTimeout(100);
+    await t695('1357'); r.repite = await page.$eval('#main', (m) => /Repítela/.test(m.textContent));
+    await t695('1357'); r.abre = await page.$$eval('#main .cn2', (b) => b.length);
+    r.guardado = await page.evaluate(() => { const p = window.PG.consumoS().priv.pin; return !!p && p.s.length === 32 && p.h.length === 64 && !JSON.stringify(window.PG.store).includes('"1357"'); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.render(); P.ui.tab = 'consumo'; P.render(); }); await page.waitForTimeout(100);
+    r.vuelvePide = await page.$eval('#main', (m) => /Escribe tu contraseña para entrar/.test(m.textContent));
+    await t695('0000'); r.malaNo = await page.$$eval('#main .cn2', (b) => b.length);
+    await t695('1357'); r.buenaSi = await page.$$eval('#main .cn2', (b) => b.length);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia695); delete window.__copia695; P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await sueltaHoy();
+    check('695) 4:20 · contraseña obligatoria: sin ella pide ponerla y «Cancelar» saca a Hoy; puesta abre; al volver la pide; la mala no abre y la buena sí; solo sal + hash',
+      r.pide && r.cancelaSale === 'hoy' && r.repite && r.abre === 1 && r.guardado && r.vuelvePide && r.malaNo === 0 && r.buenaSi === 1, JSON.stringify(r));
+  }
+  // 696) 4:20 REINVENTADO · época de fumar → plan de 7 días, encadenado: con 5 días de 7 con sesión la pantalla propone dejarlo;
+  // «Empezar hoy» → «Día 1 de 7 · como mucho una»; «He fumado» → «Hoy» NO reinicia el plan; el día 3 es «Hoy: ninguna» con 7 puntos;
+  // «Tengo ganas» pone 15 minutos y «Ya han pasado» apunta unas ganas aguantadas. Cae sin cnEstado/«cn-dejar» (vuelve la portada vieja).
+  {
+    const cl6 = async (q) => { const e = await page.$(q); if (e) await e.click(); return !!e; };
+    await fijaHoy();
+    await page.evaluate(async () => { const P = window.PG; window.__copia696 = JSON.stringify(P.store); delete P.store.consumo;
+      await P.cnPinPone('2468'); [0, 1, 3, 4, 6].forEach((i) => P.consumoApuntar({ fecha: P.iso(P.addDays(new Date(), -i)) }));
+      P.ui.cnAbierto = true; P.ui.cnPin = null; P.ui.cnAj = null; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.save(); P.render(); });
+    await page.waitForTimeout(100);
+    const txt = () => page.$eval('#main', (m) => m.textContent.replace(/\s+/g, ' '));
+    const r = {};
+    r.epoca = await txt(); r.epocaOk = /Has fumado 5 de 7 días\./.test(r.epoca) && /Te propongo 7 días: 2 bajando y 5 sin/.test(r.epoca) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 1;
+    await cl6('#main [data-a="cn-dejar"]'); await page.waitForTimeout(100);
+    r.d1 = await txt(); r.d1Ok = /Día 1 de 7/.test(r.d1) && /como mucho una, después de cenar/.test(r.d1);
+    await cl6('#main [data-a="cn-fumo"]'); await page.waitForTimeout(80);
+    await cl6('#main [data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(100);
+    r.trasFumar = await txt(); r.sigue = /Día 1 de 7/.test(r.trasFumar);
+    r.ses = await page.evaluate(() => window.PG.consumoS().ses.filter((x) => x.fecha === window.PG.iso(new Date())).length);
+    await page.evaluate(() => { const P = window.PG, p = P.consumoS().plan; p.dejar = { desde: P.iso(P.addDays(new Date(), -2)) }; P.save(); P.render(); });
+    r.d3 = await txt(); r.d3Ok = /Día 3 de 7/.test(r.d3) && /Hoy: ninguna\./.test(r.d3) && (await page.$$('#main .cnpts i')).length === 7;
+    await cl6('#main [data-a="cn-ganas"]'); await page.waitForTimeout(80);
+    r.reloj = await page.$$eval('#cnReloj', (e) => e.length ? e[0].textContent : '');
+    await cl6('#main [data-a="cn-ganas-res"]'); await page.waitForTimeout(100);
+    r.ganas = await page.evaluate(() => { const g = window.PG.consumoS().ganas[0]; return g && g.res; });
+    r.vuelve = /Día 3 de 7/.test(await txt());
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia696); delete window.__copia696; P.ui.cnAbierto = false; P.ui.cnGanas = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await sueltaHoy();
+    check('696) 4:20 · época de fumar (5 de 7) propone 7 días; «Empezar hoy» → Día 1 «como mucho una»; «He fumado» no reinicia; día 3 «Hoy: ninguna» con 7 puntos; «Tengo ganas» 15:00 y apunta ganas aguantadas',
+      r.epocaOk && r.d1Ok && r.sigue && r.ses === 2 && r.d3Ok && r.reloj === '15:00' && r.ganas === 'aguante' && r.vuelve, JSON.stringify(Object.assign({}, r, { epoca: r.epoca.slice(0, 160), d1: undefined, trasFumar: undefined, d3: r.d3.slice(0, 160) })));
+  }
+  // 697) 4:20 REINVENTADO · recaída puntual, encadenada: viniendo de dejarlo (nada en 20 días; una de hace 25), «He fumado» → «Hoy»
+  // dice «Bueno, no pasa nada… no sigas» y NO propone el plan; «Vale» → «29 días sin.» (no se reinicia nada); si sigue hasta 4 días
+  // en 7 vuelve a ser época y propone el plan; «Ahora no» lo deja en «Cuando quieras». Cae sin la rama «recaida» de cnEstado.
+  {
+    const cl6 = async (q) => { const e = await page.$(q); if (e) await e.click(); return !!e; };
+    await fijaHoy();
+    await page.evaluate(async () => { const P = window.PG; window.__copia697 = JSON.stringify(P.store); delete P.store.consumo;
+      await P.cnPinPone('2468'); P.consumoApuntar({ fecha: P.iso(P.addDays(new Date(), -40)) });
+      P.ui.cnAbierto = true; P.ui.cnPin = null; P.ui.cnAj = null; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.save(); P.render(); });
+    await page.waitForTimeout(100);
+    const txt = () => page.$eval('#main', (m) => m.textContent.replace(/\s+/g, ' '));
+    const r = {};
+    r.dejado = /30 días sin\./.test(await txt());
+    await cl6('#main [data-a="cn-fumo"]'); await page.waitForTimeout(80);
+    await cl6('#main [data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(100);
+    r.rec = await txt(); r.recOk = /Bueno, no pasa nada\./.test(r.rec) && /Pero no sigas: mañana, ninguna\./.test(r.rec) && /29 de 30/.test(r.rec) && !/Empezar hoy/.test(r.rec);
+    await cl6('#main [data-a="cn-vale"]'); await page.waitForTimeout(100);
+    r.vale = /29 días sin\./.test(await txt());
+    await page.evaluate(() => { const P = window.PG; [1, 2, 3].forEach((i) => P.consumoApuntar({ fecha: P.iso(P.addDays(new Date(), -i)) })); P.render(); });
+    r.otra = await txt(); r.otraOk = /Has fumado 4 de 7 días\./.test(r.otra) && /Te propongo 7 días/.test(r.otra);
+    await cl6('#main [data-a="cn-dejar-no"]'); await page.waitForTimeout(100);
+    r.luego = await txt(); r.luegoOk = /Cuando quieras: 7 días para dejarlo/.test(r.luego) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 0 && (await page.$$('#main [data-a="cn-dejar"]')).length === 1;
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia697); delete window.__copia697; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await sueltaHoy();
+    check('697) 4:20 · recaída puntual tras dejarlo: «no pasa nada, pero no sigas» sin plan; «Vale» → 29 días sin; con 4 de 7 vuelve a proponer el plan; «Ahora no» → «Cuando quieras»',
+      r.dejado && r.recOk && r.vale && r.otraOk && r.luegoOk, JSON.stringify({ dejado: r.dejado, rec: r.rec.slice(0, 200), vale: r.vale, otra: r.otra.slice(0, 160), luego: r.luego.slice(0, 160) }));
+  }
+  // 698) 4:20 REINVENTADO · minimalista y sin perder nada: a 412×915 la sección cabe en una pantalla, con ≤ 3 botones a 44 px o más
+  // y letra ≥ 13 px, sin las 4 pestañas viejas; las sesiones viejas (forma, g, motivo, tabaco) y el plan nuevo sobreviven a normalize;
+  // el 🔒 abre «Cambiar la contraseña» y vuelve. Cae con la portada vieja (38 botones, 1,7 pantallas).
+  {
+    const cl6 = async (q) => { const e = await page.$(q); if (e) await e.click(); return !!e; };
+    await fijaHoy();
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(async () => { const P = window.PG; window.__copia698 = JSON.stringify(P.store); delete P.store.consumo;
+      await P.cnPinPone('2468'); const c = P.consumoS();
+      c.ses.push({ id: 'v698', ts: 1, fecha: P.iso(P.addDays(new Date(), -60)), hora: '22:00', forma: 'porro', g: 0.5, ctx: 'amigos', tabaco: true, motivo: 'social', thc: 60 });
+      c.plan.dejar = { desde: P.iso(P.addDays(new Date(), -3)) };
+      P.ui.cnAbierto = true; P.ui.cnPin = null; P.ui.cnAj = null; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.save(); P.render(); window.scrollTo(0, 0); });
+    await page.waitForTimeout(150);
+    const r = await page.evaluate(() => { const m = document.querySelector('#main'), bs = [...m.querySelectorAll('button')].filter((b) => b.offsetParent);
+      let min = 99; m.querySelectorAll('*').forEach((e) => { if (e.offsetParent && e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) min = Math.min(min, parseFloat(getComputedStyle(e).fontSize)); });
+      const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))), v = n.consumo.ses.filter((x) => x.id === 'v698')[0];
+      return { cabe: document.scrollingElement.scrollHeight <= innerHeight + 1, alto: document.scrollingElement.scrollHeight, nb: bs.length, bajos: bs.filter((b) => b.getBoundingClientRect().height < 44).length,
+        min, pestañas: m.querySelectorAll('.cnvis').length, vieja: !!v && v.forma === 'porro' && v.g === 0.5 && v.motivo === 'social' && v.tabaco === true, plan: !!n.consumo.plan.dejar && n.consumo.plan.dejar.desde === P.consumoS().plan.dejar.desde }; });
+    await cl6('#main [data-a="cn-aj"]'); await page.waitForTimeout(80);
+    r.aj = await page.$$eval('#main [data-a="cn-pin-cambia"]', (b) => b.length);
+    await cl6('#main [data-a="cn-aj"]'); await page.waitForTimeout(80);
+    r.vuelve = await page.$$eval('#main .cn2[data-estado="plan"]', (b) => b.length);
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia698); delete window.__copia698; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await sueltaHoy();
+    check('698) 4:20 · minimalista: cabe en una pantalla a 412×915, ≤ 3 botones de ≥ 44 px, letra ≥ 13 px, sin pestañas; lo viejo y el plan sobreviven a normalize; el 🔒 abre «Cambiar la contraseña» y vuelve',
+      r.cabe && r.nb <= 3 && r.bajos === 0 && r.min >= 13 && r.pestañas === 0 && r.vieja && r.plan && r.aj === 1 && r.vuelve === 1, JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
