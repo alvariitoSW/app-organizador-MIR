@@ -1,0 +1,113 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Semana · maqueta</title>
+<style>
+:root{--bg:#070b14;--bg2:#0c1424;--card:#111a2b;--ink:#e9f2ff;--ink2:#8fa6c6;--line:#1e2b44;--brand:#38e1ff;--accent:#a3e635;--ok:#34d399;--warn:#fbbf24;--gua:#7a1420;--r:16px}
+*{box-sizing:border-box}
+body{margin:0;background:#03060c;color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px 48px}
+h1{font-size:18px;margin:0 0 4px;text-align:center}.lead{text-align:center;color:var(--ink2);font-size:13px;margin:0 0 20px}
+.wrapf{display:flex;gap:28px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.col{width:412px;max-width:none;flex:none}
+.col h2{font-size:16px;margin:0 0 8px}
+.nota{font-size:13px;color:var(--ink2);margin:10px 0 0}.nota b{color:var(--ink)}
+@media(max-width:444px){body{padding-left:0;padding-right:0}}
+@media(max-width:899px){.wrapf{flex-direction:column;align-items:center}}
+.frame{width:412px;height:915px;background:var(--bg);border:1px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.hd{height:52px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--line);font-weight:800}
+.hd .back{min-width:44px;min-height:44px;display:flex;align-items:center;color:var(--ink2);font-weight:700;font-size:14px;background:none;border:0;font-family:inherit}
+.hd .t{flex:1;text-align:center}.hd .r{color:var(--ink2);font-size:13px;font-weight:700}
+.sub{flex:none;padding:8px 14px 6px;font-size:13px;color:var(--ink2)}
+.body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 12px}
+.tabs{height:64px;flex:none;display:flex;border-top:1px solid var(--line);background:var(--card)}
+.tabs span{flex:1;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--ink2)}.tabs .on{color:var(--brand)}
+.tap{border-bottom:1px dotted var(--ink2);cursor:pointer}
+.pill{display:inline-block;font-size:13px;font-weight:800;padding:4px 9px;border-radius:99px;border:1px solid #fbbf2466;background:#fbbf241a;color:var(--warn);white-space:nowrap}
+.pill.no{border-color:var(--line);background:none;color:var(--ink2)}
+.tg{font-size:13px;font-weight:900;letter-spacing:.04em}
+.tg.g{color:#f08a95}.tg.s{color:var(--warn)}.tg.t{color:var(--ink2)}
+/* pie */
+.pie{display:flex;flex-direction:column;gap:6px;padding:8px 0 10px}
+.pie .l{display:flex;align-items:center;min-height:44px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 12px;font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;font-family:inherit}
+.pie .l.p{font-size:13px;font-weight:600;color:var(--ink2);min-height:32px;background:none;border:0;padding:0 4px}
+.btn2{min-height:44px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--ink);font:700 14px inherit;font-family:inherit}
+.compact .pie{padding:4px 0 6px;gap:4px}.compact .pie .l{min-height:36px}
+/* A */
+.rowA{display:flex;align-items:center;gap:6px;height:84px;margin:0 0 3px;padding:6px 10px 6px 10px;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px}
+.rowA.g{border-left-color:var(--gua)}.rowA.s{border-left-color:var(--warn)}
+.rowA.hoy{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset;background:color-mix(in srgb,var(--brand) 9%,var(--card))}
+.rowA .d{width:78px;flex:none}.rowA .d b{display:block;font-size:15px}
+.rowA .m{flex:1;min-width:0;font-size:13px;line-height:1.4}.rowA .m div+div{color:var(--ink2)}
+.rowA .rt{flex:none;width:90px;text-align:right}
+/* B */
+.big{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:0 0 8px}
+.big.hoy{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 9%,var(--card))}
+.big.g{border-left:5px solid var(--gua)}.big.s{border-left:5px solid var(--warn)}
+.big .e{font-size:13px;font-weight:800;color:var(--ink2);letter-spacing:.06em}
+.big h3{margin:2px 0 6px;font-size:18px}
+.rg{display:flex;align-items:center;gap:10px;min-height:36px;border-top:1px dashed var(--line);font-size:14px}
+.rg .i{width:24px;text-align:center;flex:none}.rg span.v{flex:1}.rg .tap{border-bottom-style:dotted}
+.cmp{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 4px}
+.cmp summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;font-size:13px;cursor:pointer}
+.cmp summary::-webkit-details-marker{display:none}
+.cmp summary b{width:52px;flex:none;font-size:14px}.cmp summary .x{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink2)}
+.cmp summary .ch{color:var(--ink2);font-size:18px;transition:transform .15s}.cmp[open] .ch{transform:rotate(90deg)}
+.cmp .in{padding:0 12px 8px}
+.cmp.g{border-left:5px solid var(--gua)}.cmp.s{border-left:5px solid var(--warn)}
+/* C */
+.tira{display:flex;gap:4px;padding:4px 0 8px}
+.tira button{flex:1;min-width:0;height:62px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-family:inherit;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
+.tira button b{font-size:16px}.tira i{width:8px;height:8px;border-radius:50%;background:var(--ink2)}
+.tira .g i{background:#c2283b}.tira .s i{background:var(--warn)}
+.tira .sel{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--card));box-shadow:0 0 0 1px var(--brand) inset}
+.tira .hoyd{color:var(--brand)}
+.blk{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;margin:0 0 8px}
+.blk .h{display:flex;align-items:center}.blk .h b{flex:1;font-size:15px}
+.blk .h a{min-height:44px;display:flex;align-items:center;color:var(--brand);font-size:14px;font-weight:700;padding:0 4px;cursor:pointer}
+.blk .ln{font-size:14px;padding:2px 0}.blk .ln small{display:block;color:var(--ink2);font-size:13px}
+.dia{font-size:13px;color:var(--ink2);margin:0 0 6px 2px}.dia b{color:var(--ink)}
+</style></head><body>
+<h1>La Semana · tres maneras de verla</h1>
+<p class="lead">Mismos datos en las tres. Marcos de móvil de 412×915.</p>
+<div class="wrapf">
+ <div class="col"><h2>A · Agenda</h2><div class="frame" id="fa"></div>
+  <p class="nota"><b>Lo bueno:</b> la semana entera de un vistazo, sin tocar nada. <b>Lo que cuesta:</b> letra pequeña y poco sitio para cambiar cada dato.</p></div>
+ <div class="col"><h2>B · Hoy grande</h2><div class="frame" id="fb"></div>
+  <p class="nota"><b>Lo bueno:</b> hoy y mañana clarísimos, con todo escrito. <b>Lo que cuesta:</b> hay que bajar para ver el resto de la semana.</p></div>
+ <div class="col"><h2>C · Tira + capas</h2><div class="frame" id="fc"></div>
+  <p class="nota"><b>Lo bueno:</b> un día cada vez, grande y ordenado por temas. <b>Lo que cuesta:</b> para ver la semana hay que ir tocando días.</p></div>
+</div>
+<script>
+const D=[
+{k:'mié',n:18,t:'g',tn:'GUARDIA 🩺',up:'06:30',cama:null,en:null,co:'Bol de lentejas (táper)',ce:'Hospital',ll:null,lln:'no'},
+{k:'jue',n:19,t:'s',tn:'SALIENTE',up:null,siesta:'13:00',cama:'22:40',en:'movilidad 20 min',co:'Ensalada de pollo y garbanzos',ce:'Merluza con verduras',ll:'21:15'},
+{k:'vie',n:20,t:'t',tn:'trabajo',up:'06:50',cama:'22:10',nota:'mañana tienes guardia: por eso antes',en:'fuerza 17:00',co:'Merluza con verduras',ce:'Potaje de vigilia',coc:'cocinas esta noche: 4 raciones, da para sáb y dom',ll:null,lln:'hoy no'},
+{k:'sáb',n:21,t:'g',tn:'GUARDIA 🩺',up:'06:30',cama:null,en:null,co:'Potaje (táper)',ce:'Hospital',ll:null,lln:'no'},
+{k:'dom',n:22,t:'s',tn:'SALIENTE',up:null,siesta:'13:00',cama:'22:40',en:'piscina 18:00',co:'Potaje',ce:'Marmitako',coc:'cocinas esta noche: 4 raciones',ll:'21:15'},
+{k:'lun',n:23,t:'t',tn:'trabajo',up:'06:50',cama:'22:40',en:'fuerza 17:00',co:'Marmitako',ce:'Tortilla y ensalada',ll:'21:15'},
+{k:'mar',n:24,t:'t',tn:'trabajo',up:'06:50',cama:'22:40',en:'descanso',co:'Pollo al curry',ce:'Yogur, fruta y nueces',ll:'21:15'}];
+const K=(d)=>'<span class="tap">'+d+'</span>';
+const cab=(c)=>'<div class="hd"><button class="back">‹ Hoy</button><span class="t">La Semana</span><span class="r">18–24 nov</span></div><div class="sub">Hecha con tu cuadrante: 2 guardias. Toca lo que no te cuadre.</div>'+c+'<div class="tabs"><span>Hoy</span><span>Mes</span><span>Comer</span><span>Más</span></div>';
+const pie=(cl)=>'<div class="pie '+cl+'"><a class="l">🛒 Compra de la semana: 23 cosas ›</a><div class="l p">Tardes fuera · este mes 1 de 3 · esta semana: jueves</div><button class="btn2">Volver a montarla</button></div>';
+const short=s=>s.replace(' con verduras','').replace(' (táper)','').replace(' de vigilia','').replace('Ensalada de pollo y garbanzos','Ensalada de pollo');
+function linea1(d){const a=d.siesta?'😴 hasta '+d.siesta:'⏰ '+d.up;const b=d.cama?'🛌 '+d.cama:'🛌 sin hora';let e=d.en&&d.en!=='descanso'?' · 💪 '+d.en.replace(' 20 min',''):'';return a+(d.siesta?' · ':' → ')+b+e}
+function linea2(d){return '🍽 '+short(d.co)+' · 🌙 '+(d.ce==='Potaje de vigilia'?d.ce:short(d.ce))}
+// A
+fa.classList.add('compact');
+fa.innerHTML=cab('<div class="body">'+D.map((d,i)=>'<div class="rowA '+d.t+(i==0?' hoy':'')+'"><div class="d"><b>'+d.k[0].toUpperCase()+d.k.slice(1)+' '+d.n+'</b><span class="tg '+d.t+'">'+d.tn+'</span></div><div class="m"><div>'+K(linea1(d))+'</div><div>'+K(linea2(d))+'</div></div><div class="rt">'+(d.ll?'<span class="pill">Lloret ≤'+d.ll+'</span>':'')+'</div></div>').join('')+pie('')+'</div>');
+// B
+const ren=(i,v)=>'<div class="rg"><span class="i">'+i+'</span><span class="v">'+v+'</span></div>';
+function det(d){return [d.siesta?ren('😴','Siesta hasta '+d.siesta):'',d.up?ren('⏰','De pie '+K(d.up)):'',ren('🛌','Cama: '+(d.cama?K(d.cama):K('sin hora, es guardia'))),ren('💪','Entreno: '+K(d.en||'no')),ren('🍽','Comida: '+K(d.co)),ren('🌙','Cena: '+K(d.ce)+(d.coc?' · cocinas 4 raciones':'')),ren('🚶','Lloret: '+(d.ll?K('hasta '+d.ll):K(d.lln)))].join('')}
+const nm={mié:'Miércoles',jue:'Jueves'};
+const big=(d,e,c)=>'<div class="big '+d.t+' '+c+'"><div class="e">'+e+'</div><h3>'+nm[d.k]+' '+d.n+' · <span class="tg '+d.t+'" style="font-size:14px">'+d.tn+'</span></h3>'+det(d)+'</div>';
+fb.innerHTML=cab('<div class="body">'+big(D[0],'HOY','hoy')+big(D[1],'MAÑANA','')+D.slice(2).map(d=>'<details class="cmp '+d.t+'"'+(d.k=='vie'?' open':'')+'><summary><b>'+d.k[0].toUpperCase()+d.k.slice(1)+' '+d.n+'</b><span class="tg '+d.t+'">'+(d.t=='g'?'GUARDIA':d.t=='s'?'SALIENTE':'trabajo')+'</span><span class="x">🛌 '+(d.cama||'sin hora')+' · 🌙 '+short(d.ce)+'</span><span class="ch">›</span></summary><div class="in">'+det(d)+'</div></details>').join('')+pie('')+'</div>');
+// C
+let sel=2;
+function drawC(){const d=D[sel],nx=D[sel+1];
+ const cena=d.ce+(d.coc&&!d.coc.includes('esta noche')?'':'');
+ const dorm=(d.siesta?'<div class="ln">😴 Siesta hasta '+d.siesta+'</div>':'')+(d.up?'<div class="ln">⏰ De pie '+d.up+'</div>':'')+'<div class="ln">🛌 Cama '+(d.cama||'sin hora: es guardia')+(d.nota?'<small>'+d.nota+'</small>':'')+'</div>';
+ const mov='<div class="ln">💪 '+(d.en?d.en[0].toUpperCase()+d.en.slice(1):'Sin entreno')+'</div><div class="ln">🚶 Lloret: '+(d.ll?'hasta '+d.ll:d.lln)+'</div>';
+ const com='<div class="ln">🍽 Comida: '+d.co+'</div><div class="ln">🌙 Cena: '+d.ce+(d.coc?'<small>'+d.coc+'</small>':'')+'</div>';
+ const B=(t,c)=>'<div class="blk"><div class="h"><b>'+t+'</b><a>cambiar</a></div>'+c+'</div>';
+ fc.innerHTML=cab('<div class="body"><div class="tira">'+D.map((x,i)=>'<button class="'+x.t+(i==sel?' sel':'')+(i==0?' hoyd':'')+'" data-i="'+i+'"><span>'+x.k[0].toUpperCase()+'</span><b>'+x.n+'</b><i></i></button>').join('')+'</div><p class="dia"><b>'+d.k[0].toUpperCase()+d.k.slice(1)+' '+d.n+'</b> · '+d.tn+(sel==0?' · hoy':'')+'</p>'+B('Dormir',dorm)+B('Moverse',mov)+B('Comer',com)+pie('')+'</div>');
+ fc.querySelectorAll('.tira button').forEach(b=>b.onclick=()=>{sel=+b.dataset.i;drawC()})}
+drawC();
+</script></body></html>
