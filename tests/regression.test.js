@@ -9039,7 +9039,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(async () => { const P = window.PG; await P.cnPinPone('1234'); P.ui.cnAbierto = true; P.consumoApuntar({ dia: '1', forma: 'dry', g: 0.1, ctx: 'casa' });
       P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.cnAj = null; P.ui.tab = 'consumo'; P.render(); });
     await page.click('[data-a="cn-fumo"]'); await page.click('[data-a="cn-fumo-dia"][data-v="0"]'); await page.waitForTimeout(120);
-    const cn = await page.evaluate(() => { const P = window.PG, s = P.consumoS().ses, hoy = P.consumoDe(P.iso(new Date())), n = P.normalize(JSON.parse(JSON.stringify(P.store)));
+    const cn = await page.evaluate(() => { const P = window.PG, s = P.consumoS().ses, hoy = s.filter((x) => x.fecha === P.iso(new Date())), n = P.normalize(JSON.parse(JSON.stringify(P.store)));
       return { n: s.length, hoy: hoy.length, ses: hoy[0] && (hoy[0].forma + ' ' + hoy[0].g + ' ' + hoy[0].ctx), vuelta: (n.consumo || { ses: [] }).ses.length }; });
     const cajon = await page.evaluate(() => [...document.querySelectorAll('#drawer [data-a="drawer-nav"]')].some((b) => b.dataset.t === 'consumo'));
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia227; P.save(); P.ui.cnAbierto = false; P.ui.cnPin = null; P.ui.tab = 'hoy'; P.render(); });
