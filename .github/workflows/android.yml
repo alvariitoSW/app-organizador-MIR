@@ -82,7 +82,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "lanzador-v${{ github.run_number }}" "lanzador-v${{ github.run_number }}.apk" \
+          # el .zip al lado: Brave en Android se queda colgado al 100 % bajando un .apk (18/11), el .zip sí baja
+          zip -j "lanzador-v${{ github.run_number }}.zip" "lanzador-v${{ github.run_number }}.apk"
+          gh release create "lanzador-v${{ github.run_number }}" "lanzador-v${{ github.run_number }}.apk" "lanzador-v${{ github.run_number }}.zip" \
             --target "$GITHUB_SHA" --latest \
             --title "Lanzador v${{ github.run_number }}" \
             --notes "La lanzadora de Android (El Lanzador). Descárgala en el móvil e instálala; al abrirla pide «Acceso al uso», lee el uso del móvil y abre la app en Brave. Sin permiso de internet."
