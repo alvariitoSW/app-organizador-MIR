@@ -31,7 +31,7 @@ Todo lo que hay debajo de esta sección es **historia** (ya hecho o absorbido); 
 | # | Sesión | Qué | Tipo | Presupuesto | Qué hace falta del usuario |
 |---|---|---|---|---|---|
 | ~~1~~ ✅ 18/11 | Salud | La prueba «el aviso de mantener pulsado sale en el Mes y no se queda encima al ir a Comer ni a Hoy» cae (trozo 4, revisión del 18/11): ver si falla la app o la prueba y arreglarlo con prueba que cae al revertir · cerrar [aparc-reloj-324] y [aparc-lloret-suite] si no han vuelto a caer | arreglo | ~0,5 M | nada |
-| 2 | El Lanzador K2+K3+K4 | La lanzadora Android (K2), instalarla en su móvil (K3) y el widget de 4 botones (K4); tabla «El Lanzador» más abajo. Estaba aparcado por el usuario el 03/11: entra en el plan el 18/11 («que se haga todo») | construir | ~2,0 M | el móvil a mano para instalar |
+| 2 · ½ ✅ 18/11 K2 (ya estaba, lanzador-v7) y K4 (widget 2×2, pruebas 690-694) · falta K3 con el usuario | El Lanzador K2+K3+K4 | La lanzadora Android (K2), instalarla en su móvil (K3) y el widget de 4 botones (K4); tabla «El Lanzador» más abajo. Estaba aparcado por el usuario el 03/11: entra en el plan el 18/11 («que se haga todo») | construir | ~2,0 M | el móvil a mano para instalar |
 | ~~3~~ ✗ 18/11 | «+» flotante | **No se hace** (el usuario, 18/11): basta el «+» de Tu mes (C2); el flotante tapa la barra de abajo | — | — | — |
 
 **Total: ~2,5 M** (el «+» flotante, fuera). Widget K4: 4 botones en 2×2 (elegido por el usuario, 18/11).
