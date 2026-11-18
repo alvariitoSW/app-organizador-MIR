@@ -37,6 +37,10 @@ Todo lo que hay debajo de esta sección es **historia** (ya hecho o absorbido); 
 
 **Total: ~2,5 M** (el «+» flotante, fuera). Widget K4: 4 botones en 2×2 (elegido por el usuario, 18/11).
 
+**Traspaso 18/11 (sesión tender-albattani):** K3 hecha: el usuario instaló el Lanzador (v13, va con .zip porque Brave se cuelga con .apk; extraer antes de instalar). «Acceso al uso» bloqueado por «ajustes restringidos» de HyperOS (Xiaomi esconde la opción): v13 hace que los botones del widget vayan directos sin pasar por el permiso; para darlo, `adb shell appops set es.guardias.lanzador GET_USAGE_STATS allow` desde un ordenador (pendiente, si lo quiere). 4:20 reinventado como «Schumacher» 🏁 en main f07fbb9; el mini menú del «···» (7b90024) lo termina la sesión session_01QiKC36AgSHRAnb5nCYek6b.
+
+**Siguiente (pedido el 18/11):** [v3-hoy-rediseno] rediseño de Hoy, en sesión nueva: primero concretar con el usuario el objetivo final (qué tiene que ver y hacer en Hoy de un vistazo), luego maqueta (`redisena-seccion`) y obra.
+
 **Esperan una decisión del usuario (no se hacen sin ella):**
 - [v3-foto-plato] C2, la foto del plato **con IA**: la foto saldría del móvil a un servicio externo (choca con la
   regla de privacidad) y tendría coste. Hoy C1 (sin IA) ya está. ¿Sí o no?
