@@ -22,7 +22,28 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## Por hacer
 
-### Tras el veredicto de La Competencia · pedido por el usuario el 05/11/2026
+### ★ El plan para acabar la 3.0 · organizado el 18/11/2026 · lo único que queda
+
+**Regla para no dispersarse:** esto es la cola entera. Lo que el usuario diga nuevo va a «Ideas» y no entra aquí
+hasta que él lo ordene. Se hace en este orden, una sesión cada fila, y cada una acaba en `main` (suite, sella, Actions).
+Todo lo que hay debajo de esta sección es **historia** (ya hecho o absorbido); no se vuelve a proponer.
+
+| # | Sesión | Qué | Tipo | Presupuesto | Qué hace falta del usuario |
+|---|---|---|---|---|---|
+| 1 | Salud | La prueba «el aviso de mantener pulsado sale en el Mes y no se queda encima al ir a Comer ni a Hoy» cae (trozo 4, revisión del 18/11): ver si falla la app o la prueba y arreglarlo con prueba que cae al revertir · cerrar [aparc-reloj-324] y [aparc-lloret-suite] si no han vuelto a caer | arreglo | ~0,5 M | nada |
+| 2 | El Lanzador K2+K3+K4 | La lanzadora Android (K2), instalarla en su móvil (K3) y el widget de 4 botones (K4); tabla «El Lanzador» más abajo. Estaba aparcado por el usuario el 03/11: entra en el plan el 18/11 («que se haga todo») | construir | ~2,0 M | el móvil a mano para instalar |
+| 3 | «+» flotante | El único resto de [v3-competencia-algun-dia] (deslizar días quedó en flechas, T2c; récords en gráfico, X3; PDF y Excel, T4): maqueta y, con su visto bueno, construir en la misma sesión | maqueta → construir | ~1,0 M | elegir la maqueta |
+
+**Total: ~3,5 M en 3 sesiones** (con el margen de siempre, máx. ~4,5 M).
+
+**Esperan una decisión del usuario (no se hacen sin ella):**
+- [v3-foto-plato] C2, la foto del plato **con IA**: la foto saldría del móvil a un servicio externo (choca con la
+  regla de privacidad) y tendría coste. Hoy C1 (sin IA) ya está. ¿Sí o no?
+
+**Fuera del plan (ideas a futuro, solo si las pide):** [v3-mapa-comidas] el mapa de dónde has comido ·
+[aparc-suite-siembra] la suite en ~2 min · [v3-viajes] el Consejo de viajes (el modo viaje y el vuelo a mano ya están).
+
+### ~~Tras el veredicto de La Competencia~~ ✅ P1, P2, P3 y foto del plato C1 en `main` (05-10/11, sellado en 2c89126) · pedido por el usuario el 05/11/2026
 [v3-tras-veredicto] Las 3 propuestas de `docs/veredicto-competencia-2026-11.md`, en una sesión aparte (encargo `encargos/tras-el-veredicto.md`): P1 Hoy y Mes en una pantalla, con maqueta (~2,5 M) · P2 contraste, letra, «te quedan…» y la foto del cuadrante con uno real (~1 M) · P3 Consejo sobre la foto del plato (~0,8 M).
 
 ### ~~Remate de La Competencia~~ ✅ hecho el 03/11 (ver «En marcha») · decidido por el usuario el 03/11/2026

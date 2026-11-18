@@ -4,13 +4,13 @@ Lo ya contado (para no repetirlo) y lo abierto (hasta que se cierre). Lo escribe
 tú puedes añadir o tachar a mano.
 
 ## Encargos aparcados
-- [aparc-plan-v3-desfasado] (18/11) `plan-v3.md` sigue con P1, P2, P3 y la foto del plato (C1) como «por hacer» y están en `main` 2c89126 (05-10/11): ponerlas al día.
+- ~~[aparc-plan-v3-desfasado]~~ ✅ 18/11, plan al día y cola única en `plan-v3.md` («El plan para acabar la 3.0»). Antes: (18/11) `plan-v3.md` sigue con P1, P2, P3 y la foto del plato (C1) como «por hacer» y están en `main` 2c89126 (05-10/11): ponerlas al día.
 - [aparc-competencia-fase-3] Fase 3 de La Competencia en `main` 7633880 (03/11, run 41613839826 success, sellado). Lo que queda está en `plan-v3.md` → [v3-remate-competencia] (6 pasos, decididos por el usuario el 03/11). La rama `claude/la-competencia` solo va 2 commits por delante (plan y traspaso).
 - ~~[aparc-competencia-construir]~~ ✅ cubierto por las fases 1 y 2 (en main ab1be8d, 02/11). Antes: Maquetas A y B de La Competencia aprobadas por el usuario (02/11, rama `claude/la-competencia`; opciones recomendadas, a confirmar). Pide `/plan-socialista` con el Consejo para aprobar cómo se construye: `encargos/competencia-construir.md`. No se ha tocado `app.js`.
 - ~~[aparc-consejo-competencia]~~ ✅ Consejo hecho (02/11, acta `consejo/2026-11-02-competencia.md`, rama `claude/la-competencia`, 929 k). Aprobado: plan en 3 fases (~38 M, máx. ~50 M), sin Consejo por tanda; PDF y Excel «más adelante»; widget = K4 del Lanzador. **Siguiente:** fase 1, `encargos/competencia-fase-1.md` (02/11); fase 2 el 03/11; fase 3 el 04/11.
 - [aparc-pruebas-dia-1] 6 pruebas de la regresión caen el día 1 de mes (vistas el 01/11/2026, también en el commit e87af01 de antes de la CH4): saliente, Lloretazo/taxi ×3, vacaciones a mano y la línea entre meses del Mes. El 01/11 (CH5) cae también la 83 («Hoy» junta las cinco patas), igual con el código de antes de la CH5 (c9e4c07): misma causa de fecha u hora. Dependen de la fecha, no del código; arreglarlas (fecha fija) antes del `main` de la CH8 · tests/regression.test.js
   **Cerrado 03/11:** las de la hora real (sol, 285→289, 333) arregladas; suite completa en verde.
-- [aparc-lanzador] **Aparcado por el usuario el 03/11** (K2-K4 no se hacen por ahora). Tanda «El Lanzador» aprobada (01/11, acta `consejo/2026-11-01.md`): Brave, lanzadora (C), todo plegado, ~2,6 M con delegación al Consejo. **K1 hecha** (01/11, rama `claude/plan-socialista-q4sp1t`, commits 70929a0 + ddb8562, **en `main` 09c5151 el 01/11** (run 41337590763 success): `#uso=` validado, `store.uso` a 30 días, relleno de la noche y del «sin pantallas», caso C; pruebas 445-448; formato del enlace documentado encima de `usoEntrante`). Clave de firma creada el 01/11 y guardada por el usuario en Secrets (`LANZADOR_KEYSTORE` en base64 de un PKCS12, `LANZADOR_PASSWORD` = contraseña del almacén y de la clave, `LANZADOR_ALIAS` = `lanzador`); el workflow de K2 usa esos nombres. Siguiente: **K2** (la lanzadora Android).
+- [aparc-lanzador] **Vuelve al plan el 18/11** (sesión 2 de «El plan para acabar la 3.0»). **Aparcado por el usuario el 03/11** (K2-K4 no se hacen por ahora). Tanda «El Lanzador» aprobada (01/11, acta `consejo/2026-11-01.md`): Brave, lanzadora (C), todo plegado, ~2,6 M con delegación al Consejo. **K1 hecha** (01/11, rama `claude/plan-socialista-q4sp1t`, commits 70929a0 + ddb8562, **en `main` 09c5151 el 01/11** (run 41337590763 success): `#uso=` validado, `store.uso` a 30 días, relleno de la noche y del «sin pantallas», caso C; pruebas 445-448; formato del enlace documentado encima de `usoEntrante`). Clave de firma creada el 01/11 y guardada por el usuario en Secrets (`LANZADOR_KEYSTORE` en base64 de un PKCS12, `LANZADOR_PASSWORD` = contraseña del almacén y de la clave, `LANZADOR_ALIAS` = `lanzador`); el workflow de K2 usa esos nombres. Siguiente: **K2** (la lanzadora Android).
 
 - [aparc-reloj-324] La prueba 324 (tocar la sesión en «lo que viene» del reloj) cayó una vez en la suite completa (10:0x del 30/10, quedaba abierto «¿Quitar este evento?») y pasa sola, en su trozo y en la siguiente suite entera · tests/regression.test.js:12883
 - ~~[aparc-letra-conductor]~~ ✅ 03/11 en `main` 7633880: texto HTML de Conductor y Línea ≥13 px (pruebas 590-594); el texto dentro de los dibujos SVG sigue a 1-9 px en pantalla: subirlo pide rediseñar los dibujos
@@ -24,7 +24,7 @@ tú puedes añadir o tachar a mano.
   · F0 y F1 hechas (2026-10-14): dirección «La jornada» con visto bueno; barra abajo, guardia 65 % rojo, claros
     suavizados. Tandas 1 (cielo de la hora y barra abajo) y 2 (las piezas, 44 px) de lo común: desplegadas
     (0f2765e, 2026-10-17). Siguen por hacer:
-  · [aparc-arte-energia] tanda 3 de lo común: el cálculo de la energía del día (que se gasta y se recarga, ver
+  · ~~[aparc-arte-energia]~~ ✅ hecha en la G11 (30/10, energía del día en 4 tramos). Antes: tanda 3 de lo común: el cálculo de la energía del día (que se gasta y se recarga, ver
     design/arte/continuidad.md).
 - [enc-continuidad] **Continuidad** como filosofía del arte: el tiempo pasa, la energía se gasta y se recarga, lo que
   haces deja huella; un solo hilo de tiempo sin cortes a medianoche. Ver design/arte/continuidad.md · 2026-10-14
@@ -40,7 +40,7 @@ Todo lo de la 3.0 (lo que está en marcha, el orden de lo que falta, las ideas y
 
 - ~~[aparc-parte-diario]~~ Descartado por el usuario (03/11): no quiere parte automático; lo pide con /plan-socialista
 
-### Comida: ingeniería inversa para mejorar SOLO ese apartado  ·  [enc-comida-ri]  (pedido el 2026-10-26)
+### ~~Comida: ingeniería inversa~~ ✅ A-D hechas (vitaminas, ración, buscador, Nutri-Score; 27-28/10) · [enc-comida-ri]  (pedido el 2026-10-26)
 
 Usar la skill `/ingenieria-reversa` para estudiar fuentes de alimentación y mejorar **únicamente** la parte de
 Comer. Pediste prepararlo en una sesión nueva con el coste que supondría.
