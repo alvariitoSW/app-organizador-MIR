@@ -10146,10 +10146,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(async () => { const P = window.PG; await P.cnPinPone('1234'); P.ui.cnAbierto = true; P.ui.cnFumo = null; P.ui.cnAj = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.render(); });
     const cl = async (sel) => { const e = await page.$(sel); if (e) { await e.click(); await page.waitForTimeout(80); return true; } return false; };
     const pasos = [];
-    await page.evaluate(() => window.PG.consumoApuntar({ forma: 'dry', g: 0.25, ctx: 'casa', motivo: 'dormir' }));
+    // «Tengo ganas» sale dentro del plan de 7 días: se empieza hoy (en época de fumar la pantalla propone el plan en vez)
+    await page.evaluate(() => { const P = window.PG; P.consumoApuntar({ forma: 'dry', g: 0.25, ctx: 'casa', motivo: 'dormir' }); P.consumoS().plan.dejar = { desde: P.iso(new Date()) }; P.save(); P.render(); });
     pasos.push(await cl('[data-a="cn-ganas"]')); pasos.push(await cl('[data-a="cn-ganas-res"][data-v="aguante"]'));
     const ses = await page.evaluate(() => { const s = window.PG.consumoS(); return { mot: s.ses[0].motivo, thc: s.ses[0].thc, ganas: s.ganas.length }; });
-    await page.evaluate(() => { window.PG.ui.cnAbierto = false; });
+    // se quita la contraseña: con ella puesta los hábitos de 4:20 salen tapados («plan privado») y el asistente cambia
+    await page.evaluate(() => { const P = window.PG; delete P.consumoS().priv.pin; P.ui.cnAbierto = false; P.save(); });
     // el check-in de la mañana no sale antes de las 5: se fija la hora a las 12:00 de hoy (mismo patrón que la 75) para que no dependa de cuándo corre la suite
     await page.evaluate(() => { const Orig = Date, n = new Orig(); const fijo = new Orig(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0).getTime();
       window.__origDate257 = Orig; window.Date = class extends Orig { constructor(...a) { if (!a.length) super(fijo); else super(...a); } static now() { return fijo; } }; });
