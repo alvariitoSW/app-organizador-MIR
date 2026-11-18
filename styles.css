@@ -4568,7 +4568,7 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .fpprev b{display:block;font-size:16px;font-variant-numeric:tabular-nums}.fpprev span{font-size:var(--t-13);font-weight:700;color:var(--ink2)}
 .fpmini{flex:none;width:44px;height:44px;padding:0;border:0;border-radius:10px;overflow:hidden;background:var(--bg2);cursor:pointer}
 .fpmini img{width:100%;height:100%;object-fit:cover;display:block}
-/* 4:20 reinventado (18/11/2026), opción C · Terminal: oscura, letra de consola y sin colores, con el nombre en clave «norte».
+/* 4:20 reinventado (18/11/2026), opción C · Terminal: oscura, letra de consola y sin colores, con el nombre en clave «schumacher».
    La paleta es fija (no sigue el tema) para que se vea igual de discreta de día y de noche. */
 .cn2{--t-bg:#0b0d10;--t-on:#e9ebee;--t-ink:#d6d9de;--t-ink2:#8a9099;--t-line:#262b32;
   --t-mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;

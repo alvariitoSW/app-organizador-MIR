@@ -2942,3 +2942,4 @@ Web (`app.js`, junto a `usoEntrante`): `accionLee()` al arrancar y en `hashchang
   - **No se toca:** la lógica (`cnEstado`, umbrales, plan, contraseña), los `data-a`, los datos guardados ni el teclado de la contraseña (sus textos ya eran neutros; solo «4:20 va siempre…» pasa a «Norte va siempre…»).
   - **Supuestos:** «norte» = un rumbo, sobrio y solo suyo; la paleta oscura fija aunque la app esté en tema claro (así no llama la atención); letra ≥ 13 px (pasada por `suelo-letra`, 0 cambios en seco).
   - **Pruebas:** 696, 697 y la 399 (cajón: candado y «Norte») con los textos nuevos; **cae con X revertido:** con el `app.js` de antes caen 399, 696 y 697 (comprobado).
+  - **Nombre en clave: «Schumacher» (18/11, el usuario en esta sesión: «no menciones a la planta… llamarlo Schumacher»).** Sustituye a «norte» en todo (`CN_CLAVE`, Más, Ajustes, contraseña, asistente, hábito «🏁 Schumacher a cero», Tu semana); 🧭 → 🏁. Pruebas 399, 696 y 697 con el nombre nuevo.
