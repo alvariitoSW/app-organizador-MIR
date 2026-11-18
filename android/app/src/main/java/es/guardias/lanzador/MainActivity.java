@@ -35,8 +35,22 @@ public class MainActivity extends Activity {
   static final String WEB = "https://alvariitosw.github.io/app-organizador-MIR/index.html";
   static final String BRAVE = "com.brave.browser";
   static final int DIAS = 14;
+  static final String EXTRA_ACCION = "accion";
 
   private boolean abriendo;
+
+  /** La acción del botón del widget, solo si es una de las 4 conocidas; si no, nada. */
+  private String accion() {
+    String a = getIntent() == null ? null : getIntent().getStringExtra(EXTRA_ACCION);
+    for (String ok : Atajos.ACCIONES) if (ok.equals(a)) return a;
+    return null;
+  }
+
+  @Override protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);   /* singleTask: un botón del widget con la lanzadora ya abierta */
+    abriendo = false;
+  }
 
   @Override protected void onResume() {
     super.onResume();
@@ -88,6 +102,9 @@ public class MainActivity extends Activity {
 
   /** Abre la web en Brave (donde están sus datos), nunca en el navegador por defecto sin avisar. */
   private void abre(String hash) {
+    /* K4: el widget añade la acción: «#accion=X», o «#uso=…&accion=X» (el & de los datos va codificado) */
+    String acc = accion();
+    if (acc != null) hash = (hash == null ? "#accion=" : hash + "&accion=") + acc;
     Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(WEB + (hash == null ? "" : hash)));
     i.setPackage(BRAVE);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

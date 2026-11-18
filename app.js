@@ -30587,8 +30587,9 @@ function usoPantallas(){
     pr.resp[D]=tot<10?'si':'no';pr.auto[D]=tot;});}
 function usoEntrante(){
   try{
-    const h=location.hash||'';if(h.indexOf('#uso=')!==0)return;
+    let h=location.hash||'';if(h.indexOf('#uso=')!==0)return;
     history.replaceState(null,'',location.pathname+location.search);
+    h=h.replace(/&accion=[a-z]{0,12}$/,'');   /* K4: el widget puede añadir «&accion=…» (lo lee accionEntrante, antes) */
     if(h.length>12000)return;
     let P;try{P=JSON.parse(decodeURIComponent(h.slice(5)));}catch(e){return;}
     if(!P||typeof P!=='object'||P.v!==1||!Array.isArray(P.d)||P.d.length<1||P.d.length>14)return;
@@ -30603,6 +30604,30 @@ function usoEntrante(){
     Object.keys(store.uso).forEach(function(k){if(k<lim)delete store.uso[k];else if(k<limQ)delete store.uso[k].q;});
     usoPantallas();save();
     flash('Uso del móvil: '+n+' día'+(n===1?'':'s')+' recibido'+(n===1?'':'s'));
+  }catch(e){}}
+/* K4 · EL WIDGET DEL LANZADOR. Sus 4 botones abren  index.html#accion=anoche|gasto|entreno|comida  (y, si el Lanzador
+   también lee el uso al abrir, #uso=<datos>&accion=X: el «&» dentro de <datos> va codificado, así que el sufijo es inequívoco).
+   Entrada NO fiable: solo esos 4 valores exactos; cualquier otro se ignora sin error. El hash se borra siempre (el de #uso=,
+   usoEntrante). Cada una abre el gesto que ya existe, tras el primer render; con el asistente de primera vez activo, nada. */
+const ACCIONES_WIDGET=['anoche','gasto','entreno','comida'];
+let _accionPend=null;
+function accionLee(){
+  try{
+    const h=location.hash||'';
+    if(h.indexOf('#accion=')!==0&&h.indexOf('#uso=')!==0)return;
+    const m=(h.indexOf('#accion=')===0?/^#accion=([a-z]{1,12})$/:/&accion=([a-z]{1,12})$/).exec(h);
+    if(h.indexOf('#accion=')===0)history.replaceState(null,'',location.pathname+location.search);
+    _accionPend=m&&ACCIONES_WIDGET.indexOf(m[1])>=0?m[1]:null;
+  }catch(e){_accionPend=null;}}
+function accionEjecuta(){
+  const a=_accionPend;_accionPend=null;if(!a||ui.arranque)return;
+  try{
+    const hoyK=iso(new Date()),nada={dataset:{}};
+    if(a==='anoche'){ui.tab='hoy';ui.hoyVista='';ui.snHoja=hoyK;ui.snTr=null;render();}   /* como «sn-hoja»: «Anotar anoche» */
+    else if(a==='gasto'){ui.tab='dinero';ui.dinTab='';ui.dineroVista='';ui.dinHoja='';render();act('dinero-apuntar',nada);}   /* el «＋ Gasto» de Tu mes */
+    else if(a==='entreno'){ui.tab='gym';ui.gymPanel='';ui.gymDate=hoyK;render();
+      const rt=rutinaDeFecha(hoyK);if(rt&&!ui.gymSesionActiva){const r=empezarRutina(rt.id,hoyK,false,false,false);if(r)flash(r);render();}}   /* «▶ Empezar» la de hoy */
+    else if(a==='comida'){ui.tab='food';weekDate=mondayOf(new Date());ui.foodDate='';ui.foodPos=momentoEscribir();ui.foodBusca='';ui.foodVista='buscar';render();}   /* «¿Qué has comido?» */
   }catch(e){}}
 function compartidoEntrante(){
   /* el share_target del manifest entrega title/text/url en la query de index.html (método GET).
@@ -30822,8 +30847,8 @@ window.addEventListener('resize',anchoMovil);
 load();
 vistaRestaurar();   /* abrir donde estabas, no siempre en el Mes */
 pausaEntrante();   /* LM4 */
-usoEntrante();   /* K1: la lanzadora */
-window.addEventListener('hashchange',function(){usoEntrante();render();});
+accionLee();usoEntrante();   /* K1: la lanzadora · K4: su widget */
+window.addEventListener('hashchange',function(){accionLee();usoEntrante();render();accionEjecuta();});
 compartidoEntrante();   /* antes de pintar: si vienes de «Compartir → Guardias», abre ya la pantalla */
 compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo compartido */
 /* Si has entrado compartiendo una receta, vienes con una intención concreta: el asistente del
@@ -30833,6 +30858,7 @@ compartidoPendiente();  /* y si el sistema mató la app a medias, se recupera lo
 if(ui.arranque&&ui.imp&&(ui.imp.txt||ui.imp.url))ui.arranque=null;
 impAutoDesdeEnlace();   /* con un enlace a la vista, la receta se carga sola */
 render();
+accionEjecuta();   /* K4: el botón del widget, ya con la app pintada */
 avisarBackupSiToca();
 copiaDiaria();          /* una foto de tus datos al día, las últimas 7, en este móvil */
 fpCarga().then(function(){if(Object.keys(FP_MINI).length&&ui.tab==='food')render();});   /* las miniaturas del plato (30 días, fuera de las copias) */

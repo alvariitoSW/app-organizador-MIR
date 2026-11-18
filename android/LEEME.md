@@ -16,3 +16,10 @@ del móvil, y el workflow falla si alguna vez aparece ese permiso.
 Probar la cuenta sin el SDK de Android (en el contenedor no se puede bajar):
 `javac -cp /opt/gradle-8.14.3/lib/junit-4.13.2.jar -d /tmp/u app/src/main/java/es/guardias/lanzador/Uso.java app/src/test/java/es/guardias/lanzador/UsoTest.java`
 y `java -cp /tmp/u:/opt/gradle-8.14.3/lib/junit-4.13.2.jar:/opt/gradle-8.14.3/lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore es.guardias.lanzador.UsoTest`.
+
+## Widget (K4)
+`Atajos.java` es un widget de inicio 2×2 con 4 botones: 😴 Anoche · 💶 + Gasto · 🏋️ Entreno · 🍽️ Comida
+(`res/layout/widget_atajos.xml`, `res/xml/widget_atajos_info.xml`; se añade desde el menú de widgets del móvil). Cada botón
+lanza `MainActivity` con el extra `accion`; esta (tras pedir/leer el uso, como siempre) lo añade al hash que abre en el
+mismo Brave: `#accion=X` (sin uso) o `#uso=<datos>&accion=X`. La web (`accionLee`/`accionEjecuta` en `app.js`) solo acepta
+`anoche`, `gasto`, `entreno` y `comida`, borra el hash y abre el gesto que ya existe. El versionCode lo pone el workflow.

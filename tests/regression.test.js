@@ -19023,6 +19023,66 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.setViewportSize(vp);
   }
 
+  // 690) EL LANZADOR · K4-a: index.html#accion=anoche abre «Anotar anoche».
+  {
+  const k4Abre = async (h, esperar) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + h); await p.waitForFunction(() => window.PG && window.__arrancada); await p.waitForTimeout(500); return p; };
+    const p = await k4Abre('#accion=anoche');
+    const R = await p.evaluate(() => ({ hash: location.hash, tab: window.PG.ui.tab, hoja: window.PG.ui.snHoja === window.PG.iso(new Date()), guardar: !!document.querySelector('[data-a="sn-tguardar"]') }));
+    await p.close();
+    check('690) K4 · #accion=anoche abre la hoja de «Anotar anoche» de Hoy y vacía el #', R.hash === '' && R.tab === 'hoy' && R.hoja && R.guardar, JSON.stringify(R));
+  }
+  // 691) EL LANZADOR · K4-b: #accion=gasto abre «Apuntar un gasto».
+  {
+  const k4Abre = async (h, esperar) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + h); await p.waitForFunction(() => window.PG && window.__arrancada); await p.waitForTimeout(500); return p; };
+    const p = await k4Abre('#accion=gasto');
+    const R = await p.evaluate(() => ({ hash: location.hash, tab: window.PG.ui.tab, modal: !!document.querySelector('#mPgImporte'), titulo: (document.querySelector('.modal h3, .modal h2, #modal h3, #modal h2') || {}).textContent || '' }));
+    await p.close();
+    check('691) K4 · #accion=gasto abre «Apuntar un gasto» en Dinero (importe, en qué y categoría) y vacía el #', R.hash === '' && R.tab === 'dinero' && R.modal, JSON.stringify(R));
+  }
+  // 692) EL LANZADOR · K4-c: #accion=entreno empieza la sesión de hoy (fijaHoy, por hashchange).
+  {
+  const k4Abre = async (h, esperar) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + h); await p.waitForFunction(() => window.PG && window.__arrancada); await p.waitForTimeout(500); return p; };
+    await page.evaluate(() => { window.__copia692 = JSON.stringify(window.PG.store); });
+    await fijaHoy();
+    const ok = await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()), sh = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end)[0];
+      if (!sh) return 'sin turno'; P.setDayOverride(hoy, sh.id, ''); const rt = { id: 'rt-k4', nombre: 'Empuje K4', notas: '', dias: [sh.id], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] };
+      P.store.gym.rutinas = [rt]; P.store.gym.forzar = {}; P.ui.gymSesionActiva = null; P.ui.tab = 'hoy'; P.save(); P.render();
+      const r2 = P.rutinaDeFecha(hoy); return r2 && r2.id === 'rt-k4' ? 1 : 'r2=' + (r2 && r2.id); });
+    await page.evaluate(() => { location.hash = '#accion=entreno'; }); await page.waitForTimeout(500);
+    const R = await page.evaluate(() => { const P = window.PG, s = P.ui.gymSesionActiva; return { hash: location.hash, tab: P.ui.tab, sesion: !!s, hoy: !!s && s.fecha === P.iso(new Date()) }; });
+    await page.evaluate(() => { const P = window.PG; P.ui.gymSesionActiva = null; P.store = JSON.parse(window.__copia692); P.ui.tab = 'hoy'; P.save(); P.render(); }); await sueltaHoy();
+    check('692) K4 · #accion=entreno con una rutina que toca hoy la EMPIEZA (sesión en curso de hoy, pestaña Entreno) y vacía el #', ok === 1 && R.hash === '' && R.tab === 'gym' && R.sesion && R.hoy, JSON.stringify({ ok, R }));
+  }
+  // 693) EL LANZADOR · K4-d: #accion=comida abre «¿Qué has comido?».
+  {
+  const k4Abre = async (h, esperar) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + h); await p.waitForFunction(() => window.PG && window.__arrancada); await p.waitForTimeout(500); return p; };
+    const p = await k4Abre('#accion=comida');
+    const R = await p.evaluate(() => ({ hash: location.hash, tab: window.PG.ui.tab, vista: window.PG.ui.foodVista, campo: !!document.querySelector('#fbQ') }));
+    await p.close();
+    check('693) K4 · #accion=comida abre Comer en «¿Qué has comido?» (el buscador para apuntar) y vacía el #', R.hash === '' && R.tab === 'food' && R.vista === 'buscar' && R.campo, JSON.stringify(R));
+  }
+  // 694) EL LANZADOR · K4-e: acciones raras no hacen nada; #uso=…&accion=gasto hace las dos.
+  {
+  const k4Abre = async (h, esperar) => { const p = await context.newPage(); await p.setViewportSize({ width: 412, height: 915 });
+    await p.goto(base + 'index.html' + h); await p.waitForFunction(() => window.PG && window.__arrancada); await p.waitForTimeout(500); return p; };
+    const base0 = await k4Abre(''); const B = await base0.evaluate(() => ({ tab: window.PG.ui.tab, vista: window.PG.ui.foodVista || '' })); await base0.close();
+    const malos = [], casos = ['#accion=<script>alert(1)</script>', '#accion=Gasto', '#accion=gasto2', '#accion=', '#accion=entreno%00', '#accion=__proto__', '#accion=comida&accion=gasto'];
+    for (const h of casos) { const p = await k4Abre(h);
+      const r = await p.evaluate(() => ({ hash: location.hash, tab: window.PG.ui.tab, modal: !!document.querySelector('#mPgImporte'), vista: window.PG.ui.foodVista || '', ses: !!window.PG.ui.gymSesionActiva, sn: !!window.PG.ui.snHoja }));
+      await p.close(); if (r.hash !== '' || r.modal || r.ses || r.sn || r.tab !== B.tab || r.vista !== B.vista) malos.push(h + ' ' + JSON.stringify(r)); }
+    // con datos de uso Y acción: el uso se guarda y la acción se hace
+    const ayer = await page.evaluate(() => window.PG.iso(window.PG.addDays(new Date(), -1)));
+    const u = '#uso=' + encodeURIComponent(JSON.stringify({ v: 1, d: [{ f: ayer, m: 120, u: 20, a: [] }] })) + '&accion=gasto';
+    const p = await k4Abre(u);
+    const C = await p.evaluate((a) => ({ hash: location.hash, uso: !!(window.PG.store.uso || {})[a], modal: !!document.querySelector('#mPgImporte') }), ayer); await p.close();
+    check('694) K4 · acciones desconocidas o mal escritas (<script>, mayúsculas, vacía, __proto__) no hacen nada y vacían el #; «#uso=…&accion=gasto» guarda el uso y abre el gasto',
+      !malos.length && C.hash === '' && C.uso && C.modal, JSON.stringify({ malos, C }));
+  }
+
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
 
   await browser.close();

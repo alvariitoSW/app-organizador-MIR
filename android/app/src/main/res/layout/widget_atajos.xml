@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget 2×2 del Lanzador: cuatro botones grandes, uno por cuarto. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="6dp"
+    android:background="@drawable/widget_fondo">
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1"
+      android:orientation="horizontal">
+      <TextView
+          android:id="@+id/w_anoche"
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:layout_margin="4dp"
+          android:background="@drawable/widget_boton"
+          android:gravity="center"
+          android:text="😴\nAnoche"
+          android:textColor="#e6edf7"
+          android:textSize="15sp"
+          android:textStyle="bold" />
+      <TextView
+          android:id="@+id/w_gasto"
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:layout_margin="4dp"
+          android:background="@drawable/widget_boton"
+          android:gravity="center"
+          android:text="💶\n+ Gasto"
+          android:textColor="#e6edf7"
+          android:textSize="15sp"
+          android:textStyle="bold" />
+  </LinearLayout>
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_weight="1"
+      android:orientation="horizontal">
+      <TextView
+          android:id="@+id/w_entreno"
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:layout_margin="4dp"
+          android:background="@drawable/widget_boton"
+          android:gravity="center"
+          android:text="🏋️\nEntreno"
+          android:textColor="#e6edf7"
+          android:textSize="15sp"
+          android:textStyle="bold" />
+      <TextView
+          android:id="@+id/w_comida"
+          android:layout_width="0dp"
+          android:layout_height="match_parent"
+          android:layout_weight="1"
+          android:layout_margin="4dp"
+          android:background="@drawable/widget_boton"
+          android:gravity="center"
+          android:text="🍽️\nComida"
+          android:textColor="#e6edf7"
+          android:textSize="15sp"
+          android:textStyle="bold" />
+  </LinearLayout>
+</LinearLayout>

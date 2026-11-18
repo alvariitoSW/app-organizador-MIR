@@ -7,4 +7,5 @@
   <string name="sin_datos">Abrir la app sin datos</string>
   <string name="sin_brave">No encuentro Brave. Tu app y sus datos viven en Brave: instálalo o ábrelo una vez.\n\nSi la abres en otro navegador saldrá vacía (los datos no se pierden, siguen en Brave).</string>
   <string name="abrir_otro">Abrir en otro navegador igualmente</string>
+  <string name="widget_nombre">Atajos de Guardias</string>
 </resources>
