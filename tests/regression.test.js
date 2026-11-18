@@ -15519,7 +15519,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.vis = await page.evaluate(() => [...document.querySelectorAll('#main .cn2 button')].map((b) => Math.round(b.getBoundingClientRect().height)));
     // y ninguna letra de la pantalla del 4:20 por debajo de 11 px
     r.minPortada = await letraMin();
-    await page.click('#main [data-a="cn-aj"]'); await page.waitForTimeout(200);
+    await page.click('#main [data-a="cn-menu"]'); await page.waitForTimeout(100); await page.click('#main [data-a="cn-aj"]'); await page.waitForTimeout(200);
     r.plan = await page.evaluate(() => {
       const chk = [...document.querySelectorAll('#main .cn label.mini input[type=checkbox]')].map((i) => ({ w: Math.round(i.getBoundingClientRect().width), h: Math.round(i.getBoundingClientRect().height), fila: Math.round(i.closest('label').getBoundingClientRect().height) }));
       return { chk: chk, mini: parseFloat(getComputedStyle(document.querySelector('#main .mini')).fontSize), ancho: document.documentElement.scrollWidth };
@@ -15669,7 +15669,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.evaluate(() => { const P = window.PG; P.store = window.__copia399; P.save(); P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.render(); });
     check('399 Iconos en vez de emojis: la tira de la mañana lleva un svg por ficha (taxi, no 🚕), «Más» enseña 6 recuadros con planta/hucha/libro/candado/eventos/notas + su nombre, Ajustes con su icono y el ✕ svg de 44×44; tocar Notas abre Notas y cierra el cajón',
       fichas.n >= 3 && fichas.svg === fichas.n && fichas.emoji === 0 && fichas.nombres.includes('taxi') && fichas.w >= 54 && fichas.h >= 56 && fichas.letra >= 11 &&
-      cajon.n === 6 && cajon.svg === 6 && cajon.ico.join() === 'planta,hucha,libro,candado,eventos,notas' && cajon.txt.join() === 'Hábitos,Dinero,Estudio,Norte,Eventos,Notas' && cajon.x && cajon.xw >= 44 && cajon.xh >= 44 && cajon.aj && cajon.ajIco === 'ajustes' &&
+      cajon.n === 6 && cajon.svg === 6 && cajon.ico.join() === 'planta,hucha,libro,candado,eventos,notas' && cajon.txt.join() === 'Hábitos,Dinero,Estudio,Schumacher,Eventos,Notas' && cajon.x && cajon.xw >= 44 && cajon.xh >= 44 && cajon.aj && cajon.ajIco === 'ajustes' &&
       luego.tab === 'notas' && !luego.abierto, JSON.stringify({ fichas, cajon, luego }));
   }
 
@@ -19035,7 +19035,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.waitForTimeout(100);
     const txt = () => page.$eval('#main', (m) => m.textContent.replace(/\s+/g, ' '));
     const r = {};
-    r.epoca = await txt(); r.epocaOk = /norte: 5\/7/.test(r.epoca) && /¿modo zen\? 7 días: 2 a medio gas y 5 a cero/.test(r.epoca) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 1;
+    r.epoca = await txt(); r.epocaOk = /schumacher: 5\/7/.test(r.epoca) && /¿modo zen\? 7 días: 2 a medio gas y 5 a cero/.test(r.epoca) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 1;
     await cl6('#main [data-a="cn-dejar"]'); await page.waitForTimeout(100);
     r.d1 = await txt(); r.d1Ok = /zen 1\/7/.test(r.d1) && /hoy: una como mucho, tarde/.test(r.d1);
     await cl6('#main [data-a="cn-fumo"]'); await page.waitForTimeout(80);
@@ -19051,7 +19051,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     r.vuelve = /zen 3\/7/.test(await txt());
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia696); delete window.__copia696; P.ui.cnAbierto = false; P.ui.cnGanas = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await sueltaHoy();
-    check('696) norte · época (5/7) propone el modo zen de 7 días; «empezar» → zen 1/7 «una como mucho»; «registro» no reinicia; zen 3/7 «hoy: a cero» con 7 puntos; «me apetece» 15:00 y apunta ganas aguantadas',
+    check('696) schumacher · época (5/7) propone el modo zen de 7 días; «empezar» → zen 1/7 «una como mucho»; «registro» no reinicia; zen 3/7 «hoy: a cero» con 7 puntos; «me apetece» 15:00 y apunta ganas aguantadas',
       r.epocaOk && r.d1Ok && r.sigue && r.ses === 2 && r.d3Ok && r.reloj === '15:00' && r.ganas === 'aguante' && r.vuelve, JSON.stringify(Object.assign({}, r, { epoca: r.epoca.slice(0, 160), d1: undefined, trasFumar: undefined, d3: r.d3.slice(0, 160) })));
   }
   // 697) 4:20 REINVENTADO · recaída puntual, encadenada: viniendo de dejarlo (nada en 20 días; una de hace 25), «He fumado» → «Hoy»
@@ -19073,12 +19073,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await cl6('#main [data-a="cn-vale"]'); await page.waitForTimeout(100);
     r.vale = /29\/30 a cero\./.test(await txt());
     await page.evaluate(() => { const P = window.PG; [1, 2, 3].forEach((i) => P.consumoApuntar({ fecha: P.iso(P.addDays(new Date(), -i)) })); P.render(); });
-    r.otra = await txt(); r.otraOk = /norte: 4\/7/.test(r.otra) && /¿modo zen\? 7 días/.test(r.otra);
+    r.otra = await txt(); r.otraOk = /schumacher: 4\/7/.test(r.otra) && /¿modo zen\? 7 días/.test(r.otra);
     await cl6('#main [data-a="cn-dejar-no"]'); await page.waitForTimeout(100);
     r.luego = await txt(); r.luegoOk = /cuando quieras: 7 días de modo zen/.test(r.luego) && (await page.$$('#main .btn.p[data-a="cn-dejar"]')).length === 0 && (await page.$$('#main [data-a="cn-dejar"]')).length === 1;
     await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia697); delete window.__copia697; P.ui.cnAbierto = false; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await sueltaHoy();
-    check('697) norte · recaída puntual tras dejarlo: «no pasa nada, pero no sigas» sin plan; «vale» → 29/30 a cero; con 4/7 vuelve a proponer el zen; «luego» → «cuando quieras»',
+    check('697) schumacher · recaída puntual tras dejarlo: «no pasa nada, pero no sigas» sin plan; «vale» → 29/30 a cero; con 4/7 vuelve a proponer el zen; «luego» → «cuando quieras»',
       r.dejado && r.recOk && r.vale && r.otraOk && r.luegoOk, JSON.stringify({ dejado: r.dejado, rec: r.rec.slice(0, 200), vale: r.vale, otra: r.otra.slice(0, 160), luego: r.luego.slice(0, 160) }));
   }
   // 698) 4:20 REINVENTADO · minimalista y sin perder nada: a 412×915 la sección cabe en una pantalla, con ≤ 3 botones a 44 px o más
@@ -19099,7 +19099,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const P = window.PG, n = P.normalize(JSON.parse(JSON.stringify(P.store))), v = n.consumo.ses.filter((x) => x.id === 'v698')[0];
       return { cabe: document.scrollingElement.scrollHeight <= innerHeight + 1, alto: document.scrollingElement.scrollHeight, nb: bs.length, bajos: bs.filter((b) => b.getBoundingClientRect().height < 44).length,
         min, pestañas: m.querySelectorAll('.cnvis').length, vieja: !!v && v.forma === 'porro' && v.g === 0.5 && v.motivo === 'social' && v.tabaco === true, plan: !!n.consumo.plan.dejar && n.consumo.plan.dejar.desde === P.consumoS().plan.dejar.desde }; });
-    await cl6('#main [data-a="cn-aj"]'); await page.waitForTimeout(80);
+    await cl6('#main [data-a="cn-menu"]'); await page.waitForTimeout(80); await cl6('#main [data-a="cn-aj"]'); await page.waitForTimeout(80);
     r.aj = await page.$$eval('#main [data-a="cn-pin-cambia"]', (b) => b.length);
     await cl6('#main [data-a="cn-aj"]'); await page.waitForTimeout(80);
     r.vuelve = await page.$$eval('#main .cn2[data-estado="plan"]', (b) => b.length);
@@ -19107,6 +19107,42 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await sueltaHoy();
     check('698) 4:20 · minimalista: cabe en una pantalla a 412×915, ≤ 3 botones de ≥ 44 px, letra ≥ 13 px, sin pestañas; lo viejo y el plan sobreviven a normalize; el 🔒 abre «Cambiar la contraseña» y vuelve',
       r.cabe && r.nb <= 3 && r.bajos === 0 && r.min >= 13 && r.pestañas === 0 && r.vieja && r.plan && r.aj === 1 && r.vuelve === 1, JSON.stringify(r));
+  }
+
+  // 699) SCHUMACHER · MINI MENÚ (18/11/2026, «debería haber un mini menú»), encadenado: «···» abre historial, cómo me afecta,
+  // empezar/parar el zen y código; el historial lista lo de 30 días y su × borra uno; «cómo me afecta» no dice «monchis»; «empezar el zen»
+  // pone el plan y el menú pasa a «parar el zen», que lo para; «volver» deja la pantalla de siempre. Cae sin cnMenuHTML/cnVerPinta.
+  {
+    const cl6 = async (q) => { const e = await page.$(q); if (e) await e.click(); await page.waitForTimeout(100); return !!e; };
+    await fijaHoy();
+    await page.evaluate(async () => { const P = window.PG; window.__copia699 = JSON.stringify(P.store); delete P.store.consumo;
+      await P.cnPinPone('2468'); [2, 9, 40].forEach((i) => P.consumoApuntar({ fecha: P.iso(P.addDays(new Date(), -i)) }));
+      P.ui.cnAbierto = true; P.ui.cnPin = null; P.ui.cnAj = null; P.ui.cnMenu = null; P.ui.cnVer = ''; P.ui.cnFumo = null; P.ui.cnGanas = null; P.ui.tab = 'consumo'; P.save(); P.render(); });
+    await page.waitForTimeout(100);
+    const r = {};
+    r.cerrado = (await page.$$('#main .cnmenu')).length === 0;
+    await cl6('#main [data-a="cn-menu"]');
+    r.items = await page.$$eval('#main .cnmenu .cnmi', (b) => b.map((x) => x.textContent.trim() + ':' + (x.getBoundingClientRect().height >= 44)));
+    await cl6('#main .cnmi[data-v="hist"]');
+    r.filas = await page.$$eval('#main .cnfila', (b) => b.length);
+    await cl6('#main [data-a="cn-del"]');
+    r.trasBorrar = await page.$$eval('#main .cnfila', (b) => b.length);
+    r.ses = await page.evaluate(() => window.PG.consumoS().ses.length);
+    await cl6('#main [data-a="cn-ver"][data-v=""]');
+    r.vuelve = (await page.$$('#main .cn2[data-estado="dejado"], #main .cn2[data-estado="recaida"], #main .cn2[data-estado="poco"]')).length === 1;
+    await cl6('#main [data-a="cn-menu"]'); await cl6('#main .cnmi[data-v="efectos"]');
+    r.efectos = await page.$eval('#main', (m) => /cómo me afecta/.test(m.textContent) && !/monchis|sesión|fum/i.test(m.textContent));
+    await cl6('#main [data-a="cn-ver"][data-v=""]');
+    await cl6('#main [data-a="cn-menu"]'); await cl6('#main .cnmi[data-a="cn-dejar"]');
+    r.plan = (await page.$$('#main .cn2[data-estado="plan"]')).length === 1;
+    await cl6('#main [data-a="cn-menu"]');
+    r.parar = await page.$$eval('#main .cnmi[data-a="cn-dejar-fin"]', (b) => b.length);
+    await cl6('#main .cnmi[data-a="cn-dejar-fin"]');
+    r.parado = await page.evaluate(() => !window.PG.consumoS().plan.dejar) && (await page.$$('#main .cn2[data-estado="plan"]')).length === 0;
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(window.__copia699); delete window.__copia699; P.ui.cnAbierto = false; P.ui.cnMenu = null; P.ui.cnVer = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await sueltaHoy();
+    check('699) schumacher · el «···» abre historial, cómo me afecta, empezar/parar el zen y código (≥ 44 px); el historial lista los de 30 días y × borra uno; efectos sin palabras que delaten; el zen se empieza y se para desde el menú',
+      r.cerrado && r.items.join() === 'historial:true,cómo me afecta:true,empezar el zen:true,código:true' && r.filas === 2 && r.trasBorrar === 1 && r.ses === 2 && r.vuelve && r.efectos && r.plan && r.parar === 1 && r.parado, JSON.stringify(r));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
