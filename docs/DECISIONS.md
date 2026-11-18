@@ -2902,3 +2902,14 @@ hoja con la foto y «🗑️ Borrar la foto». Quitar la toma o deshacerla borra
 **Supuestos:** «a esa hora» = la misma comida (desayuno, comida, cena…) otro día; los «más repetidos» se cuentan por nombre; la foto se
 guarda a 360 px, que vale como miniatura y para verla «en grande» en la hoja.
 **Cae con X revertido:** la 683 sin el chip; la 684 (y el bloque) sin `fpMiniHTML` en la fila; la 685 sin la caducidad de `fpCarga`.
+
+## La Semana · estudio, Consejo y maqueta (18/11/2026; sin tocar `app.js`)
+**Elegido:** no escribir otro motor. La Semana junta lo que ya se calcula por fecha: `nocheCadena` (de pie, cama, «Vete del Lloret»),
+`entrenoDe`, `mSemana` y el asistente «¿Me la propones?» (el único de los tres caminos al menú que monta por fechas y respeta guardia
+y saliente), con la compra que ya sale sola. Semana de 7 días seguidos desde hoy. Cama y vuelta del Lloret se calculan desde la hora
+de pie (≥8 h); la asoci, un contador mensual sin castigo. Tres variantes en `maquetas/la-semana.html` para que elija. Acta:
+`.claude/plan-socialista/consejo/2026-11-18.md`.
+**Descartado:** pestaña nueva (no cabe, ya decidido); reutilizar `sbAuto`/`renderSemanaSimple` (en modo plantilla ignoran el
+cuadrante) o `menuAutoSemana` (por tipo de día, machaca menús); pedirle una hora fija de cama o de vuelta.
+**Supuestos:** «asoci» = tardes fuera, se nombra con palabras discretas hasta que él diga si va tras el PIN; el Lloret sin hora propia
+le vale si sale de la cama; los datos de la maqueta son de ejemplo (guardia mié 18 y sáb 21).
