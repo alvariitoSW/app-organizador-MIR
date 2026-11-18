@@ -1,0 +1,208 @@
+<title>4:20 modo zen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Maqueta 2.ª ronda: oscura y discreta, sin colores; un móvil por estado. Se elige C o D arriba. */
+:root{
+  --bg:#050608; --m:#0b0d10; --ink:#d6d9de; --ink2:#7c828c; --line:#1c2026; --on:#e9ebee;
+  --f:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:900px;margin:0 auto;display:grid;gap:16px}
+h1{font-size:17px;font-weight:600;margin:0}
+.intro{color:var(--ink2);margin:0;max-width:64ch}
+.elige{display:flex;gap:8px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:8px;z-index:5}
+.elige button{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--m);color:var(--ink);font:500 14px var(--f);cursor:pointer}
+.elige button[aria-pressed="true"]{border-color:var(--ink2);color:var(--on)}
+button:focus-visible{outline:1px solid var(--on);outline-offset:2px}
+.desc{margin:0;color:var(--ink2)}
+.moviles{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.est{display:grid;gap:6px;min-width:0}
+.est>b{font-size:13px;font-weight:500;color:var(--ink2)}
+.m{background:var(--m);border:1px solid var(--line);border-radius:24px;padding:18px 18px 20px;min-height:500px;
+  display:flex;flex-direction:column;max-width:412px;width:100%}
+.cab{display:flex;align-items:center;font-size:15px;color:var(--ink2)}
+.cab .sp{flex:1}
+.cand{font-size:13px;color:var(--ink2);min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.cuerpo{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-block:18px}
+.pie{display:grid;gap:4px}
+.lnks{display:flex;justify-content:center;gap:20px}
+.lnk{background:none;border:0;color:var(--ink2);font:inherit;font-size:14px;min-height:44px;cursor:pointer}
+/* C · terminal */
+.C .m{font-family:var(--mono)}
+.C .eti{font-size:13px;color:var(--ink2);margin:0}
+.C .linea{font-size:17px;color:var(--on);margin:0;line-height:1.4}
+.C .sub{font-size:13px;color:var(--ink2);margin:0;max-width:36ch}
+.C .pts{font-size:15px;letter-spacing:.32em;color:var(--ink2);margin:0;white-space:nowrap;overflow:hidden}
+.C .pts b{color:var(--on);font-weight:400}
+.C .btn{min-height:48px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--on);font:400 14px var(--mono);cursor:pointer;width:100%}
+/* D · esfera */
+.D .num{font-size:76px;font-weight:200;line-height:1;color:var(--on);margin:0;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.D .eti{font-size:13px;color:var(--ink2);margin:0;letter-spacing:.04em}
+.D .sub{font-size:14px;color:var(--ink2);margin:6px 0 0;max-width:32ch}
+.D .cuerpo{align-items:flex-start}
+.D .aro{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;max-width:260px}
+.D .aro i{width:6px;height:6px;border-radius:50%;background:var(--line);display:block}
+.D .aro i.y{background:var(--ink2)}
+.D .aro i.h{outline:1px solid var(--on);outline-offset:2px}
+.D .btn{min-height:48px;border-radius:999px;border:1px solid var(--line);background:var(--on);color:var(--bg);font:500 14px var(--f);cursor:pointer;width:100%}
+.D .btn.sec{background:transparent;color:var(--ink)}
+/* comunes */
+.pin{display:flex;gap:14px;justify-content:center;margin:8px 0}
+.pin i{width:10px;height:10px;border-radius:50%;border:1px solid var(--ink2)}
+.pin i.l{background:var(--on);border-color:var(--on)}
+.tec{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tec button{min-height:52px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:400 18px var(--f)}
+.C .tec button{font-family:var(--mono)}
+section.tx{border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:6px;background:var(--m)}
+section.tx h2{font-size:15px;font-weight:600;margin:0}
+.lista{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--ink2)}
+.lista b{color:var(--ink);font-weight:500}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td,th{border-top:1px solid var(--line);padding:6px 8px 6px 0;text-align:left;vertical-align:top;color:var(--ink2)}
+th{color:var(--ink);font-weight:500}
+.tabla{overflow-x:auto}
+</style>
+
+<div class="wrap">
+  <h1>4:20 · segunda ronda</h1>
+  <p class="intro">Oscuro, sin colores y con letra pequeña, para que no llame la atención si alguien mira el móvil. Ninguna palabra dice lo que es: solo guiños. La lógica es la de antes: «época», plan de 7 días, «dejado», «recaída» y contraseña obligatoria.</p>
+
+  <div class="elige" role="group" aria-label="Opción">
+    <button id="bC" aria-pressed="true" onclick="ver('C')">C · Terminal</button>
+    <button id="bD" aria-pressed="false" onclick="ver('D')">D · Esfera</button>
+  </div>
+  <p class="desc" id="dC">C: parece una consola. Letra de máquina, una línea por cosa y los días como puntitos de texto. Habla de «modo zen» y «barbecho».</p>
+  <p class="desc" id="dD" hidden>D: parece la esfera de un reloj. Un número grande y fino, una etiqueta pequeña y botones redondos. Habla de «la plantita» y de «a cero».</p>
+
+  <!-- ============ C · TERMINAL ============ -->
+  <div class="moviles C" id="C">
+    <div class="est"><b>Época · 5 de 7 días</b>
+      <div class="m"><div class="cab">4:20<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="eti">últimos 7 días</p><p class="pts">●●·●●·<b>●</b></p>
+          <p class="linea">&gt; la plantita: 5/7</p><p class="sub">¿modo zen? 7 días: 2 a medio gas, 5 en barbecho.</p></div>
+        <div class="pie"><button class="btn">empezar</button><div class="lnks"><button class="lnk">luego</button><button class="lnk">ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>Plan · día 1 (a medio gas)</b>
+      <div class="m"><div class="cab">4:20<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="eti">zen 1/7</p><p class="pts"><b>○</b>·······</p>
+          <p class="linea">&gt; hoy: una como mucho, tarde.</p><p class="sub">mañana, igual. luego, barbecho.</p></div>
+        <div class="pie"><button class="btn">me apetece</button><div class="lnks"><button class="lnk">ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>Plan · día 4 (barbecho)</b>
+      <div class="m"><div class="cab">4:20<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="eti">zen 4/7</p><p class="pts">◐◐○<b>○</b>···</p>
+          <p class="linea">&gt; hoy: barbecho.</p><p class="sub">si se duerme peor estos días, es normal. pasa.</p></div>
+        <div class="pie"><button class="btn">me apetece</button><div class="lnks"><button class="lnk">ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>«Me apetece»</b>
+      <div class="m"><div class="cab">4:20<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="eti">respira</p><p class="linea" style="font-size:32px">14:32</p>
+          <p class="sub">sal a andar o bebe agua. en 15 min baja solo.</p></div>
+        <div class="pie"><button class="btn">ya pasó</button><div class="lnks"><button class="lnk">cerrar</button></div></div></div></div>
+
+    <div class="est"><b>Dejado</b>
+      <div class="m"><div class="cab">4:20<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="eti">últimos 30 días</p><p class="pts" style="letter-spacing:.12em">○○○○○○○○○○○●○○○○○○○○○○○○○○○○○<b>○</b></p>
+          <p class="linea">&gt; 29/30 en barbecho.</p><p class="sub">nada que hacer hoy.</p></div>
+        <div class="pie"><div class="lnks"><button class="lnk">ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>Recaída puntual</b>
+      <div class="m"><div class="cab">4:20<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="eti">apuntado · hoy</p>
+          <p class="linea">&gt; bueno, una no cuenta.</p><p class="sub">siguen siendo 29/30. pero no sigas: mañana, barbecho.</p></div>
+        <div class="pie"><button class="btn">vale</button></div></div></div>
+
+    <div class="est"><b>Contraseña</b>
+      <div class="m"><div class="cab">···</div>
+        <div class="cuerpo" style="justify-content:flex-start;padding-top:30px;text-align:center"><p class="linea">código</p>
+          <div class="pin"><i class="l"></i><i class="l"></i><i></i><i></i></div></div>
+        <div class="tec"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button style="font-size:13px">olvidé</button><button>0</button><button>⌫</button></div></div></div>
+  </div>
+
+  <!-- ============ D · ESFERA ============ -->
+  <div class="moviles D" id="D" hidden>
+    <div class="est"><b>Época · 5 de 7 días</b>
+      <div class="m"><div class="cab">🍃<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="num">5/7</p><p class="eti">días con la plantita</p>
+          <div class="aro"><i class="y"></i><i class="y"></i><i></i><i class="y"></i><i class="y"></i><i></i><i class="y h"></i></div>
+          <p class="sub">¿Unos días de modo zen? Siete: dos a medio gas y cinco a cero.</p></div>
+        <div class="pie"><button class="btn">Vamos</button><div class="lnks"><button class="lnk">Luego</button><button class="lnk">Ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>Plan · día 1 (a medio gas)</b>
+      <div class="m"><div class="cab">🍃<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="num">1</p><p class="eti">de 7 · modo zen</p>
+          <div class="aro"><i class="h"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="sub">Hoy, una como mucho y tarde.</p></div>
+        <div class="pie"><button class="btn sec">Me apetece</button><div class="lnks"><button class="lnk">Ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>Plan · día 4 (a cero)</b>
+      <div class="m"><div class="cab">🍃<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="num">4</p><p class="eti">de 7 · modo zen</p>
+          <div class="aro"><i class="y"></i><i class="y"></i><i class="y"></i><i class="h"></i><i></i><i></i><i></i></div>
+          <p class="sub">Hoy, a cero. Si duermes peor estos días, es normal: pasa.</p></div>
+        <div class="pie"><button class="btn">Me apetece</button><div class="lnks"><button class="lnk">Ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>«Me apetece»</b>
+      <div class="m"><div class="cab">🍃<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="num">14:32</p><p class="eti">respira</p>
+          <p class="sub">Un paseo o un vaso de agua. En 15 minutos baja sola.</p></div>
+        <div class="pie"><button class="btn">Ya pasó</button><div class="lnks"><button class="lnk">Cerrar</button></div></div></div></div>
+
+    <div class="est"><b>Dejado</b>
+      <div class="m"><div class="cab">🍃<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="num">29</p><p class="eti">de 30 días a cero</p>
+          <div class="aro"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="y"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="h"></i></div>
+          <p class="sub">Todo en calma.</p></div>
+        <div class="pie"><div class="lnks"><button class="lnk">Ha caído una</button></div></div></div></div>
+
+    <div class="est"><b>Recaída puntual</b>
+      <div class="m"><div class="cab">🍃<span class="sp"></span><span class="cand">···</span></div>
+        <div class="cuerpo"><p class="num">29</p><p class="eti">siguen siendo, de 30</p>
+          <p class="sub">Bueno, una no cuenta. Pero no sigas: mañana, a cero.</p></div>
+        <div class="pie"><button class="btn">Vale</button></div></div></div>
+
+    <div class="est"><b>Contraseña</b>
+      <div class="m"><div class="cab">···</div>
+        <div class="cuerpo" style="justify-content:flex-start;padding-top:30px;align-items:center"><p class="eti">código</p>
+          <div class="pin"><i class="l"></i><i class="l"></i><i></i><i></i></div></div>
+        <div class="tec"><button>1</button><button>2</button><button>3</button><button>4</button><button>5</button><button>6</button><button>7</button><button>8</button><button>9</button><button style="font-size:13px">Olvidé</button><button>0</button><button>⌫</button></div></div></div>
+  </div>
+
+  <section class="tx"><h2>Las palabras: de antes → ahora</h2>
+    <div class="tabla"><table>
+      <tr><th>Antes</th><th>C · Terminal</th><th>D · Esfera</th></tr>
+      <tr><td>🌿 4:20 (título)</td><td>4:20</td><td>🍃</td></tr>
+      <tr><td>Has fumado 5 de 7 días</td><td>la plantita: 5/7</td><td>5/7 días con la plantita</td></tr>
+      <tr><td>Plan para dejarlo · Día 4 de 7</td><td>zen 4/7</td><td>4 de 7 · modo zen</td></tr>
+      <tr><td>Hoy: ninguna</td><td>hoy: barbecho</td><td>hoy, a cero</td></tr>
+      <tr><td>Tengo ganas</td><td>me apetece</td><td>Me apetece</td></tr>
+      <tr><td>He fumado</td><td>ha caído una</td><td>Ha caído una</td></tr>
+      <tr><td>29 días sin</td><td>29/30 en barbecho</td><td>29 de 30 días a cero</td></tr>
+      <tr><td>Bueno, no pasa nada</td><td>bueno, una no cuenta</td><td>Bueno, una no cuenta</td></tr>
+      <tr><td>Contraseña · 🔒</td><td>código · ···</td><td>código · ···</td></tr>
+    </table></div>
+  </section>
+
+  <section class="tx"><h2>Lo que no cambia</h2>
+    <ul class="lista">
+      <li><b>Época:</b> 4 días o más de 7 → te propone 7 días (2 a medio gas, 5 a cero).</li>
+      <li><b>Plan:</b> un paso por día; si «cae una», no se reinicia.</li>
+      <li><b>Dejado:</b> los días a cero de los últimos 30; una vez no borra nada.</li>
+      <li><b>Recaída</b> tras dejarlo: «una no cuenta, pero no sigas», sin volver al plan salvo que llegue a 4 de 7.</li>
+      <li><b>Contraseña obligatoria</b> y la sección tapada fuera de aquí. Lo guardado no se borra.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+function ver(o){
+  const c=o==='C';
+  document.getElementById('C').hidden=!c;document.getElementById('D').hidden=c;
+  document.getElementById('dC').hidden=!c;document.getElementById('dD').hidden=c;
+  document.getElementById('bC').setAttribute('aria-pressed',c);document.getElementById('bD').setAttribute('aria-pressed',!c);
+}
+</script>
