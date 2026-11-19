@@ -117,7 +117,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (!o.sal) { const rt = { id: 'rt-70', nombre: 'Empuje 70', notas: '', dias: [SH.id], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] }; P.store.gym.rutinas = [rt]; } }
     if (o.amanece) P.store.suenoReal[d(0)] = { h: 7.5, acostar: '23:15', desp: '06:45', tramos: [[23.25, 30.75, 0]], guardia: false, kss: 0, amanece: 'pend' };
     P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} }); P.store.food.objetivo = Object.assign({}, P.store.food.objetivo, { prot: 110 });
-    P.ui.gymSesionActiva = null; P.ui.hoyModo = o.modo === null ? null : 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.uphVis = false; P.ui.nocheAbierta = false;
+    P.ui.gymSesionActiva = null; P.ui.hoyModo = o.modo === null ? null : 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.hoyDibujo = false; try { localStorage.removeItem('guardias-hoymodo3'); } catch (e) {} P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.uphVis = false; P.ui.nocheAbierta = false;
     P.save(); P.render(); }, o);
   const suelta70 = async () => { await page.evaluate(() => { const P = window.PG; if (window.__copia70) { P.store = JSON.parse(window.__copia70); delete window.__copia70; } P.ui.gymSesionActiva = null; P.ui.hoyModo = 'reloj'; P.ui.hoyBusV = 'conductor'; P.ui.uphVis = false; P.ui.tab = 'hoy'; P.save(); P.render(); }); await sueltaHoy(); };
   const vuelve70 = async () => { await gotoTab('month'); await gotoTab('hoy'); await page.waitForTimeout(250); };
