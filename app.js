@@ -6165,9 +6165,10 @@ function hoyQuedaHTML(it,key,n){
 function nocheHTML(key,esHoy,pleg){
   if(!esHoy)return mananaHTML(key,false);
   const C=nocheCadena(key,hoyNow(true));if(!C)return '';
-  const g=C.g,abierta=!!ui.nocheAbierta,P=C.pend,VG=nocheVisperaDe(key);
+  const g=C.g,abierta=!!ui.nocheAbierta,P=C.pend,VG=nocheVisperaDe(key,pleg);
+  const sal5=pleg?C.hitos.filter(function(x){return x.id==='salir';})[0]:null;
   const cartel='<div class="ncartel nled" role="status"><div class="l1">'+(g.ico||'')+' '+(g.h?esc(g.h.cartel):'')+(g.hora?' · '+esc(g.hora):'')+'</div>'+
-    '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div>'+(VG.l4?'<div class="l4">'+esc(VG.l4)+'</div>':'')+'</div>';
+    '<div class="l2">'+esc(g.min!=null?'en '+nocheFalta(g.min):g.txt)+'</div><div class="l3">'+esc(g.sub||'')+'</div>'+(VG.l4?'<div class="l4">'+esc(VG.l4)+'</div>':'')+(sal5?'<div class="l5">🚪 sales de casa a las '+esc(hm(sal5.hora%1440))+'</div>':'')+'</div>';
   const m=mananaDe(key),h=hoyNow(true)/60;
   /* ya en el trabajo («He llegado» guardado) no se ofrece «He salido» */
   let sali='';
@@ -6187,7 +6188,8 @@ function nocheHTML(key,esHoy,pleg){
   /* con «He salido» a la vista, «He llegado» va de segundo (no dos botones principales apilados) */
   const vivo=viv?'<button class="btn '+(sali?'s nvivo n2':'p nvivo')+'" data-a="noche-hoja" data-k="'+viv[0]+'">'+viv[1]+'</button>':'';
   let pie='';
-  if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
+  if(pleg){}   /* en los tres bloques la cadena 🏠›🛌›⏰ no va: repite el cartel */
+  else if(abierta)pie='<button class="btn s nplegar" data-a="noche-plegar" aria-expanded="true" aria-controls="nocheCad">▴ plegar</button>'+
     '<div class="ncad" id="nocheCad">'+P.map(function(x,i){return '<div class="ncf'+(i===0?' ya':'')+'"><span class="nico">'+x.ico+'</span><div><b>'+esc(x.corto)+'</b>'+
       (x.nota?'<small>'+esc(x.nota)+'</small>':'')+'</div><span class="nh">'+hm(x.hora)+'</span></div>';}).join('')+
       (C.vuelta?'<div class="nok">✓ Volviste a las '+esc(C.vuelta)+'</div>':'')+(C.llego?'<div class="nok">✓ Llegaste a las '+esc(C.llego)+'</div>':'')+
@@ -6211,9 +6213,9 @@ function anocheHTML(key,pleg){
   const r=suenoReal(key),enlaces=function(){return '<div class="nalinks"><button class="lnk" data-a="sn-hoja" data-k="'+esc(key)+'">cambiar</button>'+
     '<button class="lnk" data-a="sn-abrir">otras noches</button></div>';};
   if(r){
-    if(r.amanece!=='pend'||r.guardia)return '';
-    return '<div class="nanoche ok" role="group" aria-label="Anoche guardada"><div class="t"><small>Anoche guardada</small><b>✓ '+esc(nocheFalta(Math.round(suenoTotal(r)*60)))+
-      (r.acostar&&r.desp?' · '+esc(hCortaHM(r.acostar)+'–'+hCortaHM(r.desp)):'')+'</b></div>'+enlaces()+'</div>'+
+    if(r.amanece!=='pend'||r.guardia||pleg===1)return '';
+    const resum='✓ '+nocheFalta(Math.round(suenoTotal(r)*60))+(r.acostar&&r.desp?' · '+hCortaHM(r.acostar)+'–'+hCortaHM(r.desp):'');
+    return (pleg?hoyPlegIni('anoche','😴','Anoche',esc(resum)):'')+'<div class="nanoche ok" role="group" aria-label="Anoche guardada"><div class="t"><small>Anoche guardada</small><b>'+esc(resum)+'</b></div>'+enlaces()+'</div>'+(pleg?hoyPlegFin():'')+
       (pleg?hoyPlegIni('amanece','🙂','¿Cómo amaneces?','si quieres'):'')+
       '<div class="ncaras" role="group" aria-label="¿Cómo amaneces?">'+(pleg?'':'<div class="cap">¿CÓMO AMANECES? (SI QUIERES)</div>')+'<div class="ncaras3">'+
       CARAS_AMANECE.map(function(c){return '<button class="ncara" data-a="anoche-cara" data-v="'+c[0]+'"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'+
@@ -6231,7 +6233,7 @@ function anocheVale(key){
   suenoRealS()[key]=x;save();return true;}
 /* La víspera y el día de guardia: una línea más en el cartel y, debajo, las tres órdenes con «Avisarme» (snOrdenesHTML, la de Sueño).
    Víspera: «Faltan X h Y en tus 3 últimas noches · cama HH:MM» (sin rojo ni «deber»); día de guardia: la primera orden, la siesta. */
-function nocheVisperaDe(key){
+function nocheVisperaDe(key,pleg){
   const G=snOrdenesDe(key);if(!G)return {l4:'',html:''};
   const vis=G!==key;let l4='';
   if(vis){
@@ -6241,7 +6243,9 @@ function nocheVisperaDe(key){
   /* P1 Hoy: el plan de la víspera, plegado en una línea; al tocarla sale el bloque entero */
   const linea='🩺 '+(vis?'Mañana guardia · a la cama '+snCamaDe(key):'Hoy guardia'+(l4?' · '+l4:''));
   return {l4:l4,html:'<button class="uph-vis" data-a="uph-vis" aria-expanded="'+(ui.uphVis?'true':'false')+'">'+esc(linea)+' <span aria-hidden="true">'+(ui.uphVis?'▴':'▾')+'</span></button>'+
-    (ui.uphVis?'<div class="nvis"><div class="dsucap">'+(vis?'MAÑANA TIENES GUARDIA':'HOY TIENES GUARDIA')+'</div>'+snOrdenesHTML(G,vis)+'</div>':'')};}
+    (ui.uphVis?'<div class="nvis"><div class="dsucap">'+(vis?'MAÑANA TIENES GUARDIA':'HOY TIENES GUARDIA')+'</div>'+snOrdenesHTML(G,vis)+(pleg?nocheConsejoGuardia(key):'')+'</div>':'')};}
+/* el consejo de la tarjeta «Mañana guardia» del 4:20 (cnTarjeta), dentro de la fila de la víspera en vez de una tarjeta aparte */
+function nocheConsejoGuardia(key){let c=null;try{c=cnTapado()?null:cnTarjeta(key);}catch(e){c=null;}return c&&c.id==='guardia'?'<p class="mini">'+esc(c.txt)+'</p>':'';}
 function nocheSugHTML(key){
   const s=nocheSugerencia(key);if(!s)return '';
   if(avisoCola()!=='cama')return '';
@@ -6417,8 +6421,10 @@ function hoyAhoraHTML(key,inf,esHoy){
 function hoyViaHTML(key,inf){
   let D=null;try{D=hoyBusDatos(key,inf,true);}catch(e){D=null;}if(!D)return '';
   const W=8,a=D.ahora,lo=a-W/2,pos=function(h){return Math.round(1000*(h-lo)/W)/10;},P=[];
-  D.dia.forEach(function(x){if(x.ayer||x.a<=lo+0.2||x.a>=lo+W-0.2)return;P.push({h:x.a,t:x.t,k:x.k});});
-  D.noches.forEach(function(x){if(x.t==='noche'&&x.a>12&&x.a>lo+0.2&&x.a<lo+W-0.2)P.push({h:x.a,t:'Cama',k:'cama'});});
+  D.dia.forEach(function(x){if(x.ayer||x.a<=lo+0.2||x.a>=lo+W-0.2)return;P.push({h:x.a,t:String(x.t).replace(/\s+[\d,\-–]+\s*h$/i,''),k:x.k});});
+  let cm=null;try{cm=mins(snCamaDe(key));}catch(e){cm=null;}
+  if(cm!=null&&cm<12*60)cm+=1440;
+  D.noches.forEach(function(x){if(x.t==='noche'&&x.a>12&&x.a>lo+0.2&&x.a<lo+W-0.2)P.push({h:cm!=null?cm/60:x.a,t:'Cama',k:'cama'});});
   P.sort(function(p,q){return p.h-q.h;});
   const S=[];P.forEach(function(x){const u=S[S.length-1];if(u&&pos(x.h)-pos(u.h)<22){if(x.k==='cama')S[S.length-1]=x;return;}S.push(x);});
   const hh=function(h){return hm(Math.round(h*60)%1440);};
@@ -6427,7 +6433,7 @@ function hoyViaHTML(key,inf){
     S.slice(0,4).map(function(x,i){return '<span class="hv-p k-'+esc(x.k)+(i%2?' ar':'')+'" style="left:'+pos(x.h)+'%"><i></i><em>'+esc(x.t)+' '+hh(x.h)+'</em></span>';}).join('')+
     '<span class="hv-ahora"><svg viewBox="0 0 44 26" width="44" height="26" aria-hidden="true"><rect x="1" y="2" width="42" height="18" rx="5" fill="currentColor"/><rect x="6" y="6" width="8" height="7" rx="1.5" fill="var(--card)"/><rect x="17" y="6" width="8" height="7" rx="1.5" fill="var(--card)"/><rect x="28" y="6" width="9" height="7" rx="1.5" fill="var(--card)"/><circle cx="12" cy="21" r="3.5" fill="var(--bg)" stroke="currentColor" stroke-width="2"/><circle cx="33" cy="21" r="3.5" fill="var(--bg)" stroke="currentColor" stroke-width="2"/></svg><em>'+hh(a)+'</em></span></div>';}
 /* una fila plegada de una línea (<details>): su estado se recuerda en ui.hoyPleg (ver el listener de «toggle») y no se pierde al repintar */
-function hoyPlegIni(v,ico,tit,res){return '<details class="hoypleg" data-v="'+v+'"'+((ui.hoyPleg||{})[v]?' open':'')+'><summary><span class="hp-i" aria-hidden="true">'+ico+'</span><b>'+tit+'</b><span class="hp-r">'+(res||'')+'</span></summary><div class="hp-b">';}
+function hoyPlegIni(v,ico,tit,res){return '<details class="hoypleg" data-v="'+v+'"'+((ui.hoyPlegK===fechaHoy()&&(ui.hoyPleg||{})[v])?' open':'')+'><summary><span class="hp-i" aria-hidden="true">'+ico+'</span><b>'+tit+'</b><span class="hp-r">'+(res||'')+'</span></summary><div class="hp-b">';}
 function hoyPlegFin(){return '</div></details>';}
 /* COMER: lo de hoy en dos barras (kcal y proteína) y la próxima comida por apuntar, con su botón; ENTRENO: lo que toca y «Empezar» */
 function hoyComerHTML(key,inf){
@@ -6451,7 +6457,7 @@ function hoyEntrenoHTML(key){
 /* HOY EN TRES BLOQUES (v3-hoy-rediseno): «Ahora» (con su carretera), «La noche» y «Para hoy»; debajo Comer y Entreno en dos columnas;
    y lo de consulta (energía y coach, lo que viene, ¿cómo amaneces?) en filas plegadas. Es lo que ve Hoy cuando es hoy */
 function hoyBloquesHTML(hoy,inf,esHoy,estado,sh,guardiaHoy){
-  const noche=nocheHTML(hoy,esHoy,true),e=energiaHoy(hoy),coach=coachHTML(hoy),prot=protHoyHTML(hoy,guardiaHoy);
+  const noche=nocheHTML(hoy,esHoy,1),e=energiaHoy(hoy),coach=coachHTML(hoy),prot=protHoyHTML(hoy,guardiaHoy);
   const cab='<div class="hoycab"><div class="hoyest" style="--tc:'+(sh&&!inf.vac?esc(sh.color):'var(--ink)')+'">'+estado+(guardiaHoy?' <span class="tag b1">de guardia</span>':'')+'</div><span class="sp"></span>'+
     '<button class="btn s'+(lloretDe(hoy)?' p':'')+'" data-a="lloret" data-k="'+esc(hoy)+'" title="'+esc(cnOculta('Lloretazo'))+': '+esc(hm(lloretPlan(hoy).de))+'–'+esc(hm(lloretPlan(hoy).a))+'">'+cnOculta('🌿')+(lloretDe(hoy)?' ✓':'')+'</button>'+
     '<button class="btn s" data-a="dia-add" data-k="'+esc(hoy)+'" aria-label="añadir">＋</button></div>';
@@ -6459,8 +6465,9 @@ function hoyBloquesHTML(hoy,inf,esHoy,estado,sh,guardiaHoy){
     (noche?'<div class="card hoynoche"><h2>🌙 La noche</h2>'+noche+'</div>':'')+
     paraHoyHTML(hoy)+
     '<div class="hoycols">'+hoyComerHTML(hoy,inf)+hoyEntrenoHTML(hoy)+'</div>'+
-    dinHoyLineaHTML(hoy,esHoy)+hoyChoqueHTML(hoy,inf)+mvResumenHTML(store.modoViaje)+mvSalidaHTML(store.modoViaje||{},hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy)+habTiraHTML(hoy,esHoy)+
+    dinHoyLineaHTML(hoy,esHoy)+hoyChoqueHTML(hoy,inf)+mvResumenHTML(store.modoViaje)+mvSalidaHTML(store.modoViaje||{},hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy,true)+habTiraHTML(hoy,esHoy)+
     ((uphPlantBtn()||modoAvisoHTML(true))?'<div class="hoyplant">'+uphPlantBtn()+modoAvisoHTML(true)+'</div>':'')+
+    anocheHTML(hoy,2)+
     ((coach||prot)?hoyPlegIni('coach','⚡','Energía y coach',e?e.nom:'')+coach+prot+hoyPlegFin():'')+
     hoyPlegIni('viene','🛣️','Lo que viene',lqvResumen())+'<div id="carrSlot" class="carrslot"></div>'+hoyPlegFin();}
 function habTiraHTML(key,esHoy){
@@ -20389,10 +20396,10 @@ function reglasDe(lista,k,primera,sinNada){
 function asistTarjeta(k){return reglasDe(HAB_R,k,true,true);}
 function asistTarjetaHab(k){return reglasDe(HAB_R,k,true,false);}
 function cnTarjeta(k){return reglasDe(CN_R,k,true,true);}
-function asistHoyHTML(k){
+function asistHoyHTML(k,sinGuardia){
   /* en Hoy: el check-in (si falta) y una tarjeta por asistente (hábitos, dinero y 4:20) si hay algo que decir */
   const q=avisoCola(),t=q==='hab'?asistTarjeta(k):null,hoyK=k===iso(new Date()),d=hoyK&&(q==='din'||q==='din-fin')?dinAsis(true,q==='din-fin'?['din-fin']:null):null,
-    cg=hoyK&&!cnTapado()?cnTarjeta(k):null,c=cg&&(cg.id==='guardia'||q==='cn')?cg:null,hh=new Date().getHours();
+    cg=hoyK&&!cnTapado()?cnTarjeta(k):null,c=cg&&((cg.id==='guardia'&&!sinGuardia)||(q==='cn'&&!(sinGuardia&&cg.id==='guardia')))?cg:null,hh=new Date().getHours();
   const ck=hh>=5&&hoyModo()!=='bus'?asistCheckinHTML(k):'';   /* con el conductor, el check-in es la radio */
   if(!ck&&!t&&!d&&!c)return '';
   /* la primera abierta; las otras, en una línea que se abre al tocar (eran 482 px entre las tres) */
@@ -26129,6 +26136,7 @@ function pintaCielo(){
   r.classList.toggle('de-guardia',deGuardiaAhora(now));
   if(!_cieloT)_cieloT=setInterval(pintaCielo,60000);}
 function render(){
+  if(ui.tab!=='hoy')ui.hoyPleg=null;   /* las filas plegadas de Hoy vuelven plegadas al entrar de nuevo */
   /* EL CAMPO QUE SE ESTÁ EDITANDO HAY QUE SOLTARLO ANTES. renderNow() reemplaza #main.innerHTML
      entero; si dentro hay un <input> con el foco, el navegador dispara su blur EN MEDIO del
      reemplazo, ese blur vuelve a entrar aquí, y la segunda pasada se encuentra con un nodo que ya
@@ -30661,7 +30669,9 @@ function registrarSW(){
   try{navigator.serviceWorker.register('./sw.js').catch(function(){});}catch(e){}}
 /* las filas plegadas de Hoy (details.hoypleg) recuerdan si estaban abiertas al repintar; «Lo que viene» pinta su carretera al abrirse (cerrada no tiene ancho) */
 document.addEventListener('toggle',function(e){const d=e.target;if(!d||!d.matches||!d.matches('details.hoypleg'))return;
-  ui.hoyPleg=ui.hoyPleg||{};ui.hoyPleg[d.dataset.v]=d.open;if(d.open&&d.dataset.v==='viene')carrMonta('hoy');},true);
+  if(!ui.hoyPleg||ui.hoyPlegK!==fechaHoy()){ui.hoyPleg={};ui.hoyPlegK=fechaHoy();}ui.hoyPleg[d.dataset.v]=d.open;
+  /* la carretera se pinta con el ancho que tiene al abrirse: la que se hizo con la fila cerrada (ancho 0) sale con letra diminuta */
+  if(d.open&&d.dataset.v==='viene')requestAnimationFrame(function(){_carr.hoy=null;carrMonta('hoy');});},true);
 window.PG={fpCandidatos,fpCarga,fpGuarda,FP_MINI,fraseApuntarLee,pedParse,pedJunta,pedCalc,pedTotal,pedLeeTextos,pedApuntar,snPantallas,coachHoy,energiaHoy,menuPorMomento,platoDesdeDish,suenoHoyCardHTML,horasSuenoHTML,nocheCadena,franja,laminaDatos,laminaTextos,laminaTema,lamTimerVivo,gymHoraDe,gymDur,lugarEntreno,rutinaParque,ventanaEntreno,horaLibreEntreno,objetivoPeso,setObjetivoPeso,regresoS,regresoDe,regresoRef,taxisMes,diaEscenas,estadoDe,mananaRegleta,habitosEscena,mananaDe,mananaSemana,mananaMes,conductorEscenas,habFaseA,cnTB,ticketPeso,mPoner,sbFechaW,sbCeldaDia,snGuarda,unidadesEnPantalla,icsFecha,icsAvisoMin,editMeal,editDish,addSet,vaciarMenus,leeImporte,restoPorRepartir,entraMes,metaPct,habEdAbre,habDia,habMinSug,habEnMarcha,asistTarjetaHab,cnTarjeta,bancoS,bkQueda,bkGastoMes,bkRitmo,dinAsis,recibosEntre,diaTipo,tomasDelDia,agendaDia,planTotalsOf,esBasicoCasa,suenoPruebaDia,SN_CIEN,suenoCfg,siesta3On,snPruebaPendiente,snMejorSim,snPuntua,snPlanSim,snGuardiaSel,habitoToca,rutinaDia,rutinaDe,hoyChoques,eventosS,cocinadoS,cocinadoAdd,sbPoner,cjeHoyPlan,tandaRaciones,cjeSemana,dishNada,dishFuera,d6Mes,cjeDesayunos,desayunosNevera,glutenDePlato,semPS,semPAplicar,addFoodEntry,mSemana,tandasSemana,compraSG,cocinaPref,cjeAuto,nevCombos,comboConProt,fraseMacros,frSeg,protSemana,protExtras,cnFechaDe,protExtraPoner,esDiaGuardia,dishHospital,consumoApuntar,consumoS,consumoSemana,monchisOpciones,monchisKcal,qcCombos,fraseLeer,fraseNombre,fraseRepetidas,alimDeTexto,platoRanking,platoVotar,semanaComida,ocrListo,ticketLinea,vidaDe,tkHabitual,sbAuto,diasAguanta,frescoDias,puroPct,puroMin,mesTipo,dinero3S,d3Datos,d4Cobro,d4Hist,metaHucha,d6Cats,d6Consejos,SN_T,suenoEstado,suenoCuenta,snPlan,snBase,snMejor,snMetricas,snGuardias,snPasos,snAvisosEventos,suenoHoraStats,snTramosLimpia,snResumenTramos,snTramosDe,pvtBase,suenoPVT,suenoPruebas,snEnergiaDia,buscarResultadosHTML,foodBuscar,dineroXlsx,gastoMes,ahorroDeMes,repartoDe,llegadaHucha,notasAviso,avisosCfg,programarAvisoHoy,gymModo,marcarTodas,copiasGuardar,copiasLista,copiasLeer,gymUnidad,uVer,uLeer,cargaSerie,volSerie,pasoEj,redondeaEj,planCrear,planCfg,capacidadSemanas,planAgua,supsS,supToggle,cafeinaHoy,informeEntrenoHTML,minutosSemana,aguaMes,nuevoObjetivo,listoDe,bloqueDe,seriesMusculo,acwrDe,e1rm,cargaSemana,tituloCasilla,discosPorLado,marcarSerie,sesionFilas,ejSets,cerrarSesionCore,
   vaciarMenus,esDeEjemplo,normalize,parseRhythmText,parseServicesText,applyRhythm,hhmm,normClock,
   get store(){return store;},set store(v){store=normalize(v);},get ui(){return ui;},render,save,weekDays,

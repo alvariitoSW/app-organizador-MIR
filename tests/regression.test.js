@@ -112,6 +112,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     if (o.sal) { P.setDayOverride(d(-1), GU.id, 'urg'); P.setDayOverride(d(0), 'sh-s', ''); }
     if (o.rutina) { const rt = { id: 'rt-70', nombre: 'Empuje 70', notas: '', dias: [SH.id], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] }; P.store.gym.rutinas = [rt]; P.store.gym.forzar = {}; }
     else { P.store.gym.rutinas = []; }
+    if (o.real) { o.amanece = true; P.store.food.log[d(0)] = [{ id: 'e70', p: 'comida', nombre: 'Lentejas', kcal: 500, prot: 25, carb: 60, gresa: 10, rac: 1 }];
+      P.store.habitos = { items: [['Agua 2 L', '💧'], ['Estirar', '🧘'], ['Leer', '📖']].map((n, i) => ({ id: 'hb70' + i, nombre: n[0], icono: n[1], color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: [], auto: '', min: '1 min', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' })), registro: {} };
+      if (!o.sal) { const rt = { id: 'rt-70', nombre: 'Empuje 70', notas: '', dias: [SH.id], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] }; P.store.gym.rutinas = [rt]; } }
     if (o.amanece) P.store.suenoReal[d(0)] = { h: 7.5, acostar: '23:15', desp: '06:45', tramos: [[23.25, 30.75, 0]], guardia: false, kss: 0, amanece: 'pend' };
     P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} }); P.store.food.objetivo = Object.assign({}, P.store.food.objetivo, { prot: 110 });
     P.ui.gymSesionActiva = null; P.ui.hoyModo = o.modo === null ? null : 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.uphVis = false; P.ui.nocheAbierta = false;
@@ -19169,7 +19172,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 700) HOY EN TRES BLOQUES · H1: a las 21:00 de un día de trabajo, entrando por Mes → Hoy, antes de y=850 están «Ahora» (con su carretera de ~90 px), «La noche» y «Para hoy», por ese orden
   {
     await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
-    await prep70({}); await vuelve70();
+    await prep70({ real: true }); await vuelve70();
     const R = await tops70();
     await suelta70();
     check('700) Hoy a las 21:00 (trabajo): «Ahora» con carretera (~90 px, el autobús y alguna parada), «La noche» y «Para hoy» por ese orden y antes de y=850, sin selector de modos', R.ahora > 0 && R.noche > R.ahora && R.para > R.noche && R.para < 850 && R.via >= 70 && R.via <= 110 && R.marca && R.paradas >= 1 && /\S/.test(R.frase) && !R.seg, JSON.stringify(R));
@@ -19225,18 +19228,47 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 704) HOY EN TRES BLOQUES · H5: la víspera de guardia dice «Mañana guardia · a la cama HH:MM» (y al tocarla sale el plan) y el saliente «Saliente · hasta N»; en los dos, los tres bloques por orden antes de y=850
   {
     await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
-    await prep70({ visp: true }); await vuelve70();
+    await prep70({ visp: true, real: true }); await vuelve70();
     const V = await page.evaluate(() => ({ tx: ((document.querySelector('#main .uph-vis') || {}).innerText || '').replace(/\s+/g, ' '), nvis: !!document.querySelector('#main .nvis') }));
     const TV = await tops70();
     await page.click('#main .uph-vis', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(250);
     const V2 = await page.evaluate(() => ({ nvis: !!document.querySelector('#main .nvis'), cap: /MAÑANA TIENES GUARDIA/.test(document.getElementById('main').innerText) }));
-    await prep70({ sal: true }); await vuelve70();
+    await prep70({ sal: true, real: true }); await vuelve70();
     const S = await page.evaluate(() => ((document.querySelector('#main .hoyest') || {}).innerText || '').replace(/\s+/g, ' '));
     const TS = await tops70();
     await suelta70();
     const orden = (t) => t.ahora > 0 && t.noche > t.ahora && t.para > t.noche && t.para < 850 && !t.seg;
     check('704) Hoy en víspera («🩺 Mañana guardia · a la cama HH:MM», al tocarla sale el plan) y en saliente («Saliente · hasta N»): «Ahora», «La noche» y «Para hoy» por orden antes de y=850',
       /Mañana guardia · a la cama \d\d:\d\d/.test(V.tx) && !V.nvis && V2.nvis && V2.cap && /Saliente · hasta \d+/.test(S) && orden(TV) && orden(TS), JSON.stringify({ V, V2, S, TV, TS }));
+  }
+
+  // 705) HOY EN TRES BLOQUES · víspera con datos reales: «Mañana guardia» sale UNA vez (la fila de La noche; el consejo va dentro al desplegarla) y «Ahora» dice la misma hora de cama que La noche
+  {
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({ visp: true, real: true }); await vuelve70();
+    const n = () => page.evaluate(() => (document.getElementById('main').innerText.match(/Mañana guardia/gi) || []).length);
+    const A = { n: await n(), fila: await page.evaluate(() => ((document.querySelector('#main .uph-vis') || {}).innerText || '').replace(/\s+/g, ' ')),
+      cama: await page.evaluate(() => [...document.querySelectorAll('#main .hoyvia .hv-p.k-cama em')].map((e) => e.textContent.trim()).join('|')) };
+    await page.click('#main .uph-vis', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(250);
+    const B = await page.evaluate(() => ({ n: (document.getElementById('main').innerText.match(/Mañana guardia/gi) || []).length, consejo: /Antes de una guardia|Hoy hay/.test(((document.querySelector('#main .nvis') || {}).innerText || '')) , tarjeta: !!document.querySelector('#main .asist') }));
+    await suelta70();
+    const hF = (A.fila.match(/a la cama (\d\d:\d\d)/) || [])[1], hC = (A.cama.match(/(\d\d:\d\d)/) || [])[1];
+    check('705) Hoy víspera de guardia (con anoche guardada, hábitos y comida): «Mañana guardia» una sola vez, el consejo dentro de la fila al abrirla, y la cama de «Ahora» = la de La noche', A.n === 1 && B.n === 1 && B.consejo && !B.tarjeta && !!hF && hF === hC, JSON.stringify({ A, B, hF, hC }));
+  }
+  // 706) HOY EN TRES BLOQUES · La noche solo con el cartel (sin la fila 🏠›🛌›⏰), la parada «Cena HH:MM» sin «3-15 h», «Anoche» en una fila plegada abajo y las filas abiertas vuelven plegadas al reentrar
+  {
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({ real: true }); await vuelve70();
+    const A = await page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), nn = q('.hoynoche'), tx = (nn || {}).innerText || '';
+      return { chips: !!(nn && nn.querySelector('.nchips, .nchip')), casa: /🏠|⏰ 0|🛌 \d/.test(tx), sale: /🚪/.test(tx), guard: /Anoche guardada|¿Cómo amaneces/.test(tx), cena: [...document.querySelectorAll('#main .hoyvia .hv-p em')].map((e) => e.textContent.trim()),
+        fila: !!q('details.hoypleg[data-v="anoche"]'), cierra: !!q('details.hoypleg[data-v="anoche"]:not([open])') }; });
+    await page.click('#main details.hoypleg[data-v="anoche"] summary', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(200);
+    const B = await page.evaluate(() => ({ abierta: !!document.querySelector('details.hoypleg[data-v="anoche"][open]'), txt: /Anoche guardada/.test(((document.querySelector('details.hoypleg[data-v="anoche"]') || {}).innerText || '')) }));
+    await vuelve70();
+    const C = await page.evaluate(() => document.querySelectorAll('#main details.hoypleg[open]').length);
+    await suelta70();
+    check('706) Hoy: La noche sin la fila 🏠›🛌›⏰ (con 🚪 en el cartel), la cena de la carretera sin «3-15 h», «Anoche» y «¿Cómo amaneces?» fuera de La noche en filas plegadas (la de Anoche se abre y enseña «Anoche guardada»), y al reentrar vuelven plegadas',
+      !A.chips && !A.casa && A.sale && !A.guard && A.cena.some((c) => /^Cena \d\d:\d\d$/.test(c)) && !A.cena.some((c) => /\d-\d/.test(c)) && A.fila && A.cierra && B.abierta && B.txt && C === 0, JSON.stringify({ A, B, C }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

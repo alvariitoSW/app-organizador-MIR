@@ -4666,3 +4666,5 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .hoyplant{margin:0 0 8px}
 .hoynoche{padding-top:10px;padding-bottom:12px}
 .hoynoche>h2{font-size:var(--t-16);margin:0}
+.hoycab .hoyest{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}
+.ncartel .l5{font-size:var(--suelo);color:var(--ink2);margin-top:2px}
