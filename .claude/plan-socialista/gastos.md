@@ -25,7 +25,7 @@ Una cifra por tipo (simplificada el 02/11/2026, Consejo asunto 3). El detalle de
 |---|---|---|---|
 | estudio (Consejo) | **~0,6 M** | mapa en sonnet con ≤12 búsquedas + 2 dictámenes; quien preside lee cabeceras, no archivos enteros | consejo-gobierno 0,77 M (02/11) · media de 8: 0,79 M |
 | maqueta | **~0,5 M** | sin concurso, con las pantallas ya fijadas en el acta; un encargo al sonnet y una pasada del verificador (con concurso: ~2,7 M) | mananas-lm1 0,46 M (31/10) |
-| construir | **~1,2 M** | ficha con líneas exactas y qué se quita + un constructor sonnet con todas las condiciones + verificador | mananas-lm2/lm3 1,2 M · chef-ch5 1,3 M |
+| construir | **~1,2 M** (rediseño de una pantalla: ~4,4 M, el 90 % de hoy-rediseno) | ficha con líneas exactas y qué se quita + un constructor sonnet con todas las condiciones + verificador | mananas-lm2/lm3 1,2 M · chef-ch5 1,3 M |
 | arreglo | **~0,5 M** | sitio ya localizado: sin ayudantes; cierre con verificador, suite, sella y main | mananas-lm5 0,43 M · suite-fecha-fija 0,62 M |
 | datos | **~0,2 M por lote de 15** | script de una vez por lote, sin releer el JSON; el principal solo lanza y sube | chef-ch4 (01/11) |
 | herramientas | **~0,4 M** | sin ayudantes, sin releer skills enteras | v3-plan-global 0,44 M (27/10) |
@@ -98,6 +98,7 @@ Una cifra por tipo (simplificada el 02/11/2026, Consejo asunto 3). El detalle de
 | 2026-11-18 | parte-y-plan-al-dia | herramientas | opus-5-5 + sonnet-5-5 | 2 | 31 | **490 k** | sesión principal (68 %) | parte + salud + repaso del plan; el plan desfasado infló la primera estimación (~22 M → ~3,5 M) · ahorro: repasar «En marcha» antes de estimar |
 | 2026-11-18 | salud-322-y-k4-widget | construir | opus-5-5 + sonnet-5-5 | 3 | 92 | **1,8 M** | sesión principal (58 %) | 322 era la prueba (fecha de inicio del aviso); K2 ya estaba hecha; K4 con un constructor sonnet (141 k); una suite de más por la 602 suelta · ahorro: mirar releases y git log de android/ antes de presupuestar |
 | 2026-11-18 | 420-reinventado | construir | opus-5-5 + sonnet-5-5 | 4 | 154 | **4,2 M** | sesión principal (58 %) | — |
+| 2026-11-19 | hoy-rediseno | construir | opus-5-5 + sonnet-5-5 | 6 | 198 | **4,9 M** | Construir Hoy en tres bloques (52 %) | 3 rondas de obra: la 1.ª medida con datos vacíos (Para hoy cabía) y con datos reales no; sembrar datos reales en la prueba desde el principio · la suite se paró 2 veces |
 <!-- fin de tareas medidas -->
 | 2026-10-30 | parte + consejo-g2 + G2 maqueta (una sesión) | parte · estudio · maqueta | opus + sonnet + haiku | 8 | 118 | 1,6 M (parte ~0,2 · consejo ~0,5 · G2 ~0,6 · resto principal) | mapa haiku 253 k (37 pasos) | el mapa en haiku dio muchas vueltas: pedirle ≤15 búsquedas · maqueta sin concurso con lenguaje ya elegido: ~0,6 M |
 | 2026-10-30 | G4 · proteína en Hoy, aviso tras entreno, frase en Comer | construir | sonnet (constructor) + opus (preside) | 1 | 87 | ~2,1 M (constructor 2,0 M) | constructor: 10,2 M de caché leída en 87 pasos | dos suites completas y una ronda de retoques: decir en el primer encargo «una sola caja», «un solo número» y «pruebas que caen limpias» · arrancar en sonnet |

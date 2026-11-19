@@ -202,6 +202,7 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 6. ~~[aparc-arte-iconos]~~ ✅ El Cierre C1-C2
 
 ## Ideas (dichas, sin ordenar ni aclarar)
+- [v3-hoy-limpia-modos] Quitar de Hoy el código de Reloj/Línea/Estación y el dibujo grande, con sus pruebas (registro `aparc-hoy-limpia-modos`).
 
 - [v3-competencia-algun-dia] (02/11, «algún día, sin prisa») Lo que el Consejo de La Competencia dejó fuera: importar el planning en PDF y Excel (librería nueva y tocar `sw.js`: decide el usuario; «para más adelante», 02/11), deslizar para cambiar de día, «+» flotante y récords en gráfico. El widget pasó a la K4 del Lanzador (02/11). Acta `consejo/2026-11-02-competencia.md`.
 - [v3-foto-plato] (02/11, el usuario: «estaría muy bien») (Consejo, 05/11) → **C1 construido (05/11, pruebas 683-685)**; C2 pendiente, solo si lo pide. Decidido: C1 ya (miniatura 30 días; botón en la hoja «Apuntar», lo eligió Transportes) y C2 más adelante. Foto a lo que comes para apuntarlo en Comer. Recomendado **C1** (~1,7 M, 0 €): la foto se queda en el móvil y la app propone «¿Es esto?» con lo que ya sabe (lo del plan de hoy, lo último a esa hora, tus platos), cantidad por raciones. **C2** opcional (+1,5 M): IA con tu propia clave, apagada por defecto y con aviso (céntimos por foto). Descartados: reconocer en el móvil (10-150 MB y flojo con comida española) y una clave del proyecto (sería pública). Acta `consejo/2026-11-05-foto-plato.md`, maqueta `maquetas/foto-plato.html`.
@@ -220,6 +221,8 @@ Orden (Consejo, 2026-10-29; rehecho el mismo día tras hablar el usuario): Diner
 - [aparc-png-design] Comprimir los PNG de `design/` (74 MB)
 
 ## Hecha
+
+~~[v3-hoy-rediseno] Hoy en tres bloques~~ ✅ (19/11, `main` 35e592a, run 44432533341 success): Ahora (con carretera) · La noche (solo el cartel) · Para hoy; Comer y Entreno lado a lado; energía, Lo que viene, ¿cómo amaneces? y la noche entera plegadas; solo el modo Conductor. Pruebas 700-706. 4,9 M (presupuesto ~1,7 M: tres rondas de obra por medir primero con datos vacíos).
 
 - [v3-mananas] «Las Mañanas» LM1-LM5 · 31/10 · main cfc43b6 (marcas «En pie»/«Vestido», hoja del móvil, «Tu semana», pausa con recuento; LM6 condicional sin hacer)
 - [v3-chef] «El Chef» CH1-CH11 · 30/10-01/11 · main (recetario sin gluten de 341 platos, modo cocina, semana y compra con el recetario, pulido CH10b)
