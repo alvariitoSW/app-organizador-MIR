@@ -36,11 +36,11 @@ Solo queda el modo Conductor, con su dibujo reducido a una franja.
 - Pruebas parecidas: 275 (conductor), las de «uph»/P1 Hoy. Nuevas desde **700**.
 
 ## 4. Pasos
-- [ ] P1 Pruebas 700-704 encadenadas (H1-H5) con `await fijaHoy()` a las 21:00, que fallen hoy · tests/regression.test.js · general-purpose sonnet · ~15
-- [ ] P2 Clave de modo nueva + init de la suite · app.js:hoyModo, tests:52 · mismo · ~5
-- [ ] P3 Tres tarjetas Ahora / La noche / Para hoy en `renderHoy` cuando esHoy y modo bus; sin selector; sin dibujo grande; franja-carretera ~90 px con las paradas del día (reutilizar datos de `hoyBusDatos` 6450) · app.js, styles.css · mismo · ~40
-- [ ] P4 Comer + Entreno en dos columnas (reutilizar `foodTotals`/`planTotalsOf`, `protHoyHTML`, `entrenoContadorHTML`) · mismo · ~20
-- [ ] P5 Filas plegadas (energía y coach, Lo que viene, ¿cómo amaneces?) con `<details>` · mismo · ~10
+- [x] P1 Pruebas 700-704 encadenadas (H1-H5) con `await fijaHoy()` a las 21:00, que fallen hoy · tests/regression.test.js · general-purpose sonnet · ~15
+- [x] P2 Clave de modo nueva + init de la suite · app.js:hoyModo, tests:52 · mismo · ~5
+- [x] P3 Tres tarjetas Ahora / La noche / Para hoy en `renderHoy` cuando esHoy y modo bus; sin selector; sin dibujo grande; franja-carretera ~90 px con las paradas del día (reutilizar datos de `hoyBusDatos` 6450) · app.js, styles.css · mismo · ~40
+- [x] P4 Comer + Entreno en dos columnas (reutilizar `foodTotals`/`planTotalsOf`, `protHoyHTML`, `entrenoContadorHTML`) · mismo · ~20
+- [x] P5 Filas plegadas (energía y coach, Lo que viene, ¿cómo amaneces?) con `<details>` · mismo · ~10
 - [ ] P6 Capturas 412×915 normal/víspera/saliente · verificador sonnet · ~15
 - [ ] P7 DECISIONS, suite completa, sella, main, gasto · principal
 

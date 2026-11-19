@@ -49,7 +49,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   const context = await browser.newContext();
   // «Hoy» abre de serie en la vista del conductor; las pruebas de antes son del reloj y la línea, que
   // siguen ahí: arrancan en el reloj como antes, y la 275 prueba el conductor
-  await context.addInitScript(() => { try { if (!sessionStorage.getItem('__conductor')) localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} });
+  await context.addInitScript(() => { try { if (!sessionStorage.getItem('__conductor')) localStorage.setItem('guardias-hoymodo3', 'reloj'); } catch (e) {} });
   // P1 Mes (upm): el abono, el R1 y las vacaciones van plegados; las pruebas viejas los quieren a la vista también tras recargar
   // (la 675 prueba el pliegue poniéndolo a false a mano)
   await context.addInitScript(() => { Object.defineProperty(window, 'PG', { configurable: true, set(v) { Object.defineProperty(window, 'PG', { value: v, writable: true, configurable: true }); try { v.ui.upmMas = true; } catch (e) {} } }); });
@@ -92,14 +92,35 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} });
     P.store.habitos = { items: [['Agua 2 L', '💧', []], ['Estirar', '🧘', []], ['Estudiar', '📚', ['guardia', 'saliente']], ['Leer', '📖', []]].map((n, i) => ({ id: 'hbc3' + i, nombre: n[0], icono: n[1], color: '#38bdf8',
       dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: n[2], auto: '', min: '1 min', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' })), registro: {} };
-    P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = modo; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); }, [modo, guardia, saliente]);
-  const c3Suelta = () => page.evaluate(() => { const P = window.PG; if (window.__copiaC3) { P.store = window.__copiaC3; delete window.__copiaC3; } P.ui.hoyModo = 'reloj'; P.ui.diaHoy = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = modo; P.ui.hoyDibujo = modo === 'bus'; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); }, [modo, guardia, saliente]);
+  const c3Suelta = () => page.evaluate(() => { const P = window.PG; if (window.__copiaC3) { P.store = window.__copiaC3; delete window.__copiaC3; } P.ui.hoyModo = 'reloj'; P.ui.hoyDibujo = false; P.ui.diaHoy = ''; P.ui.habEd = null; P.ui.tab = 'hoy'; P.save(); P.render(); });
   const c3Orden = () => page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), t = (e) => (e ? e.getBoundingClientRect().top + scrollY : -1), b = (e) => (e ? e.getBoundingClientRect().bottom + scrollY : -1);
     return { ahora: !!q('.hoyahora'), frase: ((q('.hoyahora .hoyfrase') || {}).textContent || '').trim(), bateria: document.querySelectorAll('#main .hoyahora .hoyener .bat i').length,
       tira: document.querySelectorAll('#main .habtira .habtira-b').length, tiraTop: t(q('.habtira')), ahoraBot: b(q('.hoyahora')), paraTop: t(q('.parahoy')), paraBot: b(q('.parahoy')), dibTop: t(q('#hoyBusSlot')),
       dibFuera: !!q('#hoyBusSlot') && !!q('#hoyBusSlot').closest('.hoybusfuera'), cartel: !!q('.ncartel'), cond: !!q('.hoycond'), vh: innerHeight }; });
 
 
+  // ===== HOY EN TRES BLOQUES (700-704) · v3-hoy-rediseno =====
+  // Hoy a las 21:00 de un día de trabajo, a 412×915: «Ahora» (con su carretera), «La noche» y «Para hoy» a la vista sin bajar;
+  // debajo Comer y Entreno en dos columnas; y las filas de consulta, plegadas. Sin selector de modos.
+  // (modo = null deja que hoyModo() lo decida solo, como al abrir la app)
+  const prep70 = (o) => page.evaluate((o) => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)),
+      SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren/i.test(x.name || ''))[0], GU = P.store.shifts.filter(P.isGuardia)[0];
+    if (!window.__copia70) window.__copia70 = JSON.stringify(P.store);
+    for (let i = -3; i <= 3; i++) P.setDayOverride(d(i), SH.id, '');
+    if (o.visp) P.setDayOverride(d(1), GU.id, 'urg');
+    if (o.sal) { P.setDayOverride(d(-1), GU.id, 'urg'); P.setDayOverride(d(0), 'sh-s', ''); }
+    if (o.rutina) { const rt = { id: 'rt-70', nombre: 'Empuje 70', notas: '', dias: [SH.id], ejercicios: [{ ex: 'Press banca', series: 4, reps: 8 }] }; P.store.gym.rutinas = [rt]; P.store.gym.forzar = {}; }
+    else { P.store.gym.rutinas = []; }
+    if (o.amanece) P.store.suenoReal[d(0)] = { h: 7.5, acostar: '23:15', desp: '06:45', tramos: [[23.25, 30.75, 0]], guardia: false, kss: 0, amanece: 'pend' };
+    P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} }); P.store.food.objetivo = Object.assign({}, P.store.food.objetivo, { prot: 110 });
+    P.ui.gymSesionActiva = null; P.ui.hoyModo = o.modo === null ? null : 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.uphVis = false; P.ui.nocheAbierta = false;
+    P.save(); P.render(); }, o);
+  const suelta70 = async () => { await page.evaluate(() => { const P = window.PG; if (window.__copia70) { P.store = JSON.parse(window.__copia70); delete window.__copia70; } P.ui.gymSesionActiva = null; P.ui.hoyModo = 'reloj'; P.ui.hoyBusV = 'conductor'; P.ui.uphVis = false; P.ui.tab = 'hoy'; P.save(); P.render(); }); await sueltaHoy(); };
+  const vuelve70 = async () => { await gotoTab('month'); await gotoTab('hoy'); await page.waitForTimeout(250); };
+  const tops70 = () => page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), t = (e) => (e ? Math.round(e.getBoundingClientRect().top + scrollY) : -1);
+    return { ahora: t(q('.hoyahora')), noche: t(q('.hoynoche')), para: t(q('.parahoy')), comer: t(q('.hoycomer')), entreno: t(q('.hoyentreno')), seg: !!q('.hoyseg'), via: q('.hoyahora .hoyvia') ? Math.round(q('.hoyahora .hoyvia').getBoundingClientRect().height) : -1,
+      marca: !!q('.hoyahora .hoyvia .hv-ahora'), paradas: document.querySelectorAll('#main .hoyahora .hoyvia .hv-p').length, frase: ((q('.hoyahora .hoyfrase') || {}).textContent || '').trim(), vh: innerHeight }; });
   // navegación: la barra tiene tres grupos —Calendario (Hoy/Semana/Mes), Entreno y Comer
   // (Hoy/Menú/Cocina/Compra)— y lo que no es de esos tres vive en el menú lateral (☰ Más)
   const CAL_TABS = new Set(['hoy', 'month']);
@@ -11241,12 +11262,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false })); }, h);
     const txt = () => page.evaluate(() => { const q = (s) => { const e = document.querySelector('#main .cd [data-r="' + s + '"]'); return e ? e.textContent : ''; };
       return { nxl: q('nxl'), nxb: q('nxb'), nxa: q('nxa'), sval: q('rdl') }; });   /* lo dormido va en la pantalla de la radio */
-    const antes = await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.removeItem('guardias-hoymodo2'); const P = window.PG;
+    const antes = await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.setItem('guardias-hoymodo3', 'bus'); const P = window.PG;
       const hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
       const a = { hoy: P.dayOverride(hoy), ay: P.dayOverride(ay), sr: P.store.suenoReal[hoy] ? JSON.parse(JSON.stringify(P.store.suenoReal[hoy])) : null };
       P.setDayOverride(ay, 'sh-l', ''); P.setDayOverride(hoy, 'sh-t', '');
       P.store.suenoReal[hoy] = { h: 7.5, acostar: '23:15', desp: '06:45', tramos: [[23.25, 30.75, 0]], guardia: false, kss: 0 };
-      P.ui.hoyModo = null; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.ui.asistMas = false; P.save(); P.render(); return a; });
+      P.ui.hoyModo = null; P.ui.hoyDibujo = true; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.ui.asistMas = false; P.save(); P.render(); return a; });
     await page.waitForTimeout(250);
     r.a = await page.evaluate(() => { const C = window.PG.conductor(), d = (C.d && C.d.dia) || [];
       return { hay: !!document.querySelector('#main #hoyBusSlot .cd svg'), marco: !!document.querySelector('#main iframe'),
@@ -11350,12 +11371,12 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (j) «Reloj» se recuerda
     await page.click('.hoyseg [data-v="reloj"]').catch(() => {});
     await page.waitForTimeout(150);
-    r.j = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo2'), bus: !!document.querySelector('#main #hoyBusSlot .cd'), snhoy: !!document.querySelector('#main .snhoy') }));
+    r.j = await page.evaluate(() => ({ ls: localStorage.getItem('guardias-hoymodo3'), bus: !!document.querySelector('#main #hoyBusSlot .cd'), snhoy: !!document.querySelector('#main .snhoy') }));
     await page.evaluate((a) => { const P = window.PG, hoy = P.iso(new Date()), ay = P.iso(P.addDays(new Date(), -1));
       P.setDayOverride(ay, a.ay ? a.ay.shift : null, a.ay ? a.ay.guard : ''); P.setDayOverride(hoy, a.hoy ? a.hoy.shift : null, a.hoy ? a.hoy.guard : '');
       if (a.sr) P.store.suenoReal[hoy] = a.sr; else delete P.store.suenoReal[hoy];
-      sessionStorage.removeItem('__conductor'); localStorage.setItem('guardias-hoymodo2', 'reloj'); P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.asistMas = false; P.save(); P.render(); }, antes);
-    check('Hoy abre de serie en el conductor, dentro de la página (sin marco), con el día de la agenda y sin repetir la tarjeta de Sueño',
+      sessionStorage.removeItem('__conductor'); localStorage.setItem('guardias-hoymodo3', 'reloj'); P.ui.hoyModo = 'reloj'; P.ui.hoyIt = null; P.ui.asistMas = false; P.save(); P.render(); }, antes);
+    check('Hoy con el dibujo del conductor (solo en pruebas: ui.hoyDibujo), dentro de la página (sin marco), con el día de la agenda y sin repetir la tarjeta de Sueño',
       r.a.hay && !r.a.marco && /^🚌 Conductor\*\|🏗 Estación\|◷ Reloj\|☰ Línea$/.test(r.a.seg) && r.a.n >= 1 && r.a.conI && !r.a.snhoy, JSON.stringify(r.a));
     check('en el conductor, mantener la próxima parada abre la hoja de lo que pone el visor', !!r.b.it && r.b.visor.indexOf(r.b.it) >= 0, JSON.stringify(r.b));
     check('el paisaje del conductor va con lo que toca: ciudad con ventanas en el trabajo, bosque y luna por la noche libre de camino y, ya en casa, la habitación',
@@ -11467,7 +11488,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       [['Agua 2 L', '💧', '#38bdf8', 'agua'], ['Estudio', '📚', '#f59e0b', 'estudio'], ['Estirar', '🧘', '#c084fc', '']].forEach((h, i) => P.store.habitos.items.push({ id: 't278' + i, nombre: h[0], icono: h[1], color: h[2], dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-01-01', noEn: [], auto: h[3], min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-01-01' }));
       P.save(); P.render(); });
     // (c)
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
     await page.waitForTimeout(400);
     r.c = await page.evaluate(() => ({ chips: [...document.querySelectorAll('#main .hoyseg button')].map((b) => b.textContent.trim() + (b.classList.contains('on') ? '*' : '')).join('|'), suelto: !!document.querySelector('#main .hoybusv') }));
     await page.click('#main .hoyseg [data-v="est"]');
@@ -11504,7 +11525,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.__t279 = { k, ov: (P.store.rotation.shiftByDay || {})[k], mode: P.store.rotation.mode, nEv: P.eventosS().length };
       P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
       P.eventosS().push({ id: 'ev279', titulo: 'Sesión t279', hora: '08:30', modo: 'fecha', fecha: ke, dow: [], color: '#38e1ff', on: true });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.mesV = 'plana'; P.save(); P.render(); return k; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.mesV = 'plana'; P.save(); P.render(); return k; });
     await page.waitForSelector('#main .lqv #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
     r.a = await page.evaluate((k) => { const svg = document.querySelector('#main .lqv #carrSlot .ct svg'); const t = svg ? svg.textContent : '';
       return { hay: !!svg, cuenta: !!document.querySelector('#main .hoycta'), proximos: [...document.querySelectorAll('#main .card h2')].some((h) => /Próximos/.test(h.textContent)),
@@ -11536,7 +11557,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // (c) en la app: la guardia de mañana es un túnel con sus carteles de salida (lo que dura, no lo que falta); la carretera se carga aquí
     const kg = await page.evaluate(() => { const P = window.PG, d = new Date(); d.setDate(d.getDate() + 1); const k = P.iso(d), G = P.store.shifts.filter(P.isGuardia)[0];
       P.__t280 = { k, ov: (P.store.rotation.shiftByDay || {})[k], mode: P.store.rotation.mode }; P.store.rotation.mode = 'date'; if (G) P.setDayOverride(k, G.id, 'urg');
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); return k; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); return k; });
     await page.waitForSelector('#main .lqv #carrSlot .ct svg', { timeout: 8000 }).catch(() => {});
     // (a) ya cargado el módulo: la escena con datos de un día de guardia en marcha
     r.a = await page.evaluate((D) => { const C = window.Carretera; if (!C || !C.escena) return null; const s = C.escena(D, 0), s1 = C.escena(D, 1);
@@ -11591,7 +11612,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // 10:15 el autobús está en la sesión y a las 14:00 en la vuelta, parado. Fija: se quedaba en el cartel
   // «10:00 Sesión» hasta las 15:00 aunque el salpicadero dijera «Ahora: Trabajo».
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
     await page.waitForFunction(() => !!(window.Conductor && window.Conductor.ruta), null, { timeout: 8000 }).catch(() => {});
     const r = await page.evaluate(() => { const C = window.Conductor; if (!C || !C.ruta) return null;
       const D = { dia: [{ a: 8, b: 15, t: 'Trabajo', k: 'work', i: 0 }, { a: 10, b: 10.5, t: 'Sesión general', k: 'plan', i: 1 }, { a: 15.33, b: 16, t: 'Comida en casa', k: 'meal', i: 2 }], noches: [] };
@@ -11649,7 +11670,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.habitosS().items.push({ id: 'hb285t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' },
         { id: 'hb285p', nombre: 'Salir a tiempo', icono: '🚪', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'puerta', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       P.store.manana = {}; P.store.manana[kt] = { salio: '07:40' }; P.store.manana[kp] = { salio: '07:29' };
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
       const e = document.querySelector('#main .manana'), out = { kt, hay: !!e, hitos: e ? [...e.querySelectorAll('.mnh small'), ...e.querySelectorAll('.mnh.pta b')].map((x) => x.textContent.replace(/ \d+:\d+$/, '')) : [], txt: e ? e.textContent.replace(/\s+/g, ' ').trim() : '', deshacer: !!(e && e.querySelector('[data-a="manana-deshacer"]')),
         taxi: P.habitoEstado('hb285t', kt), puerta: P.habitoEstado('hb285p', kt), puerta2: P.habitoEstado('hb285p', kp), e745: P.estadoDe(kt, 7.75).e, salir: P.diaEscenas(kt).salir, sem: P.mananaSemana(kt) };
       return out; });
@@ -11673,7 +11694,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // del volante; (d) a las 17:42, parado en el polideportivo, la barra con el conductor colgado. Fija: la cabina
   // sin manos ni rotación, y la vuelta a casa que seguía siendo en autobús.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
     await page.waitForFunction(() => !!(window.Conductor && window.Conductor.crea), null, { timeout: 8000 }).catch(() => {});
     const r = await page.evaluate(() => { const C = window.Conductor; if (!C || !C.crea) return null;
       const D = { dia: [{ a: 8, b: 15, t: 'Trabajo', k: 'work', i: 0 }, { a: 10, b: 10.5, t: 'Sesión general', k: 'plan', i: 1 }, { a: 15.33, b: 15.83, t: 'Comida en casa', k: 'meal', i: 2 }, { a: 17.5, b: 18.75, t: 'Fuerza', k: 'gym', i: 3, m: 'gym' }],
@@ -11690,7 +11711,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // a las 16:30, en el escritorio con el flexo a las 17:36, en la cama con el móvil a las 22:24 y durmiendo a las
   // 23:30 (sin manta sobre él); fuera de casa no se ve. Fija: la cochera era una caja cerrada con el autobús.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'estacion'; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'estacion'; P.ui.diaHoy = ''; P.render(); });
     await page.waitForFunction(() => !!(window.Estacion && window.Estacion.crea), null, { timeout: 15000 }).catch(() => {});
     const r = await page.evaluate(() => { const E = window.Estacion; if (!E || !E.crea) return null;
       const D = { dia: [{ a: 7, b: 7.5, t: 'Desayuno', k: 'meal', i: 0 }, { a: 8, b: 15, t: 'Trabajo', k: 'work', i: 1 }, { a: 17.5, b: 18.75, t: 'Fuerza', k: 'gym', i: 3 }], noches: [{ a: -1.5, b: 6.83, t: 'noche' }, { a: 22.67, b: 30.75, t: 'noche' }],
@@ -11735,7 +11756,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true };
       P.habitosS().items.push({ id: 'hb289t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
       P.store.manana = {};
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.save(); P.render();
       const e = document.querySelector('#main .manana');
       return { kt, mismaSem: P.iso(P.mondayOf(P.parseDate(kt))) === P.iso(P.mondayOf(new Date())), deSerie: P.viajeCfg().taxi, hab: P.habitoEstado('hb289t', kt), e745: P.estadoDe(kt, 7.75).e, taxi: P.diaEscenas(kt).seg.some((x) => x.e === 'taxi'), sem: P.mananaSemana(hoy), mes: P.mananaMes(hoy),
         fichas: e ? [...e.querySelectorAll('.mnp small')].map((x) => x.textContent) : [], horas: e ? [...e.querySelectorAll('.mnp b')].map((x) => x.textContent) : [], boton: !!(e && e.querySelector('[data-a="manana-sali"]')) }; });
@@ -11787,7 +11808,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.keyboard.press('Tab');
     await page.waitForTimeout(300);
     r.b = await page.evaluate((k1) => { const P = window.PG, hoy = P.iso(new Date()), mk = hoy.slice(0, 7), T = P.taxisMes(mk);
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = k1; P.render();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = k1; P.render();
       const e = document.querySelector('#main .manana');
       const out = { precio: P.viajeCfg().taxiEur, n: T.n, eur: T.eur, tn: P.mananaMes(k1).taxi, tira: e ? e.textContent.replace(/\s+/g, ' ') : '' };   /* la tira cuenta hasta el día que miras */
       const t = P.__t290; P.store.rotation.viaje = t.viaje; P.store.manana = JSON.parse(t.manana); P.ui.diaHoy = ''; P.ui.cfgVista = ''; P.ui.dinTab = ''; P.ui.tab = t.tab; delete P.__t290; P.save(); P.render(); return out; }, r.k1);
@@ -11802,7 +11823,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // hechas y las que quedan, y el parasol dice «☾ GUARDIA · sales 08:00»; a las 10:00 nada de eso y el parasol
   // vuelve a la rotación. Fija: la cabina era la misma de día que de guardia (solo se oscurecía de noche).
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
     await page.waitForFunction(() => !!(window.Conductor && window.Conductor.crea), null, { timeout: 8000 }).catch(() => {});
     const r = await page.evaluate(() => { const C = window.Conductor; if (!C || !C.crea) return null;
       const D = { dia: [{ a: 15, b: 32, t: 'Guardia', k: 'guard', i: 0 }, { a: 20.5, b: 21, t: 'Cena', k: 'meal', i: 1 }], noches: [{ a: -1.5, b: 6.83, t: 'noche' }], pendiente: [], senales: [], ph: 1, modo: 'hoy', vivo: true,
@@ -11822,7 +11843,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // la cochera a oscuras. Fija: el autobús se quedaba en «8:00 Sesión general» hasta las 15:00 y el día de
   // mañana se abría dentro del garaje.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.render(); });
     await page.waitForFunction(() => !!(window.Conductor && window.Conductor.ruta), null, { timeout: 8000 }).catch(() => {});
     const r = await page.evaluate(() => { const C = window.Conductor, P = window.PG; if (!C || !C.ruta) return null;
       const D = { dia: [{ a: 8, b: 15, t: 'Trabajo', k: 'work', i: 0 }, { a: 8, b: 8.5, t: 'Sesión general', k: 'plan', i: 1 }, { a: 14, b: 14.5, t: 'Comida', k: 'meal', i: 2 }], noches: [{ a: -1.3, b: 6.75, t: 'noche' }] };
@@ -11874,7 +11895,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.notas.push({ id: 'nt294', txt: 'Llamar al tutor', fecha: hoy, hecha: 0, color: '', evId: '', ts: Date.now() });
       P.eventosS().push({ id: 'ev294', titulo: 'Cena con Lucía', hora: '23:30', fin: '23:55', dur: 25, modo: 'fecha', fecha: hoy, dow: [], color: '#7a5cf0', on: true });
       P.habitosS().items.push({ id: 'hb294', nombre: 'Estirar', icono: '🧘', color: '#38bdf8', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: '', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.save(); P.render(); return { hoy }; });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.save(); P.render(); return { hoy }; });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-o="mirai"]'), null, { timeout: 8000 }).catch(() => {});
     const toca = async (sel, ms) => { const e = await page.$(sel); if (!e) return false; await e.click().catch(() => {}); await page.waitForTimeout(ms || 250); return true; };
     const lado = () => page.evaluate(() => { const g = document.querySelector('#main .cd [data-r="lado"]'); return g ? g.textContent.replace(/\s+/g, ' ') : ''; });
@@ -11959,7 +11980,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // cámara cruza al otro lado, y «volver al frente» trae la carretera de vuelta y, acabado el giro, el lado queda
   // vacío. Fija: mirar a un lado cambiaba la vista de golpe.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="frenteg"]'), null, { timeout: 8000 }).catch(() => {});
     const tr = () => page.evaluate(() => { const cd = document.querySelector('#main .cd'), g = (n) => cd.querySelector('[data-r="' + n + '"]'), x = (e) => new DOMMatrix(getComputedStyle(e).transform === 'none' ? '' : getComputedStyle(e).transform).m41;
       return { fx: Math.round(x(g('frenteg'))), lx: Math.round(x(g('lado'))), dur: getComputedStyle(g('frenteg')).transitionDuration, ftr: g('frenteg').style.transform, ltr: g('lado').style.transform, n: g('lado').childElementCount }; });
@@ -12026,7 +12047,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // DURMIENDO», «Te levantas a las 10:30»); los datos con la hora 00:55 tampoco se cortan a las 23:59. Fija: tras
   // el Lloretazo la línea acababa a las 23:59 y el conductor se quedaba en el sofá sin irse nunca a la cama.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForFunction(() => !!(window.PG.conductor().c && document.querySelector('#main .cd svg')), null, { timeout: 8000 }).catch(() => {});
     const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false, dia: [], noches: [{ a: -1.25, b: 10.5, t: 'noche' }, { a: 24.75, b: 34.5, t: 'noche' }],
       esc: Object.assign({}, C.d.esc || {}, { casa: [[22.2, 24.25, 'salon'], [24.25, 24.75, 'movil'], [24.75, 34.5, 'cama']] }) })); }, h);
@@ -12113,7 +12134,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // en D (mañana) también abre a la hora de levantarte. Fija: ayer se abría al final del día y solo se podía
   // apuntar con un toque lo de hoy.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-o="marcha"]'), null, { timeout: 8000 }).catch(() => {});
     await page.click('#main .cd [data-o="marcha"][data-d="-1"]').catch(() => {});
     await page.waitForTimeout(400);
@@ -12176,7 +12197,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // apuntar 3 h, la siesta dura 3 h; «Pollo a la plancha con verduras» (no está en el recetario) se lee sin pasos.
   // Fija: los cafés no se apuntaban, la siesta del saliente se inventaba (6 h) y los platos traían pasos genéricos.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.__t303 = JSON.stringify(P.store.cafes || {}); P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.__t303 = JSON.stringify(P.store.cafes || {}); P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-o="radio"]'), null, { timeout: 8000 }).catch(() => {});
     await page.locator('#main .cd g[data-o="radio"]').first().click().catch(() => {});
     await page.waitForTimeout(150);
@@ -12205,7 +12226,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // el trabajo, comer fuera no se veía, desde casa se veía la calle y el quiosco y el poste cortaban a 3 y 4.
   {
     await page.evaluate(() => { const P = window.PG, hoy = P.iso(new Date()); P.__t304 = P.dayOverride(hoy); P.setDayOverride(hoy, 'sh-t', '');
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="scene"]'), null, { timeout: 8000 }).catch(() => {});
     const PH = Array.from({ length: 7 }, (_, i) => ({ ico: '', t: 'Cosa ' + (i + 1), sub: '', hecho: false, av: false, acc: null }));
     const HB = Array.from({ length: 8 }, (_, i) => ({ ico: '', t: 'Hábito ' + (i + 1), on: false, est: '', acc: null }));
@@ -12253,7 +12274,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.__t305 = { hoy: P.dayOverride(hoy), man: P.dayOverride(man), rh: JSON.stringify((P.store.rhythm || {})['sh-l'] || null), mode: P.store.rotation.mode };
       P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-l', '');
       P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '09:30' });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
     const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
       const cd = document.querySelector('#main .cd'), q = (r) => (cd.querySelector('[data-r="' + r + '"]') || {}).textContent || ''; return { casa: cd.classList.contains('casa'), nxl: q('nxl'), nxa: q('nxa') }; }, h);
@@ -12280,7 +12301,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.mode = 'date'; P.setDayOverride(hoy, 'sh-l', ''); P.setDayOverride(man, 'sh-g', 'urg');
       P.store.rhythm['sh-l'] = Object.assign({}, P.store.rhythm['sh-l'] || {}, { sleep: '00:30', wake: '09:30' });
       P.store.rhythm['sh-g'] = Object.assign({}, P.store.rhythm['sh-g'] || {}, { wake: '06:45' });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
     const ver = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false }));
       const cd = document.querySelector('#main .cd'), q = (r) => (cd.querySelector('[data-r="' + r + '"]') || {}).textContent || ''; return { nxl: q('nxl'), nxa: q('nxa') }; }, h);
@@ -12362,7 +12383,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // pantallita blanca (y la línea de debajo, en ámbar claro); en oscuro tiene que seguir siendo clara.
   {
     const lcd = async () => {
-      await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.render(); });
+      await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.render(); });
       await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="nxa"]'), null, { timeout: 8000 }).catch(() => {});
       return page.evaluate(() => {
         const C = window.PG.conductor(); if (!C || !C.c) return { hay: false };
@@ -12387,7 +12408,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   // (cielo de día) y se vuelve; a las 21:40 se mira a la izquierda y a la derecha. Fija: los lados tenían un cielo fijo de
   // día y a las 21:40 salían el sol y el azul con la noche de frente.
   {
-    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.ui.tab = 'hoy'; P.ui.calMode = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.render(); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd [data-r="scene"]'), null, { timeout: 8000 }).catch(() => {});
     const pon = (h) => page.evaluate((h) => { const C = window.PG.conductor(); C.c.actualiza(Object.assign({}, C.d, { ahora: h, vivo: false, sol: [8, 19.5], esc: Object.assign({}, C.d.esc || {}, { casa: [] }) })); return true; }, h);
     const lum = (hex) => { const v = [1, 3, 5].map((i) => { const x = parseInt(String(hex).slice(i, i + 2), 16) / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return Math.round((0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]) * 1000) / 1000; };
@@ -12915,7 +12936,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       window.__copia324 = { ev: JSON.parse(JSON.stringify(P.store.eventos || [])), ov: P.dayOverride(k) };
       P.setDayOverride(k, 'sh-t', '');
       P.store.eventos = (P.store.eventos || []).filter((e) => !/lloret/i.test(e.titulo || '')).concat([{ id: 'ev-324', titulo: 'Sesión clínica', hora: '10:00', fin: '11:00', modo: 'fecha', fecha: k, dow: [], on: true }]);
-      P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
+      P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.hoyIt = null; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.waitForSelector('#main #hoyBusSlot .cd svg', { timeout: 8000 }).catch(() => {});
     await pon(9 + 40 / 60); await page.waitForTimeout(200);
     const r = { a: await lee() };
@@ -13073,7 +13094,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const r = {}, vp = page.viewportSize();
     await page.setViewportSize({ width: 412, height: 915 });
     await page.evaluate(() => { const P = window.PG, k = P.iso(new Date()); P.__t329 = JSON.stringify(P.store.suenoReal[k] || null); P.__t329m = [P.ui.hoyModo, P.ui.hoyBusV]; delete P.store.suenoReal[k];
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.snHoja = ''; P.save(); P.render(); window.scrollTo(0, 0); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = ''; P.ui.hoyIt = null; P.ui.snHoja = ''; P.save(); P.render(); window.scrollTo(0, 0); });
     await page.waitForFunction(() => !!document.querySelector('#main .cd g[data-o="radio"]'), null, { timeout: 8000 }).catch(() => {});
     await page.waitForTimeout(200);
     r.pista0 = await page.evaluate(() => (document.querySelector('#main .cd [data-r="rh"]') || {}).textContent || '');
@@ -14185,7 +14206,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {};
       { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.save(); P.render(); });
     await page.waitForTimeout(300);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), seg = document.querySelector('#main .hoyseg');
       return { hay: !!n, arriba: !!(n && seg && (seg.compareDocumentPosition(n) & 2)), txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', chips: n ? [...n.querySelectorAll('.nchip')].map((x) => x.textContent.replace(/\s+/g, ' ').trim()) : [],
@@ -14240,7 +14261,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
       { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
         boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
@@ -14291,7 +14312,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
       { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
         boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
@@ -14338,7 +14359,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
       { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
         boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
@@ -14386,7 +14407,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
       { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
         boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
@@ -14440,7 +14461,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         P.store.suenoReal[k] = { h: 7.5, acostar: a ? '23:07' : '23:23', desp: a ? '06:54' : '06:59', guardia: false }; P.store.manana[k] = { salio: a ? '07:35' : '07:42' }; }
       if (opt && opt.camas) opt.camas.forEach((c, i) => { P.store.suenoReal[dia(i)] = { h: 7.5, acostar: c, desp: '06:45', guardia: false }; });
       { const s = P.asistS().sil, f = P.iso(P.addDays(new Date(), 14)); ['av-modo', 'av-copia', 'din-fin', 'hab', 'av-entreno'].forEach((id) => { s[id] = f; }); for (let i = 0; i < 8; i++) { const h = P.asistTarjeta(P.iso(new Date())); if (!h) break; s[h.id] = f; } } // C1: de uno en uno; se apartan los avisos de delante de la cama
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.save(); P.render(); }, [sueno || null, opt || null]);
     const lee = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), h = document.querySelector('#hojaDia [role="dialog"]'), q = (s) => document.querySelector(s);
       return { txt: n ? n.textContent.replace(/\s+/g, ' ').trim() : '', pant: ((q('#main .npant') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
         boton: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').textContent.trim() : '', botonK: n && n.querySelector('[data-a="noche-hoja"]') ? n.querySelector('[data-a="noche-hoja"]').dataset.k : '',
@@ -14485,7 +14506,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       d.pagos = opt.fijos ? [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p2', fecha: '2026-10-05', nombre: 'Luz y agua', importe: 60, cat: 'casa', gastoId: 'g2', ts: 2 }]
         .concat(opt.seguroPagado ? [{ id: 'p3', fecha: '2026-10-30', nombre: 'Seguro', importe: 25, cat: 'otros', gastoId: 'g3', ts: 3 }] : []) : [];
       if (opt.sinManana) d.gastos = d.gastos.filter((g) => g.id !== 'g3');
-      P.ui.tmFijos = false; P.ui.tab = opt.hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, opt);
+      P.ui.tmFijos = false; P.ui.tab = opt.hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, opt);
     const lee = () => page.evaluate(() => { const m = document.querySelector('#main'), q = (s) => m.querySelector(s), t = (s) => q(s) ? q(s).textContent.replace(/\s+/g, ' ').trim() : '';
       const vaso = q('.tm-vaso'), fx = q('.tm-fx');
       return { hay: !!q('.tm'), hero: t('.tm-hero'), lado: t('.tm-lado'), cadena: t('.tm-cadena'), fijosLista: m.querySelectorAll('.tm-fijos li').length, hechos: m.querySelectorAll('.tm-fijos li.si').length,
@@ -14559,7 +14580,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         { id: 'g5', nombre: 'Móvil', importe: 35, dia: 31, cat: 'casa', on: true }, { id: 'g6', nombre: 'Gimnasio', importe: 40, dia: 31, cat: 'salud', on: true }];
       d.pagos = [{ id: 'p1', fecha: '2026-10-01', nombre: 'Alquiler', importe: 550, cat: 'casa', gastoId: 'g1', ts: 1 }, { id: 'p2', fecha: '2026-10-05', nombre: 'Luz y agua', importe: 60, cat: 'casa', gastoId: 'g2', ts: 2 }];
       P.dinero3S().compras = []; P.dinero3S().ahorro.guardado = 3000;
-      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, hoy);
+      P.ui.tmFijos = false; P.ui.tmGrande = null; P.ui.tab = hoy ? 'hoy' : 'dinero'; P.ui.dinTab = ''; P.ui.dineroVista = ''; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.save(); P.render(); }, hoy);
     const lee = () => page.evaluate(() => { const P = window.PG, m = document.querySelector('#main'), q = (s) => m.querySelector(s), t = (s) => q(s) ? q(s).textContent.replace(/\s+/g, ' ').trim() : '';
       const cs = P.dinero3S().compras;
       return { hero: t('.tm-hero'), chip: t('.tm-chip'), filas: m.querySelectorAll('.tm-gfila').length, btn: !!q('.tm-gbtn'), capaRayas: !!q('.tm-vaso svg [data-capa="aparta"]'), linea: t('.tm-hoy'),
@@ -14758,7 +14779,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   //      vista Línea: el mismo botón → abre la misma hoja; en Conductor no se añade (allí lo ofrece el propio conductor)
   {
     const vp = page.viewportSize(); await page.setViewportSize({ width: 412, height: 915 });
-    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); window.__modo375 = P.ui.hoyModo; try { window.__ls375 = localStorage.getItem('guardias-hoymodo2'); } catch (e) {}
+    await page.evaluate(() => { const P = window.PG; window.__copia375 = JSON.parse(JSON.stringify(P.store)); window.__modo375 = P.ui.hoyModo; try { window.__ls375 = localStorage.getItem('guardias-hoymodo3'); } catch (e) {}
       delete P.suenoRealS()[P.iso(new Date())]; P.ui.tab = 'hoy'; P.ui.diaHoy = ''; P.ui.hoyVista = ''; P.ui.snHoja = ''; P.ui.hoyModo = 'reloj'; P.save(); P.render(); });
     const lee = () => page.evaluate(() => { const b = document.querySelector('#main .snbtn[data-a="sn-hoja"]'), h = document.querySelector('.hoja [data-a="sn-tguardar"]');
       return { btn: b ? b.textContent.replace(/\s+/g, ' ').trim() : '', alto: b ? Math.round(b.getBoundingClientRect().height) : 0, hoja: !!h,
@@ -14772,7 +14793,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main .snbtn[data-a="sn-hoja"]', { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(250); r.hojaL = await lee();
     await page.evaluate(() => { const P = window.PG; P.ui.snHoja = ''; P.ui.snTr = null; P.render(); });
     await page.click('#main [data-a="hoy-modo"][data-v="bus"]'); await page.waitForTimeout(250); r.bus = await lee();
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.hoyModo = window.__modo375; try { if (window.__ls375 == null) localStorage.removeItem('guardias-hoymodo2'); else localStorage.setItem('guardias-hoymodo2', window.__ls375); } catch (e) {} P.ui.snHoja = ''; P.ui.snTr = null; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia375; P.ui.hoyModo = window.__modo375; try { if (window.__ls375 == null) localStorage.removeItem('guardias-hoymodo3'); else localStorage.setItem('guardias-hoymodo2', window.__ls375); } catch (e) {} P.ui.snHoja = ''; P.ui.snTr = null; P.save(); P.render(); });
     await page.setViewportSize(vp);
     check('375 Hoy · Reloj y Línea: «Anotar anoche» a la vista (≥44 px) abre la hoja de la noche; al guardar dice «✎ Anoche: … · cambiar o añadir»; en Línea el mismo botón abre la misma hoja; en Conductor no se duplica',
       /Anotar anoche|Cuánto dormiste/.test(r.reloj.btn) && r.reloj.alto >= 44 && r.hojaR.hoja && /Anoche|Noche/.test(r.hojaR.tit) && !r.tras.hoja && r.guardado &&
@@ -15657,7 +15678,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       const SH = P.store.shifts.filter((x) => !P.isGuardia(x) && /jornada|trabajo|diario/i.test(x.name || '') && x.start && x.end)[0] || P.store.shifts.filter((x) => x.start && x.end && !P.isGuardia(x))[0];
       P.store.rotation.mode = 'date'; if (SH) P.setDayOverride(kt, SH.id, ''); P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true }; P.store.manana = {};
       P.habitosS().items.push({ id: 'hb399t', nombre: 'Taxi', icono: '🚕', color: '#f59e0b', dow: [0, 1, 2, 3, 4, 5, 6], creado: '2026-09-20', noEn: [], auto: 'taxi', min: '', ancla: {}, obst: '', plan: '', porQue: '', fase: 'marcha', inicio: '2026-09-20' });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.ui.drawerOpen = false; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.diaHoy = kt; P.ui.drawerOpen = false; P.save(); P.render(); });
     const fichas = await page.evaluate(() => { const f = [...document.querySelectorAll('#main .manana .mnp')]; const m = f[0] && f[0].getBoundingClientRect();
       return { n: f.length, svg: f.filter((x) => x.querySelector('i svg.ico')).length, emoji: f.filter((x) => /[\u{1F300}-\u{1FAFF}☀-➿]/u.test((x.querySelector('i') || {}).textContent || '')).length, nombres: f.map((x) => (x.querySelector('i svg') || {}).dataset ? x.querySelector('i svg').dataset.ico : ''), w: m ? Math.round(m.width) : 0, h: m ? Math.round(m.height) : 0,
         letra: f.length ? Math.min(...[...f[0].querySelectorAll('b,small')].map((x) => parseFloat(getComputedStyle(x).fontSize))) : 0 }; });
@@ -15725,7 +15746,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
     const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
     const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
       const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
@@ -15767,7 +15788,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
     const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
     const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
       const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
@@ -15825,7 +15846,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.store.rotation.viaje = { min: 20, bus: '07:35', antes: 4, on: true, taxi: false };
       P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, escalon: '22:35' });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.lloret = { diario: true }; P.store.manana = {}; P.store.suenoReal = {};
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.nocheHoja = null; P.ui.mananaMovil = null; P.save(); P.render(); });
     const man = '2026-10-30', sel = '#main .noche [data-a="manana-marca"]';
     const fichas = () => page.evaluate(() => { const n = document.querySelector('#main .noche'), q = (k) => n && n.querySelector('[data-a="manana-marca"][data-k="' + k + '"]'), sa = n && n.querySelector('[data-a="manana-sali"]');
       const f = (e) => e ? { txt: e.textContent.replace(/\s+/g, ' ').trim(), p: e.classList.contains('p'), on: e.getAttribute('aria-pressed'), alto: Math.round(e.getBoundingClientRect().height) } : null;
@@ -16106,7 +16127,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const sinSw = async (json) => {
       const ls = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
       const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 412, height: 915 } });
-      await ctx.addInitScript((s) => { try { const o = JSON.parse(s); for (const k in o) localStorage.setItem(k, o[k]); localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} }, ls);
+      await ctx.addInitScript((s) => { try { const o = JSON.parse(s); for (const k in o) localStorage.setItem(k, o[k]); localStorage.setItem('guardias-hoymodo3', 'reloj'); } catch (e) {} }, ls);
       if (json) await ctx.route('**/data/recetario.json', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(json) }));
       else await ctx.route('**/data/recetario.json', (r) => r.abort());
       const pg = await ctx.newPage(); await pg.goto(base + 'index.html'); await pg.waitForTimeout(500);
@@ -16324,7 +16345,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const falso = { version: 1, esquema: 1, recetas: trampas.concat(real.recetas) };
     const ls = await page.evaluate(() => JSON.stringify(Object.assign({}, localStorage)));
     const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width: 412, height: 915 } });
-    await ctx.addInitScript((s) => { try { const o = JSON.parse(s); for (const k in o) localStorage.setItem(k, o[k]); localStorage.setItem('guardias-hoymodo2', 'reloj'); } catch (e) {} }, ls);
+    await ctx.addInitScript((s) => { try { const o = JSON.parse(s); for (const k in o) localStorage.setItem(k, o[k]); localStorage.setItem('guardias-hoymodo3', 'reloj'); } catch (e) {} }, ls);
     await ctx.route('**/data/recetario.json', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(falso) }));
     const pg = await ctx.newPage(); await pg.goto(base + 'index.html'); await pg.waitForTimeout(500);
     const R = {};
@@ -16679,7 +16700,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       if (cfg.vuelta) P.store.lloret.vuelta = { [d(-1)]: cfg.vuelta };
       if (cfg.pie) P.store.manana[d(0)] = { pie: cfg.pie };
       Object.keys(cfg.noches || {}).forEach((i) => { P.store.suenoReal[d(+i)] = { h: cfg.noches[i], guardia: false }; });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.uphVis = false; P.ui.nocheHoja = null; P.ui.snHoja = ''; P.save(); P.render();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.uphVis = false; P.ui.nocheHoja = null; P.ui.snHoja = ''; P.save(); P.render();
       return { hoy: d(0), man: d(1) }; }, cfg);
     // P1 Hoy: la víspera viene plegada («🩺 Mañana guardia…»); para leerla entera se abre primero
     const lee450 = async () => { if ((await page.$('#main .uph-vis')) && !(await page.$('#main .nvis'))) { await page.click('#main .uph-vis'); await page.waitForTimeout(250); } return lee450b(); };
@@ -16689,7 +16710,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
         l4: t(l4), l4Color: l4 ? getComputedStyle(l4).color : '', vis: t(q('.nvis')), avisa: q('[data-a="sn-avisa3"]') ? t(q('[data-a="sn-avisa3"]')) : '', cartel: t(q('.ncartel')), sr: sr ? JSON.stringify(sr) : '',
         altoBot: [...document.querySelectorAll('#main .nanoche button, #main .ncaras button, #main .nvis button')].map((b) => Math.round(b.getBoundingClientRect().height)), ancho: document.documentElement.scrollWidth,
         btnSnbtn: q('.snbtn') ? t(q('.snbtn')) : '' }; });
-    const restaura450 = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia450)); P.ui.snHoja = ''; P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
+    const restaura450 = () => page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia450)); P.ui.snHoja = ''; P.ui.hoyVista = ''; P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.save(); P.render(); });
     const rojo = (c) => { const m = /rgba?\((\d+), (\d+), (\d+)/.exec(c || ''); return !m || (+m[1] - +m[2] > 60 && +m[1] - +m[3] > 60); };
 
     // 450) «He vuelto» (guardado) + «En pie» (botón de verdad) → fila «Anoche …» → «Vale» → la noche queda en suenoReal con esas horas
@@ -17954,7 +17975,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       ['bus', 'reloj', 'linea'].every((m) => R[m].h.every(Boolean) && R[m].nav.every(Boolean) && R[m].d.join('|') === ['', mas(1), mas(2), mas(1), ''].join('|')), JSON.stringify(R));
     // 561 viaje
     await page.evaluate(() => { const P = window.PG; P.store.modoViaje = { destino: 'Lisboa', ida: P.iso(P.addDays(new Date(), -1)), vuelta: P.iso(P.addDays(new Date(), 2)), pausa: {}, lista: [], billetes: [], avisados: [] };
-      P.ui.hoyModo = 'bus'; P.ui.diaHoy = ''; P.ui.mvCompleto = false; P.render(); });
+      P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.diaHoy = ''; P.ui.mvCompleto = false; P.render(); });
     await page.waitForTimeout(250);
     const v0 = await page.evaluate(() => ({ esencial: /Lo esencial de hoy/.test(document.getElementById('main').innerText), nav: !!document.querySelector('#main .diasnav2') }));
     await click('[data-a="dia-next"]');
@@ -18023,7 +18044,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       R.h3 && R.bus2.n === 0 && R.bus2.ancho <= 412, JSON.stringify(R.bus2));
     check('594 Letra mínima · los textos no cambian, solo el tamaño: «LÍNEA DE HOY» y «PRÓXIMA PARADA» en el conductor, el desayuno (se llama «pre-entreno» solo si ese miércoles toca entreno temprano) y «A casa» en la línea',
       /LÍNEA DE HOY/.test(R.txtBus) && /PRÓXIMA PARADA/.test(R.txtBus) && /Desayuno/.test(R.txtLinea) && /A casa/.test(R.txtLinea), JSON.stringify({ ok: [/LÍNEA DE HOY/.test(R.txtBus), /PRÓXIMA PARADA/.test(R.txtBus), /Desayuno/.test(R.txtLinea), /A casa/.test(R.txtLinea)], b: R.txtBus.slice(0, 80), lin: R.txtLinea.replace(/\s+/g, ' ').slice(0, 600) }));
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia590; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia590; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
   // ===== T3b · TU GUARDIA (580-589) =====
@@ -18534,7 +18555,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     check('651 Letra de los dibujos · los rótulos de la línea no se solapan ni se salen del dibujo y salen «Trabajo» (ahora), «Entreno» (próxima) y «Guardia» escritos', R.a.solapa === 0 && R.a.fuera === 0 && R.a.rot.some((t) => /Trabajo/.test(t)) && R.a.rot.some((t) => /Entreno/.test(t)) && R.a.rot.some((t) => /Guardia/.test(t)), JSON.stringify(R.a.rot));
     check('652 Letra de los dibujos · «PRÓXIMA PARADA» del cuadro del conductor mide ≥13 px en pantalla', /PRÓXIMA PARADA/.test(R.a.nxl) && R.a.nxlPx >= 12.99, JSON.stringify({ t: R.a.nxl, px: R.a.nxlPx }));
     check('653 Letra de los dibujos · conductor → línea → conductor con los botones: al volver, la línea sigue a 1:1 con rótulos ≥13 px', R.h2 && R.h3 && bien(R.b), JSON.stringify(R.b));
-    await page.evaluate(() => { const P = window.PG; P.store = window.__copia650; P.ui.hoyModo = 'bus'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = window.__copia650; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
@@ -18671,7 +18692,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     // 658-659: la víspera de guardia (Hoy): «no hace falta siesta…» y «antes, a las…» a 13 px; el dibujo del conductor, sin 12,5 px
     await page.evaluate(() => { const P = window.PG, hoy = new Date(), d = (i) => P.iso(P.addDays(hoy, i)), SH = P.store.shifts.filter((x) => !P.isGuardia(x) && x.start && x.end && !/salient|libre|vacac|fuerza|entren/i.test(x.name || ''))[0], GU = P.store.shifts.filter(P.isGuardia)[0];
       for (let i = -3; i <= 3; i++) P.setDayOverride(d(i), SH.id, ''); P.setDayOverride(d(1), GU.id, 'urg'); P.store.rotation.mode = 'template'; P.store.sueno = Object.assign({}, P.store.sueno, { avisos: {} });
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyIt = null; P.ui.diaHoy = ''; P.save(); P.render(); });
     await page.click('[data-a="nav-cal"]'); await page.click('#calModes button[data-t="hoy"]'); await page.waitForTimeout(400);
     if ((await page.$('#main .uph-vis')) && !(await page.$('#main .nvis'))) { await page.click('#main .uph-vis'); await page.waitForTimeout(250); }
     const v658 = await page.evaluate(() => { const s = [...document.querySelectorAll('#main .nvis .snord small')]; return { n: s.length, t: s.map((x) => x.textContent), fs: s.map((x) => getComputedStyle(x).fontSize) }; });
@@ -18789,7 +18810,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.setDayOverride(d(1), GU.id, 'urg');
       P.store.sueno = Object.assign({}, P.store.sueno, { min: 8, latencia: 10, avisos: {}, sim: {} });
       P.store.eventos = (P.store.eventos || []).filter((e) => !e.lloret); P.store.suenoReal = {}; P.store.manana = {}; P.store.lloret = { diario: true, vuelta: { [d(-1)]: '01:00' } }; P.store.manana[d(0)] = { pie: '08:30' };
-      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.uphVis = false; P.ui.uphPlant = false; P.save(); P.render();
+      P.ui.tab = 'hoy'; P.ui.hoyVista = ''; P.ui.diaHoy = ''; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyBusV = 'conductor'; P.ui.nocheAbierta = false; P.ui.uphVis = false; P.ui.uphPlant = false; P.save(); P.render();
       return d(0); }, plantilla);
     const mide665 = () => page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), r = (e) => e ? e.getBoundingClientRect() : null, t = (e) => e ? e.innerText.replace(/\s+/g, ' ').trim() : '';
       const a = r(q('.hoyahora')), c = r(q('.ncartel')), s = r(q('.hoyseg')), n = r(q('.nanoche')), h = q('.uph-h2'), l = r(q('[data-a="lloret"]')), p = r(q('[data-a="dia-add"]')), v = q('.uph-vis');
@@ -18825,7 +18846,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     for (const m of ['reloj', 'linea', 'bus']) { await page.click('#main .hoyseg [data-v="' + m + '"]'); await page.waitForTimeout(250); modos[m] = await page.evaluate((m) => ({ on: window.PG.ui.hoyModo === m, seg: !!document.querySelector('#main .hoyseg'), ahora: !!document.querySelector('#main .hoyahora') }), m); }
     check('668 Hoy · con la semana en plantilla sale solo «ℹ️ plantilla» (≥44 px, sin el texto largo) → al tocarla el texto entero con «Usar las fechas del Mes» → otro toque la pliega; el reloj y la línea siguen funcionando (selector a mano, sin «Ahora») y vuelve el Conductor con «Ahora»',
       c0.b && /^ℹ️ plantilla$/.test(c0.txt) && c0.alto >= 44 && !c0.largo && c1.largo && c1.sync && c1.ancho <= 412 && !c2 && modos.reloj.on && modos.reloj.seg && !modos.reloj.ahora && modos.linea.on && modos.linea.seg && !modos.linea.ahora && modos.bus.on && modos.bus.ahora, JSON.stringify([c0, c1, c2, modos]));
-    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia665)); P.ui.uphVis = false; P.ui.uphPlant = false; P.ui.hoyModo = 'bus'; P.ui.tab = 'hoy'; P.save(); P.render(); });
+    await page.evaluate(() => { const P = window.PG; P.store = JSON.parse(JSON.stringify(window.__copia665)); P.ui.uphVis = false; P.ui.uphPlant = false; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.tab = 'hoy'; P.save(); P.render(); });
     await page.setViewportSize(vp); await sueltaHoy();
   }
 
@@ -18907,7 +18928,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       P.setDayOverride(k(1), 'sh-g', true); P.setDayOverride(k(2), 'sh-s', '');
       const h = P.store.habitos || (P.store.habitos = { items: [] }); h.items = h.items || [];
       h.items.push({ id: 'hb686', nombre: 'Agua 686', icono: '💧', color: '#38e1ff', dow: [0, 1, 2, 3, 4, 5, 6], creado: k(-3), noEn: [] });
-      P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.drawerOpen = false; P.save(); P.render(); });
+      P.ui.tab = 'hoy'; P.ui.hoyModo = 'bus'; P.ui.hoyDibujo = true; P.ui.hoyVista = ''; P.ui.foodVista = ''; P.ui.drawerOpen = false; P.save(); P.render(); });
     // Hoy (cabina) → Mes → cajón → Hábitos → Comer · Casa
     await page.click('[data-a="nav-cal"]'); await page.waitForTimeout(200);
     await page.click('#calModes button[data-t="hoy"]'); await page.waitForSelector('.cd-sub', { state: 'attached', timeout: 4000 }).catch(() => {});
@@ -19143,6 +19164,79 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await sueltaHoy();
     check('699) schumacher · el «···» abre historial, cómo me afecta, empezar/parar el zen y código (≥ 44 px); el historial lista los de 30 días y × borra uno; efectos sin palabras que delaten; el zen se empieza y se para desde el menú',
       r.cerrado && r.items.join() === 'historial:true,cómo me afecta:true,empezar el zen:true,código:true' && r.filas === 2 && r.trasBorrar === 1 && r.ses === 2 && r.vuelve && r.efectos && r.plan && r.parar === 1 && r.parado, JSON.stringify(r));
+  }
+
+  // 700) HOY EN TRES BLOQUES · H1: a las 21:00 de un día de trabajo, entrando por Mes → Hoy, antes de y=850 están «Ahora» (con su carretera de ~90 px), «La noche» y «Para hoy», por ese orden
+  {
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({}); await vuelve70();
+    const R = await tops70();
+    await suelta70();
+    check('700) Hoy a las 21:00 (trabajo): «Ahora» con carretera (~90 px, el autobús y alguna parada), «La noche» y «Para hoy» por ese orden y antes de y=850, sin selector de modos', R.ahora > 0 && R.noche > R.ahora && R.para > R.noche && R.para < 850 && R.via >= 70 && R.via <= 110 && R.marca && R.paradas >= 1 && /\S/.test(R.frase) && !R.seg, JSON.stringify(R));
+  }
+  // 701) HOY EN TRES BLOQUES · H2: quien dejó el reloj elegido (clave vieja) ve igualmente los tres bloques, sin selector de modos y sin nada repetido
+  {
+    await page.evaluate(() => { sessionStorage.setItem('__conductor', '1'); localStorage.setItem('guardias-hoymodo2', 'reloj'); localStorage.removeItem('guardias-hoymodo3'); });
+    await page.reload(); await page.waitForFunction(() => window.PG && window.__arrancada); await page.waitForTimeout(300);
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({ modo: null }); await vuelve70();
+    const R = await page.evaluate(() => { const m = document.getElementById('main'), tx = m.innerText;
+      return { seg: !!m.querySelector('.hoyseg'), ahora: m.querySelectorAll('.hoyahora').length, para: m.querySelectorAll('.parahoy').length, paraTx: (tx.match(/Para hoy/gi) || []).length, ahoraTx: (tx.match(/^\s*Ahora\b/gim) || []).length,
+        sin: (tx.match(/sin apuntar/gi) || []).length, modo: window.PG.ui.hoyModo, dibujo: !!m.querySelector('#hoyBusSlot .cd, #hoyBusSlot .es') }; });
+    await page.evaluate(() => { sessionStorage.removeItem('__conductor'); localStorage.removeItem('guardias-hoymodo2'); localStorage.setItem('guardias-hoymodo3', 'reloj'); });
+    await suelta70();
+    check('701) Hoy con la clave vieja del reloj guardada: sin selector de modos, «Ahora» una vez, «Para hoy» una vez, la cena «sin apuntar» como mucho una vez y sin el dibujo grande', R.modo === 'bus' && !R.seg && R.ahora === 1 && R.para === 1 && R.paraTx === 1 && R.ahoraTx <= 1 && R.sin <= 1 && !R.dibujo, JSON.stringify(R));
+  }
+  // 702) HOY EN TRES BLOQUES · H3: bajo los tres bloques, Comer («N de M kcal · N de M g proteína», próxima comida con «apúntala») y Entreno («Hoy toca X · Empezar») lado a lado y por encima de y=850; Empezar abre el entreno; sin rutina, «Hoy no toca»
+  {
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({ rutina: true }); await vuelve70();
+    const R = await page.evaluate(() => { const q = (s) => document.querySelector('#main ' + s), r = (e) => (e ? e.getBoundingClientRect() : null), c = r(q('.hoycomer')), e = r(q('.hoyentreno'));
+      return { comer: c ? Math.round(c.top + scrollY) : -1, entreno: e ? Math.round(e.top + scrollY) : -1, lado: !!c && !!e && Math.abs(c.top - e.top) < 4 && c.right <= e.left + 2, ancho: c ? Math.round(c.width) : 0,
+        tx: ((q('.hoycomer') || {}).innerText || '').replace(/\s+/g, ' '), te: ((q('.hoyentreno') || {}).innerText || '').replace(/\s+/g, ' '), emp: !!q('.hoyentreno [data-a="ses-empezar"]'), apunta: !!q('.hoycomer [data-a="hoy-log-slot"], .hoycomer [data-a="hoy-comer"]') }; });
+    await page.click('#main .hoyentreno [data-a="ses-empezar"]', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400);
+    const E = await page.evaluate(() => { const P = window.PG, s = P.ui.gymSesionActiva; return { tab: P.ui.tab, sesion: !!s, hoy: !!s && s.fecha === P.iso(new Date()) }; });
+    await prep70({}); await vuelve70();
+    const N = await page.evaluate(() => ((document.querySelector('#main .hoyentreno') || {}).innerText || '').replace(/\s+/g, ' '));
+    await suelta70();
+    check('702) Hoy: Comer y Entreno lado a lado antes de y=850; Comer dice «N de M kcal», «N de M g proteína» y «apúntala»; Entreno «Hoy toca Empuje 70 · Empezar» → Empezar abre la sesión de hoy; sin rutina, «Hoy no toca»',
+      R.comer > 0 && R.comer < 850 && R.entreno < 850 && R.lado && /\d+ de \d+ kcal/.test(R.tx) && /\d+ de \d+ g proteína/.test(R.tx) && /apúntala/.test(R.tx) && R.apunta && /Hoy toca/.test(R.te) && /Empuje 70/.test(R.te) && R.emp && E.tab === 'gym' && E.sesion && E.hoy && /Hoy no toca/.test(N),
+      JSON.stringify({ R, E, N }));
+  }
+  // 703) HOY EN TRES BLOQUES · H4: «Energía y coach», «Lo que viene» y «¿Cómo amaneces?» salen como filas de una línea plegadas; al tocar una se despliega su contenido de siempre
+  {
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({ amanece: true }); await vuelve70();
+    const lee = () => page.evaluate(() => { const m = document.getElementById('main'), f = (v) => m.querySelector('details.hoypleg[data-v="' + v + '"]'), vis = (e) => !!e && !e.closest('details:not([open])') && e.offsetHeight > 0;
+      const o = {}; ['coach', 'viene', 'amanece'].forEach((v) => { const d = f(v), s = d && d.querySelector('summary'); o[v] = { hay: !!d, abierta: !!d && d.open, alto: s ? Math.round(s.getBoundingClientRect().height) : -1 }; });
+      o.coachVis = vis(m.querySelector('.coach')); o.carrVis = vis(m.querySelector('#carrSlot')); o.carasVis = [...m.querySelectorAll('.ncara')].filter(vis).length; return o; });
+    const A = await lee();
+    await page.click('#main details.hoypleg[data-v="coach"] summary', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(200);
+    const B = await lee();
+    await page.click('#main details.hoypleg[data-v="viene"] summary', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(250);
+    const C = await lee();
+    await page.click('#main details.hoypleg[data-v="amanece"] summary', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(200);
+    const D = await lee();
+    await suelta70();
+    const una = (x) => x.hay && !x.abierta && x.alto >= 44 && x.alto <= 70;
+    check('703) Hoy: «Energía y coach», «Lo que viene» y «¿Cómo amaneces?» van plegadas en filas de una línea (44-70 px); tocar cada una despliega la energía y el coach, la carretera y las tres caras',
+      una(A.coach) && una(A.viene) && una(A.amanece) && !A.coachVis && !A.carrVis && A.carasVis === 0 && B.coach.abierta && B.coachVis && C.viene.abierta && C.carrVis && D.amanece.abierta && D.carasVis === 3, JSON.stringify({ A, B, C, D }));
+  }
+  // 704) HOY EN TRES BLOQUES · H5: la víspera de guardia dice «Mañana guardia · a la cama HH:MM» (y al tocarla sale el plan) y el saliente «Saliente · hasta N»; en los dos, los tres bloques por orden antes de y=850
+  {
+    await fijaHoy(21, 0); await page.setViewportSize({ width: 412, height: 915 });
+    await prep70({ visp: true }); await vuelve70();
+    const V = await page.evaluate(() => ({ tx: ((document.querySelector('#main .uph-vis') || {}).innerText || '').replace(/\s+/g, ' '), nvis: !!document.querySelector('#main .nvis') }));
+    const TV = await tops70();
+    await page.click('#main .uph-vis', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(250);
+    const V2 = await page.evaluate(() => ({ nvis: !!document.querySelector('#main .nvis'), cap: /MAÑANA TIENES GUARDIA/.test(document.getElementById('main').innerText) }));
+    await prep70({ sal: true }); await vuelve70();
+    const S = await page.evaluate(() => ((document.querySelector('#main .hoyest') || {}).innerText || '').replace(/\s+/g, ' '));
+    const TS = await tops70();
+    await suelta70();
+    const orden = (t) => t.ahora > 0 && t.noche > t.ahora && t.para > t.noche && t.para < 850 && !t.seg;
+    check('704) Hoy en víspera («🩺 Mañana guardia · a la cama HH:MM», al tocarla sale el plan) y en saliente («Saliente · hasta N»): «Ahora», «La noche» y «Para hoy» por orden antes de y=850',
+      /Mañana guardia · a la cama \d\d:\d\d/.test(V.tx) && !V.nvis && V2.nvis && V2.cap && /Saliente · hasta \d+/.test(S) && orden(TV) && orden(TS), JSON.stringify({ V, V2, S, TV, TS }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));

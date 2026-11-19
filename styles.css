@@ -4616,3 +4616,53 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .cnfila span{flex:1}
 .cnaf2{flex-direction:column;align-items:flex-start;gap:2px;padding:8px 0}
 .cnaf2 b{font-weight:400;color:var(--t-on)}.cnaf2 span{color:var(--t-ink2)}.cnaf2 small{font-size:var(--suelo)}
+
+/* ===== HOY EN TRES BLOQUES (v3-hoy-rediseno): Ahora + carretera, La noche, Para hoy, Comer y Entreno, filas plegadas ===== */
+.hoycab{display:flex;align-items:center;gap:6px;margin:4px 0 0}
+.hoycab .hoyest{font-weight:800;font-size:var(--t-14);min-width:0;flex:1}
+.hoycab .btn{min-width:44px;min-height:44px;justify-content:center}
+.hoyvia{position:relative;height:90px;margin-top:8px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.hoyvia .hv-via{position:absolute;left:0;right:0;top:30px;height:28px;background:color-mix(in srgb,var(--ink2) 22%,var(--bg2))}
+.hoyvia .hv-linea{position:absolute;left:0;right:0;top:43px;border-top:2px dashed var(--ink2);opacity:.55}
+.hoyvia .hv-pasado{position:absolute;left:0;top:30px;height:28px;background:color-mix(in srgb,var(--brand) 14%,transparent)}
+.hoyvia .hv-p{position:absolute;top:0;width:0;height:100%;color:var(--warn)}
+.hoyvia .hv-p i{position:absolute;left:-1px;top:6px;width:2px;height:32px;background:currentColor}
+.hoyvia .hv-p i::before{content:"";position:absolute;left:-5px;top:-6px;width:12px;height:12px;border-radius:50%;background:currentColor}
+.hoyvia .hv-p em{position:absolute;top:62px;left:0;transform:translateX(-50%);font-style:normal;font-size:var(--suelo);white-space:nowrap;color:currentColor}
+.hoyvia .hv-p.k-cama{color:var(--ink2)}
+.hoyvia .hv-p.k-gym{color:var(--ok)}
+.hoyvia .hv-ahora{position:absolute;left:50%;top:32px;width:44px;margin-left:-22px;color:var(--brand);text-align:center}
+.hoyvia .hv-ahora svg{display:block}
+.hoyvia .hv-ahora em{position:absolute;top:30px;left:50%;transform:translateX(-50%);font-style:normal;font-weight:800;font-size:var(--suelo)}
+.hoynoche>h2,.hoyahora+.hoynoche>h2{margin-bottom:0}
+.hoynoche .noche{margin:6px 0 0}
+.hoycols{display:flex;gap:10px;margin:0 0 var(--t-12)}
+.hoycols .card{flex:1;min-width:0;margin:0;display:flex;flex-direction:column;padding:12px}
+.hoycols h2{font-size:var(--t-16);margin:0 0 6px}
+.hoycomer .hc-n{margin-top:6px;font-size:var(--t-13);font-variant-numeric:tabular-nums}
+.hoycomer .hc-n b{font-size:var(--t-18,18px)}
+.hoycomer .hc-bar{height:5px;border-radius:5px;background:var(--line);margin-top:3px;overflow:hidden}
+.hoycomer .hc-bar i{display:block;height:100%;border-radius:5px}
+.hoycomer .hc-sig{margin-top:auto;min-height:44px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;border:1px solid var(--line);background:var(--bg2);border-radius:12px;color:var(--ink);font:inherit;font-size:var(--t-13);cursor:pointer;margin-top:10px}
+.hoycomer .hc-sig b{color:var(--brand)}
+.hoycomer .hc-sig.ok{justify-content:center;color:var(--ok);cursor:default}
+.hoyentreno .he-t{font-size:var(--t-18,18px);font-weight:800;line-height:1.2}
+.hoyentreno .he-s{font-size:var(--t-13);color:var(--ink2);margin-top:2px}
+.hoyentreno .he-b{margin-top:auto;min-height:44px;justify-content:center;width:100%}
+.hoyentreno .entcont{margin-top:8px;font-size:var(--suelo)}
+.hoyentreno .entcont span{display:none}
+.hoypleg{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:0 0 8px;overflow:hidden}
+.hoypleg>summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 14px;cursor:pointer;font-size:var(--t-14)}
+.hoypleg>summary::-webkit-details-marker{display:none}
+.hoypleg>summary .hp-r{margin-left:auto;color:var(--ink2);font-size:var(--suelo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hoypleg>summary::after{content:"▾";color:var(--ink2);flex:none}
+.hoypleg[open]>summary::after{content:"▴"}
+.hoypleg .hp-b{padding:0 14px 12px}
+.hoypleg .hp-b .card{margin:0;border:0;box-shadow:none;background:none;padding:0}
+.hoynoche .hoypleg{margin:8px 0 0;background:var(--bg2)}
+.hoycab .hoyest{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hoyvia .hv-ahora em{white-space:nowrap}
+.hoyahora .hoyfrase{margin:0}
+.hoyplant{margin:0 0 8px}
+.hoynoche{padding-top:10px;padding-bottom:12px}
+.hoynoche>h2{font-size:var(--t-16);margin:0}
