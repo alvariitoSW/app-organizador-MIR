@@ -4039,19 +4039,19 @@ html.dark{--lau-fondo:#0f1f16;--lau-cielo1:#12261b;--lau-cielo2:#1d3527;--lau-lo
 .noche .nchip small{color:var(--ink2);font-size:var(--suelo)}
 .noche .nmas{margin-left:auto;color:var(--ink2)}
 .noche .nplegar{min-height:44px;margin-top:8px}
-.noche .ncad{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px}
-.noche .ncf{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
-.noche .ncf:first-child{border-top:0}
-.noche .ncf.ya b{color:var(--brand)}
-.noche .ncf .nico{font-size:20px;width:28px;text-align:center}
-.noche .ncf div{flex:1;min-width:0}
-.noche .ncf small{display:block;color:var(--ink2);font-size:var(--suelo)}
-.noche .ncf .nh{font-variant-numeric:tabular-nums;font-weight:700}
+:is(.noche,.hoypleg) .ncad{margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 10px}
+:is(.noche,.hoypleg) .ncf{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+:is(.noche,.hoypleg) .ncf:first-child{border-top:0}
+:is(.noche,.hoypleg) .ncf.ya b{color:var(--brand)}
+:is(.noche,.hoypleg) .ncf .nico{font-size:20px;width:28px;text-align:center}
+:is(.noche,.hoypleg) .ncf div{flex:1;min-width:0}
+:is(.noche,.hoypleg) .ncf small{display:block;color:var(--ink2);font-size:var(--suelo)}
+:is(.noche,.hoypleg) .ncf .nh{font-variant-numeric:tabular-nums;font-weight:700}
 .noche .nvivo{width:100%;min-height:52px;margin-top:8px;font-size:17px}
 .noche .nvivo.n2{min-height:44px;font-size:inherit}
-.noche .nok{color:var(--ok);font-size:var(--suelo);padding:6px 2px}
-.noche .nvistas{margin-top:6px;gap:8px}
-.noche .nvistas .btn{min-height:44px}
+:is(.noche,.hoypleg) .nok{color:var(--ok);font-size:var(--suelo);padding:6px 2px}
+:is(.noche,.hoypleg) .nvistas{margin-top:6px;gap:8px}
+:is(.noche,.hoypleg) .nvistas .btn{min-height:44px}
 .nsug{background:var(--card);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:14px;padding:12px 14px;margin:0 0 10px;font-size:14px}
 .nsug .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .nsug .btn{min-height:44px}
@@ -4668,3 +4668,5 @@ html:not(.dark) .coach .coacht .mini{color:color-mix(in srgb,var(--ink2) 80%,var
 .hoynoche>h2{font-size:var(--t-16);margin:0}
 .hoycab .hoyest{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}
 .ncartel .l5{font-size:var(--suelo);color:var(--ink2);margin-top:2px}
+.hoycab .btn{min-width:40px;padding-left:8px;padding-right:8px}
+.hoycab .hoyest{flex:1 1 auto;white-space:nowrap}

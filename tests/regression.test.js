@@ -19265,7 +19265,9 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     await page.click('#main details.hoypleg[data-v="anoche"] summary', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(200);
     const B = await page.evaluate(() => ({ abierta: !!document.querySelector('details.hoypleg[data-v="anoche"][open]'), txt: /Anoche guardada/.test(((document.querySelector('details.hoypleg[data-v="anoche"]') || {}).innerText || '')) }));
     const BT = await page.evaluate(() => { const f = document.querySelector('details.hoypleg[data-v="anoche"]'), v = (e) => !!e && e.offsetHeight > 0;
-      return { alarmas: v(f && f.querySelector('[data-v="alarmas"]')), semana: v(f && f.querySelector('[data-v="semana"]')), cadena: !!(f && f.querySelector('.ncad .ncf')) }; });
+      return { alarmas: v(f && f.querySelector('[data-v="alarmas"]')), semana: v(f && f.querySelector('[data-v="semana"]')), cadena: !!(f && f.querySelector('.ncad .ncf')),
+        mismaLinea: [...(f ? f.querySelectorAll('.ncad .ncf') : [])].every((r) => { const b = r.querySelector('b').getBoundingClientRect(), h = r.querySelector('.nh').getBoundingClientRect(), d = r.querySelector('div').getBoundingClientRect(); return h.left >= b.right - 1 && h.top < d.bottom - 2 && h.bottom > d.top + 2; }),
+        titulo: (() => { const h = document.querySelector('#main .hoyest'); return h ? { alto: Math.round(h.getBoundingClientRect().height), cortado: h.scrollWidth > h.clientWidth + 1 } : null; })() }; });
     await page.click('#main details.hoypleg[data-v="anoche"] [data-v="semana"]', { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(300);
     const SE = await page.evaluate(() => window.PG.ui.hoyVista);
     await page.evaluate(() => { window.PG.ui.hoyVista = ''; window.PG.render(); });
@@ -19273,7 +19275,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
     const C = await page.evaluate(() => document.querySelectorAll('#main details.hoypleg[open]').length);
     await suelta70();
     check('706) Hoy: La noche sin la fila 🏠›🛌›⏰ (con 🚪 en el cartel), la cena de la carretera sin «3-15 h», «Anoche» y «¿Cómo amaneces?» fuera de La noche en filas plegadas (la «La noche · anoche ✓» se abre y enseña «Anoche guardada», la cadena, «Alarmas del móvil» y «Tu semana», que abre su pantalla), y al reentrar vuelven plegadas',
-      !A.chips && !A.casa && A.sale && !A.guard && A.cena.some((c) => /^Cena \d\d:\d\d$/.test(c)) && !A.cena.some((c) => /\d-\d/.test(c)) && A.fila && A.cierra && B.abierta && B.txt && BT.alarmas && BT.semana && BT.cadena && SE === 'semana' && C === 0, JSON.stringify({ A, B, BT, SE, C }));
+      !A.chips && !A.casa && A.sale && !A.guard && A.cena.some((c) => /^Cena \d\d:\d\d$/.test(c)) && !A.cena.some((c) => /\d-\d/.test(c)) && A.fila && A.cierra && B.abierta && B.txt && BT.alarmas && BT.semana && BT.cadena && BT.mismaLinea && BT.titulo && BT.titulo.alto <= 26 && !BT.titulo.cortado && SE === 'semana' && C === 0, JSON.stringify({ A, B, BT, SE, C }));
   }
 
   check('sin errores de JavaScript no capturados durante la sesión', pageErrors.length === 0, JSON.stringify(pageErrors));
