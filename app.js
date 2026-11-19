@@ -6162,6 +6162,17 @@ function hoyQuedaHTML(it,key,n){
 /* LA NOCHE EN HOY: el cartel LED con lo siguiente («Vete del Lloret · 21:45 / en 25 min»), debajo una fila plegada con lo que
    falta y, al tocarla, la cadena con sus notas. Va justo debajo del selector, igual en los 4 modos. El plegado vive en
    ui.nocheAbierta (no se guarda). Otro día que no es hoy: solo la tira de la mañana, si hay algo apuntado. */
+/* lo que abría la fila 🏠›🛌›⏰: la cadena de la noche, «Alarmas del móvil», «Tu semana» y la mañana; ahora va dentro de la fila plegada «La noche» */
+function nocheDetalleHTML(key){
+  const C=nocheCadena(key,hoyNow(true));if(!C)return '';
+  return '<div class="ncad">'+C.pend.map(function(x,i){return '<div class="ncf'+(i===0?' ya':'')+'"><span class="nico">'+x.ico+'</span><div><b>'+esc(x.corto)+'</b>'+
+      (x.nota?'<small>'+esc(x.nota)+'</small>':'')+'</div><span class="nh">'+hm(x.hora)+'</span></div>';}).join('')+
+      (C.vuelta?'<div class="nok">✓ Volviste a las '+esc(C.vuelta)+'</div>':'')+(C.llego?'<div class="nok">✓ Llegaste a las '+esc(C.llego)+'</div>':'')+
+      '<div class="row nvistas"><button class="btn s" data-a="noche-vista" data-v="alarmas">⏰ Alarmas del móvil</button><button class="btn s" data-a="noche-vista" data-v="semana">📊 Tu semana</button></div></div>'+mananaHTML(key,true);}
+function nocheFilaHTML(key){
+  const r=suenoReal(key),res=r&&!r.guardia?'anoche ✓ '+nocheFalta(Math.round(suenoTotal(r)*60))+(r.acostar&&r.desp?' · '+hCortaHM(r.acostar)+'–'+hCortaHM(r.desp):''):'';
+  const det=nocheDetalleHTML(key);if(!det&&!res)return '';
+  return hoyPlegIni('anoche','😴','La noche',esc(res))+anocheHTML(key,3)+det+hoyPlegFin();}
 function nocheHTML(key,esHoy,pleg){
   if(!esHoy)return mananaHTML(key,false);
   const C=nocheCadena(key,hoyNow(true));if(!C)return '';
@@ -6215,12 +6226,15 @@ function anocheHTML(key,pleg){
   if(r){
     if(r.amanece!=='pend'||r.guardia||pleg===1)return '';
     const resum='✓ '+nocheFalta(Math.round(suenoTotal(r)*60))+(r.acostar&&r.desp?' · '+hCortaHM(r.acostar)+'–'+hCortaHM(r.desp):'');
-    return (pleg?hoyPlegIni('anoche','😴','Anoche',esc(resum)):'')+'<div class="nanoche ok" role="group" aria-label="Anoche guardada"><div class="t"><small>Anoche guardada</small><b>'+esc(resum)+'</b></div>'+enlaces()+'</div>'+(pleg?hoyPlegFin():'')+
+    const ok='<div class="nanoche ok" role="group" aria-label="Anoche guardada"><div class="t"><small>Anoche guardada</small><b>'+esc(resum)+'</b></div>'+enlaces()+'</div>';
+    if(pleg===3)return ok;
+    return (pleg===2?'':ok)+
       (pleg?hoyPlegIni('amanece','🙂','¿Cómo amaneces?','si quieres'):'')+
       '<div class="ncaras" role="group" aria-label="¿Cómo amaneces?">'+(pleg?'':'<div class="cap">¿CÓMO AMANECES? (SI QUIERES)</div>')+'<div class="ncaras3">'+
       CARAS_AMANECE.map(function(c){return '<button class="ncara" data-a="anoche-cara" data-v="'+c[0]+'"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'+
         '<circle cx="16" cy="16" r="13"/><circle cx="11.5" cy="13" r="1.1" fill="currentColor"/><circle cx="20.5" cy="13" r="1.1" fill="currentColor"/><path d="'+c[2]+'"/></svg>'+c[1]+'</button>';}).join('')+'</div>'+
       '<div class="ncarasp"><span class="mini">Un toque y desaparece. Sin nota, sin racha.</span><button class="lnk" data-a="anoche-saltar">Saltar</button></div></div>'+(pleg?hoyPlegFin():'');}
+  if(pleg===3)return '';
   const D=anocheDatos(key);if(!D)return '';
   return '<div class="nanoche" role="group" aria-label="Anoche"><div class="t"><small>Anoche</small><b>'+esc(hCortaHM(D.acostar)+'–'+hCortaHM(D.desp)+' · '+nocheFalta(D.min))+'</b></div>'+
     '<button class="btn p" data-a="anoche-vale">Vale</button>'+enlaces()+'</div>';}
@@ -6467,7 +6481,7 @@ function hoyBloquesHTML(hoy,inf,esHoy,estado,sh,guardiaHoy){
     '<div class="hoycols">'+hoyComerHTML(hoy,inf)+hoyEntrenoHTML(hoy)+'</div>'+
     dinHoyLineaHTML(hoy,esHoy)+hoyChoqueHTML(hoy,inf)+mvResumenHTML(store.modoViaje)+mvSalidaHTML(store.modoViaje||{},hoy)+pantHTML()+informeTocaHTML()+asistHoyHTML(hoy,true)+habTiraHTML(hoy,esHoy)+
     ((uphPlantBtn()||modoAvisoHTML(true))?'<div class="hoyplant">'+uphPlantBtn()+modoAvisoHTML(true)+'</div>':'')+
-    anocheHTML(hoy,2)+
+    nocheFilaHTML(hoy)+anocheHTML(hoy,2)+
     ((coach||prot)?hoyPlegIni('coach','⚡','Energía y coach',e?e.nom:'')+coach+prot+hoyPlegFin():'')+
     hoyPlegIni('viene','🛣️','Lo que viene',lqvResumen())+'<div id="carrSlot" class="carrslot"></div>'+hoyPlegFin();}
 function habTiraHTML(key,esHoy){
