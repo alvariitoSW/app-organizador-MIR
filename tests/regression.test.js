@@ -8408,6 +8408,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
   //  · una guardia puesta sin repintar (lo que hace el puente de Claude) no llevaba su saliente a
   //    Google: la memoria «por pintado» de salidaDeGuardia() seguía con lo de antes.
   {
+    await fijaHoy();   // con la fecha real, d(15) caía en festivo (08/12) desde el 23/11
     const r = await page.evaluate(() => { const P = window.PG, g = P.gymS(), copia = JSON.parse(JSON.stringify(P.store));
       const d = (n) => P.iso(P.addDays(new Date(), n));
       const K = d(14), K1 = d(15), K5 = d(18), K6 = d(19);
@@ -8450,6 +8451,7 @@ function isoDate(d) { const x = new Date(d.getTime() - d.getTimezoneOffset() * 6
       r.circS !== 'NO' && /gimnasio|parque/i.test(r.circS) && !/guardia/i.test(r.circS) && !/de saliente/.test(r.avisos), JSON.stringify(r));
     check('una guardia puesta sin repintar lleva su saliente a Google aunque antes se hubiera preguntado por ese día',
       !r.antes && r.salK6, JSON.stringify(r));
+    await sueltaHoy();
   }
 
   // 214) MANTENER PULSADO UN DÍA DEL MES, encadenado por la interfaz: toque corto (panel de siempre) →
