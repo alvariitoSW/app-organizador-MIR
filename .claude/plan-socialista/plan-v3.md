@@ -12,7 +12,7 @@ El tablero de la reestructuración. **Una tarea = una sesión** (CLAUDE.md). Lo 
 
 ## En marcha
 
-**«Dónde estoy» [v3-donde-estoy]** (Consejo, 23/11/2026 · acta `consejo/2026-11-23-donde-estoy.md` · aprobado por el usuario: por tandas, asoci cifrada, maqueta A «solo un chip»): **T1** el Lanzador vigila hospital/asoci/Lloret en segundo plano y enseña su último registro (~1,5 M) · **T2** la web: enlace cifrado, horas en «Este mes», chip en Hoy, Schumacher y la pregunta del calendario (~2,5 M, sesión nueva, después de que el usuario compruebe T1 en su Xiaomi).
+**«Dónde estoy» [v3-donde-estoy]** (Consejo, 23/11/2026 · acta `consejo/2026-11-23-donde-estoy.md` · aprobado por el usuario: por tandas, asoci cifrada, maqueta A «solo un chip»): **T1 ✅** el Lanzador vigila Sitio 1/2/3 en segundo plano y enseña su último registro (`main` a7cfc9c, 23/11, Release lanzador-v15; 1,8 M con el Consejo) · **T2** la web: enlace cifrado, horas en «Este mes», chip en Hoy, Schumacher y la pregunta del calendario (~2,5 M, sesión nueva, después de que el usuario compruebe T1 en su Xiaomi).
 
 ~~Remate de La Competencia~~ ✅ (03/11, en `main` 437e7e9): R1 `=======` fuera de styles.css, chapita «del móvil ✓» (620) · R2 «Tu guardia en 3 pasos» como primera pantalla (630-634) · R3 compra suma líneas a mano en gramos (640-644) · R4 Línea de hoy del conductor a 13 px reales, opción B (650-653) · 5 PNG: cerrado sin tocar (G13 ya los bajó; recomprimir haría crecer el historial) · 6 tandas viejas: nada pendiente, tachadas R7-R10, S6 y S7. De paso: la prueba del primer arranque devuelve lo que había (sus guardias se colaban los días 3, 11 y 19) y la 564 redondea al píxel.
 
