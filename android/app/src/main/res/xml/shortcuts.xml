@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+  <shortcut
+      android:shortcutId="sitios"
+      android:enabled="true"
+      android:shortcutShortLabel="@string/atajo_sitios">
+    <intent
+        android:action="es.guardias.lanzador.SITIOS"
+        android:targetPackage="es.guardias.lanzador"
+        android:targetClass="es.guardias.lanzador.MainActivity" />
+  </shortcut>
+</shortcuts>

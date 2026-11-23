@@ -6,6 +6,15 @@
   <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
       tools:ignore="ProtectedPermissions" />
 
+  <!-- Sitios (T1): ubicación en segundo plano, calculada en el móvil -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
   <!-- Android 11+: ver Brave, la pantalla de inicio y el nombre de las apps del cajón -->
   <queries>
     <package android:name="com.brave.browser" />
@@ -35,7 +44,25 @@
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
+      <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
     </activity>
+    <!-- Sitios (T1): la pantalla, el vigía en primer plano y el arranque tras reiniciar -->
+    <activity
+        android:name=".SitiosActivity"
+        android:exported="false"
+        android:taskAffinity="es.guardias.lanzador.sitios" />
+    <service
+        android:name=".Vigia"
+        android:exported="false"
+        android:foregroundServiceType="location" />
+    <receiver
+        android:name=".Arranque"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+      </intent-filter>
+    </receiver>
     <!-- K4: el widget de inicio (2×2, 4 atajos). Sin red. -->
     <receiver
         android:name=".Atajos"

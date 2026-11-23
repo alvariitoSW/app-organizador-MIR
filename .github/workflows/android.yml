@@ -44,6 +44,12 @@ jobs:
             echo "::warning::Sin LANZADOR_KEYSTORE: la APK sale sin firmar y no se publica"
           fi
 
+      - name: Sin nombres propios en android/
+        run: |
+          if grep -riE 'hospital|asoci|lloret|schumacher' android/; then
+            echo "::error::Hay nombres propios en android/ (los sitios son Sitio 1/2/3)"; exit 1
+          fi
+
       - name: Pruebas y compilación
         env:
           VERSION_CODE: ${{ github.run_number }}
@@ -61,6 +67,14 @@ jobs:
             echo "::error::La APK pide INTERNET: los datos podrían salir del móvil"; exit 1
           fi
           grep -q 'android.permission.PACKAGE_USAGE_STATS' permisos.txt || { echo "::error::Falta PACKAGE_USAGE_STATS"; exit 1; }
+          # lista cerrada: cualquier otro permiso hace fallar el workflow
+          PERMITIDOS="android.permission.PACKAGE_USAGE_STATS android.permission.ACCESS_FINE_LOCATION android.permission.ACCESS_COARSE_LOCATION android.permission.ACCESS_BACKGROUND_LOCATION android.permission.FOREGROUND_SERVICE android.permission.FOREGROUND_SERVICE_LOCATION android.permission.POST_NOTIFICATIONS android.permission.RECEIVE_BOOT_COMPLETED"
+          for p in $(grep -oE "uses-permission: name='[^']+'" permisos.txt | sed -E "s/.*name='([^']+)'/\1/"); do
+            case " $PERMITIDOS " in
+              *" $p "*) ;;
+              *) echo "::error::Permiso fuera de la lista cerrada: $p"; exit 1 ;;
+            esac
+          done
           if [ -n "${LANZADOR_KEYSTORE_FILE:-}" ]; then
             "$BT/apksigner" verify --print-certs "$APK" | grep -v 'SHA-1'
             cp "$APK" "lanzador-v${{ github.run_number }}.apk"
@@ -87,4 +101,4 @@ jobs:
           gh release create "lanzador-v${{ github.run_number }}" "lanzador-v${{ github.run_number }}.apk" "lanzador-v${{ github.run_number }}.zip" \
             --target "$GITHUB_SHA" --latest \
             --title "Lanzador v${{ github.run_number }}" \
-            --notes "La lanzadora de Android (El Lanzador). Descárgala en el móvil e instálala; al abrirla pide «Acceso al uso», lee el uso del móvil y abre la app en Brave. Sin permiso de internet."
+            --notes "La lanzadora de Android (El Lanzador). Descárgala en el móvil e instálala; al abrirla pide «Acceso al uso», lee el uso del móvil y abre la app en Brave. Con pulsación larga en el icono, «Sitios»: guarda hasta 3 sitios y apunta en el móvil cuándo entras y sales (ubicación en segundo plano, calculada en el móvil). Sin permiso de internet."

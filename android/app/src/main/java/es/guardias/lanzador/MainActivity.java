@@ -30,12 +30,15 @@ import java.util.Set;
  * La lanzadora (El Lanzador · K2). Al abrirse: si no tiene «Acceso al uso», lo pide; si lo tiene, lee
  * los eventos de uso de los últimos 14 días (queryEvents, sin nada en segundo plano), abre la web en
  * Brave con «#uso=…» y se cierra. Sin permiso de internet: los datos solo viajan dentro del móvil.
+ * La pantalla «Sitios» (SitiosActivity) cuelga del atajo de pulsación larga del icono.
  */
 public class MainActivity extends Activity {
   static final String WEB = "https://alvariitosw.github.io/app-organizador-MIR/index.html";
   static final String BRAVE = "com.brave.browser";
   static final int DIAS = 14;
   static final String EXTRA_ACCION = "accion";
+  /** El atajo de pulsación larga «Sitios» (res/xml/shortcuts.xml). */
+  static final String ACCION_SITIOS = "es.guardias.lanzador.SITIOS";
 
   private boolean abriendo;
 
@@ -55,6 +58,14 @@ public class MainActivity extends Activity {
   @Override protected void onResume() {
     super.onResume();
     if (abriendo) return;
+    if (getIntent() != null && ACCION_SITIOS.equals(getIntent().getAction())) {
+      /* antes que nada del uso: la pantalla Sitios, en su propia tarea, y esta se cierra */
+      setIntent(new Intent(Intent.ACTION_MAIN));
+      startActivity(new Intent(this, SitiosActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+      finish();
+      return;
+    }
+    if (Vigia.quiere(this)) Vigia.arranca(this);   /* cada apertura revive el vigía si el sistema lo paró */
     if (!tieneAcceso()) {
       /* un botón del widget va directo a su gesto aunque falte «Acceso al uso» (en HyperOS el permiso
          puede quedar bloqueado por «ajustes restringidos»); la pantalla del permiso, solo desde el icono */
@@ -138,6 +149,9 @@ public class MainActivity extends Activity {
     Button sin = boton(getString(R.string.sin_datos));
     sin.setOnClickListener(v -> abre(null));
     caja.addView(sin);
+    Button sit = boton(getString(R.string.atajo_sitios));
+    sit.setOnClickListener(v -> { startActivity(new Intent(this, SitiosActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); finish(); });
+    caja.addView(sit);
   }
 
   private LinearLayout pantalla(String texto, String accion, android.view.View.OnClickListener alTocar) {
